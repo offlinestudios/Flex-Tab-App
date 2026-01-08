@@ -1,25 +1,708 @@
+import { useState, useEffect } from "react";
+import { Menu, Plus, Trash2, Edit2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
-import { Streamdown } from 'streamdown';
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
-/**
- * All content in this page are only for example, replace with your own feature implementation
- * When building pages, remember your instructions in Frontend Best Practices, Design Guide and Common Pitfalls
- */
+interface Exercise {
+  id: string;
+  name: string;
+  category: string;
+  isCustom?: boolean;
+}
+
+interface SetLog {
+  id: string;
+  date: string;
+  exercise: string;
+  sets: number;
+  reps: number;
+  weight: number;
+  time: string;
+}
+
+interface WorkoutSession {
+  date: string;
+  exercises: SetLog[];
+}
+
+const PRESET_EXERCISES: Exercise[] = [
+  // Chest
+  { id: "1", name: "Bench Press", category: "Chest" },
+  { id: "2", name: "Incline Press", category: "Chest" },
+  { id: "3", name: "Dumbbell Press", category: "Chest" },
+  // Back
+  { id: "4", name: "Pull-Ups", category: "Back" },
+  { id: "5", name: "Dumbbell Rows", category: "Back" },
+  { id: "6", name: "Barbell Rows", category: "Back" },
+  // Arms
+  { id: "7", name: "Bicep Curls", category: "Arms" },
+  { id: "8", name: "Tricep Dips", category: "Arms" },
+  // Shoulders
+  { id: "9", name: "Shoulder Press", category: "Shoulders" },
+  { id: "10", name: "Lateral Raises", category: "Shoulders" },
+  // Legs
+  { id: "11", name: "Squats", category: "Legs" },
+  { id: "12", name: "Leg Press", category: "Legs" },
+  { id: "13", name: "Leg Curls", category: "Legs" },
+  { id: "14", name: "Deadlifts", category: "Legs" },
+];
+
 export default function Home() {
-  // If theme is switchable in App.tsx, we can implement theme toggling like this:
-  // const { theme, toggleTheme } = useTheme();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [selectedExercises, setSelectedExercises] = useState<Exercise[]>([]);
+  const [customExerciseName, setCustomExerciseName] = useState("");
+  const [customExerciseCategory, setCustomExerciseCategory] = useState("");
+  const [allExercises, setAllExercises] = useState<Exercise[]>(PRESET_EXERCISES);
+  const [showCustomDialog, setShowCustomDialog] = useState(false);
+  const [workoutSessions, setWorkoutSessions] = useState<WorkoutSession[]>([]);
+  const [editingLog, setEditingLog] = useState<SetLog | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editFormData, setEditFormData] = useState<SetLog | null>(null);
+
+  // Load data from localStorage on mount
+  useEffect(() => {
+    const savedExercises = localStorage.getItem("customExercises");
+    const savedSessions = localStorage.getItem("workoutSessions");
+
+    if (savedExercises) {
+      setAllExercises(JSON.parse(savedExercises));
+    }
+    if (savedSessions) {
+      setWorkoutSessions(JSON.parse(savedSessions));
+    }
+  }, []);
+
+  // Save exercises to localStorage
+  useEffect(() => {
+    localStorage.setItem("customExercises", JSON.stringify(allExercises));
+  }, [allExercises]);
+
+  // Save sessions to localStorage
+  useEffect(() => {
+    localStorage.setItem("workoutSessions", JSON.stringify(workoutSessions));
+  }, [workoutSessions]);
+
+  const handleAddCustomExercise = () => {
+    if (customExerciseName.trim() && customExerciseCategory.trim()) {
+      const newExercise: Exercise = {
+        id: Date.now().toString(),
+        name: customExerciseName,
+        category: customExerciseCategory,
+        isCustom: true,
+      };
+      setAllExercises([...allExercises, newExercise]);
+      setCustomExerciseName("");
+      setCustomExerciseCategory("");
+      setShowCustomDialog(false);
+    }
+  };
+
+  const handleSelectExercise = (exercise: Exercise) => {
+    if (selectedExercises.find((e) => e.id === exercise.id)) {
+      setSelectedExercises(selectedExercises.filter((e) => e.id !== exercise.id));
+    } else {
+      setSelectedExercises([...selectedExercises, exercise]);
+    }
+  };
+
+  const handleLogSet = (
+    exercise: string,
+    sets: number,
+    reps: number,
+    weight: number
+  ) => {
+    const today = new Date().toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
+    });
+
+    const time = new Date().toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    });
+
+    const newLog: SetLog = {
+      id: Date.now().toString(),
+      date: today,
+      exercise,
+      sets,
+      reps,
+      weight,
+      time,
+    };
+
+    const existingSession = workoutSessions.find((s) => s.date === today);
+    if (existingSession) {
+      existingSession.exercises.push(newLog);
+      setWorkoutSessions([...workoutSessions]);
+    } else {
+      setWorkoutSessions([
+        ...workoutSessions,
+        { date: today, exercises: [newLog] },
+      ]);
+    }
+  };
+
+  const handleDeleteLog = (logId: string, sessionDate: string) => {
+    setWorkoutSessions(
+      workoutSessions
+        .map((session) => {
+          if (session.date === sessionDate) {
+            return {
+              ...session,
+              exercises: session.exercises.filter((e) => e.id !== logId),
+            };
+          }
+          return session;
+        })
+        .filter((session) => session.exercises.length > 0)
+    );
+  };
+
+  const handleEditLog = (log: SetLog) => {
+    setEditingLog(log);
+    setEditFormData({ ...log });
+    setShowEditDialog(true);
+  };
+
+  const handleSaveEditLog = () => {
+    if (!editFormData) return;
+
+    setWorkoutSessions(
+      workoutSessions.map((session) => ({
+        ...session,
+        exercises: session.exercises.map((e) =>
+          e.id === editFormData.id ? editFormData : e
+        ),
+      }))
+    );
+
+    setShowEditDialog(false);
+    setEditingLog(null);
+    setEditFormData(null);
+  };
+
+  const groupedExercises = PRESET_EXERCISES.reduce(
+    (acc, exercise) => {
+      if (!acc[exercise.category]) {
+        acc[exercise.category] = [];
+      }
+      acc[exercise.category].push(exercise);
+      return acc;
+    },
+    {} as Record<string, Exercise[]>
+  );
+
+  const customExercises = allExercises.filter((e) => e.isCustom);
+  const sortedSessions = [...workoutSessions].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+
+  const calculateStats = (exercises: SetLog[]) => {
+    const totalReps = exercises.reduce((sum, e) => sum + e.reps, 0);
+    const totalSets = exercises.reduce((sum, e) => sum + e.sets, 0);
+    const totalVolume = exercises.reduce((sum, e) => sum + e.weight * e.reps * e.sets, 0);
+    const uniqueExercises = new Set(exercises.map((e) => e.exercise)).size;
+
+    return { totalReps, totalSets, totalVolume, uniqueExercises };
+  };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <main>
-        {/* Example: lucide-react for icons */}
-        <Loader2 className="animate-spin" />
-        Example Page
-        {/* Example: Streamdown for markdown rendering */}
-        <Streamdown>Any **markdown** content</Streamdown>
-        <Button variant="default">Example Button</Button>
-      </main>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      {/* Header with Hamburger and Title Side by Side */}
+      <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm">
+        <div className="flex items-center gap-4 px-4 py-4 md:px-6">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+          >
+            <Menu className="w-6 h-6 text-slate-700" />
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">
+              Workout Dashboard
+            </h1>
+            <p className="text-sm text-slate-500">
+              Track your fitness progress with precision
+            </p>
+          </div>
+        </div>
+      </header>
+
+      <div className="flex">
+        {/* Sidebar */}
+        <aside
+          className={`fixed md:relative w-80 bg-white border-r border-slate-200 h-[calc(100vh-80px)] overflow-y-auto transition-transform duration-300 z-30 ${
+            sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+          }`}
+        >
+          <div className="p-6">
+            <h2 className="text-xl font-bold text-slate-900 mb-6">
+              Workout Builder
+            </h2>
+
+            {/* Preset Exercises */}
+            <div className="space-y-6">
+              {Object.entries(groupedExercises).map(([category, exercises]) => (
+                <div key={category}>
+                  <h3 className="font-semibold text-slate-700 mb-3 text-sm uppercase tracking-wide">
+                    {category}
+                  </h3>
+                  <div className="space-y-2">
+                    {exercises.map((exercise) => (
+                      <button
+                        key={exercise.id}
+                        onClick={() => handleSelectExercise(exercise)}
+                        className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
+                          selectedExercises.find((e) => e.id === exercise.id)
+                            ? "bg-cyan-100 text-cyan-900 font-medium"
+                            : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                        }`}
+                      >
+                        <span className="text-sm">+ {exercise.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              {/* Custom Exercises Section */}
+              {customExercises.length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-slate-700 mb-3 text-sm uppercase tracking-wide">
+                    Custom Exercises
+                  </h3>
+                  <div className="space-y-2">
+                    {customExercises.map((exercise) => (
+                      <button
+                        key={exercise.id}
+                        onClick={() => handleSelectExercise(exercise)}
+                        className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
+                          selectedExercises.find((e) => e.id === exercise.id)
+                            ? "bg-cyan-100 text-cyan-900 font-medium"
+                            : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                        }`}
+                      >
+                        <span className="text-sm">+ {exercise.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Add Custom Exercise Button */}
+              <button
+                onClick={() => setShowCustomDialog(true)}
+                className="w-full flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-cyan-400 to-cyan-500 text-white rounded-lg hover:from-cyan-500 hover:to-cyan-600 transition-all font-medium"
+              >
+                <Plus className="w-4 h-4" />
+                Add Custom Exercise
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        {/* Main Content */}
+        <main className="flex-1 p-4 md:p-8">
+          <div className="max-w-6xl mx-auto">
+            {/* Tabs */}
+            <Tabs defaultValue="active" className="w-full">
+              <TabsList className="grid w-full grid-cols-4 mb-8 bg-slate-200">
+                <TabsTrigger value="active" className="data-[state=active]:bg-white">
+                  Active
+                </TabsTrigger>
+                <TabsTrigger value="measurements" className="data-[state=active]:bg-white">
+                  Measurements
+                </TabsTrigger>
+                <TabsTrigger value="history" className="data-[state=active]:bg-white">
+                  History
+                </TabsTrigger>
+                <TabsTrigger value="progress" className="data-[state=active]:bg-white">
+                  Progress
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Active Tab */}
+              <TabsContent value="active" className="space-y-6">
+                {selectedExercises.length === 0 ? (
+                  <Card className="p-12 text-center bg-white border-slate-200">
+                    <p className="text-slate-600 text-lg mb-2">
+                      No exercises selected yet
+                    </p>
+                    <p className="text-slate-500">
+                      Use the sidebar to add exercises or load a preset workout plan
+                    </p>
+                  </Card>
+                ) : (
+                  <div className="space-y-4">
+                    {selectedExercises.map((exercise) => (
+                      <ExerciseCard
+                        key={exercise.id}
+                        exercise={exercise}
+                        onLogSet={handleLogSet}
+                      />
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+
+              {/* Measurements Tab */}
+              <TabsContent value="measurements">
+                <Card className="p-8 bg-white border-slate-200">
+                  <p className="text-slate-600">Measurements feature coming soon</p>
+                </Card>
+              </TabsContent>
+
+              {/* History Tab */}
+              <TabsContent value="history" className="space-y-6">
+                {sortedSessions.length === 0 ? (
+                  <Card className="p-12 text-center bg-white border-slate-200">
+                    <p className="text-slate-600 text-lg">No workout history yet</p>
+                    <p className="text-slate-500">
+                      Log your first set to start tracking
+                    </p>
+                  </Card>
+                ) : (
+                  sortedSessions.map((session) => {
+                    const stats = calculateStats(session.exercises);
+                    return (
+                      <Card key={session.date} className="overflow-hidden bg-white border-slate-200">
+                        <div className="p-6 border-b border-slate-200">
+                          <h3 className="text-lg font-bold text-slate-900">
+                            {session.date}
+                          </h3>
+                        </div>
+                        <div className="overflow-x-auto">
+                          <table className="w-full">
+                            <thead>
+                              <tr className="border-b border-slate-200 bg-slate-50">
+                                <th className="px-6 py-3 text-left text-sm font-semibold text-slate-700">
+                                  Exercise
+                                </th>
+                                <th className="px-6 py-3 text-left text-sm font-semibold text-slate-700">
+                                  Sets
+                                </th>
+                                <th className="px-6 py-3 text-left text-sm font-semibold text-slate-700">
+                                  Reps
+                                </th>
+                                <th className="px-6 py-3 text-left text-sm font-semibold text-slate-700">
+                                  Weight (lbs)
+                                </th>
+                                <th className="px-6 py-3 text-left text-sm font-semibold text-slate-700">
+                                  Time
+                                </th>
+                                <th className="px-6 py-3 text-left text-sm font-semibold text-slate-700">
+                                  Actions
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {session.exercises.map((log) => (
+                                <tr
+                                  key={log.id}
+                                  className="border-b border-slate-200 hover:bg-slate-50 transition-colors"
+                                >
+                                  <td className="px-6 py-4 text-sm font-medium text-slate-900">
+                                    {log.exercise}
+                                  </td>
+                                  <td className="px-6 py-4 text-sm text-slate-600">
+                                    {log.sets}
+                                  </td>
+                                  <td className="px-6 py-4 text-sm text-slate-600">
+                                    {log.reps}
+                                  </td>
+                                  <td className="px-6 py-4 text-sm text-slate-600">
+                                    {log.weight}
+                                  </td>
+                                  <td className="px-6 py-4 text-sm text-slate-600">
+                                    {log.time}
+                                  </td>
+                                  <td className="px-6 py-4 text-sm">
+                                    <div className="flex gap-2">
+                                      <button
+                                        onClick={() => handleEditLog(log)}
+                                        className="p-2 hover:bg-blue-100 rounded-lg transition-colors text-blue-600"
+                                        title="Edit"
+                                      >
+                                        <Edit2 className="w-4 h-4" />
+                                      </button>
+                                      <button
+                                        onClick={() =>
+                                          handleDeleteLog(log.id, session.date)
+                                        }
+                                        className="p-2 hover:bg-red-100 rounded-lg transition-colors text-red-600"
+                                        title="Delete"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                        <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 grid grid-cols-4 gap-4">
+                          <div>
+                            <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">
+                              Total Reps
+                            </p>
+                            <p className="text-2xl font-bold text-cyan-500">
+                              {stats.totalReps}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">
+                              Total Sets
+                            </p>
+                            <p className="text-2xl font-bold text-cyan-500">
+                              {stats.totalSets}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">
+                              Total Volume (LBS)
+                            </p>
+                            <p className="text-2xl font-bold text-cyan-500">
+                              {stats.totalVolume.toLocaleString()}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">
+                              Exercises
+                            </p>
+                            <p className="text-2xl font-bold text-cyan-500">
+                              {stats.uniqueExercises}
+                            </p>
+                          </div>
+                        </div>
+                      </Card>
+                    );
+                  })
+                )}
+              </TabsContent>
+
+              {/* Progress Tab */}
+              <TabsContent value="progress">
+                <Card className="p-8 bg-white border-slate-200">
+                  <p className="text-slate-600">Progress tracking coming soon</p>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </main>
+      </div>
+
+      {/* Add Custom Exercise Dialog */}
+      <Dialog open={showCustomDialog} onOpenChange={setShowCustomDialog}>
+        <DialogContent className="bg-white border-slate-200">
+          <DialogHeader>
+            <DialogTitle className="text-slate-900">Add Custom Exercise</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label htmlFor="exercise-name" className="text-slate-700">
+                Exercise Name
+              </Label>
+              <Input
+                id="exercise-name"
+                placeholder="e.g., Cable Flyes"
+                value={customExerciseName}
+                onChange={(e) => setCustomExerciseName(e.target.value)}
+                className="mt-2 border-slate-300"
+              />
+            </div>
+            <div>
+              <Label htmlFor="exercise-category" className="text-slate-700">
+                Category
+              </Label>
+              <Input
+                id="exercise-category"
+                placeholder="e.g., Chest"
+                value={customExerciseCategory}
+                onChange={(e) => setCustomExerciseCategory(e.target.value)}
+                className="mt-2 border-slate-300"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowCustomDialog(false)}
+              className="border-slate-300"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleAddCustomExercise}
+              className="bg-cyan-500 hover:bg-cyan-600"
+            >
+              Add Exercise
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Log Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="bg-white border-slate-200">
+          <DialogHeader>
+            <DialogTitle className="text-slate-900">Edit Set Log</DialogTitle>
+          </DialogHeader>
+          {editFormData && (
+            <div className="space-y-4 py-4">
+              <div>
+                <Label htmlFor="edit-sets" className="text-slate-700">
+                  Sets
+                </Label>
+                <Input
+                  id="edit-sets"
+                  type="number"
+                  value={editFormData.sets}
+                  onChange={(e) =>
+                    setEditFormData({
+                      ...editFormData,
+                      sets: parseInt(e.target.value) || 0,
+                    })
+                  }
+                  className="mt-2 border-slate-300"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-reps" className="text-slate-700">
+                  Reps
+                </Label>
+                <Input
+                  id="edit-reps"
+                  type="number"
+                  value={editFormData.reps}
+                  onChange={(e) =>
+                    setEditFormData({
+                      ...editFormData,
+                      reps: parseInt(e.target.value) || 0,
+                    })
+                  }
+                  className="mt-2 border-slate-300"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-weight" className="text-slate-700">
+                  Weight (lbs)
+                </Label>
+                <Input
+                  id="edit-weight"
+                  type="number"
+                  value={editFormData.weight}
+                  onChange={(e) =>
+                    setEditFormData({
+                      ...editFormData,
+                      weight: parseInt(e.target.value) || 0,
+                    })
+                  }
+                  className="mt-2 border-slate-300"
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowEditDialog(false)}
+              className="border-slate-300"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveEditLog}
+              className="bg-cyan-500 hover:bg-cyan-600"
+            >
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Overlay for mobile sidebar */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 md:hidden z-20"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
     </div>
+  );
+}
+
+interface ExerciseCardProps {
+  exercise: Exercise;
+  onLogSet: (exercise: string, sets: number, reps: number, weight: number) => void;
+}
+
+function ExerciseCard({ exercise, onLogSet }: ExerciseCardProps) {
+  const [sets, setSets] = useState(3);
+  const [reps, setReps] = useState(10);
+  const [weight, setWeight] = useState(0);
+
+  return (
+    <Card className="p-6 bg-white border-slate-200">
+      <h3 className="text-lg font-bold text-slate-900 mb-4">{exercise.name}</h3>
+      <div className="grid grid-cols-3 gap-4 mb-4">
+        <div>
+          <Label htmlFor={`sets-${exercise.id}`} className="text-slate-700">
+            Sets
+          </Label>
+          <Input
+            id={`sets-${exercise.id}`}
+            type="number"
+            value={sets}
+            onChange={(e) => setSets(parseInt(e.target.value) || 0)}
+            className="mt-2 border-slate-300"
+          />
+        </div>
+        <div>
+          <Label htmlFor={`reps-${exercise.id}`} className="text-slate-700">
+            Reps
+          </Label>
+          <Input
+            id={`reps-${exercise.id}`}
+            type="number"
+            value={reps}
+            onChange={(e) => setReps(parseInt(e.target.value) || 0)}
+            className="mt-2 border-slate-300"
+          />
+        </div>
+        <div>
+          <Label htmlFor={`weight-${exercise.id}`} className="text-slate-700">
+            Weight (lbs)
+          </Label>
+          <Input
+            id={`weight-${exercise.id}`}
+            type="number"
+            value={weight}
+            onChange={(e) => setWeight(parseInt(e.target.value) || 0)}
+            className="mt-2 border-slate-300"
+          />
+        </div>
+      </div>
+      <Button
+        onClick={() => onLogSet(exercise.name, sets, reps, weight)}
+        className="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-medium"
+      >
+        Log Set
+      </Button>
+    </Card>
   );
 }
