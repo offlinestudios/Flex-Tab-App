@@ -264,18 +264,18 @@ export default function Home() {
                   <h3 className="font-semibold text-slate-700 mb-3 text-sm uppercase tracking-wide">
                     {category}
                   </h3>
-                  <div className="flex flex-wrap gap-2 md:flex-col md:space-y-2">
+                  <div className="space-y-2">
                     {exercises.map((exercise) => (
                       <button
                         key={exercise.id}
                         onClick={() => handleSelectExercise(exercise)}
-                        className={`flex-1 md:w-full text-left px-3 py-2 rounded-lg transition-colors text-sm ${
+                        className={`w-full text-left px-4 py-2.5 rounded-md transition-all text-sm font-medium ${
                           selectedExercises.find((e) => e.id === exercise.id)
-                            ? "bg-cyan-100 text-cyan-900 font-medium"
-                            : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                            ? "bg-cyan-500 text-white shadow-md"
+                            : "bg-slate-100 text-slate-700 hover:bg-slate-150 border border-slate-200"
                         }`}
                       >
-                        <span className="text-xs md:text-sm">+ {exercise.name}</span>
+                        <span>+ {exercise.name}</span>
                       </button>
                     ))}
                   </div>
@@ -288,18 +288,18 @@ export default function Home() {
                   <h3 className="font-semibold text-slate-700 mb-3 text-sm uppercase tracking-wide">
                     Custom Exercises
                   </h3>
-                  <div className="flex flex-wrap gap-2 md:flex-col md:space-y-2">
+                  <div className="space-y-2">
                     {customExercises.map((exercise) => (
                       <button
                         key={exercise.id}
                         onClick={() => handleSelectExercise(exercise)}
-                        className={`flex-1 md:w-full text-left px-3 py-2 rounded-lg transition-colors text-sm ${
+                        className={`w-full text-left px-4 py-2.5 rounded-md transition-all text-sm font-medium ${
                           selectedExercises.find((e) => e.id === exercise.id)
-                            ? "bg-cyan-100 text-cyan-900 font-medium"
-                            : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                            ? "bg-cyan-500 text-white shadow-md"
+                            : "bg-slate-100 text-slate-700 hover:bg-slate-150 border border-slate-200"
                         }`}
                       >
-                        <span className="text-xs md:text-sm">+ {exercise.name}</span>
+                        <span>+ {exercise.name}</span>
                       </button>
                     ))}
                   </div>
