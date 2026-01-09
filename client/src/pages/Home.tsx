@@ -16,6 +16,7 @@ import { WorkoutCalendar } from "@/components/WorkoutCalendar";
 import { WorkoutStatistics } from "@/components/WorkoutStatistics";
 import { BodyMeasurements } from "@/components/BodyMeasurements";
 import ProgressCharts from "@/components/ProgressCharts";
+import { formatDateFull } from "@/lib/dateUtils";
 
 interface Exercise {
   id: string;
@@ -402,6 +403,13 @@ export default function Home() {
                     setMeasurements(newMeasurements);
                     localStorage.setItem("measurements", JSON.stringify(newMeasurements));
                   }}
+                  onEditMeasurement={(measurement) => {
+                    const newMeasurements = measurements.map((m) =>
+                      m.id === measurement.id ? measurement : m
+                    );
+                    setMeasurements(newMeasurements);
+                    localStorage.setItem("measurements", JSON.stringify(newMeasurements));
+                  }}
                 />
               </TabsContent>
 
@@ -421,29 +429,29 @@ export default function Home() {
                       <Card key={session.date} className="overflow-hidden bg-white border-slate-200">
                         <div className="p-6 border-b border-slate-200">
                           <h3 className="text-lg font-bold text-slate-900">
-                            {session.date}
+                            {formatDateFull(session.date)}
                           </h3>
                         </div>
                         <div className="overflow-x-auto">
                           <table className="w-full text-xs md:text-sm">
                             <thead>
                               <tr className="border-b border-slate-200 bg-slate-50">
-                                <th className="px-2 md:px-6 py-3 text-left font-semibold text-slate-700">
+                                <th className="px-3 md:px-6 py-4 text-left font-semibold text-slate-700">
                                   Exercise
                                 </th>
-                                <th className="px-2 md:px-6 py-3 text-left font-semibold text-slate-700">
+                                <th className="px-3 md:px-6 py-4 text-center font-semibold text-slate-700">
                                   Sets
                                 </th>
-                                <th className="px-2 md:px-6 py-3 text-left font-semibold text-slate-700">
+                                <th className="px-3 md:px-6 py-4 text-center font-semibold text-slate-700">
                                   Reps
                                 </th>
-                                <th className="px-2 md:px-6 py-3 text-left font-semibold text-slate-700">
+                                <th className="px-3 md:px-6 py-4 text-center font-semibold text-slate-700">
                                   Weight
                                 </th>
-                                <th className="hidden md:table-cell px-6 py-3 text-left font-semibold text-slate-700">
+                                <th className="hidden md:table-cell px-6 py-4 text-center font-semibold text-slate-700">
                                   Time
                                 </th>
-                                <th className="px-2 md:px-6 py-3 text-left font-semibold text-slate-700">
+                                <th className="px-3 md:px-6 py-4 text-center font-semibold text-slate-700">
                                   Actions
                                 </th>
                               </tr>
@@ -454,38 +462,38 @@ export default function Home() {
                                   key={log.id}
                                   className="border-b border-slate-200 hover:bg-slate-50 transition-colors"
                                 >
-                                  <td className="px-2 md:px-6 py-4 font-medium text-slate-900">
+                                  <td className="px-3 md:px-6 py-4 font-medium text-slate-900">
                                     {log.exercise}
                                   </td>
-                                  <td className="px-2 md:px-6 py-4 text-slate-600">
+                                  <td className="px-3 md:px-6 py-4 text-center text-slate-600">
                                     {log.sets}
                                   </td>
-                                  <td className="px-2 md:px-6 py-4 text-slate-600">
+                                  <td className="px-3 md:px-6 py-4 text-center text-slate-600">
                                     {log.reps}
                                   </td>
-                                  <td className="px-2 md:px-6 py-4 text-slate-600">
+                                  <td className="px-3 md:px-6 py-4 text-center text-slate-600">
                                     {log.weight}
                                   </td>
-                                  <td className="hidden md:table-cell px-6 py-4 text-slate-600">
+                                  <td className="hidden md:table-cell px-6 py-4 text-center text-slate-600">
                                     {log.time}
                                   </td>
-                                  <td className="px-2 md:px-6 py-4">
-                                    <div className="flex gap-1 md:gap-2">
+                                  <td className="px-3 md:px-6 py-4">
+                                    <div className="flex gap-2 justify-center">
                                       <button
                                         onClick={() => handleEditLog(log)}
-                                        className="p-1 md:p-2 hover:bg-blue-100 rounded-lg transition-colors text-blue-600"
+                                        className="p-2 hover:bg-blue-100 rounded-lg transition-colors text-blue-600"
                                         title="Edit"
                                       >
-                                        <Edit2 className="w-3 h-3 md:w-4 md:h-4" />
+                                        <Edit2 className="w-4 h-4" />
                                       </button>
                                       <button
                                         onClick={() =>
                                           handleDeleteLog(log.id, session.date)
                                         }
-                                        className="p-1 md:p-2 hover:bg-red-100 rounded-lg transition-colors text-red-600"
+                                        className="p-2 hover:bg-red-100 rounded-lg transition-colors text-red-600"
                                         title="Delete"
                                       >
-                                        <Trash2 className="w-3 h-3 md:w-4 md:h-4" />
+                                        <Trash2 className="w-4 h-4" />
                                       </button>
                                     </div>
                                   </td>

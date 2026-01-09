@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus, Trash2, Edit2 } from "lucide-react";
 import { useState } from "react";
+import { formatDateFull } from "@/lib/dateUtils";
 
 interface Measurement {
   id: string;
@@ -19,14 +20,17 @@ interface BodyMeasurementsProps {
   measurements: Measurement[];
   onAddMeasurement: (measurement: Measurement) => void;
   onDeleteMeasurement: (id: string) => void;
+  onEditMeasurement?: (measurement: Measurement) => void;
 }
 
 export function BodyMeasurements({
   measurements,
   onAddMeasurement,
   onDeleteMeasurement,
+  onEditMeasurement,
 }: BodyMeasurementsProps) {
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     weight: "",
     chest: "",
@@ -64,6 +68,58 @@ export function BodyMeasurements({
     }
   };
 
+  const handleEditMeasurement = (measurement: Measurement) => {
+    setEditingId(measurement.id);
+    setFormData({
+      weight: measurement.weight.toString(),
+      chest: measurement.chest.toString(),
+      waist: measurement.waist.toString(),
+      arms: measurement.arms.toString(),
+      thighs: measurement.thighs.toString(),
+    });
+  };
+
+  const handleSaveEdit = (measurementId: string) => {
+    if (
+      formData.weight &&
+      formData.chest &&
+      formData.waist &&
+      formData.arms &&
+      formData.thighs
+    ) {
+      const measurement = measurements.find(m => m.id === measurementId);
+      if (measurement && onEditMeasurement) {
+        onEditMeasurement({
+          ...measurement,
+          weight: parseFloat(formData.weight),
+          chest: parseFloat(formData.chest),
+          waist: parseFloat(formData.waist),
+          arms: parseFloat(formData.arms),
+          thighs: parseFloat(formData.thighs),
+        });
+      }
+      setEditingId(null);
+      setFormData({
+        weight: "",
+        chest: "",
+        waist: "",
+        arms: "",
+        thighs: "",
+      });
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setFormData({
+      weight: "",
+      chest: "",
+      waist: "",
+      arms: "",
+      thighs: "",
+    });
+  };
+
   const sortedMeasurements = [...measurements].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
@@ -88,7 +144,7 @@ export function BodyMeasurements({
   return (
     <div className="space-y-6">
       {/* Add Measurement Form */}
-      {!showForm ? (
+      {!showForm && editingId === null ? (
         <Button
           onClick={() => setShowForm(true)}
           className="w-full bg-cyan-500 hover:bg-cyan-600 text-white"
@@ -96,7 +152,7 @@ export function BodyMeasurements({
           <Plus className="w-4 h-4 mr-2" />
           Add Body Measurement
         </Button>
-      ) : (
+      ) : showForm ? (
         <Card className="p-6 bg-white border-slate-200">
           <h3 className="text-lg font-bold text-slate-900 mb-4">
             New Measurement
@@ -199,7 +255,7 @@ export function BodyMeasurements({
             </Button>
           </div>
         </Card>
-      )}
+      ) : null}
 
       {/* Progress Summary */}
       {progress && (
@@ -285,57 +341,166 @@ export function BodyMeasurements({
         ) : (
           <div className="space-y-3">
             {sortedMeasurements.map((measurement) => (
-              <Card
-                key={measurement.id}
-                className="p-4 bg-white border-slate-200 hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <p className="font-semibold text-slate-900">
-                      {new Date(measurement.date).toLocaleDateString()}
-                    </p>
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-3 text-sm">
-                      <div>
-                        <p className="text-slate-600">Weight</p>
-                        <p className="font-medium text-slate-900">
-                          {measurement.weight} lbs
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-slate-600">Chest</p>
-                        <p className="font-medium text-slate-900">
-                          {measurement.chest}"
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-slate-600">Waist</p>
-                        <p className="font-medium text-slate-900">
-                          {measurement.waist}"
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-slate-600">Arms</p>
-                        <p className="font-medium text-slate-900">
-                          {measurement.arms}"
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-slate-600">Thighs</p>
-                        <p className="font-medium text-slate-900">
-                          {measurement.thighs}"
-                        </p>
-                      </div>
+              editingId === measurement.id ? (
+                <Card key={measurement.id} className="p-6 bg-white border-slate-200">
+                  <h4 className="text-lg font-bold text-slate-900 mb-4">
+                    Edit Measurement - {formatDateFull(measurement.date)}
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="edit-weight" className="text-sm font-medium">
+                        Weight (lbs)
+                      </Label>
+                      <Input
+                        id="edit-weight"
+                        type="number"
+                        step="0.1"
+                        value={formData.weight}
+                        onChange={(e) =>
+                          setFormData({ ...formData, weight: e.target.value })
+                        }
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-chest" className="text-sm font-medium">
+                        Chest (inches)
+                      </Label>
+                      <Input
+                        id="edit-chest"
+                        type="number"
+                        step="0.1"
+                        value={formData.chest}
+                        onChange={(e) =>
+                          setFormData({ ...formData, chest: e.target.value })
+                        }
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-waist" className="text-sm font-medium">
+                        Waist (inches)
+                      </Label>
+                      <Input
+                        id="edit-waist"
+                        type="number"
+                        step="0.1"
+                        value={formData.waist}
+                        onChange={(e) =>
+                          setFormData({ ...formData, waist: e.target.value })
+                        }
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-arms" className="text-sm font-medium">
+                        Arms (inches)
+                      </Label>
+                      <Input
+                        id="edit-arms"
+                        type="number"
+                        step="0.1"
+                        value={formData.arms}
+                        onChange={(e) =>
+                          setFormData({ ...formData, arms: e.target.value })
+                        }
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-thighs" className="text-sm font-medium">
+                        Thighs (inches)
+                      </Label>
+                      <Input
+                        id="edit-thighs"
+                        type="number"
+                        step="0.1"
+                        value={formData.thighs}
+                        onChange={(e) =>
+                          setFormData({ ...formData, thighs: e.target.value })
+                        }
+                        className="mt-1"
+                      />
                     </div>
                   </div>
-                  <button
-                    onClick={() => onDeleteMeasurement(measurement.id)}
-                    className="p-2 hover:bg-red-50 rounded-lg transition-colors ml-4"
-                    title="Delete"
-                  >
-                    <Trash2 className="w-4 h-4 text-red-500" />
-                  </button>
-                </div>
-              </Card>
+                  <div className="flex gap-3 mt-6">
+                    <Button
+                      onClick={() => handleSaveEdit(measurement.id)}
+                      className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white"
+                    >
+                      Save Changes
+                    </Button>
+                    <Button
+                      onClick={handleCancelEdit}
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </Card>
+              ) : (
+                <Card
+                  key={measurement.id}
+                  className="p-4 bg-white border-slate-200 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                    <div className="flex-1">
+                      <p className="font-semibold text-slate-900">
+                        {formatDateFull(measurement.date)}
+                      </p>
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-3 text-sm">
+                        <div>
+                          <p className="text-slate-600">Weight</p>
+                          <p className="font-medium text-slate-900">
+                            {measurement.weight} lbs
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-slate-600">Chest</p>
+                          <p className="font-medium text-slate-900">
+                            {measurement.chest}"
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-slate-600">Waist</p>
+                          <p className="font-medium text-slate-900">
+                            {measurement.waist}"
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-slate-600">Arms</p>
+                          <p className="font-medium text-slate-900">
+                            {measurement.arms}"
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-slate-600">Thighs</p>
+                          <p className="font-medium text-slate-900">
+                            {measurement.thighs}"
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 md:flex-col">
+                      <button
+                        onClick={() => handleEditMeasurement(measurement)}
+                        className="p-2 hover:bg-blue-50 rounded-lg transition-colors text-blue-600"
+                        title="Edit"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => onDeleteMeasurement(measurement.id)}
+                        className="p-2 hover:bg-red-50 rounded-lg transition-colors text-red-600"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </Card>
+              )
             ))}
           </div>
         )}
