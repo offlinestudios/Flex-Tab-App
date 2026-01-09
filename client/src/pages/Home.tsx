@@ -83,7 +83,10 @@ export default function Home() {
     const savedMeasurements = localStorage.getItem("measurements");
 
     if (savedExercises) {
-      setAllExercises(JSON.parse(savedExercises));
+      const exercises = JSON.parse(savedExercises);
+      // Filter out duplicate Dumbbell Flys from custom exercises
+      const filtered = exercises.filter((e: Exercise) => !(e.name === "Dumbbell Flys" && e.isCustom));
+      setAllExercises(filtered);
     }
     if (savedSessions) {
       setWorkoutSessions(JSON.parse(savedSessions));
