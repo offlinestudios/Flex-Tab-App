@@ -427,7 +427,7 @@ export default function Home() {
                     const stats = calculateStats(session.exercises);
                     return (
                       <Card key={session.date} className="overflow-hidden bg-white border-slate-200">
-                        <div className="p-6 border-b border-slate-200">
+                        <div className="px-3 md:px-6 py-4 border-b border-slate-200">
                           <h3 className="text-lg font-bold text-slate-900">
                             {formatDateFull(session.date)}
                           </h3>

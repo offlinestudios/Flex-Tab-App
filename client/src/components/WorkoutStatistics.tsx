@@ -114,7 +114,7 @@ export function WorkoutStatistics({
       <div>
         <h3 className="text-lg font-bold text-slate-900 mb-4">All-Time Statistics</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="p-4 bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200">
+          <Card className="p-4 bg-white border-slate-200 shadow-sm">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm text-slate-600 font-medium">Total Workouts</p>
@@ -126,7 +126,7 @@ export function WorkoutStatistics({
             </div>
           </Card>
 
-          <Card className="p-4 bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200">
+          <Card className="p-4 bg-white border-slate-200 shadow-sm">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm text-slate-600 font-medium">Total Reps</p>
@@ -138,7 +138,7 @@ export function WorkoutStatistics({
             </div>
           </Card>
 
-          <Card className="p-4 bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200">
+          <Card className="p-4 bg-white border-slate-200 shadow-sm">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm text-slate-600 font-medium">Total Volume (lbs)</p>
@@ -150,7 +150,7 @@ export function WorkoutStatistics({
             </div>
           </Card>
 
-          <Card className="p-4 bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200">
+          <Card className="p-4 bg-white border-slate-200 shadow-sm">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm text-slate-600 font-medium">Unique Exercises</p>
@@ -165,14 +165,14 @@ export function WorkoutStatistics({
 
         {/* Additional Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-          <Card className="p-4 bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200">
+          <Card className="p-4 bg-white border-slate-200 shadow-sm">
             <p className="text-sm text-slate-600 font-medium">Total Sets</p>
             <p className="text-2xl font-bold text-slate-900 mt-2">
               {allTimeStats.totalSets}
             </p>
           </Card>
 
-          <Card className="p-4 bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200">
+          <Card className="p-4 bg-white border-slate-200 shadow-sm">
             <p className="text-sm text-slate-600 font-medium">Current Streak</p>
             <p className="text-2xl font-bold text-slate-900 mt-2">
               {currentStreak} day{currentStreak !== 1 ? "s" : ""}
@@ -203,28 +203,28 @@ export function WorkoutStatistics({
             Workout for {selectedDate}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card className="p-4 bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200">
+            <Card className="p-4 bg-white border-slate-200 shadow-sm">
               <p className="text-sm text-slate-600 font-medium">Exercises</p>
               <p className="text-3xl font-bold text-slate-900 mt-2">
                 {selectedDateStats.exerciseCount}
               </p>
             </Card>
 
-            <Card className="p-4 bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200">
+            <Card className="p-4 bg-white border-slate-200 shadow-sm">
               <p className="text-sm text-slate-600 font-medium">Total Sets</p>
               <p className="text-3xl font-bold text-slate-900 mt-2">
                 {selectedDateStats.totalSets}
               </p>
             </Card>
 
-            <Card className="p-4 bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200">
+            <Card className="p-4 bg-white border-slate-200 shadow-sm">
               <p className="text-sm text-slate-600 font-medium">Total Reps</p>
               <p className="text-3xl font-bold text-slate-900 mt-2">
                 {selectedDateStats.totalReps}
               </p>
             </Card>
 
-            <Card className="p-4 bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200">
+            <Card className="p-4 bg-white border-slate-200 shadow-sm">
               <p className="text-sm text-slate-600 font-medium">Total Volume (lbs)</p>
               <p className="text-3xl font-bold text-slate-900 mt-2">
                 {selectedDateStats.totalVolume.toLocaleString()}
