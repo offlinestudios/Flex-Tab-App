@@ -14,6 +14,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { WorkoutCalendar } from "@/components/WorkoutCalendar";
 import { WorkoutStatistics } from "@/components/WorkoutStatistics";
+import { BodyMeasurements } from "@/components/BodyMeasurements";
 
 interface Exercise {
   id: string;
@@ -35,6 +36,16 @@ interface SetLog {
 interface WorkoutSession {
   date: string;
   exercises: SetLog[];
+}
+
+interface Measurement {
+  id: string;
+  date: string;
+  weight: number;
+  chest: number;
+  waist: number;
+  arms: number;
+  thighs: number;
 }
 
 const PRESET_EXERCISES: Exercise[] = [
@@ -71,17 +82,22 @@ export default function Home() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editFormData, setEditFormData] = useState<SetLog | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
+  const [measurements, setMeasurements] = useState<Measurement[]>([]);
 
   // Load data from localStorage on mount
   useEffect(() => {
     const savedExercises = localStorage.getItem("customExercises");
     const savedSessions = localStorage.getItem("workoutSessions");
+    const savedMeasurements = localStorage.getItem("measurements");
 
     if (savedExercises) {
       setAllExercises(JSON.parse(savedExercises));
     }
     if (savedSessions) {
       setWorkoutSessions(JSON.parse(savedSessions));
+    }
+    if (savedMeasurements) {
+      setMeasurements(JSON.parse(savedMeasurements));
     }
   }, []);
 
@@ -323,7 +339,7 @@ export default function Home() {
           <div className="max-w-6xl mx-auto">
             {/* Tabs */}
             <Tabs defaultValue="active" className="w-full">
-              <TabsList className="grid w-full grid-cols-4 mb-8 bg-slate-200">
+              <TabsList className="flex w-full mb-8 bg-slate-200 overflow-x-auto md:grid md:grid-cols-4">
                 <TabsTrigger value="active" className="data-[state=active]:bg-white">
                   Active
                 </TabsTrigger>
@@ -364,21 +380,19 @@ export default function Home() {
 
               {/* Measurements Tab */}
               <TabsContent value="measurements">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                  <div className="lg:col-span-1">
-                    <WorkoutCalendar
-                      workoutDates={workoutSessions.map((s) => s.date)}
-                      onDateSelect={setSelectedDate}
-                      selectedDate={selectedDate}
-                    />
-                  </div>
-                  <div className="lg:col-span-2">
-                    <WorkoutStatistics
-                      workoutSessions={workoutSessions}
-                      selectedDate={selectedDate}
-                    />
-                  </div>
-                </div>
+                <BodyMeasurements
+                  measurements={measurements}
+                  onAddMeasurement={(measurement) => {
+                    const newMeasurements = [...measurements, measurement];
+                    setMeasurements(newMeasurements);
+                    localStorage.setItem("measurements", JSON.stringify(newMeasurements));
+                  }}
+                  onDeleteMeasurement={(id) => {
+                    const newMeasurements = measurements.filter((m) => m.id !== id);
+                    setMeasurements(newMeasurements);
+                    localStorage.setItem("measurements", JSON.stringify(newMeasurements));
+                  }}
+                />
               </TabsContent>
 
               {/* History Tab */}
