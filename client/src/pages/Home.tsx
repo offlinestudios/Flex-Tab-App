@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { WorkoutCalendar } from "@/components/WorkoutCalendar";
 import { WorkoutStatistics } from "@/components/WorkoutStatistics";
 import { BodyMeasurements } from "@/components/BodyMeasurements";
+import ProgressCharts from "@/components/ProgressCharts";
 
 interface Exercise {
   id: string;
@@ -356,26 +357,35 @@ export default function Home() {
 
               {/* Active Tab */}
               <TabsContent value="active" className="space-y-6">
-                {selectedExercises.length === 0 ? (
-                  <Card className="p-12 text-center bg-white border-slate-200">
-                    <p className="text-slate-600 text-lg mb-2">
-                      No exercises selected yet
-                    </p>
-                    <p className="text-slate-500">
-                      Use the sidebar to add exercises or load a preset workout plan
-                    </p>
-                  </Card>
-                ) : (
-                  <div className="space-y-4">
-                    {selectedExercises.map((exercise) => (
-                      <ExerciseCard
-                        key={exercise.id}
-                        exercise={exercise}
-                        onLogSet={handleLogSet}
-                      />
-                    ))}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div className="lg:col-span-2 space-y-4">
+                    {selectedExercises.length === 0 ? (
+                      <Card className="p-12 text-center bg-white border-slate-200">
+                        <p className="text-slate-600 text-lg mb-2">
+                          No exercises selected yet
+                        </p>
+                        <p className="text-slate-500">
+                          Use the sidebar to add exercises or load a preset workout plan
+                        </p>
+                      </Card>
+                    ) : (
+                      selectedExercises.map((exercise) => (
+                        <ExerciseCard
+                          key={exercise.id}
+                          exercise={exercise}
+                          onLogSet={handleLogSet}
+                        />
+                      ))
+                    )}
                   </div>
-                )}
+                  <div className="lg:col-span-1">
+                    <WorkoutCalendar
+                      workoutDates={workoutSessions.map(s => s.date)}
+                      selectedDate={selectedDate}
+                      onDateSelect={setSelectedDate}
+                    />
+                  </div>
+                </div>
               </TabsContent>
 
               {/* Measurements Tab */}
@@ -526,10 +536,16 @@ export default function Home() {
 
               {/* Progress Tab */}
               <TabsContent value="progress" className="space-y-6">
-                <WorkoutStatistics
-                  workoutSessions={workoutSessions}
-                  selectedDate={selectedDate}
-                />
+                <div className="space-y-6">
+                  <WorkoutStatistics
+                    workoutSessions={workoutSessions}
+                    selectedDate={selectedDate}
+                  />
+                  <ProgressCharts
+                    setLogs={workoutSessions.flatMap(s => s.exercises)}
+                    measurements={measurements}
+                  />
+                </div>
               </TabsContent>
             </Tabs>
           </div>
