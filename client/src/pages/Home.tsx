@@ -17,6 +17,8 @@ import { WorkoutStatistics } from "@/components/WorkoutStatistics";
 import { BodyMeasurements } from "@/components/BodyMeasurements";
 import ProgressCharts from "@/components/ProgressCharts";
 import { formatDateFull } from "@/lib/dateUtils";
+import { PRESET_EXERCISES as EXPANDED_EXERCISES, EXERCISE_CATEGORIES } from "@/lib/exercises";
+import { ExerciseSidebar } from "@/components/ExerciseSidebar";
 
 interface Exercise {
   id: string;
@@ -50,27 +52,7 @@ interface Measurement {
   thighs: number;
 }
 
-const PRESET_EXERCISES: Exercise[] = [
-  // Chest
-  { id: "1", name: "Bench Press", category: "Chest" },
-  { id: "2", name: "Incline Press", category: "Chest" },
-  { id: "3", name: "Dumbbell Press", category: "Chest" },
-  // Back
-  { id: "4", name: "Pull-Ups", category: "Back" },
-  { id: "5", name: "Dumbbell Rows", category: "Back" },
-  { id: "6", name: "Barbell Rows", category: "Back" },
-  // Arms
-  { id: "7", name: "Bicep Curls", category: "Arms" },
-  { id: "8", name: "Tricep Dips", category: "Arms" },
-  // Shoulders
-  { id: "9", name: "Shoulder Press", category: "Shoulders" },
-  { id: "10", name: "Lateral Raises", category: "Shoulders" },
-  // Legs
-  { id: "11", name: "Squats", category: "Legs" },
-  { id: "12", name: "Leg Press", category: "Legs" },
-  { id: "13", name: "Leg Curls", category: "Legs" },
-  { id: "14", name: "Deadlifts", category: "Legs" },
-];
+const PRESET_EXERCISES: Exercise[] = EXPANDED_EXERCISES;
 
 export default function Home() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -78,6 +60,14 @@ export default function Home() {
   const [customExerciseName, setCustomExerciseName] = useState("");
   const [customExerciseCategory, setCustomExerciseCategory] = useState("");
   const [allExercises, setAllExercises] = useState<Exercise[]>(PRESET_EXERCISES);
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
+    Chest: true,
+    Back: true,
+    Arms: true,
+    Shoulders: true,
+    Legs: true,
+    Core: false,
+  });
   const [showCustomDialog, setShowCustomDialog] = useState(false);
   const [workoutSessions, setWorkoutSessions] = useState<WorkoutSession[]>([]);
   const [editingLog, setEditingLog] = useState<SetLog | null>(null);
@@ -216,6 +206,13 @@ export default function Home() {
     setEditFormData(null);
   };
 
+  const toggleCategory = (category: string) => {
+    setExpandedCategories((prev) => ({
+      ...prev,
+      [category]: !prev[category],
+    }));
+  };
+
   const groupedExercises = PRESET_EXERCISES.reduce(
     (acc, exercise) => {
       if (!acc[exercise.category]) {
@@ -274,65 +271,15 @@ export default function Home() {
             <h2 className="text-xl font-bold text-slate-900 mb-6">
               Workout Builder
             </h2>
-
-              {/* Preset Exercises */}
-            <div className="space-y-6">
-              {Object.entries(groupedExercises).map(([category, exercises]) => (
-                <div key={category}>
-                  <h3 className="font-semibold text-slate-700 mb-3 text-sm uppercase tracking-wide">
-                    {category}
-                  </h3>
-                  <div className="space-y-2">
-                    {exercises.map((exercise) => (
-                      <button
-                        key={exercise.id}
-                        onClick={() => handleSelectExercise(exercise)}
-                        className={`w-full text-left px-4 py-2.5 rounded-md transition-all text-sm font-medium ${
-                          selectedExercises.find((e) => e.id === exercise.id)
-                            ? "bg-cyan-500 text-white shadow-md"
-                            : "bg-slate-100 text-slate-700 hover:bg-slate-150 border border-slate-200"
-                        }`}
-                      >
-                        <span>+ {exercise.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-
-              {/* Custom Exercises Section */}
-              {customExercises.length > 0 && (
-                <div>
-                  <h3 className="font-semibold text-slate-700 mb-3 text-sm uppercase tracking-wide">
-                    Custom Exercises
-                  </h3>
-                  <div className="space-y-2">
-                    {customExercises.map((exercise) => (
-                      <button
-                        key={exercise.id}
-                        onClick={() => handleSelectExercise(exercise)}
-                        className={`w-full text-left px-4 py-2.5 rounded-md transition-all text-sm font-medium ${
-                          selectedExercises.find((e) => e.id === exercise.id)
-                            ? "bg-cyan-500 text-white shadow-md"
-                            : "bg-slate-100 text-slate-700 hover:bg-slate-150 border border-slate-200"
-                        }`}
-                      >
-                        <span>+ {exercise.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Add Custom Exercise Button */}
-              <button
-                onClick={() => setShowCustomDialog(true)}
-                className="w-full flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-cyan-400 to-cyan-500 text-white rounded-lg hover:from-cyan-500 hover:to-cyan-600 transition-all font-medium"
-              >
-                <Plus className="w-4 h-4" />
-                Add Custom Exercise
-              </button>
-            </div>
+            <ExerciseSidebar
+              groupedExercises={groupedExercises}
+              customExercises={customExercises}
+              selectedExercises={selectedExercises}
+              expandedCategories={expandedCategories}
+              onToggleCategory={toggleCategory}
+              onSelectExercise={handleSelectExercise}
+              onAddCustom={() => setShowCustomDialog(true)}
+            />
           </div>
         </aside>
 
