@@ -1,4 +1,4 @@
-import { TrendingUp, Zap, BarChart3, Target } from "lucide-react";
+
 import { Card } from "@/components/ui/card";
 
 interface SetLog {
@@ -115,51 +115,31 @@ export function WorkoutStatistics({
         <h3 className="text-lg font-bold text-slate-900 mb-4">All-Time Statistics</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="p-4 bg-white border-slate-200 shadow-sm">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-slate-600 font-medium">Total Workouts</p>
-                <p className="text-3xl font-bold text-slate-900 mt-2">
-                  {allTimeStats.totalWorkouts}
-                </p>
-              </div>
-              <BarChart3 className="w-8 h-8 text-slate-400 opacity-50" />
-            </div>
+            <p className="text-sm text-slate-600 font-medium">Total Workouts</p>
+            <p className="text-3xl font-bold text-slate-900 mt-2">
+              {allTimeStats.totalWorkouts}
+            </p>
           </Card>
 
           <Card className="p-4 bg-white border-slate-200 shadow-sm">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-slate-600 font-medium">Total Reps</p>
-                <p className="text-3xl font-bold text-slate-900 mt-2">
-                  {allTimeStats.totalReps.toLocaleString()}
-                </p>
-              </div>
-              <Zap className="w-8 h-8 text-slate-400 opacity-50" />
-            </div>
+            <p className="text-sm text-slate-600 font-medium">Total Reps</p>
+            <p className="text-3xl font-bold text-slate-900 mt-2">
+              {allTimeStats.totalReps.toLocaleString()}
+            </p>
           </Card>
 
           <Card className="p-4 bg-white border-slate-200 shadow-sm">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-slate-600 font-medium">Total Volume (lbs)</p>
-                <p className="text-3xl font-bold text-slate-900 mt-2">
-                  {(allTimeStats.totalVolume / 1000).toFixed(1)}k
-                </p>
-              </div>
-              <TrendingUp className="w-8 h-8 text-slate-400 opacity-50" />
-            </div>
+            <p className="text-sm text-slate-600 font-medium">Total Volume (lbs)</p>
+            <p className="text-3xl font-bold text-slate-900 mt-2">
+              {(allTimeStats.totalVolume / 1000).toFixed(1)}k
+            </p>
           </Card>
 
           <Card className="p-4 bg-white border-slate-200 shadow-sm">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-slate-600 font-medium">Unique Exercises</p>
-                <p className="text-3xl font-bold text-slate-900 mt-2">
-                  {allTimeStats.uniqueExercises}
-                </p>
-              </div>
-              <Target className="w-8 h-8 text-slate-400 opacity-50" />
-            </div>
+            <p className="text-sm text-slate-600 font-medium">Unique Exercises</p>
+            <p className="text-3xl font-bold text-slate-900 mt-2">
+              {allTimeStats.uniqueExercises}
+            </p>
           </Card>
         </div>
 
