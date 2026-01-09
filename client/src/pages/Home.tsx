@@ -325,6 +325,9 @@ export default function Home() {
                           key={exercise.id}
                           exercise={exercise}
                           onLogSet={handleLogSet}
+                          onRemove={(exerciseId) => {
+                            setSelectedExercises(selectedExercises.filter((e) => e.id !== exerciseId));
+                          }}
                         />
                       ))
                     )}
@@ -653,16 +656,26 @@ export default function Home() {
 interface ExerciseCardProps {
   exercise: Exercise;
   onLogSet: (exercise: string, sets: number, reps: number, weight: number) => void;
+  onRemove?: (exerciseId: string) => void;
 }
 
-function ExerciseCard({ exercise, onLogSet }: ExerciseCardProps) {
+function ExerciseCard({ exercise, onLogSet, onRemove }: ExerciseCardProps) {
   const [sets, setSets] = useState(3);
   const [reps, setReps] = useState(10);
   const [weight, setWeight] = useState(0);
 
   return (
-    <Card className="p-6 bg-white border-slate-200">
-      <h3 className="text-lg font-bold text-slate-900 mb-4">{exercise.name}</h3>
+    <Card className="p-6 bg-white border-slate-200 relative">
+      {onRemove && (
+        <button
+          onClick={() => onRemove(exercise.id)}
+          className="absolute top-3 right-3 p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded transition-colors"
+          title="Remove exercise"
+        >
+          <X size={20} />
+        </button>
+      )}
+      <h3 className="text-lg font-bold text-slate-900 mb-4 pr-8">{exercise.name}</h3>
       <div className="grid grid-cols-3 gap-4 mb-4">
         <div>
           <Label htmlFor={`sets-${exercise.id}`} className="text-slate-700">
