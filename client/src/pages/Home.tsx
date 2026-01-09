@@ -12,6 +12,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { WorkoutCalendar } from "@/components/WorkoutCalendar";
+import { WorkoutStatistics } from "@/components/WorkoutStatistics";
 
 interface Exercise {
   id: string;
@@ -68,6 +70,7 @@ export default function Home() {
   const [editingLog, setEditingLog] = useState<SetLog | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editFormData, setEditFormData] = useState<SetLog | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
 
   // Load data from localStorage on mount
   useEffect(() => {
@@ -361,9 +364,21 @@ export default function Home() {
 
               {/* Measurements Tab */}
               <TabsContent value="measurements">
-                <Card className="p-8 bg-white border-slate-200">
-                  <p className="text-slate-600">Measurements feature coming soon</p>
-                </Card>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  <div className="lg:col-span-1">
+                    <WorkoutCalendar
+                      workoutDates={workoutSessions.map((s) => s.date)}
+                      onDateSelect={setSelectedDate}
+                      selectedDate={selectedDate}
+                    />
+                  </div>
+                  <div className="lg:col-span-2">
+                    <WorkoutStatistics
+                      workoutSessions={workoutSessions}
+                      selectedDate={selectedDate}
+                    />
+                  </div>
+                </div>
               </TabsContent>
 
               {/* History Tab */}
@@ -496,10 +511,11 @@ export default function Home() {
               </TabsContent>
 
               {/* Progress Tab */}
-              <TabsContent value="progress">
-                <Card className="p-8 bg-white border-slate-200">
-                  <p className="text-slate-600">Progress tracking coming soon</p>
-                </Card>
+              <TabsContent value="progress" className="space-y-6">
+                <WorkoutStatistics
+                  workoutSessions={workoutSessions}
+                  selectedDate={selectedDate}
+                />
               </TabsContent>
             </Tabs>
           </div>
