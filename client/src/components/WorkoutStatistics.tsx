@@ -182,7 +182,7 @@ export function WorkoutStatistics({
 
         {/* Top Exercise */}
         {allTimeStats.topExercise && (
-          <Card className="p-4 bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200 mt-4">
+          <Card className="p-4 bg-white border-slate-200 shadow-sm mt-4">
             <p className="text-sm text-slate-600 font-medium">Personal Record</p>
             <div className="mt-2">
               <p className="text-xl font-bold text-slate-900">
