@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Menu, Plus, Trash2, Edit2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -121,8 +121,10 @@ export default function Home() {
     }
   };
 
-  const handleAddExercise = (exercise: Exercise) => {
-    if (!selectedExercises.find((e) => e.id === exercise.id)) {
+  const handleSelectExercise = (exercise: Exercise) => {
+    if (selectedExercises.find((e) => e.id === exercise.id)) {
+      setSelectedExercises(selectedExercises.filter((e) => e.id !== exercise.id));
+    } else {
       setSelectedExercises([...selectedExercises, exercise]);
     }
   };
@@ -143,6 +145,7 @@ export default function Home() {
       hour: "2-digit",
       minute: "2-digit",
       second: "2-digit",
+      hour12: true,
     });
 
     const newLog: SetLog = {
@@ -155,42 +158,50 @@ export default function Home() {
       time,
     };
 
-    setWorkoutSessions((prev) => {
-      const existingSession = prev.find((s) => s.date === today);
-      if (existingSession) {
-        return prev.map((s) =>
-          s.date === today ? { ...s, exercises: [...s.exercises, newLog] } : s
-        );
-      } else {
-        return [...prev, { date: today, exercises: [newLog] }];
-      }
-    });
+    const existingSession = workoutSessions.find((s) => s.date === today);
+    if (existingSession) {
+      existingSession.exercises.push(newLog);
+      setWorkoutSessions([...workoutSessions]);
+    } else {
+      setWorkoutSessions([
+        ...workoutSessions,
+        { date: today, exercises: [newLog] },
+      ]);
+    }
   };
 
-  const handleRemoveExercise = (exerciseId: string) => {
-    setSelectedExercises(selectedExercises.filter((e) => e.id !== exerciseId));
+  const handleDeleteLog = (logId: string, sessionDate: string) => {
+    setWorkoutSessions(
+      workoutSessions
+        .map((session) => {
+          if (session.date === sessionDate) {
+            return {
+              ...session,
+              exercises: session.exercises.filter((e) => e.id !== logId),
+            };
+          }
+          return session;
+        })
+        .filter((session) => session.exercises.length > 0)
+    );
   };
 
   const handleEditLog = (log: SetLog) => {
     setEditingLog(log);
-    setEditFormData(log);
+    setEditFormData({ ...log });
     setShowEditDialog(true);
   };
 
-  const handleSaveEdit = () => {
-    if (!editFormData || !editingLog) return;
+  const handleSaveEditLog = () => {
+    if (!editFormData) return;
 
-    setWorkoutSessions((prev) =>
-      prev.map((session) =>
-        session.date === editingLog.date
-          ? {
-              ...session,
-              exercises: session.exercises.map((log) =>
-                log.id === editingLog.id ? editFormData : log
-              ),
-            }
-          : session
-      )
+    setWorkoutSessions(
+      workoutSessions.map((session) => ({
+        ...session,
+        exercises: session.exercises.map((e) =>
+          e.id === editFormData.id ? editFormData : e
+        ),
+      }))
     );
 
     setShowEditDialog(false);
@@ -198,162 +209,112 @@ export default function Home() {
     setEditFormData(null);
   };
 
-  const handleDeleteLog = (logId: string, date: string) => {
-    setWorkoutSessions((prev) =>
-      prev
-        .map((session) =>
-          session.date === date
-            ? {
-                ...session,
-                exercises: session.exercises.filter((log) => log.id !== logId),
-              }
-            : session
-        )
-        .filter((session) => session.exercises.length > 0)
-    );
+  const toggleCategory = (category: string) => {
+    setExpandedCategories((prev) => ({
+      ...prev,
+      [category]: !prev[category],
+    }));
   };
 
-  const calculateStats = (exercises: SetLog[]) => {
-    const totalSets = exercises.reduce((sum, log) => sum + log.sets, 0);
-    const totalReps = exercises.reduce((sum, log) => sum + log.reps, 0);
-    const totalVolume = exercises.reduce(
-      (sum, log) => sum + log.sets * log.reps * log.weight,
-      0
-    );
-    return { totalSets, totalReps, totalVolume };
-  };
+  const groupedExercises = PRESET_EXERCISES.reduce(
+    (acc, exercise) => {
+      if (!acc[exercise.category]) {
+        acc[exercise.category] = [];
+      }
+      acc[exercise.category].push(exercise);
+      return acc;
+    },
+    {} as Record<string, Exercise[]>
+  );
 
+  const customExercises = allExercises.filter((e) => e.isCustom);
   const sortedSessions = [...workoutSessions].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
+  const calculateStats = (exercises: SetLog[]) => {
+    const totalReps = exercises.reduce((sum, e) => sum + e.reps, 0);
+    const totalSets = exercises.reduce((sum, e) => sum + e.sets, 0);
+    const totalVolume = exercises.reduce((sum, e) => sum + e.weight * e.reps * e.sets, 0);
+    const uniqueExercises = new Set(exercises.map((e) => e.exercise)).size;
+
+    return { totalReps, totalSets, totalVolume, uniqueExercises };
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      {/* Header with Hamburger and Title Side by Side */}
+      <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm">
+        <div className="flex items-center gap-4 px-4 py-4 md:px-6">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+          >
+            <Menu className="w-6 h-6 text-slate-700" />
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">
+              Workout Dashboard
+            </h1>
+            <p className="text-sm text-slate-500">
+              Track your fitness progress with precision
+            </p>
+          </div>
+        </div>
+      </header>
+
       <div className="flex">
         {/* Sidebar */}
-        <ExerciseSidebar
-          groupedExercises={Object.fromEntries(
-            EXERCISE_CATEGORIES.map((cat) => [
-              cat,
-              allExercises.filter((e) => e.category === cat),
-            ])
-          )}
-          customExercises={allExercises.filter((e) => e.isCustom)}
-          selectedExercises={selectedExercises}
-          expandedCategories={expandedCategories}
-          onToggleCategory={(category) =>
-            setExpandedCategories((prev) => ({
-              ...prev,
-              [category]: !prev[category],
-            }))
-          }
-          onSelectExercise={handleAddExercise}
-          onAddCustom={() => setShowCustomDialog(true)}
-        />
+        <aside
+          className={`fixed md:relative w-80 bg-white border-r border-slate-200 h-[calc(100vh-80px)] overflow-y-auto transition-transform duration-300 z-30 ${
+            sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+          }`}
+        >
+          <div className="p-6">
+            <h2 className="text-xl font-bold text-slate-900 mb-6">
+              Workout Builder
+            </h2>
+            <ExerciseSidebar
+              groupedExercises={groupedExercises}
+              customExercises={customExercises}
+              selectedExercises={selectedExercises}
+              expandedCategories={expandedCategories}
+              onToggleCategory={toggleCategory}
+              onSelectExercise={handleSelectExercise}
+              onAddCustom={() => setShowCustomDialog(true)}
+            />
+          </div>
+        </aside>
 
         {/* Main Content */}
-        <div className="flex-1 overflow-auto">
-          <div className="bg-white border-b border-slate-200 sticky top-0 z-10">
-            <div className="px-4 md:px-6 py-4 flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-slate-900">
-                  Workout Dashboard
-                </h1>
-                <p className="text-slate-600 text-sm md:text-base">
-                  Track your fitness progress with precision
-                </p>
-              </div>
-              <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="md:hidden p-2 hover:bg-slate-100 rounded-lg"
-              >
-                <Menu className="w-6 h-6" />
-              </button>
-            </div>
-          </div>
-
-          <div className="p-4 md:p-6">
+        <main className="flex-1 p-4 md:p-8">
+          <div className="max-w-6xl mx-auto">
+            {/* Tabs */}
             <Tabs defaultValue="active" className="w-full">
-              <TabsList className="grid w-full grid-cols-4 mb-6">
-                <TabsTrigger value="active">Active</TabsTrigger>
-                <TabsTrigger value="measurements">Measurements</TabsTrigger>
-                <TabsTrigger value="history">History</TabsTrigger>
-                <TabsTrigger value="progress">Progress</TabsTrigger>
+              <TabsList className="flex w-full mb-8 bg-slate-200 overflow-x-auto md:grid md:grid-cols-4">
+                <TabsTrigger value="active" className="data-[state=active]:bg-white">
+                  Active
+                </TabsTrigger>
+                <TabsTrigger value="measurements" className="data-[state=active]:bg-white">
+                  Measurements
+                </TabsTrigger>
+                <TabsTrigger value="history" className="data-[state=active]:bg-white">
+                  History
+                </TabsTrigger>
+                <TabsTrigger value="progress" className="data-[state=active]:bg-white">
+                  Progress
+                </TabsTrigger>
               </TabsList>
 
               {/* Active Tab */}
               <TabsContent value="active" className="space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   <div className="lg:col-span-2 space-y-4">
-                    {/* Today's Logged Sets */}
-                    {(() => {
-                      const today = new Date().toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "numeric",
-                        day: "numeric",
-                      });
-                      const todaySession = workoutSessions.find(
-                        (s) => s.date === today
-                      );
-                      
-                      if (!todaySession || todaySession.exercises.length === 0) return null;
-                      
-                      const stats = calculateStats(todaySession.exercises);
-                      
-                      return (
-                        <Card key={`today-${todaySession.exercises.length}`} className="bg-white border-slate-200 p-4">
-                          <h3 className="font-bold text-slate-900 mb-4 text-lg">Today's Logged Sets</h3>
-                          
-                          {/* Daily Summary Stats */}
-                          <div className="grid grid-cols-3 gap-3 mb-4 p-3 bg-slate-50 rounded border border-slate-200">
-                            <div className="text-center">
-                              <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">Sets</p>
-                              <p className="text-lg font-bold text-cyan-600">{stats.totalSets}</p>
-                            </div>
-                            <div className="text-center">
-                              <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">Reps</p>
-                              <p className="text-lg font-bold text-cyan-600">{stats.totalReps}</p>
-                            </div>
-                            <div className="text-center">
-                              <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">Volume</p>
-                              <p className="text-lg font-bold text-cyan-600">{stats.totalVolume.toLocaleString()}</p>
-                            </div>
-                          </div>
-                          
-                          {/* Logged Sets */}
-                          <div className="space-y-2 max-h-64 overflow-y-auto">
-                            {todaySession.exercises.map((log) => (
-                              <div
-                                key={log.id}
-                                className="animate-slide-in bg-slate-50 rounded p-3 border border-slate-200 flex justify-between items-center hover:bg-slate-100 transition-colors"
-                              >
-                                <div className="flex-1">
-                                  <p className="font-semibold text-slate-900">{log.exercise}</p>
-                                  <p className="text-sm text-slate-600">
-                                    {log.sets} sets × {log.reps} reps @ {log.weight} lbs
-                                  </p>
-                                </div>
-                                <div className="flex items-center gap-2 ml-2">
-                                  <p className="text-xs text-slate-500">{log.time}</p>
-                                  <button
-                                    onClick={() => handleDeleteLog(log.id, today)}
-                                    className="p-1.5 hover:bg-red-100 rounded transition-colors text-red-600 hover:text-red-700"
-                                    title="Delete set"
-                                  >
-                                    <X className="w-4 h-4" />
-                                  </button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </Card>
-                      );
-                    })()}
-
-                    {/* Exercise Cards */}
                     {selectedExercises.length === 0 ? (
                       <Card className="p-12 text-center bg-white border-slate-200">
-                        <p className="text-slate-600 text-lg">No exercises selected yet</p>
+                        <p className="text-slate-600 text-lg mb-2">
+                          No exercises selected yet
+                        </p>
                         <p className="text-slate-500">
                           Use the sidebar to add exercises or load a preset workout plan
                         </p>
@@ -364,16 +325,16 @@ export default function Home() {
                           key={exercise.id}
                           exercise={exercise}
                           onLogSet={handleLogSet}
-                          onRemove={() => handleRemoveExercise(exercise.id)}
+                          onRemove={(exerciseId) => {
+                            setSelectedExercises(selectedExercises.filter((e) => e.id !== exerciseId));
+                          }}
                         />
                       ))
                     )}
                   </div>
-
-                  {/* Calendar */}
                   <div className="lg:col-span-1">
                     <WorkoutCalendar
-                      workoutDates={workoutSessions.map((s) => s.date)}
+                      workoutDates={workoutSessions.map(s => s.date)}
                       selectedDate={selectedDate}
                       onDateSelect={setSelectedDate}
                     />
@@ -386,10 +347,21 @@ export default function Home() {
                 <BodyMeasurements
                   measurements={measurements}
                   onAddMeasurement={(measurement) => {
-                    setMeasurements([...measurements, measurement]);
+                    const newMeasurements = [...measurements, measurement];
+                    setMeasurements(newMeasurements);
+                    localStorage.setItem("measurements", JSON.stringify(newMeasurements));
                   }}
                   onDeleteMeasurement={(id) => {
-                    setMeasurements(measurements.filter((m) => m.id !== id));
+                    const newMeasurements = measurements.filter((m) => m.id !== id);
+                    setMeasurements(newMeasurements);
+                    localStorage.setItem("measurements", JSON.stringify(newMeasurements));
+                  }}
+                  onEditMeasurement={(measurement) => {
+                    const newMeasurements = measurements.map((m) =>
+                      m.id === measurement.id ? measurement : m
+                    );
+                    setMeasurements(newMeasurements);
+                    localStorage.setItem("measurements", JSON.stringify(newMeasurements));
                   }}
                 />
               </TabsContent>
@@ -505,7 +477,7 @@ export default function Home() {
                               Total Volume
                             </p>
                             <p className="text-lg md:text-2xl font-bold text-cyan-600">
-                              {stats.totalVolume.toLocaleString()}
+                              {(stats.totalVolume / 1000).toFixed(1)}k
                             </p>
                           </div>
                           <div>
@@ -513,7 +485,7 @@ export default function Home() {
                               Exercises
                             </p>
                             <p className="text-lg md:text-2xl font-bold text-cyan-600">
-                              {new Set(session.exercises.map((e) => e.exercise)).size}
+                              {stats.uniqueExercises}
                             </p>
                           </div>
                         </div>
@@ -524,108 +496,130 @@ export default function Home() {
               </TabsContent>
 
               {/* Progress Tab */}
-              <TabsContent value="progress">
-                <ProgressCharts setLogs={workoutSessions.flatMap((s) => s.exercises)} measurements={measurements} />
+              <TabsContent value="progress" className="space-y-6">
+                <div className="space-y-6">
+                  <WorkoutStatistics
+                    workoutSessions={workoutSessions}
+                    selectedDate={selectedDate}
+                  />
+                  <ProgressCharts
+                    setLogs={workoutSessions.flatMap(s => s.exercises)}
+                    measurements={measurements}
+                  />
+                </div>
               </TabsContent>
             </Tabs>
           </div>
-        </div>
+        </main>
       </div>
 
-      {/* Custom Exercise Dialog */}
+      {/* Add Custom Exercise Dialog */}
       <Dialog open={showCustomDialog} onOpenChange={setShowCustomDialog}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto">
+        <DialogContent className="bg-white border-slate-200">
           <DialogHeader>
-            <DialogTitle>Add Custom Exercise</DialogTitle>
+            <DialogTitle className="text-slate-900">Add Custom Exercise</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 py-4">
             <div>
-              <Label htmlFor="exercise-name">Exercise Name</Label>
+              <Label htmlFor="exercise-name" className="text-slate-700">
+                Exercise Name
+              </Label>
               <Input
                 id="exercise-name"
+                placeholder="e.g., Cable Flyes"
                 value={customExerciseName}
                 onChange={(e) => setCustomExerciseName(e.target.value)}
-                placeholder="e.g., Cable Flyes"
+                className="mt-2 border-slate-300"
               />
             </div>
             <div>
-              <Label htmlFor="exercise-category">Category</Label>
-              <select
+              <Label htmlFor="exercise-category" className="text-slate-700">
+                Category
+              </Label>
+              <Input
                 id="exercise-category"
+                placeholder="e.g., Chest"
                 value={customExerciseCategory}
                 onChange={(e) => setCustomExerciseCategory(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-              >
-                <option value="">Select a category</option>
-                {EXERCISE_CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
+                className="mt-2 border-slate-300"
+              />
             </div>
           </div>
           <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setShowCustomDialog(false)}
+              className="border-slate-300"
             >
               Cancel
             </Button>
-            <Button onClick={handleAddCustomExercise}>Add Exercise</Button>
+            <Button
+              onClick={handleAddCustomExercise}
+              className="bg-cyan-500 hover:bg-cyan-600"
+            >
+              Add Exercise
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Edit Log Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto">
+        <DialogContent className="bg-white border-slate-200">
           <DialogHeader>
-            <DialogTitle>Edit Set Log</DialogTitle>
+            <DialogTitle className="text-slate-900">Edit Set Log</DialogTitle>
           </DialogHeader>
           {editFormData && (
-            <div className="space-y-4">
+            <div className="space-y-4 py-4">
               <div>
-                <Label>Exercise</Label>
-                <p className="text-slate-900 font-medium">{editFormData.exercise}</p>
-              </div>
-              <div>
-                <Label htmlFor="edit-sets">Sets</Label>
+                <Label htmlFor="edit-sets" className="text-slate-700">
+                  Sets
+                </Label>
                 <Input
                   id="edit-sets"
-                  type="text"
-                  inputMode="numeric"
+                  type="number"
                   value={editFormData.sets}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value) || 0;
-                    setEditFormData({ ...editFormData, sets: val });
-                  }}
+                  onChange={(e) =>
+                    setEditFormData({
+                      ...editFormData,
+                      sets: parseInt(e.target.value) || 0,
+                    })
+                  }
+                  className="mt-2 border-slate-300"
                 />
               </div>
               <div>
-                <Label htmlFor="edit-reps">Reps</Label>
+                <Label htmlFor="edit-reps" className="text-slate-700">
+                  Reps
+                </Label>
                 <Input
                   id="edit-reps"
-                  type="text"
-                  inputMode="numeric"
+                  type="number"
                   value={editFormData.reps}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value) || 0;
-                    setEditFormData({ ...editFormData, reps: val });
-                  }}
+                  onChange={(e) =>
+                    setEditFormData({
+                      ...editFormData,
+                      reps: parseInt(e.target.value) || 0,
+                    })
+                  }
+                  className="mt-2 border-slate-300"
                 />
               </div>
               <div>
-                <Label htmlFor="edit-weight">Weight (lbs)</Label>
+                <Label htmlFor="edit-weight" className="text-slate-700">
+                  Weight (lbs)
+                </Label>
                 <Input
                   id="edit-weight"
-                  type="text"
-                  inputMode="numeric"
+                  type="number"
                   value={editFormData.weight}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value) || 0;
-                    setEditFormData({ ...editFormData, weight: val });
-                  }}
+                  onChange={(e) =>
+                    setEditFormData({
+                      ...editFormData,
+                      weight: parseInt(e.target.value) || 0,
+                    })
+                  }
+                  className="mt-2 border-slate-300"
                 />
               </div>
             </div>
@@ -634,202 +628,203 @@ export default function Home() {
             <Button
               variant="outline"
               onClick={() => setShowEditDialog(false)}
+              className="border-slate-300"
             >
               Cancel
             </Button>
-            <Button onClick={handleSaveEdit}>Save Changes</Button>
+            <Button
+              onClick={handleSaveEditLog}
+              className="bg-cyan-500 hover:bg-cyan-600"
+            >
+              Save Changes
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Overlay for mobile sidebar */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 md:hidden z-20"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
     </div>
   );
 }
 
-// Exercise Card Component
-function ExerciseCard({
-  exercise,
-  onLogSet,
-  onRemove,
-}: {
+interface ExerciseCardProps {
   exercise: Exercise;
   onLogSet: (exercise: string, sets: number, reps: number, weight: number) => void;
-  onRemove: () => void;
-}) {
+  onRemove?: (exerciseId: string) => void;
+}
+
+function ExerciseCard({ exercise, onLogSet, onRemove }: ExerciseCardProps) {
   const [sets, setSets] = useState(3);
   const [reps, setReps] = useState(10);
   const [weight, setWeight] = useState(0);
 
   const handleSetChange = (value: string) => {
-    const num = parseInt(value) || 0;
-    setSets(Math.max(0, num));
+    if (value === "") {
+      setSets(0);
+    } else {
+      const num = parseInt(value, 10);
+      if (!isNaN(num) && num >= 0) {
+        setSets(num);
+      }
+    }
   };
 
   const handleRepsChange = (value: string) => {
-    const num = parseInt(value) || 0;
-    setReps(Math.max(0, num));
+    if (value === "") {
+      setReps(0);
+    } else {
+      const num = parseInt(value, 10);
+      if (!isNaN(num) && num >= 0) {
+        setReps(num);
+      }
+    }
   };
 
   const handleWeightChange = (value: string) => {
-    const num = parseInt(value) || 0;
-    setWeight(Math.max(0, num));
-  };
-
-  const handleLogSet = () => {
-    onLogSet(exercise.name, sets, reps, weight);
-    setSets(3);
-    setReps(10);
-    setWeight(0);
+    if (value === "") {
+      setWeight(0);
+    } else {
+      const num = parseInt(value, 10);
+      if (!isNaN(num) && num >= 0) {
+        setWeight(num);
+      }
+    }
   };
 
   return (
-    <Card className="bg-white border-slate-200 p-4">
-      <div className="flex justify-between items-start mb-4">
-        <h3 className="text-lg font-bold text-slate-900">{exercise.name}</h3>
+    <Card className="p-6 bg-white border-slate-200 relative">
+      {onRemove && (
         <button
-          onClick={onRemove}
-          className="p-1.5 hover:bg-slate-100 rounded transition-colors text-slate-600 hover:text-slate-900"
+          onClick={() => onRemove(exercise.id)}
+          className="absolute top-3 right-3 p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded transition-colors"
           title="Remove exercise"
         >
-          <X className="w-5 h-5" />
+          <X size={20} />
         </button>
-      </div>
-
-      <div className="space-y-4">
-        {/* Desktop Layout - with buttons */}
-        <div className="hidden md:block">
-          <div className="grid grid-cols-3 gap-4 mb-4">
-            <div>
-              <Label className="text-sm font-medium text-slate-700 mb-2 block">
-                Sets
-              </Label>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setSets(Math.max(0, sets - 1))}
-                  className="p-2 bg-slate-200 hover:bg-slate-300 active:bg-slate-400 rounded transition-colors duration-75 text-slate-700"
-                >
-                  −
-                </button>
-                <Input
-                  type="text"
-                  inputMode="numeric"
-                  value={sets}
-                  onChange={(e) => handleSetChange(e.target.value)}
-                  className="text-center"
-                />
-                <button
-                  onClick={() => setSets(sets + 1)}
-                  className="p-2 bg-slate-200 hover:bg-slate-300 active:bg-slate-400 rounded transition-colors duration-75 text-slate-700"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <Label className="text-sm font-medium text-slate-700 mb-2 block">
-                Reps
-              </Label>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setReps(Math.max(0, reps - 1))}
-                  className="p-2 bg-slate-200 hover:bg-slate-300 active:bg-slate-400 rounded transition-colors duration-75 text-slate-700"
-                >
-                  −
-                </button>
-                <Input
-                  type="text"
-                  inputMode="numeric"
-                  value={reps}
-                  onChange={(e) => handleRepsChange(e.target.value)}
-                  className="text-center"
-                />
-                <button
-                  onClick={() => setReps(reps + 1)}
-                  className="p-2 bg-slate-200 hover:bg-slate-300 active:bg-slate-400 rounded transition-colors duration-75 text-slate-700"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <Label className="text-sm font-medium text-slate-700 mb-2 block">
-                Weight (lbs)
-              </Label>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setWeight(Math.max(0, weight - 5))}
-                  className="p-2 bg-slate-200 hover:bg-slate-300 active:bg-slate-400 rounded transition-colors duration-75 text-slate-700"
-                >
-                  −
-                </button>
-                <Input
-                  type="text"
-                  inputMode="numeric"
-                  value={weight}
-                  onChange={(e) => handleWeightChange(e.target.value)}
-                  className="text-center"
-                />
-                <button
-                  onClick={() => setWeight(weight + 5)}
-                  className="p-2 bg-slate-200 hover:bg-slate-300 active:bg-slate-400 rounded transition-colors duration-75 text-slate-700"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Mobile Layout - input only */}
-        <div className="md:hidden space-y-3">
-          <div>
-            <Label className="text-sm font-medium text-slate-700 mb-2 block">
-              Sets
-            </Label>
+      )}
+      <h3 className="text-lg font-bold text-slate-900 mb-4 pr-8">{exercise.name}</h3>
+      <div className="grid grid-cols-3 gap-4 mb-4">
+        {/* Sets */}
+        <div>
+          <Label htmlFor={`sets-${exercise.id}`} className="text-slate-700">
+            Sets
+          </Label>
+          <div className="hidden md:flex items-center gap-2 mt-2">
+            <button
+              onClick={() => setSets(Math.max(0, sets - 1))}
+              className="px-3 py-2 bg-slate-200 hover:bg-slate-300 active:bg-slate-400 rounded font-semibold text-slate-700 transition-colors duration-75"
+            >
+              −
+            </button>
             <Input
+              id={`sets-${exercise.id}`}
               type="text"
               inputMode="numeric"
               value={sets}
               onChange={(e) => handleSetChange(e.target.value)}
-              className="w-full"
+              className="flex-1 border-slate-300 text-center"
             />
+            <button
+              onClick={() => setSets(sets + 1)}
+              className="px-3 py-2 bg-slate-200 hover:bg-slate-300 active:bg-slate-400 rounded font-semibold text-slate-700 transition-colors duration-75"
+            >
+              +
+            </button>
           </div>
-
-          <div>
-            <Label className="text-sm font-medium text-slate-700 mb-2 block">
-              Reps
-            </Label>
+          <Input
+            id={`sets-mobile-${exercise.id}`}
+            type="text"
+            inputMode="numeric"
+            value={sets}
+            onChange={(e) => handleSetChange(e.target.value)}
+            className="md:hidden mt-2 border-slate-300 text-center"
+          />
+        </div>
+        {/* Reps */}
+        <div>
+          <Label htmlFor={`reps-${exercise.id}`} className="text-slate-700">
+            Reps
+          </Label>
+          <div className="hidden md:flex items-center gap-2 mt-2">
+            <button
+              onClick={() => setReps(Math.max(0, reps - 1))}
+              className="px-3 py-2 bg-slate-200 hover:bg-slate-300 active:bg-slate-400 rounded font-semibold text-slate-700 transition-colors duration-75"
+            >
+              −
+            </button>
             <Input
+              id={`reps-${exercise.id}`}
               type="text"
               inputMode="numeric"
               value={reps}
               onChange={(e) => handleRepsChange(e.target.value)}
-              className="w-full"
+              className="flex-1 border-slate-300 text-center"
             />
+            <button
+              onClick={() => setReps(reps + 1)}
+              className="px-3 py-2 bg-slate-200 hover:bg-slate-300 active:bg-slate-400 rounded font-semibold text-slate-700 transition-colors duration-75"
+            >
+              +
+            </button>
           </div>
-
-          <div>
-            <Label className="text-sm font-medium text-slate-700 mb-2 block">
-              Weight (lbs)
-            </Label>
+          <Input
+            id={`reps-mobile-${exercise.id}`}
+            type="text"
+            inputMode="numeric"
+            value={reps}
+            onChange={(e) => handleRepsChange(e.target.value)}
+            className="md:hidden mt-2 border-slate-300 text-center"
+          />
+        </div>
+        {/* Weight */}
+        <div>
+          <Label htmlFor={`weight-${exercise.id}`} className="text-slate-700">
+            Weight (lbs)
+          </Label>
+          <div className="hidden md:flex items-center gap-2 mt-2">
+            <button
+              onClick={() => setWeight(Math.max(0, weight - 5))}
+              className="px-3 py-2 bg-slate-200 hover:bg-slate-300 active:bg-slate-400 rounded font-semibold text-slate-700 transition-colors duration-75"
+            >
+              −
+            </button>
             <Input
+              id={`weight-${exercise.id}`}
               type="text"
               inputMode="numeric"
               value={weight}
               onChange={(e) => handleWeightChange(e.target.value)}
-              className="w-full"
+              className="flex-1 border-slate-300 text-center"
             />
+            <button
+              onClick={() => setWeight(weight + 5)}
+              className="px-3 py-2 bg-slate-200 hover:bg-slate-300 active:bg-slate-400 rounded font-semibold text-slate-700 transition-colors duration-75"
+            >
+              +
+            </button>
           </div>
+          <Input
+            id={`weight-mobile-${exercise.id}`}
+            type="text"
+            inputMode="numeric"
+            value={weight}
+            onChange={(e) => handleWeightChange(e.target.value)}
+            className="md:hidden mt-2 border-slate-300 text-center"
+          />
         </div>
-
-        <Button
-          onClick={handleLogSet}
-          className="w-full bg-cyan-500 hover:bg-cyan-600 active:bg-cyan-700 text-white font-semibold transition-colors duration-75"
-        >
-          Log Set
-        </Button>
       </div>
+      <Button
+        onClick={() => onLogSet(exercise.name, sets, reps, weight)}
+        className="w-full bg-cyan-500 hover:bg-cyan-600 active:bg-cyan-700 text-white font-medium transition-colors duration-75"
+      >
+        Log Set
+      </Button>
     </Card>
   );
 }
