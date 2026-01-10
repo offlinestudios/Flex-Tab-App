@@ -135,11 +135,7 @@ export default function Home() {
     reps: number,
     weight: number
   ) => {
-    const today = new Date().toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "numeric",
-      day: "numeric",
-    });
+    const today = new Date().toISOString().split('T')[0];
 
     const time = new Date().toLocaleTimeString("en-US", {
       hour: "2-digit",
@@ -310,6 +306,39 @@ export default function Home() {
               <TabsContent value="active" className="space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   <div className="lg:col-span-2 space-y-4">
+                    {/* Today's Logged Sets */}
+                    {(() => {
+                      const today = new Date().toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "numeric",
+                        day: "numeric",
+                      });
+                      const todaySession = workoutSessions.find(
+                        (s) => s.date === today
+                      );
+                      return todaySession && todaySession.exercises.length > 0 ? (
+                        <Card className="bg-gradient-to-br from-cyan-50 to-cyan-100 border-cyan-200 p-4">
+                          <h3 className="font-bold text-slate-900 mb-3 text-lg">Today's Logged Sets</h3>
+                          <div className="space-y-2 max-h-64 overflow-y-auto">
+                            {todaySession.exercises.map((log) => (
+                              <div
+                                key={log.id}
+                                className="bg-white rounded p-3 border border-cyan-200 flex justify-between items-center"
+                              >
+                                <div className="flex-1">
+                                  <p className="font-semibold text-slate-900">{log.exercise}</p>
+                                  <p className="text-sm text-slate-600">
+                                    {log.sets} sets × {log.reps} reps @ {log.weight} lbs
+                                  </p>
+                                </div>
+                                <p className="text-xs text-slate-500 ml-2">{log.time}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </Card>
+                      ) : null;
+                    })()}
+
                     {selectedExercises.length === 0 ? (
                       <Card className="p-12 text-center bg-white border-slate-200">
                         <p className="text-slate-600 text-lg mb-2">
@@ -565,7 +594,7 @@ export default function Home() {
 
       {/* Edit Log Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="bg-white border-slate-200">
+        <DialogContent className="bg-white border-slate-200 max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-slate-900">Edit Set Log</DialogTitle>
           </DialogHeader>
