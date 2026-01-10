@@ -718,7 +718,7 @@ function ExerciseCard({ exercise, onLogSet, onRemove }: ExerciseCardProps) {
           <div className="hidden md:flex items-center gap-2 mt-2">
             <button
               onClick={() => setSets(Math.max(0, sets - 1))}
-              className="px-3 py-2 bg-slate-200 hover:bg-slate-300 rounded font-semibold text-slate-700 transition-colors"
+              className="px-3 py-2 bg-slate-200 hover:bg-slate-300 active:bg-slate-400 rounded font-semibold text-slate-700 transition-colors duration-75"
             >
               −
             </button>
@@ -732,7 +732,7 @@ function ExerciseCard({ exercise, onLogSet, onRemove }: ExerciseCardProps) {
             />
             <button
               onClick={() => setSets(sets + 1)}
-              className="px-3 py-2 bg-slate-200 hover:bg-slate-300 rounded font-semibold text-slate-700 transition-colors"
+              className="px-3 py-2 bg-slate-200 hover:bg-slate-300 active:bg-slate-400 rounded font-semibold text-slate-700 transition-colors duration-75"
             >
               +
             </button>
@@ -754,7 +754,7 @@ function ExerciseCard({ exercise, onLogSet, onRemove }: ExerciseCardProps) {
           <div className="hidden md:flex items-center gap-2 mt-2">
             <button
               onClick={() => setReps(Math.max(0, reps - 1))}
-              className="px-3 py-2 bg-slate-200 hover:bg-slate-300 rounded font-semibold text-slate-700 transition-colors"
+              className="px-3 py-2 bg-slate-200 hover:bg-slate-300 active:bg-slate-400 rounded font-semibold text-slate-700 transition-colors duration-75"
             >
               −
             </button>
@@ -768,7 +768,7 @@ function ExerciseCard({ exercise, onLogSet, onRemove }: ExerciseCardProps) {
             />
             <button
               onClick={() => setReps(reps + 1)}
-              className="px-3 py-2 bg-slate-200 hover:bg-slate-300 rounded font-semibold text-slate-700 transition-colors"
+              className="px-3 py-2 bg-slate-200 hover:bg-slate-300 active:bg-slate-400 rounded font-semibold text-slate-700 transition-colors duration-75"
             >
               +
             </button>
@@ -790,7 +790,7 @@ function ExerciseCard({ exercise, onLogSet, onRemove }: ExerciseCardProps) {
           <div className="hidden md:flex items-center gap-2 mt-2">
             <button
               onClick={() => setWeight(Math.max(0, weight - 5))}
-              className="px-3 py-2 bg-slate-200 hover:bg-slate-300 rounded font-semibold text-slate-700 transition-colors"
+              className="px-3 py-2 bg-slate-200 hover:bg-slate-300 active:bg-slate-400 rounded font-semibold text-slate-700 transition-colors duration-75"
             >
               −
             </button>
@@ -804,7 +804,7 @@ function ExerciseCard({ exercise, onLogSet, onRemove }: ExerciseCardProps) {
             />
             <button
               onClick={() => setWeight(weight + 5)}
-              className="px-3 py-2 bg-slate-200 hover:bg-slate-300 rounded font-semibold text-slate-700 transition-colors"
+              className="px-3 py-2 bg-slate-200 hover:bg-slate-300 active:bg-slate-400 rounded font-semibold text-slate-700 transition-colors duration-75"
             >
               +
             </button>
@@ -821,7 +821,7 @@ function ExerciseCard({ exercise, onLogSet, onRemove }: ExerciseCardProps) {
       </div>
       <Button
         onClick={() => onLogSet(exercise.name, sets, reps, weight)}
-        className="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-medium"
+        className="w-full bg-cyan-500 hover:bg-cyan-600 active:bg-cyan-700 text-white font-medium transition-colors duration-75"
       >
         Log Set
       </Button>
