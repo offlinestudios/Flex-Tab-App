@@ -664,6 +664,33 @@ function ExerciseCard({ exercise, onLogSet, onRemove }: ExerciseCardProps) {
   const [reps, setReps] = useState(10);
   const [weight, setWeight] = useState(0);
 
+  const handleSetChange = (value: string) => {
+    const num = parseInt(value);
+    if (!isNaN(num) && num >= 0) {
+      setSets(num);
+    } else if (value === "") {
+      setSets(0);
+    }
+  };
+
+  const handleRepsChange = (value: string) => {
+    const num = parseInt(value);
+    if (!isNaN(num) && num >= 0) {
+      setReps(num);
+    } else if (value === "") {
+      setReps(0);
+    }
+  };
+
+  const handleWeightChange = (value: string) => {
+    const num = parseInt(value);
+    if (!isNaN(num) && num >= 0) {
+      setWeight(num);
+    } else if (value === "") {
+      setWeight(0);
+    }
+  };
+
   return (
     <Card className="p-6 bg-white border-slate-200 relative">
       {onRemove && (
@@ -677,41 +704,89 @@ function ExerciseCard({ exercise, onLogSet, onRemove }: ExerciseCardProps) {
       )}
       <h3 className="text-lg font-bold text-slate-900 mb-4 pr-8">{exercise.name}</h3>
       <div className="grid grid-cols-3 gap-4 mb-4">
+        {/* Sets */}
         <div>
           <Label htmlFor={`sets-${exercise.id}`} className="text-slate-700">
             Sets
           </Label>
-          <Input
-            id={`sets-${exercise.id}`}
-            type="number"
-            value={sets}
-            onChange={(e) => setSets(parseInt(e.target.value) || 0)}
-            className="mt-2 border-slate-300"
-          />
+          <div className="flex items-center gap-2 mt-2">
+            <button
+              onClick={() => setSets(Math.max(0, sets - 1))}
+              className="px-3 py-2 bg-slate-200 hover:bg-slate-300 rounded font-semibold text-slate-700 transition-colors"
+            >
+              −
+            </button>
+            <Input
+              id={`sets-${exercise.id}`}
+              type="number"
+              value={sets}
+              onChange={(e) => handleSetChange(e.target.value)}
+              className="flex-1 border-slate-300 text-center"
+              min="0"
+            />
+            <button
+              onClick={() => setSets(sets + 1)}
+              className="px-3 py-2 bg-slate-200 hover:bg-slate-300 rounded font-semibold text-slate-700 transition-colors"
+            >
+              +
+            </button>
+          </div>
         </div>
+        {/* Reps */}
         <div>
           <Label htmlFor={`reps-${exercise.id}`} className="text-slate-700">
             Reps
           </Label>
-          <Input
-            id={`reps-${exercise.id}`}
-            type="number"
-            value={reps}
-            onChange={(e) => setReps(parseInt(e.target.value) || 0)}
-            className="mt-2 border-slate-300"
-          />
+          <div className="flex items-center gap-2 mt-2">
+            <button
+              onClick={() => setReps(Math.max(0, reps - 1))}
+              className="px-3 py-2 bg-slate-200 hover:bg-slate-300 rounded font-semibold text-slate-700 transition-colors"
+            >
+              −
+            </button>
+            <Input
+              id={`reps-${exercise.id}`}
+              type="number"
+              value={reps}
+              onChange={(e) => handleRepsChange(e.target.value)}
+              className="flex-1 border-slate-300 text-center"
+              min="0"
+            />
+            <button
+              onClick={() => setReps(reps + 1)}
+              className="px-3 py-2 bg-slate-200 hover:bg-slate-300 rounded font-semibold text-slate-700 transition-colors"
+            >
+              +
+            </button>
+          </div>
         </div>
+        {/* Weight */}
         <div>
           <Label htmlFor={`weight-${exercise.id}`} className="text-slate-700">
             Weight (lbs)
           </Label>
-          <Input
-            id={`weight-${exercise.id}`}
-            type="number"
-            value={weight}
-            onChange={(e) => setWeight(parseInt(e.target.value) || 0)}
-            className="mt-2 border-slate-300"
-          />
+          <div className="flex items-center gap-2 mt-2">
+            <button
+              onClick={() => setWeight(Math.max(0, weight - 5))}
+              className="px-3 py-2 bg-slate-200 hover:bg-slate-300 rounded font-semibold text-slate-700 transition-colors"
+            >
+              −
+            </button>
+            <Input
+              id={`weight-${exercise.id}`}
+              type="number"
+              value={weight}
+              onChange={(e) => handleWeightChange(e.target.value)}
+              className="flex-1 border-slate-300 text-center"
+              min="0"
+            />
+            <button
+              onClick={() => setWeight(weight + 5)}
+              className="px-3 py-2 bg-slate-200 hover:bg-slate-300 rounded font-semibold text-slate-700 transition-colors"
+            >
+              +
+            </button>
+          </div>
         </div>
       </div>
       <Button
