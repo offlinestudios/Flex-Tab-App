@@ -135,7 +135,11 @@ export default function Home() {
     reps: number,
     weight: number
   ) => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
+    });
 
     const time = new Date().toLocaleTimeString("en-US", {
       hour: "2-digit",
@@ -317,13 +321,13 @@ export default function Home() {
                         (s) => s.date === today
                       );
                       return todaySession && todaySession.exercises.length > 0 ? (
-                        <Card className="bg-gradient-to-br from-cyan-50 to-cyan-100 border-cyan-200 p-4">
+                        <Card key={`today-${todaySession.exercises.length}`} className="bg-white border-slate-200 p-4">
                           <h3 className="font-bold text-slate-900 mb-3 text-lg">Today's Logged Sets</h3>
                           <div className="space-y-2 max-h-64 overflow-y-auto">
                             {todaySession.exercises.map((log) => (
                               <div
                                 key={log.id}
-                                className="bg-white rounded p-3 border border-cyan-200 flex justify-between items-center"
+                                className="bg-slate-50 rounded p-3 border border-slate-200 flex justify-between items-center"
                               >
                                 <div className="flex-1">
                                   <p className="font-semibold text-slate-900">{log.exercise}</p>
