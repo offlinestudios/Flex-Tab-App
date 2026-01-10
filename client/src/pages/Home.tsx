@@ -709,7 +709,7 @@ function ExerciseCard({ exercise, onLogSet, onRemove }: ExerciseCardProps) {
           <Label htmlFor={`sets-${exercise.id}`} className="text-slate-700">
             Sets
           </Label>
-          <div className="flex items-center gap-2 mt-2">
+          <div className="hidden md:flex items-center gap-2 mt-2">
             <button
               onClick={() => setSets(Math.max(0, sets - 1))}
               className="px-3 py-2 bg-slate-200 hover:bg-slate-300 rounded font-semibold text-slate-700 transition-colors"
@@ -731,13 +731,21 @@ function ExerciseCard({ exercise, onLogSet, onRemove }: ExerciseCardProps) {
               +
             </button>
           </div>
+          <Input
+            id={`sets-mobile-${exercise.id}`}
+            type="number"
+            value={sets}
+            onChange={(e) => handleSetChange(e.target.value)}
+            className="md:hidden mt-2 border-slate-300 text-center"
+            min="0"
+          />
         </div>
         {/* Reps */}
         <div>
           <Label htmlFor={`reps-${exercise.id}`} className="text-slate-700">
             Reps
           </Label>
-          <div className="flex items-center gap-2 mt-2">
+          <div className="hidden md:flex items-center gap-2 mt-2">
             <button
               onClick={() => setReps(Math.max(0, reps - 1))}
               className="px-3 py-2 bg-slate-200 hover:bg-slate-300 rounded font-semibold text-slate-700 transition-colors"
@@ -759,13 +767,21 @@ function ExerciseCard({ exercise, onLogSet, onRemove }: ExerciseCardProps) {
               +
             </button>
           </div>
+          <Input
+            id={`reps-mobile-${exercise.id}`}
+            type="number"
+            value={reps}
+            onChange={(e) => handleRepsChange(e.target.value)}
+            className="md:hidden mt-2 border-slate-300 text-center"
+            min="0"
+          />
         </div>
         {/* Weight */}
         <div>
           <Label htmlFor={`weight-${exercise.id}`} className="text-slate-700">
             Weight (lbs)
           </Label>
-          <div className="flex items-center gap-2 mt-2">
+          <div className="hidden md:flex items-center gap-2 mt-2">
             <button
               onClick={() => setWeight(Math.max(0, weight - 5))}
               className="px-3 py-2 bg-slate-200 hover:bg-slate-300 rounded font-semibold text-slate-700 transition-colors"
@@ -787,6 +803,14 @@ function ExerciseCard({ exercise, onLogSet, onRemove }: ExerciseCardProps) {
               +
             </button>
           </div>
+          <Input
+            id={`weight-mobile-${exercise.id}`}
+            type="number"
+            value={weight}
+            onChange={(e) => handleWeightChange(e.target.value)}
+            className="md:hidden mt-2 border-slate-300 text-center"
+            min="0"
+          />
         </div>
       </div>
       <Button
