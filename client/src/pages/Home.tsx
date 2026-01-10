@@ -315,17 +315,55 @@ export default function Home() {
                       const today = new Date().toLocaleDateString();
                       const todaySession = workoutSessions.find(s => s.date === today);
                       if (todaySession && todaySession.exercises.length > 0) {
+                        const stats = {
+                          sets: todaySession.exercises.reduce((sum, set) => sum + set.sets, 0),
+                          reps: todaySession.exercises.reduce((sum, set) => sum + (set.sets * set.reps), 0),
+                          volume: todaySession.exercises.reduce((sum, set) => sum + (set.sets * set.reps * set.weight), 0),
+                        };
                         return (
                           <Card className="p-6 bg-white border-slate-200">
-                            <h3 className="text-lg font-semibold mb-4 text-slate-900">Today's Workout</h3>
+                            <div className="flex justify-between items-center mb-4">
+                              <h3 className="text-lg font-semibold text-slate-900">Today's Workout</h3>
+                            </div>
+                            <div className="grid grid-cols-3 gap-3 mb-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                              <div className="text-center">
+                                <p className="text-xs text-slate-600 font-medium">Sets</p>
+                                <p className="text-lg font-bold text-slate-900">{stats.sets}</p>
+                              </div>
+                              <div className="text-center">
+                                <p className="text-xs text-slate-600 font-medium">Reps</p>
+                                <p className="text-lg font-bold text-slate-900">{stats.reps}</p>
+                              </div>
+                              <div className="text-center">
+                                <p className="text-xs text-slate-600 font-medium">Volume</p>
+                                <p className="text-lg font-bold text-slate-900">{stats.volume.toLocaleString()}</p>
+                              </div>
+                            </div>
                             <div className="space-y-3">
                               {todaySession.exercises.map((set) => (
                                 <div key={set.id} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
-                                  <div>
+                                  <div className="flex-1">
                                     <p className="font-medium text-slate-900">{set.exercise}</p>
                                     <p className="text-sm text-slate-600">{set.sets} sets × {set.reps} reps @ {set.weight} lbs</p>
                                   </div>
-                                  <p className="text-sm text-slate-500">{set.time}</p>
+                                  <div className="flex items-center gap-3">
+                                    <p className="text-sm text-slate-500">{set.time}</p>
+                                    <button
+                                      onClick={() => {
+                                        const updated = workoutSessions.map(s => 
+                                          s.date === today 
+                                            ? { ...s, exercises: s.exercises.filter(ex => ex.id !== set.id) }
+                                            : s
+                                        ).filter(s => s.exercises.length > 0);
+                                        setWorkoutSessions(updated);
+                                        localStorage.setItem('workoutSessions', JSON.stringify(updated));
+                                      }}
+                                      className="text-slate-400 hover:text-red-500 transition-colors"
+                                      title="Delete set"
+                                    >
+                                      <X size={18} />
+                                    </button>
+                                  </div>
                                 </div>
                               ))}
                             </div>
