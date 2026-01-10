@@ -665,29 +665,35 @@ function ExerciseCard({ exercise, onLogSet, onRemove }: ExerciseCardProps) {
   const [weight, setWeight] = useState(0);
 
   const handleSetChange = (value: string) => {
-    const num = parseInt(value);
-    if (!isNaN(num) && num >= 0) {
-      setSets(num);
-    } else if (value === "") {
+    if (value === "") {
       setSets(0);
+    } else {
+      const num = parseInt(value, 10);
+      if (!isNaN(num) && num >= 0) {
+        setSets(num);
+      }
     }
   };
 
   const handleRepsChange = (value: string) => {
-    const num = parseInt(value);
-    if (!isNaN(num) && num >= 0) {
-      setReps(num);
-    } else if (value === "") {
+    if (value === "") {
       setReps(0);
+    } else {
+      const num = parseInt(value, 10);
+      if (!isNaN(num) && num >= 0) {
+        setReps(num);
+      }
     }
   };
 
   const handleWeightChange = (value: string) => {
-    const num = parseInt(value);
-    if (!isNaN(num) && num >= 0) {
-      setWeight(num);
-    } else if (value === "") {
+    if (value === "") {
       setWeight(0);
+    } else {
+      const num = parseInt(value, 10);
+      if (!isNaN(num) && num >= 0) {
+        setWeight(num);
+      }
     }
   };
 
@@ -718,11 +724,11 @@ function ExerciseCard({ exercise, onLogSet, onRemove }: ExerciseCardProps) {
             </button>
             <Input
               id={`sets-${exercise.id}`}
-              type="number"
+              type="text"
+              inputMode="numeric"
               value={sets}
               onChange={(e) => handleSetChange(e.target.value)}
               className="flex-1 border-slate-300 text-center"
-              min="0"
             />
             <button
               onClick={() => setSets(sets + 1)}
@@ -733,11 +739,11 @@ function ExerciseCard({ exercise, onLogSet, onRemove }: ExerciseCardProps) {
           </div>
           <Input
             id={`sets-mobile-${exercise.id}`}
-            type="number"
+            type="text"
+            inputMode="numeric"
             value={sets}
             onChange={(e) => handleSetChange(e.target.value)}
             className="md:hidden mt-2 border-slate-300 text-center"
-            min="0"
           />
         </div>
         {/* Reps */}
@@ -754,11 +760,11 @@ function ExerciseCard({ exercise, onLogSet, onRemove }: ExerciseCardProps) {
             </button>
             <Input
               id={`reps-${exercise.id}`}
-              type="number"
+              type="text"
+              inputMode="numeric"
               value={reps}
               onChange={(e) => handleRepsChange(e.target.value)}
               className="flex-1 border-slate-300 text-center"
-              min="0"
             />
             <button
               onClick={() => setReps(reps + 1)}
@@ -769,11 +775,11 @@ function ExerciseCard({ exercise, onLogSet, onRemove }: ExerciseCardProps) {
           </div>
           <Input
             id={`reps-mobile-${exercise.id}`}
-            type="number"
+            type="text"
+            inputMode="numeric"
             value={reps}
             onChange={(e) => handleRepsChange(e.target.value)}
             className="md:hidden mt-2 border-slate-300 text-center"
-            min="0"
           />
         </div>
         {/* Weight */}
@@ -790,11 +796,11 @@ function ExerciseCard({ exercise, onLogSet, onRemove }: ExerciseCardProps) {
             </button>
             <Input
               id={`weight-${exercise.id}`}
-              type="number"
+              type="text"
+              inputMode="numeric"
               value={weight}
               onChange={(e) => handleWeightChange(e.target.value)}
               className="flex-1 border-slate-300 text-center"
-              min="0"
             />
             <button
               onClick={() => setWeight(weight + 5)}
@@ -805,11 +811,11 @@ function ExerciseCard({ exercise, onLogSet, onRemove }: ExerciseCardProps) {
           </div>
           <Input
             id={`weight-mobile-${exercise.id}`}
-            type="number"
+            type="text"
+            inputMode="numeric"
             value={weight}
             onChange={(e) => handleWeightChange(e.target.value)}
             className="md:hidden mt-2 border-slate-300 text-center"
-            min="0"
           />
         </div>
       </div>
