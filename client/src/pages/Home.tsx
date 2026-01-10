@@ -310,6 +310,30 @@ export default function Home() {
               <TabsContent value="active" className="space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   <div className="lg:col-span-2 space-y-4">
+                    {/* Today's Workout Summary */}
+                    {(() => {
+                      const today = new Date().toLocaleDateString();
+                      const todaySession = workoutSessions.find(s => s.date === today);
+                      if (todaySession && todaySession.exercises.length > 0) {
+                        return (
+                          <Card className="p-6 bg-white border-slate-200">
+                            <h3 className="text-lg font-semibold mb-4 text-slate-900">Today's Workout</h3>
+                            <div className="space-y-3">
+                              {todaySession.exercises.map((set) => (
+                                <div key={set.id} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
+                                  <div>
+                                    <p className="font-medium text-slate-900">{set.exercise}</p>
+                                    <p className="text-sm text-slate-600">{set.sets} sets × {set.reps} reps @ {set.weight} lbs</p>
+                                  </div>
+                                  <p className="text-sm text-slate-500">{set.time}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </Card>
+                        );
+                      }
+                      return null;
+                    })()}
                     {selectedExercises.length === 0 ? (
                       <Card className="p-12 text-center bg-white border-slate-200">
                         <p className="text-slate-600 text-lg mb-2">
