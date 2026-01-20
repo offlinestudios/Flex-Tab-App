@@ -22,6 +22,7 @@ import ProgressCharts from "@/components/ProgressCharts";
 import { formatDateFull } from "@/lib/dateUtils";
 import { PRESET_EXERCISES as EXPANDED_EXERCISES, EXERCISE_CATEGORIES } from "@/lib/exercises";
 import { ExerciseSidebar } from "@/components/ExerciseSidebar";
+import { ShareWorkout } from "@/components/ShareWorkout";
 
 interface Exercise {
   id: string;
@@ -63,7 +64,7 @@ export default function Home() {
   let { user, loading, error, isAuthenticated, logout } = useAuth();
 
   // All hooks must be called before any conditional returns
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [selectedExercises, setSelectedExercises] = useState<Exercise[]>([]);
   const [customExerciseName, setCustomExerciseName] = useState("");
   const [customExerciseCategory, setCustomExerciseCategory] = useState("");
@@ -606,10 +607,19 @@ export default function Home() {
                     const stats = calculateStats(session.exercises);
                     return (
                       <Card key={session.date} className="overflow-hidden bg-white border-slate-200">
-                        <div className="px-3 md:px-6 py-4 border-b border-slate-200">
+                        <div className="px-3 md:px-6 py-4 border-b border-slate-200 flex justify-between items-center">
                           <h3 className="text-lg font-bold text-slate-900">
                             {formatDateFull(session.date)}
                           </h3>
+                          <ShareWorkout
+                            workoutData={{
+                              date: formatDateFull(session.date),
+                              exercises: session.exercises,
+                              totalSets: stats.totalSets,
+                              totalReps: stats.totalReps,
+                              totalVolume: stats.totalVolume,
+                            }}
+                          />
                         </div>
                         <div className="overflow-x-auto">
                           <table className="w-full text-xs md:text-sm">

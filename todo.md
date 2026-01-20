@@ -50,3 +50,14 @@
 - [x] Fix hamburger menu not working on desktop
 - [x] Create GitHub repository for the webapp (https://github.com/offlinestudios/flextab)
 - [x] Check for "Made with Manus" branding (none found in app code, only in preview banner which disappears after publish)
+- [x] Create checkpoint after branding updates
+
+## Latest Requests
+- [x] Change sidebar to be open by default when user lands on page
+- [x] Investigate "Powered by Manus" button (platform feature, cannot be removed from code)
+- [x] Implement social sharing feature for workout summaries and progress milestones
+  - [x] Created ShareWorkout component with copy text, share API, and download image features
+  - [x] Integrated share button into History tab for each workout session
+  - [x] Added sonner for toast notifications
+  - [x] Share generates formatted text summary with stats and exercises
+  - [x] Download creates branded workout image with gradient background
