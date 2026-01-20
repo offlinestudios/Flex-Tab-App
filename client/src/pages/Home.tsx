@@ -23,6 +23,7 @@ import { formatDateFull } from "@/lib/dateUtils";
 import { PRESET_EXERCISES as EXPANDED_EXERCISES, EXERCISE_CATEGORIES } from "@/lib/exercises";
 import { ExerciseSidebar } from "@/components/ExerciseSidebar";
 import { ShareWorkout } from "@/components/ShareWorkout";
+import { UserMenu } from "@/components/UserMenu";
 
 interface Exercise {
   id: string;
@@ -429,21 +430,24 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       {/* Header with Hamburger and Title Side by Side */}
       <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm">
-        <div className="flex items-center gap-4 px-4 py-4 md:px-6">
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-          >
-            <Menu className="w-6 h-6 text-slate-700" />
-          </button>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">
-              FlexTab
-            </h1>
-            <p className="text-sm text-slate-500">
-              Track your fitness progress with precision
-            </p>
+        <div className="flex items-center justify-between gap-4 px-4 py-4 md:px-6">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+            >
+              <Menu className="w-6 h-6 text-slate-700" />
+            </button>
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900">
+                FlexTab
+              </h1>
+              <p className="text-sm text-slate-500">
+                Track your fitness progress with precision
+              </p>
+            </div>
           </div>
+          <UserMenu />
         </div>
       </header>
 

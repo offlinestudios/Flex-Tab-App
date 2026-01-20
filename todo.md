@@ -61,3 +61,12 @@
   - [x] Added sonner for toast notifications
   - [x] Share generates formatted text summary with stats and exercises
   - [x] Download creates branded workout image with gradient background
+- [x] Create checkpoint after social sharing implementation
+
+## User Settings & Logout
+- [x] Add user profile dropdown menu in header
+- [x] Add logout button
+- [x] Display user name/email in dropdown
+- [x] Add user avatar with first letter of name
+- [x] Add Settings menu item (placeholder for future features)
+- [x] Implement logout functionality with toast notifications
