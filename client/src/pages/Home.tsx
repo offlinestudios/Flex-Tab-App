@@ -88,29 +88,141 @@ export default function Home() {
   const { data: customExercisesData } = trpc.workout.getCustomExercises.useQuery(undefined, {
     enabled: isAuthenticated,
   });
+  const utils = trpc.useUtils();
+  
   const addCustomExerciseMutation = trpc.workout.addCustomExercise.useMutation({
-    onSuccess: () => {
-      // Invalidate and refetch custom exercises
-      trpc.useUtils().workout.getCustomExercises.invalidate();
+    onMutate: async (newExercise) => {
+      // Cancel outgoing refetches
+      await utils.workout.getCustomExercises.cancel();
+      
+      // Snapshot the previous value
+      const previousExercises = utils.workout.getCustomExercises.getData();
+      
+      // Optimistically update to the new value
+      utils.workout.getCustomExercises.setData(undefined, (old) => [
+        ...(old || []),
+        {
+          id: Date.now(), // Temporary ID
+          userId: user!.id,
+          name: newExercise.name,
+          category: newExercise.category,
+          createdAt: new Date(),
+        },
+      ]);
+      
+      return { previousExercises };
+    },
+    onError: (err, newExercise, context) => {
+      // Rollback on error
+      if (context?.previousExercises) {
+        utils.workout.getCustomExercises.setData(undefined, context.previousExercises);
+      }
+    },
+    onSettled: () => {
+      // Always refetch after error or success
+      utils.workout.getCustomExercises.invalidate();
     },
   });
   
   const logSetMutation = trpc.workout.logSet.useMutation({
-    onSuccess: () => {
-      // Invalidate and refetch set logs
-      trpc.useUtils().workout.getSetLogs.invalidate();
+    onMutate: async (newSet) => {
+      // Cancel outgoing refetches
+      await utils.workout.getSetLogs.cancel();
+      
+      // Snapshot the previous value
+      const previousSetLogs = utils.workout.getSetLogs.getData();
+      
+      // Optimistically update to the new value
+      utils.workout.getSetLogs.setData(undefined, (old) => [
+        ...(old || []),
+        {
+          id: Date.now(), // Temporary ID
+          sessionId: 0, // Temporary sessionId
+          userId: user!.id,
+          exercise: newSet.exercise,
+          sets: newSet.sets,
+          reps: newSet.reps,
+          weight: newSet.weight,
+          time: newSet.time,
+          createdAt: new Date(),
+          date: newSet.date,
+        },
+      ]);
+      
+      return { previousSetLogs };
+    },
+    onError: (err, newSet, context) => {
+      // Rollback on error
+      if (context?.previousSetLogs) {
+        utils.workout.getSetLogs.setData(undefined, context.previousSetLogs);
+      }
+    },
+    onSettled: () => {
+      // Always refetch after error or success
+      utils.workout.getSetLogs.invalidate();
     },
   });
   
   const deleteSetLogMutation = trpc.workout.deleteSetLog.useMutation({
-    onSuccess: () => {
-      trpc.useUtils().workout.getSetLogs.invalidate();
+    onMutate: async (variables) => {
+      // Cancel outgoing refetches
+      await utils.workout.getSetLogs.cancel();
+      
+      // Snapshot the previous value
+      const previousSetLogs = utils.workout.getSetLogs.getData();
+      
+      // Optimistically remove the set
+      utils.workout.getSetLogs.setData(undefined, (old) =>
+        (old || []).filter((log) => log.id !== variables.id)
+      );
+      
+      return { previousSetLogs };
+    },
+    onError: (err, variables, context) => {
+      // Rollback on error
+      if (context?.previousSetLogs) {
+        utils.workout.getSetLogs.setData(undefined, context.previousSetLogs);
+      }
+    },
+    onSettled: () => {
+      // Always refetch after error or success
+      utils.workout.getSetLogs.invalidate();
     },
   });
   
   const updateSetLogMutation = trpc.workout.updateSetLog.useMutation({
-    onSuccess: () => {
-      trpc.useUtils().workout.getSetLogs.invalidate();
+    onMutate: async (variables) => {
+      // Cancel outgoing refetches
+      await utils.workout.getSetLogs.cancel();
+      
+      // Snapshot the previous value
+      const previousSetLogs = utils.workout.getSetLogs.getData();
+      
+      // Optimistically update the set
+      utils.workout.getSetLogs.setData(undefined, (old) =>
+        (old || []).map((log) =>
+          log.id === variables.id
+            ? { 
+                ...log, 
+                sets: variables.sets ?? log.sets, 
+                reps: variables.reps ?? log.reps, 
+                weight: variables.weight ?? log.weight 
+              }
+            : log
+        )
+      );
+      
+      return { previousSetLogs };
+    },
+    onError: (err, variables, context) => {
+      // Rollback on error
+      if (context?.previousSetLogs) {
+        utils.workout.getSetLogs.setData(undefined, context.previousSetLogs);
+      }
+    },
+    onSettled: () => {
+      // Always refetch after error or success
+      utils.workout.getSetLogs.invalidate();
     },
   });
 
@@ -477,26 +589,7 @@ export default function Home() {
 
               {/* Measurements Tab */}
               <TabsContent value="measurements">
-                <BodyMeasurements
-                  measurements={measurements}
-                  onAddMeasurement={(measurement) => {
-                    const newMeasurements = [...measurements, measurement];
-                    setMeasurements(newMeasurements);
-                    localStorage.setItem("measurements", JSON.stringify(newMeasurements));
-                  }}
-                  onDeleteMeasurement={(id) => {
-                    const newMeasurements = measurements.filter((m) => m.id !== id);
-                    setMeasurements(newMeasurements);
-                    localStorage.setItem("measurements", JSON.stringify(newMeasurements));
-                  }}
-                  onEditMeasurement={(measurement) => {
-                    const newMeasurements = measurements.map((m) =>
-                      m.id === measurement.id ? measurement : m
-                    );
-                    setMeasurements(newMeasurements);
-                    localStorage.setItem("measurements", JSON.stringify(newMeasurements));
-                  }}
-                />
+                <BodyMeasurements />
               </TabsContent>
 
               {/* History Tab */}

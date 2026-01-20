@@ -16,9 +16,9 @@
 - [x] Migrate measurements from localStorage to tRPC API (data loading ready)
 - [x] Update Today's Workout display to use tRPC data
 - [x] Update History tab to use tRPC data
-- [ ] Update Measurements tab to use tRPC API mutations (currently read-only)
+- [x] Update Measurements tab to use tRPC API mutations
 - [ ] Update Progress tab to use tRPC data
-- [ ] Implement optimistic updates for better UX
+- [x] Implement optimistic updates for better UX
 - [x] Add loading states for authentication
 - [ ] Add error handling for all API operations
 
@@ -33,6 +33,12 @@
 - [x] Write vitest tests for workout API endpoints
 - [x] Test all CRUD operations (create, read, update, delete)
 - [x] Test user data isolation
-- [ ] Create checkpoint after frontend migration
+- [x] Create checkpoint after frontend migration
 - [ ] Configure custom domain (www.flextab.app)
 - [ ] Final testing and deployment
+
+## Current Work (In Progress)
+- [x] Update BodyMeasurements component to use tRPC mutations (add/edit/delete)
+- [x] Implement optimistic updates for set logging
+- [x] Implement optimistic updates for custom exercises
+- [ ] Configure custom domain www.flextab.app

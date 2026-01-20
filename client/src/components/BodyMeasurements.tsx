@@ -5,32 +5,11 @@ import { Label } from "@/components/ui/label";
 import { Plus, Trash2, Edit2 } from "lucide-react";
 import { useState } from "react";
 import { formatDateFull } from "@/lib/dateUtils";
+import { trpc } from "@/lib/trpc";
 
-interface Measurement {
-  id: string;
-  date: string;
-  weight: number;
-  chest: number;
-  waist: number;
-  arms: number;
-  thighs: number;
-}
-
-interface BodyMeasurementsProps {
-  measurements: Measurement[];
-  onAddMeasurement: (measurement: Measurement) => void;
-  onDeleteMeasurement: (id: string) => void;
-  onEditMeasurement?: (measurement: Measurement) => void;
-}
-
-export function BodyMeasurements({
-  measurements,
-  onAddMeasurement,
-  onDeleteMeasurement,
-  onEditMeasurement,
-}: BodyMeasurementsProps) {
+export function BodyMeasurements() {
   const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     weight: "",
     chest: "",
@@ -39,7 +18,29 @@ export function BodyMeasurements({
     thighs: "",
   });
 
-  const handleAddMeasurement = () => {
+  // Load measurements from API
+  const { data: measurements = [] } = trpc.workout.getMeasurements.useQuery();
+
+  // Mutations
+  const addMeasurementMutation = trpc.workout.addMeasurement.useMutation({
+    onSuccess: () => {
+      trpc.useUtils().workout.getMeasurements.invalidate();
+    },
+  });
+
+  const updateMeasurementMutation = trpc.workout.updateMeasurement.useMutation({
+    onSuccess: () => {
+      trpc.useUtils().workout.getMeasurements.invalidate();
+    },
+  });
+
+  const deleteMeasurementMutation = trpc.workout.deleteMeasurement.useMutation({
+    onSuccess: () => {
+      trpc.useUtils().workout.getMeasurements.invalidate();
+    },
+  });
+
+  const handleAddMeasurement = async () => {
     if (
       formData.weight &&
       formData.chest &&
@@ -47,9 +48,13 @@ export function BodyMeasurements({
       formData.arms &&
       formData.thighs
     ) {
-      const today = new Date().toISOString().split("T")[0];
-      onAddMeasurement({
-        id: Date.now().toString(),
+      const today = new Date().toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "numeric",
+        day: "numeric",
+      });
+
+      await addMeasurementMutation.mutateAsync({
         date: today,
         weight: parseFloat(formData.weight),
         chest: parseFloat(formData.chest),
@@ -57,6 +62,7 @@ export function BodyMeasurements({
         arms: parseFloat(formData.arms),
         thighs: parseFloat(formData.thighs),
       });
+
       setFormData({
         weight: "",
         chest: "",
@@ -68,7 +74,7 @@ export function BodyMeasurements({
     }
   };
 
-  const handleEditMeasurement = (measurement: Measurement) => {
+  const handleEditMeasurement = (measurement: typeof measurements[0]) => {
     setEditingId(measurement.id);
     setFormData({
       weight: measurement.weight.toString(),
@@ -79,7 +85,7 @@ export function BodyMeasurements({
     });
   };
 
-  const handleSaveEdit = (measurementId: string) => {
+  const handleSaveEdit = async (measurementId: number) => {
     if (
       formData.weight &&
       formData.chest &&
@@ -87,17 +93,15 @@ export function BodyMeasurements({
       formData.arms &&
       formData.thighs
     ) {
-      const measurement = measurements.find(m => m.id === measurementId);
-      if (measurement && onEditMeasurement) {
-        onEditMeasurement({
-          ...measurement,
-          weight: parseFloat(formData.weight),
-          chest: parseFloat(formData.chest),
-          waist: parseFloat(formData.waist),
-          arms: parseFloat(formData.arms),
-          thighs: parseFloat(formData.thighs),
-        });
-      }
+      await updateMeasurementMutation.mutateAsync({
+        id: measurementId,
+        weight: parseFloat(formData.weight),
+        chest: parseFloat(formData.chest),
+        waist: parseFloat(formData.waist),
+        arms: parseFloat(formData.arms),
+        thighs: parseFloat(formData.thighs),
+      });
+
       setEditingId(null);
       setFormData({
         weight: "",
@@ -118,6 +122,10 @@ export function BodyMeasurements({
       arms: "",
       thighs: "",
     });
+  };
+
+  const handleDeleteMeasurement = async (id: number) => {
+    await deleteMeasurementMutation.mutateAsync({ id });
   };
 
   const sortedMeasurements = [...measurements].sort(
@@ -242,9 +250,10 @@ export function BodyMeasurements({
           <div className="flex gap-3 mt-6">
             <Button
               onClick={handleAddMeasurement}
+              disabled={addMeasurementMutation.isPending}
               className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white"
             >
-              Save Measurement
+              {addMeasurementMutation.isPending ? "Saving..." : "Save Measurement"}
             </Button>
             <Button
               onClick={() => setShowForm(false)}
@@ -426,9 +435,10 @@ export function BodyMeasurements({
                   <div className="flex gap-3 mt-6">
                     <Button
                       onClick={() => handleSaveEdit(measurement.id)}
+                      disabled={updateMeasurementMutation.isPending}
                       className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white"
                     >
-                      Save Changes
+                      {updateMeasurementMutation.isPending ? "Saving..." : "Save Changes"}
                     </Button>
                     <Button
                       onClick={handleCancelEdit}
@@ -491,8 +501,9 @@ export function BodyMeasurements({
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => onDeleteMeasurement(measurement.id)}
-                        className="p-2 hover:bg-red-50 rounded-lg transition-colors text-red-600"
+                        onClick={() => handleDeleteMeasurement(measurement.id)}
+                        disabled={deleteMeasurementMutation.isPending}
+                        className="p-2 hover:bg-red-50 rounded-lg transition-colors text-red-600 disabled:opacity-50"
                         title="Delete"
                       >
                         <Trash2 className="w-4 h-4" />
