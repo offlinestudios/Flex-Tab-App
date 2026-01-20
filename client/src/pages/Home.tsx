@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
 import { Menu, Plus, Trash2, Edit2, X } from "lucide-react";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { trpc } from "@/lib/trpc";
+import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -55,6 +58,11 @@ interface Measurement {
 const PRESET_EXERCISES: Exercise[] = EXPANDED_EXERCISES;
 
 export default function Home() {
+  // The userAuth hooks provides authentication state
+  // To implement login/logout functionality, simply call logout() or redirect to getLoginUrl()
+  let { user, loading, error, isAuthenticated, logout } = useAuth();
+
+  // All hooks must be called before any conditional returns
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedExercises, setSelectedExercises] = useState<Exercise[]>([]);
   const [customExerciseName, setCustomExerciseName] = useState("");
@@ -76,48 +84,137 @@ export default function Home() {
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
 
-  // Load data from localStorage on mount
+  // Load custom exercises from API
+  const { data: customExercisesData } = trpc.workout.getCustomExercises.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+  const addCustomExerciseMutation = trpc.workout.addCustomExercise.useMutation({
+    onSuccess: () => {
+      // Invalidate and refetch custom exercises
+      trpc.useUtils().workout.getCustomExercises.invalidate();
+    },
+  });
+  
+  const logSetMutation = trpc.workout.logSet.useMutation({
+    onSuccess: () => {
+      // Invalidate and refetch set logs
+      trpc.useUtils().workout.getSetLogs.invalidate();
+    },
+  });
+  
+  const deleteSetLogMutation = trpc.workout.deleteSetLog.useMutation({
+    onSuccess: () => {
+      trpc.useUtils().workout.getSetLogs.invalidate();
+    },
+  });
+  
+  const updateSetLogMutation = trpc.workout.updateSetLog.useMutation({
+    onSuccess: () => {
+      trpc.useUtils().workout.getSetLogs.invalidate();
+    },
+  });
+
+  // Load set logs from API
+  const { data: setLogsData } = trpc.workout.getSetLogs.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+
+  // Load measurements from API
+  const { data: measurementsData } = trpc.workout.getMeasurements.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+
+  // Sync custom exercises with API data
   useEffect(() => {
-    const savedExercises = localStorage.getItem("customExercises");
-    const savedSessions = localStorage.getItem("workoutSessions");
-    const savedMeasurements = localStorage.getItem("measurements");
+    if (customExercisesData) {
+      const customExercises = customExercisesData.map(ex => ({
+        id: ex.id.toString(),
+        name: ex.name,
+        category: ex.category,
+        isCustom: true,
+      }));
+      setAllExercises([...PRESET_EXERCISES, ...customExercises]);
+    }
+  }, [customExercisesData]);
 
-    if (savedExercises) {
-      const exercises = JSON.parse(savedExercises);
-      // Filter out duplicate Dumbbell Flys from custom exercises
-      const filtered = exercises.filter((e: Exercise) => !(e.name === "Dumbbell Flys" && e.isCustom));
-      setAllExercises(filtered);
-    }
-    if (savedSessions) {
-      setWorkoutSessions(JSON.parse(savedSessions));
-    }
-    if (savedMeasurements) {
-      setMeasurements(JSON.parse(savedMeasurements));
-    }
-  }, []);
-
-  // Save exercises to localStorage
+  // Sync set logs with API data
   useEffect(() => {
-    localStorage.setItem("customExercises", JSON.stringify(allExercises));
-  }, [allExercises]);
+    if (setLogsData) {
+      // Group sets by date
+      const sessionsByDate: Record<string, SetLog[]> = {};
+      setLogsData.forEach(log => {
+        const date = log.date || "Unknown";
+        if (!sessionsByDate[date]) {
+          sessionsByDate[date] = [];
+        }
+        sessionsByDate[date].push({
+          id: log.id.toString(),
+          date,
+          exercise: log.exercise,
+          sets: log.sets,
+          reps: log.reps,
+          weight: log.weight,
+          time: log.time,
+        });
+      });
+      const sessions = Object.entries(sessionsByDate).map(([date, exercises]) => ({
+        date,
+        exercises,
+      }));
+      setWorkoutSessions(sessions);
+    }
+  }, [setLogsData]);
 
-  // Save sessions to localStorage
+  // Sync measurements with API data
   useEffect(() => {
-    localStorage.setItem("workoutSessions", JSON.stringify(workoutSessions));
-  }, [workoutSessions]);
+    if (measurementsData) {
+      const measurements = measurementsData.map(m => ({
+        id: m.id.toString(),
+        date: m.date,
+        weight: m.weight,
+        chest: m.chest,
+        waist: m.waist,
+        arms: m.arms,
+        thighs: m.thighs,
+      }));
+      setMeasurements(measurements);
+    }
+  }, [measurementsData]);
 
-  const handleAddCustomExercise = () => {
+  // Redirect to login if not authenticated (after all hooks)
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      window.location.href = getLoginUrl();
+    }
+  }, [loading, isAuthenticated]);
+
+  // Show loading state while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 mx-auto mb-4"></div>
+          <p className="text-slate-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render anything if not authenticated (will redirect)
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  const handleAddCustomExercise = async () => {
     if (customExerciseName.trim() && customExerciseCategory.trim()) {
-      const newExercise: Exercise = {
-        id: Date.now().toString(),
+      await addCustomExerciseMutation.mutateAsync({
         name: customExerciseName,
         category: customExerciseCategory,
-        isCustom: true,
-      };
-      setAllExercises([...allExercises, newExercise]);
+      });
       setCustomExerciseName("");
       setCustomExerciseCategory("");
       setShowCustomDialog(false);
+      // Query will automatically refetch due to invalidation
     }
   };
 
@@ -129,7 +226,7 @@ export default function Home() {
     }
   };
 
-  const handleLogSet = (
+  const handleLogSet = async (
     exercise: string,
     sets: number,
     reps: number,
@@ -148,42 +245,18 @@ export default function Home() {
       hour12: true,
     });
 
-    const newLog: SetLog = {
-      id: Date.now().toString(),
+    await logSetMutation.mutateAsync({
       date: today,
       exercise,
       sets,
       reps,
       weight,
       time,
-    };
-
-    const existingSession = workoutSessions.find((s) => s.date === today);
-    if (existingSession) {
-      existingSession.exercises.push(newLog);
-      setWorkoutSessions([...workoutSessions]);
-    } else {
-      setWorkoutSessions([
-        ...workoutSessions,
-        { date: today, exercises: [newLog] },
-      ]);
-    }
+    });
   };
 
-  const handleDeleteLog = (logId: string, sessionDate: string) => {
-    setWorkoutSessions(
-      workoutSessions
-        .map((session) => {
-          if (session.date === sessionDate) {
-            return {
-              ...session,
-              exercises: session.exercises.filter((e) => e.id !== logId),
-            };
-          }
-          return session;
-        })
-        .filter((session) => session.exercises.length > 0)
-    );
+  const handleDeleteLog = async (logId: string, sessionDate: string) => {
+    await deleteSetLogMutation.mutateAsync({ id: parseInt(logId) });
   };
 
   const handleEditLog = (log: SetLog) => {
@@ -192,17 +265,15 @@ export default function Home() {
     setShowEditDialog(true);
   };
 
-  const handleSaveEditLog = () => {
+  const handleSaveEditLog = async () => {
     if (!editFormData) return;
 
-    setWorkoutSessions(
-      workoutSessions.map((session) => ({
-        ...session,
-        exercises: session.exercises.map((e) =>
-          e.id === editFormData.id ? editFormData : e
-        ),
-      }))
-    );
+    await updateSetLogMutation.mutateAsync({
+      id: parseInt(editFormData.id),
+      sets: editFormData.sets,
+      reps: editFormData.reps,
+      weight: editFormData.weight,
+    });
 
     setShowEditDialog(false);
     setEditingLog(null);
