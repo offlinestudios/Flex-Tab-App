@@ -437,7 +437,7 @@ export default function Home() {
           </button>
           <div>
             <h1 className="text-2xl font-bold text-slate-900">
-              Workout Dashboard
+              FlexTab
             </h1>
             <p className="text-sm text-slate-500">
               Track your fitness progress with precision
@@ -450,7 +450,7 @@ export default function Home() {
         {/* Sidebar */}
         <aside
           className={`fixed md:relative w-80 bg-white border-r border-slate-200 h-[calc(100vh-80px)] overflow-y-auto transition-transform duration-300 z-30 ${
-            sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+            sidebarOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >
           <div className="p-6">

@@ -41,4 +41,12 @@
 - [x] Update BodyMeasurements component to use tRPC mutations (add/edit/delete)
 - [x] Implement optimistic updates for set logging
 - [x] Implement optimistic updates for custom exercises
+- [x] Create checkpoint after implementing measurements CRUD and optimistic updates
 - [ ] Configure custom domain www.flextab.app
+
+## New Requests
+- [x] Update dashboard heading title to "FlexTab" instead of "Workout Dashboard"
+- [x] Update HTML page title to "FlexTab - Track Your Fitness Progress"
+- [x] Fix hamburger menu not working on desktop
+- [x] Create GitHub repository for the webapp (https://github.com/offlinestudios/flextab)
+- [x] Check for "Made with Manus" branding (none found in app code, only in preview banner which disappears after publish)
