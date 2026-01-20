@@ -83,3 +83,14 @@
 - [x] Link Settings menu item to Settings page
 - [x] Make UserMenu full-width in sidebar for better UX
 - [x] Display user profile information (name, email) on Settings page
+- [x] Create checkpoint after Settings page implementation
+
+## UI Layout Fixes
+- [x] Fix title positioning - removed justify-between to keep title on left
+- [x] Move user menu to bottom of sidebar (below exercise categories)
+- [x] Improve user profile badge visual design
+  - [x] Changed to ghost variant button with hover effect
+  - [x] Larger avatar (10x10) with gradient background (cyan-400 to cyan-600)
+  - [x] Stacked layout: name (bold) and email (small text) vertically
+  - [x] Added subtle shadow to avatar
+  - [x] Better spacing and padding

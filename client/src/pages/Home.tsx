@@ -430,7 +430,7 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       {/* Header with Hamburger and Title Side by Side */}
       <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm">
-        <div className="flex items-center justify-between gap-4 px-4 py-4 md:px-6">
+        <div className="flex items-center gap-4 px-4 py-4 md:px-6">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
@@ -455,23 +455,25 @@ export default function Home() {
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >
-          <div className="p-6">
-            {/* User Menu at top of sidebar */}
-            <div className="mb-6">
+          <div className="flex flex-col h-full">
+            <div className="flex-1 p-6 overflow-y-auto">
+              <h2 className="text-xl font-bold text-slate-900 mb-6">
+                Workout Builder
+              </h2>
+              <ExerciseSidebar
+                groupedExercises={groupedExercises}
+                customExercises={customExercises}
+                selectedExercises={selectedExercises}
+                expandedCategories={expandedCategories}
+                onToggleCategory={toggleCategory}
+                onSelectExercise={handleSelectExercise}
+                onAddCustom={() => setShowCustomDialog(true)}
+              />
+            </div>
+            {/* User Menu at bottom of sidebar */}
+            <div className="p-4 border-t border-slate-200 bg-slate-50">
               <UserMenu />
             </div>
-            <h2 className="text-xl font-bold text-slate-900 mb-6">
-              Workout Builder
-            </h2>
-            <ExerciseSidebar
-              groupedExercises={groupedExercises}
-              customExercises={customExercises}
-              selectedExercises={selectedExercises}
-              expandedCategories={expandedCategories}
-              onToggleCategory={toggleCategory}
-              onSelectExercise={handleSelectExercise}
-              onAddCustom={() => setShowCustomDialog(true)}
-            />
           </div>
         </aside>
 

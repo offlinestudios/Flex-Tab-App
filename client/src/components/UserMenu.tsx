@@ -36,14 +36,20 @@ export function UserMenu() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="outline"
-          size="sm"
-          className="w-full flex items-center gap-2 border-slate-300 justify-start"
+          variant="ghost"
+          className="w-full flex items-center gap-3 justify-start hover:bg-slate-100 h-auto py-3 px-3"
         >
-          <div className="w-8 h-8 rounded-full bg-cyan-500 flex items-center justify-center text-white font-semibold">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center text-white font-semibold text-lg shadow-sm">
             {user.name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || "U"}
           </div>
-          <span className="text-slate-700 truncate">{user.name || user.email}</span>
+          <div className="flex flex-col items-start flex-1 min-w-0">
+            <span className="text-slate-900 font-medium truncate w-full text-left">
+              {user.name || "User"}
+            </span>
+            <span className="text-xs text-slate-500 truncate w-full text-left">
+              {user.email}
+            </span>
+          </div>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56 bg-white border-slate-200">
