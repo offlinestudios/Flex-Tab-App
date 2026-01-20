@@ -2,6 +2,7 @@ import { LogOut, Settings, User } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
+import { useLocation } from "wouter";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,6 +15,7 @@ import { toast } from "sonner";
 
 export function UserMenu() {
   const { user } = useAuth();
+  const [, setLocation] = useLocation();
   const logoutMutation = trpc.auth.logout.useMutation({
     onSuccess: () => {
       toast.success("Logged out successfully");
@@ -36,12 +38,12 @@ export function UserMenu() {
         <Button
           variant="outline"
           size="sm"
-          className="flex items-center gap-2 border-slate-300"
+          className="w-full flex items-center gap-2 border-slate-300 justify-start"
         >
           <div className="w-8 h-8 rounded-full bg-cyan-500 flex items-center justify-center text-white font-semibold">
             {user.name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || "U"}
           </div>
-          <span className="hidden md:inline text-slate-700">{user.name || user.email}</span>
+          <span className="text-slate-700 truncate">{user.name || user.email}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56 bg-white border-slate-200">
@@ -52,7 +54,10 @@ export function UserMenu() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator className="bg-slate-200" />
-        <DropdownMenuItem className="cursor-pointer text-slate-700 focus:bg-slate-100">
+        <DropdownMenuItem 
+          onClick={() => setLocation("/settings")}
+          className="cursor-pointer text-slate-700 focus:bg-slate-100"
+        >
           <Settings className="w-4 h-4 mr-2" />
           Settings
         </DropdownMenuItem>

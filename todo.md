@@ -70,3 +70,16 @@
 - [x] Add user avatar with first letter of name
 - [x] Add Settings menu item (placeholder for future features)
 - [x] Implement logout functionality with toast notifications
+- [x] Create checkpoint after user menu implementation
+
+## Settings Page & Sidebar Improvements
+- [x] Create Settings page component with user preferences
+- [x] Add units preference (lbs/kg) for weight
+- [x] Add theme preference (light/dark/system)
+- [x] Add notification settings
+- [x] Move user profile menu from header to sidebar
+- [x] Change exercise category dropdowns to be closed by default
+- [x] Add route for Settings page in App.tsx
+- [x] Link Settings menu item to Settings page
+- [x] Make UserMenu full-width in sidebar for better UX
+- [x] Display user profile information (name, email) on Settings page

@@ -71,11 +71,11 @@ export default function Home() {
   const [customExerciseCategory, setCustomExerciseCategory] = useState("");
   const [allExercises, setAllExercises] = useState<Exercise[]>(PRESET_EXERCISES);
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
-    Chest: true,
-    Back: true,
-    Arms: true,
-    Shoulders: true,
-    Legs: true,
+    Chest: false,
+    Back: false,
+    Arms: false,
+    Shoulders: false,
+    Legs: false,
     Core: false,
   });
   const [showCustomDialog, setShowCustomDialog] = useState(false);
@@ -431,23 +431,20 @@ export default function Home() {
       {/* Header with Hamburger and Title Side by Side */}
       <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm">
         <div className="flex items-center justify-between gap-4 px-4 py-4 md:px-6">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-            >
-              <Menu className="w-6 h-6 text-slate-700" />
-            </button>
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900">
-                FlexTab
-              </h1>
-              <p className="text-sm text-slate-500">
-                Track your fitness progress with precision
-              </p>
-            </div>
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+          >
+            <Menu className="w-6 h-6 text-slate-700" />
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">
+              FlexTab
+            </h1>
+            <p className="text-sm text-slate-500">
+              Track your fitness progress with precision
+            </p>
           </div>
-          <UserMenu />
         </div>
       </header>
 
@@ -459,6 +456,10 @@ export default function Home() {
           }`}
         >
           <div className="p-6">
+            {/* User Menu at top of sidebar */}
+            <div className="mb-6">
+              <UserMenu />
+            </div>
             <h2 className="text-xl font-bold text-slate-900 mb-6">
               Workout Builder
             </h2>
