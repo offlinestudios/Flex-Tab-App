@@ -427,9 +427,9 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="min-h-screen" style={{background: 'linear-gradient(to bottom right, #F7F5F2, #F3F1EE)'}}>
       {/* Header with Hamburger and Title Side by Side */}
-      <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm">
+      <header className="sticky top-0 z-40 bg-white shadow-sm" style={{borderBottom: '1px solid #E6E4E1'}}>
         <div className="flex items-center gap-4 px-4 py-4 md:px-6">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -437,13 +437,13 @@ export default function Home() {
           >
             <Menu className="w-6 h-6 text-slate-700" />
           </button>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">
-              FlexTab
-            </h1>
-            <p className="text-sm text-slate-500">
-              Track your fitness progress with precision
-            </p>
+          <div className="flex items-center gap-3">
+            <img src="/flextab-logo.png" alt="FlexTab" className="h-8 w-auto" />
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight" style={{fontFamily: 'Satoshi, sans-serif'}}>
+                flextab
+              </h1>
+            </div>
           </div>
         </div>
       </header>

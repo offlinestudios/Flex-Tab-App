@@ -94,3 +94,20 @@
   - [x] Stacked layout: name (bold) and email (small text) vertically
   - [x] Added subtle shadow to avatar
   - [x] Better spacing and padding
+- [x] Create checkpoint after UI layout fixes
+
+## Branding & Design System Update
+- [x] Generate "F" logo icon based on mockup design
+- [x] Add Satoshi font to the app (Google Fonts)
+- [x] Update color palette to warm cream theme:
+  - [x] Background: #F7F5F2 (warm off-white) - oklch(0.962 0.003 36)
+  - [x] Primary text: #0B0B0C (near black) - oklch(0.043 0.001 240)
+  - [x] Secondary text: #6B6F76 (gray) - oklch(0.434 0.006 218)
+  - [x] Dividers/borders: #E6E4E1 (soft divider) - oklch(0.895 0.003 36)
+  - [x] Card backgrounds: #FFFFFF (pure white) - oklch(1 0 0)
+  - [x] Stone background: #F3F1EE - oklch(0.946 0.003 36)
+- [x] Replace logo in header with new "F" icon + "flextab" wordmark
+- [x] Update main background gradient to warm cream palette
+- [x] Update header border to use new divider color
+- [x] Add favicon with FlexTab icon
+- [x] Apply Satoshi font globally with font-smoothing
