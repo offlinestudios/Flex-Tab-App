@@ -111,3 +111,4 @@
 - [x] Update header border to use new divider color
 - [x] Add favicon with FlexTab icon
 - [x] Apply Satoshi font globally with font-smoothing
+- [x] Create checkpoint after branding implementation
