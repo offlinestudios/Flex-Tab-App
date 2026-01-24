@@ -112,3 +112,25 @@
 - [x] Add favicon with FlexTab icon
 - [x] Apply Satoshi font globally with font-smoothing
 - [x] Create checkpoint after branding implementation
+
+## Color System Transformation (Professional Tool Aesthetic)
+- [x] Update CSS color variables to charcoal/neutral palette
+  - [x] Replace cyan primary accent with charcoal (#111827, #1F2937)
+  - [x] Update secondary text colors (#6B7280)
+  - [x] Update borders and dividers (#E5E7EB)
+  - [x] Keep warm off-white background (#F7F5F2)
+- [x] Replace light blue buttons with charcoal buttons
+  - [x] Update "Add Custom Exercise" button
+  - [x] Update "Add Body Measurement" button
+  - [x] Update "Save" buttons in dialogs
+  - [x] Update selected exercise pills in sidebar
+- [x] Demote blue to secondary data highlights only
+  - [x] Keep deeper blue (#0EA5E9) for "Log Set" action button
+  - [x] Keep blue for "Share" button (positive action)
+  - [x] Remove blue from general UI chrome (loading spinners, edit buttons, stats)
+- [x] Update calendar workout indicators to charcoal
+- [x] Update user profile avatar gradient to charcoal tones
+- [x] Update ShareWorkout image gradient to charcoal
+- [x] Test all components with new color system
+- [x] Run vitest tests (14/14 passed - no functionality broken)
+- [ ] Create checkpoint after color system transformation

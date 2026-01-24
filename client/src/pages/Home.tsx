@@ -307,7 +307,7 @@ export default function Home() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-800 mx-auto mb-4"></div>
           <p className="text-slate-600">Loading...</p>
         </div>
       </div>
@@ -677,7 +677,7 @@ export default function Home() {
                                     <div className="flex gap-2 justify-center">
                                       <button
                                         onClick={() => handleEditLog(log)}
-                                        className="p-2 hover:bg-blue-100 rounded-lg transition-colors text-blue-600"
+                                        className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-700"
                                         title="Edit"
                                       >
                                         <Edit2 className="w-4 h-4" />
@@ -703,7 +703,7 @@ export default function Home() {
                             <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">
                               Total Reps
                             </p>
-                            <p className="text-lg md:text-2xl font-bold text-cyan-600">
+                            <p className="text-lg md:text-2xl font-bold text-slate-900">
                               {stats.totalReps}
                             </p>
                           </div>
@@ -711,7 +711,7 @@ export default function Home() {
                             <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">
                               Total Sets
                             </p>
-                            <p className="text-lg md:text-2xl font-bold text-cyan-600">
+                            <p className="text-lg md:text-2xl font-bold text-slate-900">
                               {stats.totalSets}
                             </p>
                           </div>
@@ -719,7 +719,7 @@ export default function Home() {
                             <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">
                               Total Volume
                             </p>
-                            <p className="text-lg md:text-2xl font-bold text-cyan-600">
+                            <p className="text-lg md:text-2xl font-bold text-slate-900">
                               {(stats.totalVolume / 1000).toFixed(1)}k
                             </p>
                           </div>
@@ -727,7 +727,7 @@ export default function Home() {
                             <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">
                               Exercises
                             </p>
-                            <p className="text-lg md:text-2xl font-bold text-cyan-600">
+                            <p className="text-lg md:text-2xl font-bold text-slate-900">
                               {stats.uniqueExercises}
                             </p>
                           </div>
@@ -798,7 +798,7 @@ export default function Home() {
             </Button>
             <Button
               onClick={handleAddCustomExercise}
-              className="bg-cyan-500 hover:bg-cyan-600"
+              className="bg-slate-800 hover:bg-slate-900"
             >
               Add Exercise
             </Button>
@@ -877,7 +877,7 @@ export default function Home() {
             </Button>
             <Button
               onClick={handleSaveEditLog}
-              className="bg-cyan-500 hover:bg-cyan-600"
+              className="bg-slate-800 hover:bg-slate-900"
             >
               Save Changes
             </Button>
@@ -1064,7 +1064,7 @@ function ExerciseCard({ exercise, onLogSet, onRemove }: ExerciseCardProps) {
       </div>
       <Button
         onClick={() => onLogSet(exercise.name, sets, reps, weight)}
-        className="w-full bg-cyan-500 hover:bg-cyan-600 active:bg-cyan-700 text-white font-medium transition-colors duration-75"
+        className="w-full bg-sky-500 hover:bg-sky-600 active:bg-sky-700 text-white font-medium transition-colors duration-75"
       >
         Log Set
       </Button>

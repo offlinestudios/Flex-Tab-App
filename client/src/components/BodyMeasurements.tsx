@@ -155,7 +155,7 @@ export function BodyMeasurements() {
       {!showForm && editingId === null ? (
         <Button
           onClick={() => setShowForm(true)}
-          className="w-full bg-cyan-500 hover:bg-cyan-600 text-white"
+          className="w-full bg-slate-800 hover:bg-slate-900 text-white"
         >
           <Plus className="w-4 h-4 mr-2" />
           Add Body Measurement
@@ -251,7 +251,7 @@ export function BodyMeasurements() {
             <Button
               onClick={handleAddMeasurement}
               disabled={addMeasurementMutation.isPending}
-              className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white"
+              className="flex-1 bg-slate-800 hover:bg-slate-900 text-white"
             >
               {addMeasurementMutation.isPending ? "Saving..." : "Save Measurement"}
             </Button>
@@ -436,7 +436,7 @@ export function BodyMeasurements() {
                     <Button
                       onClick={() => handleSaveEdit(measurement.id)}
                       disabled={updateMeasurementMutation.isPending}
-                      className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white"
+                      className="flex-1 bg-slate-800 hover:bg-slate-900 text-white"
                     >
                       {updateMeasurementMutation.isPending ? "Saving..." : "Save Changes"}
                     </Button>

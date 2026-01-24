@@ -46,7 +46,7 @@ export function ExerciseSidebar({
                   onClick={() => onSelectExercise(exercise)}
                   className={`w-full text-left px-3 py-2 rounded-md transition-all text-sm font-medium ${
                     selectedExercises.find((e) => e.id === exercise.id)
-                      ? "bg-cyan-500 text-white shadow-md"
+                      ? "bg-slate-800 text-white shadow-md"
                       : "bg-slate-100 text-slate-700 hover:bg-slate-150 border border-slate-200"
                   }`}
                 >
@@ -82,7 +82,7 @@ export function ExerciseSidebar({
                   onClick={() => onSelectExercise(exercise)}
                   className={`w-full text-left px-3 py-2 rounded-md transition-all text-sm font-medium ${
                     selectedExercises.find((e) => e.id === exercise.id)
-                      ? "bg-cyan-500 text-white shadow-md"
+                      ? "bg-slate-800 text-white shadow-md"
                       : "bg-slate-100 text-slate-700 hover:bg-slate-150 border border-slate-200"
                   }`}
                 >
@@ -97,7 +97,7 @@ export function ExerciseSidebar({
       {/* Add Custom Exercise Button */}
       <button
         onClick={onAddCustom}
-        className="w-full flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-cyan-400 to-cyan-500 text-white rounded-lg hover:from-cyan-500 hover:to-cyan-600 transition-all font-medium"
+        className="w-full flex items-center gap-2 px-4 py-3 bg-slate-800 text-white rounded-lg hover:bg-slate-900 transition-all font-medium"
       >
         <Plus className="w-4 h-4" />
         Add Custom Exercise

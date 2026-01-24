@@ -121,15 +121,15 @@ export function WorkoutCalendar({
               onClick={() => onDateSelect(dateStr)}
               className={`aspect-square rounded-lg flex items-center justify-center text-sm font-medium transition-colors relative ${
                 isSelected
-                  ? "bg-cyan-500 text-white"
+                  ? "bg-slate-800 text-white"
                   : hasWorkoutOnDay
-                    ? "bg-cyan-100 text-cyan-900 hover:bg-cyan-200"
+                    ? "bg-slate-200 text-slate-900 hover:bg-slate-300"
                     : "bg-slate-100 text-slate-700 hover:bg-slate-200"
               }`}
             >
               {day}
               {hasWorkoutOnDay && !isSelected && (
-                <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-cyan-500 rounded-full" />
+                <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-slate-800 rounded-full" />
               )}
             </button>
           );
@@ -139,7 +139,7 @@ export function WorkoutCalendar({
       {/* Legend */}
       <div className="mt-6 pt-4 border-t border-slate-200 space-y-2">
         <div className="flex items-center gap-2 text-sm">
-          <div className="w-3 h-3 bg-cyan-100 rounded" />
+          <div className="w-3 h-3 bg-slate-200 rounded" />
           <span className="text-slate-600">Workout logged</span>
         </div>
         <div className="flex items-center gap-2 text-sm">

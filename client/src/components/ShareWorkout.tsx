@@ -95,8 +95,8 @@ export function ShareWorkout({ workoutData, trigger }: ShareWorkoutProps) {
 
       // Background gradient
       const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      gradient.addColorStop(0, "#06b6d4"); // cyan-500
-      gradient.addColorStop(1, "#0891b2"); // cyan-600
+      gradient.addColorStop(0, "#1e293b"); // slate-800
+      gradient.addColorStop(1, "#0f172a"); // slate-900
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -184,7 +184,7 @@ export function ShareWorkout({ workoutData, trigger }: ShareWorkoutProps) {
             </div>
 
             <div className="flex flex-col gap-2">
-              <Button onClick={handleShare} className="w-full bg-cyan-500 hover:bg-cyan-600">
+              <Button onClick={handleShare} className="w-full bg-sky-500 hover:bg-sky-600">
                 <Share2 className="w-4 h-4 mr-2" />
                 Share via...
               </Button>

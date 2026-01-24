@@ -39,7 +39,7 @@ export function UserMenu() {
           variant="ghost"
           className="w-full flex items-center gap-3 justify-start hover:bg-slate-100 h-auto py-3 px-3"
         >
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center text-white font-semibold text-lg shadow-sm">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center text-white font-semibold text-lg shadow-sm">
             {user.name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || "U"}
           </div>
           <div className="flex flex-col items-start flex-1 min-w-0">
