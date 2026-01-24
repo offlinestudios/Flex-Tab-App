@@ -438,7 +438,7 @@ export default function Home() {
             <Menu className="w-6 h-6 text-slate-700" />
           </button>
           <div className="flex items-center gap-3">
-            <img src="/flextab-logo.png" alt="FlexTab" className="h-8 w-auto" />
+            <img src="/flextab-logo.png?v=2" alt="FlexTab" className="h-8 w-auto" />
             <div>
               <h1 className="text-2xl font-bold tracking-tight" style={{fontFamily: 'Satoshi, sans-serif'}}>
                 flextab
