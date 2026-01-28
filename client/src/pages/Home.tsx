@@ -451,7 +451,7 @@ export default function Home() {
       <div className="flex">
         {/* Sidebar */}
         <aside
-          className={`fixed md:relative w-80 bg-white border-r border-slate-200 h-[calc(100vh-80px)] overflow-y-auto transition-transform duration-300 z-30 ${
+          className={`fixed w-80 bg-white border-r border-slate-200 h-[calc(100vh-80px)] overflow-y-auto transition-transform duration-300 z-30 ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >
@@ -478,7 +478,9 @@ export default function Home() {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-4 md:p-8">
+        <main className={`flex-1 p-4 md:p-8 transition-all duration-300 ${
+          sidebarOpen ? "ml-80" : "ml-0"
+        }`}>
           <div className="max-w-6xl mx-auto">
             {/* Tabs */}
             <Tabs defaultValue="active" className="w-full">
@@ -499,8 +501,8 @@ export default function Home() {
 
               {/* Active Tab */}
               <TabsContent value="active" className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  <div className="lg:col-span-2 space-y-4">
+                <div className="flex flex-col lg:grid lg:grid-cols-3 gap-6">
+                  <div className="lg:col-span-2 space-y-4 order-1">
                     {/* Today's Workout Summary */}
                     {(() => {
                       const today = new Date().toLocaleDateString();
@@ -585,7 +587,7 @@ export default function Home() {
                       ))
                     )}
                   </div>
-                  <div className="lg:col-span-1">
+                  <div className="lg:col-span-1 order-2">
                     <WorkoutCalendar
                       workoutDates={workoutSessions.map(s => s.date)}
                       selectedDate={selectedDate}
@@ -1064,7 +1066,7 @@ function ExerciseCard({ exercise, onLogSet, onRemove }: ExerciseCardProps) {
       </div>
       <Button
         onClick={() => onLogSet(exercise.name, sets, reps, weight)}
-        className="w-full bg-sky-500 hover:bg-sky-600 active:bg-sky-700 text-white font-medium transition-colors duration-75"
+        className="w-full bg-slate-800 hover:bg-slate-900 active:bg-black text-white font-medium transition-colors duration-75"
       >
         Log Set
       </Button>

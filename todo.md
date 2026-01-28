@@ -134,3 +134,13 @@
 - [x] Test all components with new color system
 - [x] Run vitest tests (14/14 passed - no functionality broken)
 - [ ] Create checkpoint after color system transformation
+
+## Bug Fixes & UX Improvements (Jan 28)
+- [x] Fix "Log Set" button still using bright cyan - changed to charcoal (bg-slate-800)
+- [x] Update Progress charts from cyan to charcoal/slate colors (stroke: #334155, dots: #1e293b)
+- [x] Make sidebar sticky/fixed when scrolling - removed md:relative, kept fixed positioning
+- [x] Add left margin to main content when sidebar is open (ml-80)
+- [x] Fix mobile Today's Workout layout - changed to flex-col with proper ordering
+- [x] Test all fixes on desktop and mobile views
+- [x] Run vitest tests (14/14 passed)
+- [ ] Create checkpoint after fixes

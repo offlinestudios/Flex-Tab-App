@@ -78,9 +78,9 @@ export default function ProgressCharts({ setLogs, measurements }: ProgressCharts
                     <Line 
                       type="monotone" 
                       dataKey="weight" 
-                      stroke="#00bcd4" 
+                      stroke="#334155" 
                       strokeWidth={3}
-                      dot={{ fill: '#00bcd4', r: 5 }}
+                      dot={{ fill: '#1e293b', r: 5 }}
                       activeDot={{ r: 7 }}
                       name="Weight"
                       isAnimationActive={true}
