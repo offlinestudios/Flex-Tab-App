@@ -143,4 +143,11 @@
 - [x] Fix mobile Today's Workout layout - changed to flex-col with proper ordering
 - [x] Test all fixes on desktop and mobile views
 - [x] Run vitest tests (14/14 passed)
+- [x] Create checkpoint after fixes (version: 60f0aa25)
+
+## New UX Issues (2026-01-28 Evening)
+- [x] Reset exercise input values to 0 or blank when exercise is selected (currently shows 3 sets, 10 reps, 0 weight)
+- [x] Move Today's Workout container below exercise cards (currently above)
+- [x] Fix Today's Workout visibility on mobile (not showing)
+- [x] Test all fixes on desktop and mobile (14/14 vitest tests passed)
 - [ ] Create checkpoint after fixes

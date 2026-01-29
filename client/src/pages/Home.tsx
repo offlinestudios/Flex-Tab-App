@@ -502,8 +502,30 @@ export default function Home() {
               {/* Active Tab */}
               <TabsContent value="active" className="space-y-6">
                 <div className="flex flex-col lg:grid lg:grid-cols-3 gap-6">
-                  <div className="lg:col-span-2 space-y-4 order-1">
-                    {/* Today's Workout Summary */}
+                  <div className="lg:col-span-2 space-y-4">
+                    {/* Exercise Cards - shown first on mobile, first on desktop */}
+                    {selectedExercises.length === 0 ? (
+                      <Card className="p-12 text-center bg-white border-slate-200">
+                        <p className="text-slate-600 text-lg mb-2">
+                          No exercises selected yet
+                        </p>
+                        <p className="text-slate-500">
+                          Use the sidebar to add exercises or load a preset workout plan
+                        </p>
+                      </Card>
+                    ) : (
+                      selectedExercises.map((exercise) => (
+                        <ExerciseCard
+                          key={exercise.id}
+                          exercise={exercise}
+                          onLogSet={handleLogSet}
+                          onRemove={(exerciseId) => {
+                            setSelectedExercises(selectedExercises.filter((e) => e.id !== exerciseId));
+                          }}
+                        />
+                      ))
+                    )}
+                    {/* Today's Workout Summary - shown after exercise cards */}
                     {(() => {
                       const today = new Date().toLocaleDateString();
                       const todaySession = workoutSessions.find(s => s.date === today);
@@ -565,29 +587,8 @@ export default function Home() {
                       }
                       return null;
                     })()}
-                    {selectedExercises.length === 0 ? (
-                      <Card className="p-12 text-center bg-white border-slate-200">
-                        <p className="text-slate-600 text-lg mb-2">
-                          No exercises selected yet
-                        </p>
-                        <p className="text-slate-500">
-                          Use the sidebar to add exercises or load a preset workout plan
-                        </p>
-                      </Card>
-                    ) : (
-                      selectedExercises.map((exercise) => (
-                        <ExerciseCard
-                          key={exercise.id}
-                          exercise={exercise}
-                          onLogSet={handleLogSet}
-                          onRemove={(exerciseId) => {
-                            setSelectedExercises(selectedExercises.filter((e) => e.id !== exerciseId));
-                          }}
-                        />
-                      ))
-                    )}
                   </div>
-                  <div className="lg:col-span-1 order-2">
+                  <div className="lg:col-span-1">
                     <WorkoutCalendar
                       workoutDates={workoutSessions.map(s => s.date)}
                       selectedDate={selectedDate}
@@ -905,8 +906,8 @@ interface ExerciseCardProps {
 }
 
 function ExerciseCard({ exercise, onLogSet, onRemove }: ExerciseCardProps) {
-  const [sets, setSets] = useState(3);
-  const [reps, setReps] = useState(10);
+  const [sets, setSets] = useState(0);
+  const [reps, setReps] = useState(0);
   const [weight, setWeight] = useState(0);
 
   const handleSetChange = (value: string) => {
