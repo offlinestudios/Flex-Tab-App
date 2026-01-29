@@ -150,4 +150,15 @@
 - [x] Move Today's Workout container below exercise cards (currently above)
 - [x] Fix Today's Workout visibility on mobile (not showing)
 - [x] Test all fixes on desktop and mobile (14/14 vitest tests passed)
-- [ ] Create checkpoint after fixes
+- [x] Create checkpoint after fixes (version: d7de6216)
+
+## Landing Page (2026-01-28)
+- [x] Create Landing.tsx component with hero section
+- [x] Add key features section showcasing app capabilities (6 feature cards)
+- [x] Add call-to-action button to sign up/login
+- [x] Update App.tsx routing to show landing page for non-authenticated users (/ = landing, /app = dashboard)
+- [x] Match existing charcoal/neutral color scheme with warm cream background
+- [x] Add auth protection to Settings page
+- [x] Update OAuth redirect to go to /app after login
+- [x] Test landing page on desktop and mobile (14/14 vitest tests passed)
+- [ ] Create checkpoint after landing page implementation

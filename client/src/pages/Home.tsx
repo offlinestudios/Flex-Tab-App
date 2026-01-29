@@ -295,10 +295,10 @@ export default function Home() {
     }
   }, [measurementsData]);
 
-  // Redirect to login if not authenticated (after all hooks)
+  // Redirect to landing page if not authenticated (after all hooks)
   useEffect(() => {
     if (!loading && !isAuthenticated) {
-      window.location.href = getLoginUrl();
+      window.location.href = "/";
     }
   }, [loading, isAuthenticated]);
 

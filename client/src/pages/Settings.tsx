@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -15,7 +15,31 @@ import { toast } from "sonner";
 import { User, Scale, Palette, Bell, Save } from "lucide-react";
 
 export default function Settings() {
-  const { user } = useAuth();
+  const { user, loading, isAuthenticated } = useAuth();
+  
+  // Redirect to landing page if not authenticated
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      window.location.href = "/";
+    }
+  }, [loading, isAuthenticated]);
+  
+  // Show loading state while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{background: 'linear-gradient(to bottom right, #F7F5F2, #F3F1EE)'}}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-800 mx-auto mb-4"></div>
+          <p style={{color: '#6B6F76'}}>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // Don't render anything if not authenticated (will redirect)
+  if (!isAuthenticated) {
+    return null;
+  }
   const [weightUnit, setWeightUnit] = useState(
     localStorage.getItem("weightUnit") || "lbs"
   );
