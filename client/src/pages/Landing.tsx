@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { InstallPrompt } from "@/components/InstallPrompt";
 import { getLoginUrl } from "@/const";
 import { BarChart3, Calendar, TrendingUp, Dumbbell, Target, Share2 } from "lucide-react";
 
@@ -39,6 +40,8 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen" style={{background: 'linear-gradient(to bottom right, #F7F5F2, #F3F1EE)'}}>
+      {/* PWA Install Prompt Banner */}
+      <InstallPrompt />
       {/* Header */}
       <header className="sticky top-0 z-40 bg-white shadow-sm" style={{borderBottom: '1px solid #E6E4E1'}}>
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">

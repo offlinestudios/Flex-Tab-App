@@ -184,4 +184,15 @@
 - [x] Run vitest tests (14/14 passed)
 - [ ] User to test PWA installation on iOS (Safari Share → Add to Home Screen)
 - [ ] User to test PWA installation on Android (Chrome menu → Install app)
+- [x] Create checkpoint after implementation (version: 4a66996d)
+
+## PWA Install Prompt Banner (2026-01-30)
+- [x] Create InstallPrompt component that detects beforeinstallprompt event
+- [x] Add banner UI with install button and dismiss option (slideUp animation)
+- [x] Store dismiss preference in localStorage to prevent repeated prompts
+- [x] Add InstallPrompt to Landing page
+- [x] Verify no TypeScript errors
+- [x] Run vitest tests (14/14 passed)
+- [ ] User to test on Chrome/Edge (Android/Desktop) where beforeinstallprompt is supported
+- [ ] Verify banner doesn't show on iOS (uses different install method)
 - [ ] Create checkpoint after implementation
