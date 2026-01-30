@@ -161,4 +161,13 @@
 - [x] Add auth protection to Settings page
 - [x] Update OAuth redirect to go to /app after login
 - [x] Test landing page on desktop and mobile (14/14 vitest tests passed)
-- [ ] Create checkpoint after landing page implementation
+- [x] Create checkpoint after landing page implementation (version: 33f741db)
+
+## OAuth Callback Bug (2026-01-29)
+- [x] Investigate OAuth callback handler error: "code and state are required"
+- [x] Fix callback URL parameter handling (removed redirect=/app query param from callback URL)
+- [x] Update OAuth callback handler to redirect to /app after successful authentication
+- [x] Restart server to apply changes
+- [x] Run vitest tests (14/14 passed)
+- [ ] User to test OAuth flow on mobile devices
+- [ ] Create checkpoint after fix
