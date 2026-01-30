@@ -170,4 +170,18 @@
 - [x] Restart server to apply changes
 - [x] Run vitest tests (14/14 passed)
 - [ ] User to test OAuth flow on mobile devices
-- [ ] Create checkpoint after fix
+- [x] Create checkpoint after fix (version: e089f19a)
+
+## Progressive Web App (PWA) Implementation (2026-01-30)
+- [x] Revert incomplete Remember Me changes from Landing.tsx
+- [x] Create web app manifest (manifest.json) with app metadata
+- [x] Generate app icons in multiple sizes (192x192, 512x512)
+- [x] Implement service worker for offline caching and fast loading
+- [x] Register service worker in client code (main.tsx)
+- [x] Add manifest link and meta tags to index.html
+- [x] Add Apple-specific PWA meta tags for iOS support
+- [x] Restart server and verify no errors
+- [x] Run vitest tests (14/14 passed)
+- [ ] User to test PWA installation on iOS (Safari Share → Add to Home Screen)
+- [ ] User to test PWA installation on Android (Chrome menu → Install app)
+- [ ] Create checkpoint after implementation
