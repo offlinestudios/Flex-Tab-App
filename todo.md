@@ -206,4 +206,12 @@
 - [x] Restart server to apply changes
 - [x] Run vitest tests (14/14 passed)
 - [ ] User to test new icon visibility on mobile home screen (remove old app first, then reinstall)
-- [ ] Create checkpoint after icon replacement
+- [x] Create checkpoint after icon replacement (version: 5652ece4)
+
+## Sidebar Height Fix (2026-01-31)
+- [x] Read Home.tsx to identify sidebar component structure
+- [x] Update sidebar height from h-[calc(100vh-80px)] to h-screen for full viewport coverage
+- [x] Verify no TypeScript errors
+- [x] Run vitest tests (14/14 passed)
+- [ ] User to test sidebar extends to bottom of screen on mobile PWA
+- [ ] Create checkpoint after fix

@@ -451,7 +451,7 @@ export default function Home() {
       <div className="flex">
         {/* Sidebar */}
         <aside
-          className={`fixed w-80 bg-white border-r border-slate-200 h-[calc(100vh-80px)] overflow-y-auto transition-transform duration-300 z-30 ${
+          className={`fixed w-80 bg-white border-r border-slate-200 h-screen overflow-y-auto transition-transform duration-300 z-30 ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >
