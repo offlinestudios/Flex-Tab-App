@@ -195,4 +195,15 @@
 - [x] Run vitest tests (14/14 passed)
 - [ ] User to test on Chrome/Edge (Android/Desktop) where beforeinstallprompt is supported
 - [ ] Verify banner doesn't show on iOS (uses different install method)
-- [ ] Create checkpoint after implementation
+- [x] Create checkpoint after implementation (version: 5a3599ac)
+
+## PWA Icon Replacement (2026-01-31)
+- [x] Copy new FlexTab "F" logo to project
+- [x] Generate 192x192 and 512x512 PWA icons from new logo (with white background)
+- [x] Generate 180x180 Apple touch icon from new logo
+- [x] Update manifest.json icon references (icon-192x192.png, icon-512x512.png)
+- [x] Remove old icon files to avoid confusion
+- [x] Restart server to apply changes
+- [x] Run vitest tests (14/14 passed)
+- [ ] User to test new icon visibility on mobile home screen (remove old app first, then reinstall)
+- [ ] Create checkpoint after icon replacement
