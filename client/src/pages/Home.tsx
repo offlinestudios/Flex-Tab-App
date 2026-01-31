@@ -370,7 +370,12 @@ export default function Home() {
   };
 
   const handleDeleteLog = async (logId: string, sessionDate: string) => {
-    await deleteSetLogMutation.mutateAsync({ id: parseInt(logId) });
+    try {
+      await deleteSetLogMutation.mutateAsync({ id: parseInt(logId) });
+    } catch (error) {
+      console.error("Failed to delete set:", error);
+      alert("Failed to delete set. Please try again.");
+    }
   };
 
   const handleEditLog = (log: SetLog) => {
@@ -901,7 +906,7 @@ export default function Home() {
 
 interface ExerciseCardProps {
   exercise: Exercise;
-  onLogSet: (exercise: string, sets: number, reps: number, weight: number) => void;
+  onLogSet: (exercise: string, sets: number, reps: number, weight: number) => Promise<void>;
   onRemove?: (exerciseId: string) => void;
 }
 
@@ -909,6 +914,7 @@ function ExerciseCard({ exercise, onLogSet, onRemove }: ExerciseCardProps) {
   const [sets, setSets] = useState(0);
   const [reps, setReps] = useState(0);
   const [weight, setWeight] = useState(0);
+  const [isLogging, setIsLogging] = useState(false);
 
   const handleSetChange = (value: string) => {
     if (value === "") {
@@ -1066,10 +1072,29 @@ function ExerciseCard({ exercise, onLogSet, onRemove }: ExerciseCardProps) {
         </div>
       </div>
       <Button
-        onClick={() => onLogSet(exercise.name, sets, reps, weight)}
-        className="w-full bg-slate-800 hover:bg-slate-900 active:bg-black text-white font-medium transition-colors duration-75"
+        onClick={async () => {
+          if (sets === 0 || reps === 0) {
+            alert("Please enter sets and reps");
+            return;
+          }
+          setIsLogging(true);
+          try {
+            await onLogSet(exercise.name, sets, reps, weight);
+            // Reset form after successful log
+            setSets(0);
+            setReps(0);
+            setWeight(0);
+          } catch (error) {
+            console.error("Failed to log set:", error);
+            alert("Failed to log set. Please try again.");
+          } finally {
+            setIsLogging(false);
+          }
+        }}
+        disabled={isLogging}
+        className="w-full bg-slate-800 hover:bg-slate-900 active:bg-black text-white font-medium transition-colors duration-75 disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        Log Set
+        {isLogging ? "Logging..." : "Log Set"}
       </Button>
     </Card>
   );

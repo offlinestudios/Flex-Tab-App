@@ -74,11 +74,11 @@ export const workoutRouter = router({
     .input(
       z.object({
         date: z.string(), // Format: "M/D/YYYY"
-        weight: z.number().int().nonnegative(),
-        chest: z.number().int().nonnegative(),
-        waist: z.number().int().nonnegative(),
-        arms: z.number().int().nonnegative(),
-        thighs: z.number().int().nonnegative(),
+        weight: z.number().nonnegative(),
+        chest: z.number().nonnegative(),
+        waist: z.number().nonnegative(),
+        arms: z.number().nonnegative(),
+        thighs: z.number().nonnegative(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -104,11 +104,11 @@ export const workoutRouter = router({
     .input(
       z.object({
         id: z.number().int().positive(),
-        weight: z.number().int().nonnegative().optional(),
-        chest: z.number().int().nonnegative().optional(),
-        waist: z.number().int().nonnegative().optional(),
-        arms: z.number().int().nonnegative().optional(),
-        thighs: z.number().int().nonnegative().optional(),
+        weight: z.number().nonnegative().optional(),
+        chest: z.number().nonnegative().optional(),
+        waist: z.number().nonnegative().optional(),
+        arms: z.number().nonnegative().optional(),
+        thighs: z.number().nonnegative().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {

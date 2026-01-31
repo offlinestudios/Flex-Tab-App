@@ -214,4 +214,17 @@
 - [x] Verify no TypeScript errors
 - [x] Run vitest tests (14/14 passed)
 - [ ] User to test sidebar extends to bottom of screen on mobile PWA
-- [ ] Create checkpoint after fix
+- [x] Create checkpoint after fix (version: 11d2007b)
+
+## Critical Button Functionality Bugs (2026-01-31)
+- [x] Investigate why delete buttons (trash icons) don't work in History tab (missing error handling)
+- [x] Fix delete button functionality for logged sets (added try-catch error handling)
+- [x] Investigate why Save Measurement button doesn't save data (schema expected integers, users entered decimals)
+- [x] Fix Save Measurement button functionality (changed schema to accept decimal values)
+- [x] Investigate why users can only log one set per exercise (form didn't reset after logging)
+- [x] Fix ability to log multiple sets for the same exercise (added form reset after successful log)
+- [x] Restart server to apply fixes
+- [x] Verify no TypeScript errors
+- [x] Run vitest tests (14/14 passed)
+- [ ] User to test all button fixes on mobile PWA
+- [ ] Create checkpoint after all fixes
