@@ -248,4 +248,14 @@
 - [x] Verify no TypeScript errors
 - [x] Run vitest tests (14/14 passed)
 - [ ] User to test new icons load correctly on iOS after reinstall
-- [ ] Create checkpoint after implementation
+- [x] Create checkpoint after implementation (version: f074c16d)
+
+## Measurement Persistence Bug (2026-02-01)
+- [x] Investigate why measurements don't persist when switching tabs (form required ALL 5 fields to be filled)
+- [x] Check if measurements are being saved to database via tRPC (yes, correctly implemented)
+- [x] Check if measurements are being loaded from database on tab switch (yes, correctly implemented)
+- [x] Fix measurement persistence issue (changed validation to only require weight, other fields optional with 0 default)
+- [x] Verify no TypeScript errors
+- [x] Run vitest tests (14/14 passed)
+- [ ] User to test measurement save/load across tab switches
+- [ ] Create checkpoint after fix

@@ -41,13 +41,8 @@ export function BodyMeasurements() {
   });
 
   const handleAddMeasurement = async () => {
-    if (
-      formData.weight &&
-      formData.chest &&
-      formData.waist &&
-      formData.arms &&
-      formData.thighs
-    ) {
+    // Only weight is required, other fields are optional
+    if (formData.weight) {
       const today = new Date().toLocaleDateString("en-US", {
         year: "numeric",
         month: "numeric",
@@ -57,10 +52,10 @@ export function BodyMeasurements() {
       await addMeasurementMutation.mutateAsync({
         date: today,
         weight: parseFloat(formData.weight),
-        chest: parseFloat(formData.chest),
-        waist: parseFloat(formData.waist),
-        arms: parseFloat(formData.arms),
-        thighs: parseFloat(formData.thighs),
+        chest: formData.chest ? parseFloat(formData.chest) : 0,
+        waist: formData.waist ? parseFloat(formData.waist) : 0,
+        arms: formData.arms ? parseFloat(formData.arms) : 0,
+        thighs: formData.thighs ? parseFloat(formData.thighs) : 0,
       });
 
       setFormData({
@@ -86,20 +81,15 @@ export function BodyMeasurements() {
   };
 
   const handleSaveEdit = async (measurementId: number) => {
-    if (
-      formData.weight &&
-      formData.chest &&
-      formData.waist &&
-      formData.arms &&
-      formData.thighs
-    ) {
+    // Only weight is required, other fields are optional
+    if (formData.weight) {
       await updateMeasurementMutation.mutateAsync({
         id: measurementId,
         weight: parseFloat(formData.weight),
-        chest: parseFloat(formData.chest),
-        waist: parseFloat(formData.waist),
-        arms: parseFloat(formData.arms),
-        thighs: parseFloat(formData.thighs),
+        chest: formData.chest ? parseFloat(formData.chest) : 0,
+        waist: formData.waist ? parseFloat(formData.waist) : 0,
+        arms: formData.arms ? parseFloat(formData.arms) : 0,
+        thighs: formData.thighs ? parseFloat(formData.thighs) : 0,
       });
 
       setEditingId(null);
