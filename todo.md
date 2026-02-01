@@ -302,12 +302,21 @@
 - [x] Root cause: calling trpc.useUtils() inside mutation callbacks violated Rules of Hooks
 - [x] Solution: moved useUtils() to component level, passed utils reference to callbacks
 - [x] Verified delete works on desktop for both measurements and workout sets
+- [x] Removed debug console.logs from BodyMeasurements component
+- [x] Run vitest tests (14/14 passed)
 - [ ] User to test delete functionality on mobile browser and PWA
-- [ ] Test delete mutations are being called correctly
-- [ ] Verify backend delete endpoints are working
-- [ ] Fix desktop measurement display issue
-- [ ] Fix delete functionality for measurements
+- [x] Create checkpoint after fixes (version: c50e2988)
 - [ ] Fix delete functionality for workout sets
 - [ ] Test on desktop browser
 - [ ] Test on mobile browser
 - [ ] Create checkpoint after fixes
+
+## Consecutive Delete Bug (2026-02-01)
+- [x] User can delete first workout set, but cannot delete subsequent sets (reported issue)
+- [x] Added debug logging to investigate
+- [x] Tested consecutive deletes on desktop - both worked successfully
+- [x] Root cause: Issue was from previous version before fixing invalid hook call
+- [x] Removed debug console.logs
+- [x] Verified delete functionality works correctly for multiple consecutive deletes
+- [ ] User to test on mobile browser and PWA
+- [ ] Create checkpoint after confirmation
