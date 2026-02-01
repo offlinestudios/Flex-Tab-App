@@ -268,4 +268,29 @@
 - [x] Convert number inputs to strings for database, parse strings to numbers for frontend
 - [x] Update vitest tests to match new string decimal format (14/14 tests passing)
 - [ ] User to test with various field combinations (just chest, just arms, weight+waist, etc.)
-- [ ] Create checkpoint after fixes
+- [x] Create checkpoint after fixes (version: fddfa90c)
+
+## Desktop Measurement Display Issue (2026-02-01)
+- [ ] Investigate why measurements display on mobile PWA but not on desktop browser
+- [ ] Check if it's a caching issue (service worker, browser cache)
+- [ ] Check if it's a display/rendering issue specific to desktop
+- [ ] Check browser console for errors on desktop
+- [ ] Test measurement save/load flow on desktop
+- [ ] Verify tRPC query is fetching data correctly on desktop
+- [ ] Fix desktop-specific issue
+- [ ] Test on both desktop and mobile to confirm fix
+- [ ] Create checkpoint after fix
+
+## Optimistic Updates for Measurements (2026-02-01)
+- [x] Review current measurement mutation implementation in BodyMeasurements.tsx
+- [x] Implement optimistic updates for addMeasurement (show immediately in UI)
+- [x] Implement optimistic updates for updateMeasurement (instant edit feedback)
+- [x] Implement optimistic updates for deleteMeasurement (instant removal)
+- [x] Add rollback on error (revert UI if server fails)
+- [x] Verify no TypeScript errors
+- [x] Run vitest tests (14/14 passed)
+- [ ] User to test on desktop browser
+- [ ] User to test on mobile browser
+- [ ] User to test on PWA
+- [ ] User to verify multi-device sync behavior
+- [ ] Create checkpoint after user testing

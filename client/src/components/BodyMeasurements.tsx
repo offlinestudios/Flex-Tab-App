@@ -23,19 +23,93 @@ export function BodyMeasurements() {
 
   // Mutations
   const addMeasurementMutation = trpc.workout.addMeasurement.useMutation({
-    onSuccess: () => {
+    onMutate: async (newMeasurement) => {
+      // Cancel outgoing refetches
+      await trpc.useUtils().workout.getMeasurements.cancel();
+      
+      // Snapshot previous value
+      const previousMeasurements = trpc.useUtils().workout.getMeasurements.getData();
+      
+      // Optimistically update to the new value
+      trpc.useUtils().workout.getMeasurements.setData(undefined, (old) => {
+        const optimisticMeasurement = {
+          id: Date.now(), // Temporary ID
+          userId: 0, // Will be set by server
+          ...newMeasurement,
+          createdAt: new Date(),
+        };
+        return old ? [...old, optimisticMeasurement] : [optimisticMeasurement];
+      });
+      
+      // Return context with previous value
+      return { previousMeasurements };
+    },
+    onError: (err, newMeasurement, context) => {
+      // Rollback on error
+      if (context?.previousMeasurements) {
+        trpc.useUtils().workout.getMeasurements.setData(undefined, context.previousMeasurements);
+      }
+    },
+    onSettled: () => {
+      // Refetch to ensure server state
       trpc.useUtils().workout.getMeasurements.invalidate();
     },
   });
 
   const updateMeasurementMutation = trpc.workout.updateMeasurement.useMutation({
-    onSuccess: () => {
+    onMutate: async (updatedMeasurement) => {
+      // Cancel outgoing refetches
+      await trpc.useUtils().workout.getMeasurements.cancel();
+      
+      // Snapshot previous value
+      const previousMeasurements = trpc.useUtils().workout.getMeasurements.getData();
+      
+      // Optimistically update
+      trpc.useUtils().workout.getMeasurements.setData(undefined, (old) => {
+        if (!old) return old;
+        return old.map((measurement) =>
+          measurement.id === updatedMeasurement.id
+            ? { ...measurement, ...updatedMeasurement }
+            : measurement
+        );
+      });
+      
+      return { previousMeasurements };
+    },
+    onError: (err, updatedMeasurement, context) => {
+      // Rollback on error
+      if (context?.previousMeasurements) {
+        trpc.useUtils().workout.getMeasurements.setData(undefined, context.previousMeasurements);
+      }
+    },
+    onSettled: () => {
       trpc.useUtils().workout.getMeasurements.invalidate();
     },
   });
 
   const deleteMeasurementMutation = trpc.workout.deleteMeasurement.useMutation({
-    onSuccess: () => {
+    onMutate: async (deletedMeasurement) => {
+      // Cancel outgoing refetches
+      await trpc.useUtils().workout.getMeasurements.cancel();
+      
+      // Snapshot previous value
+      const previousMeasurements = trpc.useUtils().workout.getMeasurements.getData();
+      
+      // Optimistically remove from list
+      trpc.useUtils().workout.getMeasurements.setData(undefined, (old) => {
+        if (!old) return old;
+        return old.filter((measurement) => measurement.id !== deletedMeasurement.id);
+      });
+      
+      return { previousMeasurements };
+    },
+    onError: (err, deletedMeasurement, context) => {
+      // Rollback on error
+      if (context?.previousMeasurements) {
+        trpc.useUtils().workout.getMeasurements.setData(undefined, context.previousMeasurements);
+      }
+    },
+    onSettled: () => {
       trpc.useUtils().workout.getMeasurements.invalidate();
     },
   });
