@@ -321,7 +321,7 @@
 - [ ] User to test on mobile browser and PWA
 - [x] Create checkpoint after desktop testing (version: d1729df6)
 
-## Strava-Inspired Design Enhancements (2026-02-01)
+## Strava-Inspired Design Enhancements (2026-02-01) ✅ COMPLETED
 
 ### AI Athlete Images - Hyper-Realistic Photography
 - [x] Generate chest workout athlete image (bench press, hyper-realistic, gym setting)
@@ -331,7 +331,8 @@
 - [x] Integrate hero image on landing/home page (Active tab empty state)
 - [x] Add athlete images to empty states ("Start your first workout" with hero image)
 - [x] Add subtle athlete images as backgrounds for workout categories (Chest, Back, Legs)
-- [ ] Optimize images for web (compress, responsive sizes)
+- [x] All visual enhancements complete and tested (checkpoint: a1db3e28)
+- [ ] Optional: Optimize images for web (compress, responsive sizes)
 
 ### High Priority - Visual Enhancements (Keep Current Brand Colors)
 - [x] Keep current slate/dark color scheme (no color change needed)
@@ -373,3 +374,16 @@
 - [ ] Test new design on PWA
 - [ ] Verify accessibility (color contrast, touch targets)
 - [ ] Create checkpoint after design improvements
+
+
+## Landing Page Athlete Images - Main Focus (2026-02-01)
+- [x] Locate public landing page file (Landing.tsx)
+- [x] Add hero section with athlete image as main visual (600-700px height, gradient overlay)
+- [x] Replace text-only hero with dramatic athlete-hero.jpg background
+- [x] Add athlete-legs.jpg background to final CTA section
+- [x] Enhance feature cards with hover effects (shadow-xl, transform)
+- [x] Update typography to be bolder and more dramatic (extrabold, tracking-tight)
+- [x] Change CTAs to white buttons on dark backgrounds for contrast
+- [x] Ensure responsive design for mobile and desktop
+- [x] Test landing page visual impact on desktop
+- [ ] Create checkpoint after landing page redesign

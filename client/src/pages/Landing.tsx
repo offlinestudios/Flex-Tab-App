@@ -62,33 +62,41 @@ export default function Landing() {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="container mx-auto px-4 py-20 md:py-32">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-5xl md:text-6xl font-bold mb-6" style={{color: '#0B0B0C'}}>
-            Track Your Fitness
-            <br />
-            <span style={{color: '#1F2937'}}>With Precision</span>
-          </h2>
-          <p className="text-xl md:text-2xl mb-8" style={{color: '#6B6F76', maxWidth: '600px', margin: '0 auto 2rem'}}>
-            A professional workout tracking tool for serious lifters. Log sets, track progress, and hit your goals.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              onClick={() => window.location.href = getLoginUrl()}
-              size="lg"
-              className="bg-slate-800 hover:bg-slate-900 text-white text-lg px-8 py-6"
-            >
-              Get Started Free
-            </Button>
-            <Button 
-              variant="outline"
-              size="lg"
-              onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
-              className="border-slate-300 text-slate-800 text-lg px-8 py-6"
-            >
-              Learn More
-            </Button>
+      {/* Hero Section with Athlete Image */}
+      <section className="relative h-[600px] md:h-[700px] overflow-hidden">
+        <img 
+          src="/images/athlete-hero.jpg" 
+          alt="Athlete training with intensity" 
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-black/40" />
+        <div className="relative container mx-auto px-4 h-full flex items-center">
+          <div className="max-w-2xl">
+            <h2 className="text-5xl md:text-7xl font-extrabold mb-6 text-white tracking-tight">
+              Track Your Fitness
+              <br />
+              <span className="text-slate-200">With Precision</span>
+            </h2>
+            <p className="text-xl md:text-2xl mb-8 text-white/90 leading-relaxed">
+              A professional workout tracking tool for serious lifters. Log sets, track progress, and hit your goals.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Button 
+                onClick={() => window.location.href = getLoginUrl()}
+                size="lg"
+                className="bg-white text-slate-900 hover:bg-slate-100 text-lg px-8 py-6 font-semibold shadow-xl"
+              >
+                Get Started Free
+              </Button>
+              <Button 
+                variant="outline"
+                size="lg"
+                onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
+                className="border-2 border-white text-white hover:bg-white/10 text-lg px-8 py-6 font-semibold"
+              >
+                Learn More
+              </Button>
+            </div>
           </div>
         </div>
       </section>
@@ -107,7 +115,7 @@ export default function Landing() {
             {features.map((feature, index) => (
               <Card 
                 key={index} 
-                className="p-6 bg-white border-slate-200 hover:shadow-lg transition-shadow"
+                className="p-6 bg-white border-slate-200 hover:shadow-xl transition-all transform hover:-translate-y-1"
               >
                 <div className="mb-4 text-slate-800">
                   {feature.icon}
@@ -124,24 +132,30 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="container mx-auto px-4 py-20">
-        <div className="max-w-4xl mx-auto">
-          <Card className="p-12 bg-white border-slate-200 text-center">
-            <h3 className="text-3xl md:text-4xl font-bold mb-4" style={{color: '#0B0B0C'}}>
+      {/* CTA Section with Athlete Background */}
+      <section className="relative h-[400px] overflow-hidden">
+        <img 
+          src="/images/athlete-legs.jpg" 
+          alt="Athlete performing squats" 
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-black/70" />
+        <div className="relative container mx-auto px-4 h-full flex items-center justify-center">
+          <div className="max-w-3xl text-center">
+            <h3 className="text-4xl md:text-5xl font-extrabold mb-6 text-white tracking-tight">
               Ready to Track Your Progress?
             </h3>
-            <p className="text-lg mb-8" style={{color: '#6B6F76'}}>
+            <p className="text-xl mb-8 text-white/90">
               Join FlexTab today and take control of your fitness journey
             </p>
             <Button 
               onClick={() => window.location.href = getLoginUrl()}
               size="lg"
-              className="bg-slate-800 hover:bg-slate-900 text-white text-lg px-8 py-6"
+              className="bg-white text-slate-900 hover:bg-slate-100 text-lg px-10 py-6 font-semibold shadow-xl"
             >
               Start Tracking Now
             </Button>
-          </Card>
+          </div>
         </div>
       </section>
 
