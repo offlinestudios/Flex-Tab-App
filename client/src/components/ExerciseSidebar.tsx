@@ -23,13 +23,27 @@ export function ExerciseSidebar({
   return (
     <div className="space-y-3">
       {/* Preset Exercises with Collapsible Categories */}
-      {Object.entries(groupedExercises).map(([category, exercises]) => (
+      {Object.entries(groupedExercises).map(([category, exercises]) => {
+        // Map categories to athlete images
+        const categoryImages: Record<string, string> = {
+          'Chest': '/images/athlete-chest.jpg',
+          'Back': '/images/athlete-back.jpg',
+          'Legs': '/images/athlete-legs.jpg',
+        };
+        const bgImage = categoryImages[category];
+        
+        return (
         <div key={category} className="border border-slate-200 rounded-lg overflow-hidden">
           <button
             onClick={() => onToggleCategory(category)}
-            className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors"
+            className="relative w-full flex items-center justify-between px-4 py-3 hover:bg-slate-100 transition-colors overflow-hidden"
+            style={bgImage ? {
+              backgroundImage: `linear-gradient(to right, rgba(248, 250, 252, 0.95), rgba(248, 250, 252, 0.98)), url(${bgImage})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            } : { backgroundColor: '#f8fafc' }}
           >
-            <h3 className="font-semibold text-slate-700 text-sm uppercase tracking-wide">
+            <h3 className="font-semibold text-slate-700 text-sm uppercase tracking-wide relative z-10">
               {category}
             </h3>
             <ChevronDown
@@ -56,7 +70,8 @@ export function ExerciseSidebar({
             </div>
           )}
         </div>
-      ))}
+      );
+      })}
 
       {/* Custom Exercises Section */}
       {customExercises.length > 0 && (

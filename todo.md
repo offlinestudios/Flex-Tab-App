@@ -319,4 +319,57 @@
 - [x] Removed debug console.logs
 - [x] Verified delete functionality works correctly for multiple consecutive deletes
 - [ ] User to test on mobile browser and PWA
-- [ ] Create checkpoint after confirmation
+- [x] Create checkpoint after desktop testing (version: d1729df6)
+
+## Strava-Inspired Design Enhancements (2026-02-01)
+
+### AI Athlete Images - Hyper-Realistic Photography
+- [x] Generate chest workout athlete image (bench press, hyper-realistic, gym setting)
+- [x] Generate back workout athlete image (deadlift or rows, hyper-realistic, gym setting)
+- [x] Generate leg workout athlete image (squats, hyper-realistic, gym setting)
+- [x] Generate compound/full body athlete image (athletic pose, hyper-realistic)
+- [x] Integrate hero image on landing/home page (Active tab empty state)
+- [x] Add athlete images to empty states ("Start your first workout" with hero image)
+- [x] Add subtle athlete images as backgrounds for workout categories (Chest, Back, Legs)
+- [ ] Optimize images for web (compress, responsive sizes)
+
+### High Priority - Visual Enhancements (Keep Current Brand Colors)
+- [x] Keep current slate/dark color scheme (no color change needed)
+- [x] Add icons to all metric cards (dumbbell for sets, target for reps, weight for volume)
+- [ ] Add workout type icons to exercise cards and history (chest icon, legs icon, back icon, etc.)
+- [x] Improve card shadows and add hover effects for better depth (shadow-lg, hover:shadow-lg)
+- [x] Increase typography boldness - make headlines font-extrabold with tracking-tight
+- [x] Add more size contrast between h1/h2/h3 headings
+- [x] Enhance empty states with athlete images and motivational copy (hero image with CTA)
+
+### Medium Priority - Enhanced UX
+- [ ] Add timeline view to workout history with visual connectors between sessions
+- [ ] Implement progress comparisons ("vs last week", "+10% volume")
+- [ ] Add streak counter ("7 day workout streak!") prominently in dashboard
+- [ ] Show personal records highlighting (PR badge when weight/reps increase)
+- [ ] Add mini progress charts to measurement cards showing trends
+- [ ] Add achievement badges for milestones (first workout, 10 workouts, 30 day streak)
+- [ ] Show weekly/monthly totals prominently in header or dashboard
+- [ ] Add motivational messages based on progress
+
+### Low Priority - Nice to Have
+- [ ] Add hero section with workout lifestyle photography
+- [ ] Implement swipe gestures for delete/edit on mobile
+- [ ] Add floating action button (FAB) for "Log Workout" on mobile
+- [ ] Create illustrated onboarding flow
+- [ ] Add workout category badges with colors
+- [ ] Implement bottom navigation on mobile (replace tabs)
+
+### Design System Updates
+- [ ] Define brand color palette (primary, secondary, accent colors)
+- [ ] Create icon library for workout types and metrics
+- [ ] Define typography scale with clear hierarchy
+- [ ] Update card component with shadows and hover states
+- [ ] Create badge/chip components for categories and achievements
+
+### Testing
+- [ ] Test new design on desktop browser
+- [ ] Test new design on mobile browser
+- [ ] Test new design on PWA
+- [ ] Verify accessibility (color contrast, touch targets)
+- [ ] Create checkpoint after design improvements

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Menu, Plus, Trash2, Edit2, X } from "lucide-react";
+import { Menu, Plus, Trash2, Edit2, X, Dumbbell, Target, Weight, Activity, TrendingUp, Calendar } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
@@ -510,13 +510,29 @@ export default function Home() {
                   <div className="lg:col-span-2 space-y-4">
                     {/* Exercise Cards - shown first on mobile, first on desktop */}
                     {selectedExercises.length === 0 ? (
-                      <Card className="p-12 text-center bg-white border-slate-200">
-                        <p className="text-slate-600 text-lg mb-2">
-                          No exercises selected yet
-                        </p>
-                        <p className="text-slate-500">
-                          Use the sidebar to add exercises or load a preset workout plan
-                        </p>
+                      <Card className="relative overflow-hidden bg-white border-slate-200 shadow-lg">
+                        {/* Hero Image with Overlay */}
+                        <div className="relative h-64 md:h-80">
+                          <img 
+                            src="/images/athlete-hero.jpg" 
+                            alt="Athlete training" 
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+                          <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
+                            <h2 className="text-3xl md:text-4xl font-extrabold mb-2 tracking-tight">Start Your Workout</h2>
+                            <p className="text-lg text-white/90 mb-4">
+                              Select exercises from the sidebar to build your training session
+                            </p>
+                            <Button 
+                              onClick={() => setSidebarOpen(true)}
+                              size="lg"
+                              className="bg-white text-slate-900 hover:bg-slate-100 font-semibold"
+                            >
+                              Choose Exercises
+                            </Button>
+                          </div>
+                        </div>
                       </Card>
                     ) : (
                       selectedExercises.map((exercise) => (
@@ -541,20 +557,23 @@ export default function Home() {
                           volume: todaySession.exercises.reduce((sum, set) => sum + (set.sets * set.reps * set.weight), 0),
                         };
                         return (
-                          <Card className="p-6 bg-white border-slate-200">
+                          <Card className="p-6 bg-white border-slate-200 shadow-md hover:shadow-lg transition-shadow">
                             <div className="flex justify-between items-center mb-4">
                               <h3 className="text-lg font-semibold text-slate-900">Today's Workout</h3>
                             </div>
                             <div className="grid grid-cols-3 gap-3 mb-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
-                              <div className="text-center">
+                              <div className="flex flex-col items-center text-center">
+                                <Dumbbell className="w-5 h-5 text-slate-600 mb-1" />
                                 <p className="text-xs text-slate-600 font-medium">Sets</p>
                                 <p className="text-lg font-bold text-slate-900">{stats.sets}</p>
                               </div>
-                              <div className="text-center">
+                              <div className="flex flex-col items-center text-center">
+                                <Target className="w-5 h-5 text-slate-600 mb-1" />
                                 <p className="text-xs text-slate-600 font-medium">Reps</p>
                                 <p className="text-lg font-bold text-slate-900">{stats.reps}</p>
                               </div>
-                              <div className="text-center">
+                              <div className="flex flex-col items-center text-center">
+                                <Weight className="w-5 h-5 text-slate-600 mb-1" />
                                 <p className="text-xs text-slate-600 font-medium">Volume</p>
                                 <p className="text-lg font-bold text-slate-900">{stats.volume.toLocaleString()}</p>
                               </div>
