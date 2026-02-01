@@ -15,6 +15,13 @@
       "when": 1768943532387,
       "tag": "0001_sour_vector",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1769970411778,
+      "tag": "0002_mean_black_tom",
+      "breakpoints": true
     }
   ]
 }

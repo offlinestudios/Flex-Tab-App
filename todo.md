@@ -258,4 +258,14 @@
 - [x] Verify no TypeScript errors
 - [x] Run vitest tests (14/14 passed)
 - [ ] User to test measurement save/load across tab switches
-- [ ] Create checkpoint after fix
+- [x] Create checkpoint after fix (version: 7cb52bb2)
+
+## Measurement Recording Issues - Round 2 (2026-02-01)
+- [x] Make ALL fields optional (not just weight) - user should be able to save any combination
+- [x] Fix bug where measurements don't display after being recorded (schema issue: int -> decimal)
+- [x] Investigate why measurements aren't persisting/showing in UI after input (database rejected decimal values)
+- [x] Update database schema from int to decimal(5,1) for all measurement fields
+- [x] Convert number inputs to strings for database, parse strings to numbers for frontend
+- [x] Update vitest tests to match new string decimal format (14/14 tests passing)
+- [ ] User to test with various field combinations (just chest, just arms, weight+waist, etc.)
+- [ ] Create checkpoint after fixes

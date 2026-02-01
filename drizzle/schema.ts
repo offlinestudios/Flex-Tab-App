@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { decimal, int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -57,11 +57,11 @@ export const measurements = mysqlTable("measurements", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
   date: varchar("date", { length: 20 }).notNull(),
-  weight: int("weight").notNull(),
-  chest: int("chest").notNull(),
-  waist: int("waist").notNull(),
-  arms: int("arms").notNull(),
-  thighs: int("thighs").notNull(),
+  weight: decimal("weight", { precision: 5, scale: 1 }).notNull(),
+  chest: decimal("chest", { precision: 5, scale: 1 }).notNull(),
+  waist: decimal("waist", { precision: 5, scale: 1 }).notNull(),
+  arms: decimal("arms", { precision: 5, scale: 1 }).notNull(),
+  thighs: decimal("thighs", { precision: 5, scale: 1 }).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

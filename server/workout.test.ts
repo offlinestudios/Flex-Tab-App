@@ -292,11 +292,11 @@ describe("workout.addMeasurement", () => {
     expect(db.createMeasurement).toHaveBeenCalledWith({
       userId: 1,
       date: "1/20/2026",
-      weight: 180,
-      chest: 42,
-      waist: 32,
-      arms: 15,
-      thighs: 24,
+      weight: "180",
+      chest: "42",
+      waist: "32",
+      arms: "15",
+      thighs: "24",
     });
   });
 
@@ -329,21 +329,21 @@ describe("workout.addMeasurement", () => {
     expect(db.createMeasurement).toHaveBeenNthCalledWith(1, {
       userId: 1,
       date: "1/20/2026",
-      weight: 180,
-      chest: 42,
-      waist: 32,
-      arms: 15,
-      thighs: 24,
+      weight: "180",
+      chest: "42",
+      waist: "32",
+      arms: "15",
+      thighs: "24",
     });
 
     expect(db.createMeasurement).toHaveBeenNthCalledWith(2, {
       userId: 2,
       date: "1/20/2026",
-      weight: 200,
-      chest: 44,
-      waist: 34,
-      arms: 16,
-      thighs: 26,
+      weight: "200",
+      chest: "44",
+      waist: "34",
+      arms: "16",
+      thighs: "26",
     });
   });
 });
@@ -417,8 +417,8 @@ describe("workout.updateMeasurement", () => {
 
     expect(result).toEqual({ success: true });
     expect(db.updateMeasurement).toHaveBeenCalledWith(3, 1, {
-      weight: 185,
-      chest: 43,
+      weight: "185",
+      chest: "43",
     });
   });
 });

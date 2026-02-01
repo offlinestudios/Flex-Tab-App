@@ -41,8 +41,10 @@ export function BodyMeasurements() {
   });
 
   const handleAddMeasurement = async () => {
-    // Only weight is required, other fields are optional
-    if (formData.weight) {
+    // All fields are optional - save any combination of measurements
+    const hasAnyMeasurement = formData.weight || formData.chest || formData.waist || formData.arms || formData.thighs;
+    
+    if (hasAnyMeasurement) {
       const today = new Date().toLocaleDateString("en-US", {
         year: "numeric",
         month: "numeric",
@@ -51,7 +53,7 @@ export function BodyMeasurements() {
 
       await addMeasurementMutation.mutateAsync({
         date: today,
-        weight: parseFloat(formData.weight),
+        weight: formData.weight ? parseFloat(formData.weight) : 0,
         chest: formData.chest ? parseFloat(formData.chest) : 0,
         waist: formData.waist ? parseFloat(formData.waist) : 0,
         arms: formData.arms ? parseFloat(formData.arms) : 0,
@@ -81,11 +83,13 @@ export function BodyMeasurements() {
   };
 
   const handleSaveEdit = async (measurementId: number) => {
-    // Only weight is required, other fields are optional
-    if (formData.weight) {
+    // All fields are optional - save any combination of measurements
+    const hasAnyMeasurement = formData.weight || formData.chest || formData.waist || formData.arms || formData.thighs;
+    
+    if (hasAnyMeasurement) {
       await updateMeasurementMutation.mutateAsync({
         id: measurementId,
-        weight: parseFloat(formData.weight),
+        weight: formData.weight ? parseFloat(formData.weight) : 0,
         chest: formData.chest ? parseFloat(formData.chest) : 0,
         waist: formData.waist ? parseFloat(formData.waist) : 0,
         arms: formData.arms ? parseFloat(formData.arms) : 0,

@@ -84,13 +84,27 @@ export const workoutRouter = router({
     .mutation(async ({ ctx, input }) => {
       await createMeasurement({
         userId: ctx.user.id,
-        ...input,
+        date: input.date,
+        weight: input.weight.toString(),
+        chest: input.chest.toString(),
+        waist: input.waist.toString(),
+        arms: input.arms.toString(),
+        thighs: input.thighs.toString(),
       });
       return { success: true };
     }),
 
   getMeasurements: protectedProcedure.query(async ({ ctx }) => {
-    return await getMeasurementsByUser(ctx.user.id);
+    const measurements = await getMeasurementsByUser(ctx.user.id);
+    // Convert decimal strings to numbers for frontend
+    return measurements.map(m => ({
+      ...m,
+      weight: parseFloat(m.weight as any),
+      chest: parseFloat(m.chest as any),
+      waist: parseFloat(m.waist as any),
+      arms: parseFloat(m.arms as any),
+      thighs: parseFloat(m.thighs as any),
+    }));
   }),
 
   deleteMeasurement: protectedProcedure
@@ -113,7 +127,14 @@ export const workoutRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const { id, ...data } = input;
-      await updateMeasurement(id, ctx.user.id, data);
+      // Convert numbers to strings for decimal database fields
+      const convertedData: Record<string, string> = {};
+      if (data.weight !== undefined) convertedData.weight = data.weight.toString();
+      if (data.chest !== undefined) convertedData.chest = data.chest.toString();
+      if (data.waist !== undefined) convertedData.waist = data.waist.toString();
+      if (data.arms !== undefined) convertedData.arms = data.arms.toString();
+      if (data.thighs !== undefined) convertedData.thighs = data.thighs.toString();
+      await updateMeasurement(id, ctx.user.id, convertedData);
       return { success: true };
     }),
 
