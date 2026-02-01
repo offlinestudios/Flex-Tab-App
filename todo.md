@@ -227,4 +227,14 @@
 - [x] Verify no TypeScript errors
 - [x] Run vitest tests (14/14 passed)
 - [ ] User to test all button fixes on mobile PWA
-- [ ] Create checkpoint after all fixes
+- [x] Create checkpoint after all fixes (version: 956b9732)
+
+## iOS Install Banner (2026-01-31)
+- [x] Create IOSInstallPrompt component with Safari/iOS detection
+- [x] Add visual guide showing Share button → Add to Home Screen
+- [x] Add dismiss functionality with localStorage persistence
+- [x] Add IOSInstallPrompt to Landing page
+- [x] Verify no TypeScript errors
+- [x] Run vitest tests (14/14 passed)
+- [ ] User to test on iOS Safari
+- [ ] Create checkpoint after implementation
