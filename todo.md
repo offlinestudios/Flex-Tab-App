@@ -293,4 +293,21 @@
 - [ ] User to test on mobile browser
 - [ ] User to test on PWA
 - [ ] User to verify multi-device sync behavior
-- [ ] Create checkpoint after user testing
+- [x] Create checkpoint after implementation (version: efdf96d5)
+
+## Critical Display and Delete Issues (2026-02-01)
+- [x] Measurements not displaying on desktop (was browser cache issue, now resolved)
+- [x] Delete button not working for measurements (fixed invalid hook call error)
+- [x] Delete button not working for past logged workout sets (same fix applied)
+- [x] Root cause: calling trpc.useUtils() inside mutation callbacks violated Rules of Hooks
+- [x] Solution: moved useUtils() to component level, passed utils reference to callbacks
+- [x] Verified delete works on desktop for both measurements and workout sets
+- [ ] User to test delete functionality on mobile browser and PWA
+- [ ] Test delete mutations are being called correctly
+- [ ] Verify backend delete endpoints are working
+- [ ] Fix desktop measurement display issue
+- [ ] Fix delete functionality for measurements
+- [ ] Fix delete functionality for workout sets
+- [ ] Test on desktop browser
+- [ ] Test on mobile browser
+- [ ] Create checkpoint after fixes

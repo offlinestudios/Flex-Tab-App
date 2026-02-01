@@ -20,18 +20,19 @@ export function BodyMeasurements() {
 
   // Load measurements from API
   const { data: measurements = [] } = trpc.workout.getMeasurements.useQuery();
+  const utils = trpc.useUtils();
 
   // Mutations
   const addMeasurementMutation = trpc.workout.addMeasurement.useMutation({
     onMutate: async (newMeasurement) => {
       // Cancel outgoing refetches
-      await trpc.useUtils().workout.getMeasurements.cancel();
+      await utils.workout.getMeasurements.cancel();
       
       // Snapshot previous value
-      const previousMeasurements = trpc.useUtils().workout.getMeasurements.getData();
+      const previousMeasurements = utils.workout.getMeasurements.getData();
       
       // Optimistically update to the new value
-      trpc.useUtils().workout.getMeasurements.setData(undefined, (old) => {
+      utils.workout.getMeasurements.setData(undefined, (old) => {
         const optimisticMeasurement = {
           id: Date.now(), // Temporary ID
           userId: 0, // Will be set by server
@@ -47,25 +48,25 @@ export function BodyMeasurements() {
     onError: (err, newMeasurement, context) => {
       // Rollback on error
       if (context?.previousMeasurements) {
-        trpc.useUtils().workout.getMeasurements.setData(undefined, context.previousMeasurements);
+        utils.workout.getMeasurements.setData(undefined, context.previousMeasurements);
       }
     },
     onSettled: () => {
       // Refetch to ensure server state
-      trpc.useUtils().workout.getMeasurements.invalidate();
+      utils.workout.getMeasurements.invalidate();
     },
   });
 
   const updateMeasurementMutation = trpc.workout.updateMeasurement.useMutation({
     onMutate: async (updatedMeasurement) => {
       // Cancel outgoing refetches
-      await trpc.useUtils().workout.getMeasurements.cancel();
+      await utils.workout.getMeasurements.cancel();
       
       // Snapshot previous value
-      const previousMeasurements = trpc.useUtils().workout.getMeasurements.getData();
+      const previousMeasurements = utils.workout.getMeasurements.getData();
       
       // Optimistically update
-      trpc.useUtils().workout.getMeasurements.setData(undefined, (old) => {
+      utils.workout.getMeasurements.setData(undefined, (old) => {
         if (!old) return old;
         return old.map((measurement) =>
           measurement.id === updatedMeasurement.id
@@ -79,24 +80,24 @@ export function BodyMeasurements() {
     onError: (err, updatedMeasurement, context) => {
       // Rollback on error
       if (context?.previousMeasurements) {
-        trpc.useUtils().workout.getMeasurements.setData(undefined, context.previousMeasurements);
+        utils.workout.getMeasurements.setData(undefined, context.previousMeasurements);
       }
     },
     onSettled: () => {
-      trpc.useUtils().workout.getMeasurements.invalidate();
+      utils.workout.getMeasurements.invalidate();
     },
   });
 
   const deleteMeasurementMutation = trpc.workout.deleteMeasurement.useMutation({
     onMutate: async (deletedMeasurement) => {
       // Cancel outgoing refetches
-      await trpc.useUtils().workout.getMeasurements.cancel();
+      await utils.workout.getMeasurements.cancel();
       
       // Snapshot previous value
-      const previousMeasurements = trpc.useUtils().workout.getMeasurements.getData();
+      const previousMeasurements = utils.workout.getMeasurements.getData();
       
       // Optimistically remove from list
-      trpc.useUtils().workout.getMeasurements.setData(undefined, (old) => {
+      utils.workout.getMeasurements.setData(undefined, (old) => {
         if (!old) return old;
         return old.filter((measurement) => measurement.id !== deletedMeasurement.id);
       });
@@ -106,11 +107,12 @@ export function BodyMeasurements() {
     onError: (err, deletedMeasurement, context) => {
       // Rollback on error
       if (context?.previousMeasurements) {
-        trpc.useUtils().workout.getMeasurements.setData(undefined, context.previousMeasurements);
+        utils.workout.getMeasurements.setData(undefined, context.previousMeasurements);
       }
+      alert(`Failed to delete measurement: ${err.message}`);
     },
     onSettled: () => {
-      trpc.useUtils().workout.getMeasurements.invalidate();
+      utils.workout.getMeasurements.invalidate();
     },
   });
 
