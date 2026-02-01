@@ -237,4 +237,15 @@
 - [x] Verify no TypeScript errors
 - [x] Run vitest tests (14/14 passed)
 - [ ] User to test on iOS Safari
+- [x] Create checkpoint after implementation (version: ecbb2fc1)
+
+## PWA Icon Cache Busting (2026-01-31)
+- [x] Generate new icon files with v2 suffix (icon-192x192-v2.png, icon-512x512-v2.png, apple-touch-icon-v2.png)
+- [x] Update manifest.json to reference new icon filenames
+- [x] Update index.html apple-touch-icon to reference new filename
+- [x] Remove old icon files (icon-192x192.png, icon-512x512.png, apple-touch-icon.png)
+- [x] Restart server to apply changes
+- [x] Verify no TypeScript errors
+- [x] Run vitest tests (14/14 passed)
+- [ ] User to test new icons load correctly on iOS after reinstall
 - [ ] Create checkpoint after implementation
