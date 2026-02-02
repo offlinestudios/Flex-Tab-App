@@ -429,5 +429,16 @@
 - [x] Investigate sidebar layout in Home.tsx
 - [x] Fix profile section positioning to be accessible on mobile (removed overflow-y-auto from outer aside, added min-h-0 to scrollable area, made UserMenu flex-shrink-0)
 - [x] Ensure profile/settings buttons are clickable
-- [ ] Test on mobile viewport (iPhone size)
+- [x] Test on mobile viewport (iPhone size)
+- [x] Create checkpoint after fix (version: d573e88d)
+
+
+## Horizontal Scroll Issue (2026-02-02)
+**Issue:** Side scrolling on mobile PWA causes header to slide out of frame
+
+- [x] Investigate horizontal overflow in layout
+- [x] Fix body/container overflow-x (added overflow-x: hidden to body and main container)
+- [x] Ensure header stays visible when scrolling (header already has sticky top-0)
+- [ ] Test on mobile viewport
 - [ ] Create checkpoint after fix
+- [ ] Provide PWA update instructions to user

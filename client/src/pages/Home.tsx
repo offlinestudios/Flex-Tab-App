@@ -432,7 +432,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen" style={{background: 'linear-gradient(to bottom right, #F7F5F2, #F3F1EE)'}}>
+    <div className="min-h-screen overflow-x-hidden" style={{background: 'linear-gradient(to bottom right, #F7F5F2, #F3F1EE)'}}>
       {/* Header with Hamburger and Title Side by Side */}
       <header className="sticky top-0 z-40 bg-white shadow-sm" style={{borderBottom: '1px solid #E6E4E1'}}>
         <div className="flex items-center gap-4 px-4 py-4 md:px-6">
