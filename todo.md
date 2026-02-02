@@ -451,3 +451,14 @@
   - [x] Define 3 image categories with composition rules
   - [x] Generate 8 AI images (photorealistic, neutral, enterprise fitness-tech tone)
   - [x] Implement redesigned landing page with new structure and images
+
+## Strava-Parity Landing Page Re-Engineering (2026-02-02)
+- [x] Re-engineer landing page to achieve perceived quality parity with Strava
+  - [x] Define quality bar and rejection criteria (if Strava wouldn't ship it, neither can FlexTab)
+  - [x] Define image acceptance rules (no stock photography, exaggerated physiques, dramatic lighting)
+  - [x] Re-engineer landing page structure with Strava-level discipline
+  - [x] Define 3 image categories with strict quality constraints
+  - [x] Generate 5 Strava-parity images with quality justification
+  - [x] Define motion system with restraint check (never draws attention to itself)
+  - [x] Implement redesigned landing page with Strava-parity standards
+  - [x] Perform final parity check against Strava benchmark (PARITY ACHIEVED)
