@@ -164,13 +164,13 @@ export async function getSetLogsByUser(userId: number) {
 export async function deleteSetLog(id: number, userId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  return await db.delete(setLogs).where(eq(setLogs.id, id));
+  return await db.delete(setLogs).where(and(eq(setLogs.id, id), eq(setLogs.userId, userId)));
 }
 
 export async function updateSetLog(id: number, userId: number, data: Partial<InsertSetLog>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  return await db.update(setLogs).set(data).where(eq(setLogs.id, id));
+  return await db.update(setLogs).set(data).where(and(eq(setLogs.id, id), eq(setLogs.userId, userId)));
 }
 
 // Measurements
@@ -189,13 +189,13 @@ export async function getMeasurementsByUser(userId: number) {
 export async function deleteMeasurement(id: number, userId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  return await db.delete(measurements).where(eq(measurements.id, id));
+  return await db.delete(measurements).where(and(eq(measurements.id, id), eq(measurements.userId, userId)));
 }
 
 export async function updateMeasurement(id: number, userId: number, data: Partial<InsertMeasurement>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  return await db.update(measurements).set(data).where(eq(measurements.id, id));
+  return await db.update(measurements).set(data).where(and(eq(measurements.id, id), eq(measurements.userId, userId)));
 }
 
 // Custom Exercises

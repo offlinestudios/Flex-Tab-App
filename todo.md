@@ -386,4 +386,38 @@
 - [x] Change CTAs to white buttons on dark backgrounds for contrast
 - [x] Ensure responsive design for mobile and desktop
 - [x] Test landing page visual impact on desktop
-- [ ] Create checkpoint after landing page redesign
+- [x] Create checkpoint after landing page redesign (version: 311d31db)
+
+
+## GitHub Export and Migration Off Manus (2026-02-02)
+- [ ] Export FlexTab code to GitHub repository
+- [ ] Document all environment variables needed (15+ secrets)
+- [ ] Create migration guide for external hosting
+- [ ] List required services to replace (OAuth, S3, database)
+- [ ] Provide hosting options (Railway, Render, Vercel, etc.)
+- [ ] Document build and deployment process
+- [ ] Test exported code builds successfully
+
+
+## Service Worker Caching Bug - ROOT CAUSE FOUND (2026-02-02)
+**Root Cause:** Service worker caches /api/trpc responses with cache-first strategy, causing stale data after mutations
+
+### Primary Fix - Service Worker Caching
+- [x] Update client/public/sw.js to exclude /api/* from caching
+- [x] Only cache GET requests (exclude POST/PUT/DELETE)
+- [x] Bump CACHE_NAME to "flextab-v2" to invalidate old caches
+- [ ] Test measurements save and display immediately
+- [ ] Test multiple consecutive deletes work reliably
+
+### Secondary Fixes - Security & Data Quality
+- [x] Add userId filtering to deleteSetLog in server/db.ts
+- [x] Add userId filtering to updateSetLog in server/db.ts
+- [x] Add userId filtering to deleteMeasurement in server/db.ts
+- [x] Add userId filtering to updateMeasurement in server/db.ts
+- [ ] Fix measurement inputs to send null instead of 0 for empty fields
+
+### Testing
+- [ ] Unregister service worker + clear site data on mobile
+- [ ] Test measurements on mobile PWA
+- [ ] Test consecutive deletes on mobile PWA
+- [ ] Create checkpoint after all fixes

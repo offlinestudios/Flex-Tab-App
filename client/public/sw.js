@@ -1,4 +1,4 @@
-const CACHE_NAME = 'flextab-v1';
+const CACHE_NAME = 'flextab-v2';
 const urlsToCache = [
   '/',
   '/app',
@@ -24,8 +24,15 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// Fetch from cache first, then network
+// Fetch from cache first, then network (but never cache API calls)
 self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+
+  // Never cache API calls (tRPC) or anything non-GET
+  if (url.pathname.startsWith('/api/') || event.request.method !== 'GET') {
+    return; // let the request go to the network normally
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
