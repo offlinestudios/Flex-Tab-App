@@ -420,4 +420,14 @@
 - [ ] Unregister service worker + clear site data on mobile
 - [ ] Test measurements on mobile PWA
 - [ ] Test consecutive deletes on mobile PWA
-- [ ] Create checkpoint after all fixes
+- [x] Create checkpoint after all fixes (version: cd021f45)
+
+
+## Sidebar Profile Section Positioning Bug (2026-02-02)
+**Issue:** User profile section at bottom of sidebar is cut off/inaccessible on mobile PWA
+
+- [x] Investigate sidebar layout in Home.tsx
+- [x] Fix profile section positioning to be accessible on mobile (removed overflow-y-auto from outer aside, added min-h-0 to scrollable area, made UserMenu flex-shrink-0)
+- [x] Ensure profile/settings buttons are clickable
+- [ ] Test on mobile viewport (iPhone size)
+- [ ] Create checkpoint after fix

@@ -456,27 +456,29 @@ export default function Home() {
       <div className="flex">
         {/* Sidebar */}
         <aside
-          className={`fixed w-80 bg-white border-r border-slate-200 h-screen overflow-y-auto transition-transform duration-300 z-30 ${
+          className={`fixed w-80 bg-white border-r border-slate-200 h-screen transition-transform duration-300 z-30 ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >
           <div className="flex flex-col h-full">
-            <div className="flex-1 p-6 overflow-y-auto">
-              <h2 className="text-xl font-bold text-slate-900 mb-6">
-                Workout Builder
-              </h2>
-              <ExerciseSidebar
-                groupedExercises={groupedExercises}
-                customExercises={customExercises}
-                selectedExercises={selectedExercises}
-                expandedCategories={expandedCategories}
-                onToggleCategory={toggleCategory}
-                onSelectExercise={handleSelectExercise}
-                onAddCustom={() => setShowCustomDialog(true)}
-              />
+            <div className="flex-1 overflow-y-auto min-h-0">
+              <div className="p-6">
+                <h2 className="text-xl font-bold text-slate-900 mb-6">
+                  Workout Builder
+                </h2>
+                <ExerciseSidebar
+                  groupedExercises={groupedExercises}
+                  customExercises={customExercises}
+                  selectedExercises={selectedExercises}
+                  expandedCategories={expandedCategories}
+                  onToggleCategory={toggleCategory}
+                  onSelectExercise={handleSelectExercise}
+                  onAddCustom={() => setShowCustomDialog(true)}
+                />
+              </div>
             </div>
-            {/* User Menu at bottom of sidebar */}
-            <div className="p-4 border-t border-slate-200 bg-slate-50">
+            {/* User Menu at bottom of sidebar - always visible */}
+            <div className="flex-shrink-0 p-4 border-t border-slate-200 bg-slate-50">
               <UserMenu />
             </div>
           </div>
