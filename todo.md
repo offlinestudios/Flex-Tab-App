@@ -439,6 +439,15 @@
 - [x] Investigate horizontal overflow in layout
 - [x] Fix body/container overflow-x (added overflow-x: hidden to body and main container)
 - [x] Ensure header stays visible when scrolling (header already has sticky top-0)
-- [ ] Test on mobile viewport
-- [ ] Create checkpoint after fix
+- [x] Test on mobile viewport
+- [x] Create checkpoint after fix (version: 7e722938)
 - [ ] Provide PWA update instructions to user
+
+## Enterprise Landing Page Redesign (2026-02-02)
+- [x] Redesign landing page with enterprise-grade Strava-inspired design discipline
+  - [x] Create landing page structure (Hero, Proof, Feature Story, Feature Grid, CTA, Footer)
+  - [x] Define motion/animation system (subtle, enterprise-grade, GPU-friendly)
+  - [x] Define visual/UI system (restrained, premium SaaS aesthetic)
+  - [x] Define 3 image categories with composition rules
+  - [x] Generate 8 AI images (photorealistic, neutral, enterprise fitness-tech tone)
+  - [x] Implement redesigned landing page with new structure and images
