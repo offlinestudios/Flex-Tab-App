@@ -462,3 +462,16 @@
   - [x] Define motion system with restraint check (never draws attention to itself)
   - [x] Implement redesigned landing page with Strava-parity standards
   - [x] Perform final parity check against Strava benchmark (PARITY ACHIEVED)
+
+## Mixed Visual System Landing Page Redesign (2026-02-02)
+- [x] Redesign landing page with mixed visual system (UI screenshots primary + stock photography secondary)
+  - [x] Define visual hierarchy (Product UI motion = proof, Stock photography = context)
+  - [x] Define asset class rules (60-70% UI, 30-40% photography)
+  - [x] Create section-by-section outline with asset type justification
+  - [x] Define UI animation moments (fade on scroll, subtle hover effects)
+  - [x] Define stock photography acceptance rules (editorial, not influencer-driven)
+  - [x] Generate 5 product UI screenshots showing real app states (active workout, progress chart, exercise list, measurements, history)
+  - [x] Use original 8 generated stock photos from first redesign
+  - [x] Add hero banner photo with UI overlay (like Strava's first section)
+  - [x] Implement redesigned landing page with mixed visual system (65% UI, 35% photography)
+  - [x] Perform final parity check (PARITY ACHIEVED - photography quieter, UI more authoritative)
