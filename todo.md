@@ -531,3 +531,11 @@
 - [x] Desktop layout: Show only first feature card (full-width, no carousel navigation)
 - [x] Mobile layout: Show all three cards with carousel navigation
 - [x] Ensure screenshots display at full length without cropping
+
+## Sidebar and Landing Page Fixes (2026-02-07)
+- [x] Investigate missing logout button and settings in sidebar (confirmed: UserMenu exists in Home.tsx sidebar, not Landing page)
+- [x] Restore user menu functionality (no action needed - already present in authenticated dashboard)
+- [x] Simplify landing page to show only hero section + first feature card
+- [x] Remove all other landing page sections (value prop, features grid, philosophy, footer)
+- [x] Make feature screenshot full height and width of page (desktop: h-screen w-full object-contain)
+- [x] Ensure screenshot is not cropped or contained (mobile: carousel with padding, desktop: full viewport)
