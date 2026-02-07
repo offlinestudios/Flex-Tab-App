@@ -556,3 +556,6 @@
 - [x] Add subtle device frame styling (2.5rem rounded corners, 8px dark border)
 - [x] Enhance shadow for depth and polish (0_25px_70px with 0.15 opacity)
 - [x] Ensure mobile responsiveness (w-full on small screens, max-w-[375px] on desktop)
+
+## Remove Social Proof Badge (2026-02-07)
+- [x] Remove "Trusted by 10,000+ athletes" badge from hero section (not accurate yet)

@@ -50,18 +50,6 @@ export default function Landing() {
         
         <div className="relative container mx-auto px-6 md:px-12 py-20 md:py-32">
           <div className="max-w-3xl">
-            {/* Social Proof Badge */}
-            <div 
-              className={`inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-2 mb-8 transition-all duration-500 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}
-            >
-              <div className="flex -space-x-2">
-                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-cyan-400 to-cyan-600 border-2 border-white"></div>
-                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 border-2 border-white"></div>
-                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 border-2 border-white"></div>
-              </div>
-              <span className="text-sm font-medium text-white/90">Trusted by 10,000+ athletes</span>
-            </div>
-
             <h2 
               className={`text-[56px] md:text-[80px] font-bold leading-[1.05] mb-7 tracking-tight text-white transition-all duration-500 delay-100 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}
             >
