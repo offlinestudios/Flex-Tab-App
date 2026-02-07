@@ -252,26 +252,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Social Proof Metrics */}
-      <section className="bg-[#F7F5F2] border-y border-[#E6E4E1]">
-        <div className="container mx-auto px-6 md:px-12 py-20 md:py-28">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-5xl mx-auto">
-            <div className="text-center">
-              <div className="text-[56px] md:text-[64px] font-bold text-[#0B0B0C] mb-2">2.5M+</div>
-              <div className="text-[18px] text-[#6B6F76]">Workouts logged</div>
-            </div>
-            <div className="text-center">
-              <div className="text-[56px] md:text-[64px] font-bold text-[#0B0B0C] mb-2">15K+</div>
-              <div className="text-[18px] text-[#6B6F76]">PRs hit this month</div>
-            </div>
-            <div className="text-center">
-              <div className="text-[56px] md:text-[64px] font-bold text-[#0B0B0C] mb-2">10K+</div>
-              <div className="text-[18px] text-[#6B6F76]">Active athletes</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Final CTA */}
       <section className="bg-white">
         <div className="container mx-auto px-6 md:px-12 py-24 md:py-32 text-center">

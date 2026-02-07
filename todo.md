@@ -559,3 +559,6 @@
 
 ## Remove Social Proof Badge (2026-02-07)
 - [x] Remove "Trusted by 10,000+ athletes" badge from hero section (not accurate yet)
+
+## Remove Social Proof Metrics Section (2026-02-07)
+- [x] Remove social proof metrics section (2.5M+ workouts, 15K+ PRs, 10K+ athletes) - not accurate for pre-launch
