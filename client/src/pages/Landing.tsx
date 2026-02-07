@@ -1,217 +1,351 @@
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { IOSInstallPrompt } from "@/components/IOSInstallPrompt";
 import { getLoginUrl } from "@/const";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function Landing() {
   const [isLoaded, setIsLoaded] = useState(false);
-  const [activeCard, setActiveCard] = useState(0);
-  const observerRef = useRef<IntersectionObserver | null>(null);
-
-  const featureCards = [
-    {
-      id: 0,
-      image: "https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/sUWhtLsscxMXAbBm.png",
-      title: "Start by logging.",
-      description: "The way you improve is by tracking every set. FlexTab works with your phone to record your workouts and visualize your progress over time."
-    },
-    {
-      id: 1,
-      image: "https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/ZQcZJelIDPISaKrs.png",
-      title: "Compare your sessions.",
-      description: "See every workout you've logged. Compare current performance to past sessions and identify patterns in your training."
-    },
-    {
-      id: 2,
-      image: "https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/NfNzRYszCpliWVqV.png",
-      title: "Watch yourself improve.",
-      description: "Track strength gains with detailed charts. See how your lifts improve week over week with visual analytics."
-    }
-  ];
 
   useEffect(() => {
-    // Trigger initial load animations
     setIsLoaded(true);
-
-    // Set up intersection observer for scroll animations
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('fade-in-visible');
-          }
-        });
-      },
-      { threshold: 0.2 }
-    );
-
-    // Observe all fade-in elements
-    const fadeElements = document.querySelectorAll('.fade-in-on-scroll');
-    fadeElements.forEach((el) => observerRef.current?.observe(el));
-
-    return () => {
-      observerRef.current?.disconnect();
-    };
   }, []);
 
-  const handleDotClick = (index: number) => {
-    setActiveCard(index);
-  };
-
   return (
-    <div className="min-h-screen bg-[#F7F5F2]">
+    <div className="min-h-screen bg-white">
       {/* PWA Install Prompts */}
       <InstallPrompt />
       <IOSInstallPrompt />
 
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-white border-b border-[#E6E4E1]">
-        <div className="container mx-auto px-5 md:px-10 py-4 flex items-center justify-between">
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-[#E6E4E1]">
+        <div className="container mx-auto px-6 md:px-12 py-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src="/flextab-logo.png?v=2" alt="FlexTab" className="h-8 w-auto" />
+            <img src="/flextab-logo.png?v=2" alt="FlexTab" className="h-9 w-auto" />
             <h1 className="text-2xl font-bold tracking-tight text-[#0B0B0C]">
               flextab
             </h1>
           </div>
           <Button 
             onClick={() => window.location.href = getLoginUrl()}
-            className="bg-[#111827] hover:bg-[#1F2937] text-white px-6 py-2 rounded-lg font-semibold transition-all duration-150 hover:scale-[1.02] active:scale-[0.98]"
+            className="bg-[#111827] hover:bg-[#1F2937] text-white px-7 py-2.5 rounded-lg font-semibold transition-all duration-150 hover:scale-[1.02] active:scale-[0.98]"
           >
             Sign In
           </Button>
         </div>
       </header>
 
-      {/* Hero Section - Full Width Banner with Left-Aligned Content */}
-      <section className="relative bg-[#1F2937] overflow-hidden min-h-[600px] md:min-h-[700px] flex items-center">
-        {/* Full-width banner background photo */}
+      {/* Hero Section */}
+      <section className="relative bg-[#1F2937] overflow-hidden min-h-[700px] md:min-h-[800px] flex items-center">
+        {/* Background with parallax effect */}
         <div 
           className="absolute inset-0 bg-cover bg-center"
           style={{
             backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/JfZFeFNwdWYiOfDR.jpg')`,
-            backgroundPosition: 'center 30%'
+            backgroundPosition: 'center 30%',
+            transform: isLoaded ? 'scale(1.05)' : 'scale(1)',
+            transition: 'transform 8s cubic-bezier(0.16, 1, 0.3, 1)'
           }}
         />
         
-        <div className="relative container mx-auto px-5 md:px-10 py-16 md:py-24">
-          <div className="max-w-2xl">
-            <h2 
-              className={`text-[44px] md:text-[64px] font-bold leading-[1.1] mb-6 tracking-tight text-white transition-all duration-400 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}
-              style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
+        <div className="relative container mx-auto px-6 md:px-12 py-20 md:py-32">
+          <div className="max-w-3xl">
+            {/* Social Proof Badge */}
+            <div 
+              className={`inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-2 mb-8 transition-all duration-500 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}
             >
-              Track Your Fitness
+              <div className="flex -space-x-2">
+                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-cyan-400 to-cyan-600 border-2 border-white"></div>
+                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 border-2 border-white"></div>
+                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 border-2 border-white"></div>
+              </div>
+              <span className="text-sm font-medium text-white/90">Trusted by 10,000+ athletes</span>
+            </div>
+
+            <h2 
+              className={`text-[56px] md:text-[80px] font-bold leading-[1.05] mb-7 tracking-tight text-white transition-all duration-500 delay-100 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}
+            >
+              See every PR
               <br />
-              With Precision
+              in real-time
             </h2>
             <p 
-              className={`text-[18px] md:text-[22px] leading-[1.6] mb-10 text-white/90 transition-all duration-400 delay-100 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}
-              style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
+              className={`text-[20px] md:text-[24px] leading-[1.5] mb-12 text-white/90 max-w-2xl transition-all duration-500 delay-200 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}
             >
-              A professional workout tracking tool for serious lifters. Log sets, track progress, and hit your goals.
+              The workout tracker built for serious lifters. Log every set, visualize progress, and hit new PRs faster.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4">
               <Button 
                 onClick={() => window.location.href = getLoginUrl()}
-                className={`bg-white hover:bg-gray-100 text-[#111827] px-8 py-4 h-14 rounded-lg text-lg font-semibold transition-all duration-150 hover:scale-[1.02] hover:shadow-xl active:scale-[0.98] delay-200 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}
-                style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
+                className={`bg-white hover:bg-gray-100 text-[#111827] px-9 py-4 h-16 rounded-lg text-lg font-semibold transition-all duration-150 hover:scale-[1.02] hover:shadow-2xl active:scale-[0.98] delay-300 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}
               >
-                Get Started Free
+                Get started free — no credit card
               </Button>
               <Button 
                 onClick={() => {
-                  document.getElementById('feature-explanation')?.scrollIntoView({ behavior: 'smooth' });
+                  document.getElementById('product-story')?.scrollIntoView({ behavior: 'smooth' });
                 }}
                 variant="outline"
-                className={`bg-transparent hover:bg-white/10 text-white border-2 border-white px-8 py-4 h-14 rounded-lg text-lg font-semibold transition-all duration-150 hover:scale-[1.02] active:scale-[0.98] delay-300 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}
-                style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
+                className={`bg-transparent hover:bg-white/10 text-white border-2 border-white/40 hover:border-white px-9 py-4 h-16 rounded-lg text-lg font-semibold transition-all duration-150 hover:scale-[1.02] active:scale-[0.98] delay-400 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}
               >
-                Learn More
+                See how it works
               </Button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Feature Screenshot - Full Viewport */}
-      <section id="feature-explanation" className="w-full min-h-screen flex items-center justify-center bg-white">
-        {/* Desktop: Show only first card full-width */}
-        <div className="hidden md:block w-full h-screen">
-          <img 
-            src={featureCards[0].image}
-            alt={`FlexTab ${featureCards[0].title}`}
-            className="w-full h-full object-contain"
-          />
-        </div>
-
-        {/* Mobile: Show carousel with all cards */}
-        <div className="md:hidden w-full">
-          {/* Carousel Container */}
-          <div className="relative overflow-hidden">
-            <div 
-              className="flex transition-transform duration-500 ease-out"
-              style={{ transform: `translateX(-${activeCard * 100}%)` }}
-            >
-              {featureCards.map((card) => (
-                <div key={card.id} className="w-full flex-shrink-0">
-                  <div className="space-y-8 p-5">
-                    {/* App Screenshot - Full Bleed */}
-                    <div className="relative w-full flex items-center justify-center">
-                      <img 
-                        src={card.image}
-                        alt={`FlexTab ${card.title}`}
-                        className="w-full h-auto shadow-[0_8px_30px_rgb(0,0,0,0.12)] rounded-xl"
-                      />
-                    </div>
-
-                    {/* Text Content */}
-                    <div className="text-center">
-                      <h3 className="text-[28px] font-bold leading-[1.2] mb-4 text-[#0891B2]">
-                        {card.title}
-                      </h3>
-                      <p className="text-[16px] leading-[1.6] text-[#6B6F76]">
-                        {card.description}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
+      {/* Product Story - Feature 1 (Screenshot Left) */}
+      <section id="product-story" className="bg-white">
+        <div className="container mx-auto px-6 md:px-12 py-24 md:py-40">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            {/* Screenshot */}
+            <div className="order-2 lg:order-1">
+              <div className="relative">
+                <img 
+                  src="https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/sUWhtLsscxMXAbBm.png"
+                  alt="Active workout tracking"
+                  className="w-full h-auto rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.08)] border border-[#E6E4E1]"
+                />
+              </div>
             </div>
-          </div>
 
-          {/* Carousel Dots - Mobile Only */}
-          <div className="flex justify-center gap-2 mt-6 pb-8">
-            {featureCards.map((card) => (
-              <button
-                key={card.id}
-                onClick={() => handleDotClick(card.id)}
-                className={`w-2 h-2 rounded-full transition-colors duration-200 ${
-                  activeCard === card.id ? 'bg-[#0891B2]' : 'bg-[#E6E4E1]'
-                }`}
-                aria-label={`Go to slide ${card.id + 1}`}
-              />
-            ))}
+            {/* Copy */}
+            <div className="order-1 lg:order-2">
+              <h3 className="text-[40px] md:text-[52px] font-bold leading-[1.1] mb-6 text-[#0B0B0C] tracking-tight">
+                Log every set
+                <br />
+                in seconds
+              </h3>
+              <p className="text-[20px] md:text-[22px] leading-[1.6] text-[#6B6F76] mb-8">
+                No complex forms. No wasted time. Just tap the exercise, enter your numbers, and get back to lifting.
+              </p>
+              <ul className="space-y-4">
+                <li className="flex items-start gap-4">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#0891B2]/10 flex items-center justify-center mt-1">
+                    <svg className="w-4 h-4 text-[#0891B2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <span className="text-[18px] text-[#6B6F76]">Pre-loaded with 50+ exercises, add your own in one tap</span>
+                </li>
+                <li className="flex items-start gap-4">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#0891B2]/10 flex items-center justify-center mt-1">
+                    <svg className="w-4 h-4 text-[#0891B2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <span className="text-[18px] text-[#6B6F76]">Auto-saves every set — never lose your workout data</span>
+                </li>
+                <li className="flex items-start gap-4">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#0891B2]/10 flex items-center justify-center mt-1">
+                    <svg className="w-4 h-4 text-[#0891B2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <span className="text-[18px] text-[#6B6F76]">Works offline, syncs when you're back online</span>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       </section>
 
+      {/* Product Story - Feature 2 (Screenshot Right) */}
+      <section className="bg-[#F7F5F2]">
+        <div className="container mx-auto px-6 md:px-12 py-24 md:py-40">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            {/* Copy */}
+            <div>
+              <h3 className="text-[40px] md:text-[52px] font-bold leading-[1.1] mb-6 text-[#0B0B0C] tracking-tight">
+                Compare every
+                <br />
+                session
+              </h3>
+              <p className="text-[20px] md:text-[22px] leading-[1.6] text-[#6B6F76] mb-8">
+                See your entire training history at a glance. Spot patterns, identify plateaus, and adjust your program based on real data.
+              </p>
+              <ul className="space-y-4">
+                <li className="flex items-start gap-4">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#0891B2]/10 flex items-center justify-center mt-1">
+                    <svg className="w-4 h-4 text-[#0891B2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <span className="text-[18px] text-[#6B6F76]">Filter by exercise, date range, or muscle group</span>
+                </li>
+                <li className="flex items-start gap-4">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#0891B2]/10 flex items-center justify-center mt-1">
+                    <svg className="w-4 h-4 text-[#0891B2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <span className="text-[18px] text-[#6B6F76]">See total volume, sets, and reps for each workout</span>
+                </li>
+                <li className="flex items-start gap-4">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#0891B2]/10 flex items-center justify-center mt-1">
+                    <svg className="w-4 h-4 text-[#0891B2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <span className="text-[18px] text-[#6B6F76]">Export your data anytime — you own your training log</span>
+                </li>
+              </ul>
+            </div>
 
+            {/* Screenshot */}
+            <div>
+              <div className="relative">
+                <img 
+                  src="https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/ZQcZJelIDPISaKrs.png"
+                  alt="Workout history"
+                  className="w-full h-auto rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.08)] border border-[#E6E4E1]"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-      <style>{`
-        .fade-in-on-scroll {
-          opacity: 0;
-          transform: translateY(20px);
-          transition: opacity 400ms cubic-bezier(0.16, 1, 0.3, 1), 
-                      transform 400ms cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        
-        .fade-in-visible {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      `}</style>
+      {/* Product Story - Feature 3 (Screenshot Left) */}
+      <section className="bg-white">
+        <div className="container mx-auto px-6 md:px-12 py-24 md:py-40">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            {/* Screenshot */}
+            <div>
+              <div className="relative">
+                <img 
+                  src="https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/NfNzRYszCpliWVqV.png"
+                  alt="Progress charts"
+                  className="w-full h-auto rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.08)] border border-[#E6E4E1]"
+                />
+              </div>
+            </div>
+
+            {/* Copy */}
+            <div>
+              <h3 className="text-[40px] md:text-[52px] font-bold leading-[1.1] mb-6 text-[#0B0B0C] tracking-tight">
+                Watch yourself
+                <br />
+                get stronger
+              </h3>
+              <p className="text-[20px] md:text-[22px] leading-[1.6] text-[#6B6F76] mb-8">
+                Progressive overload made visible. See your strength gains plotted in real-time charts that update with every workout.
+              </p>
+              <ul className="space-y-4">
+                <li className="flex items-start gap-4">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#0891B2]/10 flex items-center justify-center mt-1">
+                    <svg className="w-4 h-4 text-[#0891B2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <span className="text-[18px] text-[#6B6F76]">Track weight progression for every exercise</span>
+                </li>
+                <li className="flex items-start gap-4">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#0891B2]/10 flex items-center justify-center mt-1">
+                    <svg className="w-4 h-4 text-[#0891B2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <span className="text-[18px] text-[#6B6F76]">See weekly, monthly, and all-time trends</span>
+                </li>
+                <li className="flex items-start gap-4">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#0891B2]/10 flex items-center justify-center mt-1">
+                    <svg className="w-4 h-4 text-[#0891B2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <span className="text-[18px] text-[#6B6F76]">Identify PRs automatically — celebrate every win</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Social Proof Metrics */}
+      <section className="bg-[#F7F5F2] border-y border-[#E6E4E1]">
+        <div className="container mx-auto px-6 md:px-12 py-20 md:py-28">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-5xl mx-auto">
+            <div className="text-center">
+              <div className="text-[56px] md:text-[64px] font-bold text-[#0B0B0C] mb-2">2.5M+</div>
+              <div className="text-[18px] text-[#6B6F76]">Workouts logged</div>
+            </div>
+            <div className="text-center">
+              <div className="text-[56px] md:text-[64px] font-bold text-[#0B0B0C] mb-2">15K+</div>
+              <div className="text-[18px] text-[#6B6F76]">PRs hit this month</div>
+            </div>
+            <div className="text-center">
+              <div className="text-[56px] md:text-[64px] font-bold text-[#0B0B0C] mb-2">10K+</div>
+              <div className="text-[18px] text-[#6B6F76]">Active athletes</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="bg-white">
+        <div className="container mx-auto px-6 md:px-12 py-24 md:py-32 text-center">
+          <h3 className="text-[40px] md:text-[56px] font-bold leading-[1.1] mb-6 text-[#0B0B0C] tracking-tight max-w-3xl mx-auto">
+            Start tracking your progress today
+          </h3>
+          <p className="text-[20px] md:text-[22px] leading-[1.6] text-[#6B6F76] mb-10 max-w-2xl mx-auto">
+            Join thousands of lifters who track every rep and hit new PRs every week.
+          </p>
+          <Button 
+            onClick={() => window.location.href = getLoginUrl()}
+            className="bg-[#111827] hover:bg-[#1F2937] text-white px-9 py-4 h-16 rounded-lg text-lg font-semibold transition-all duration-150 hover:scale-[1.02] hover:shadow-2xl active:scale-[0.98]"
+          >
+            Get started free — no credit card
+          </Button>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-[#F7F5F2] border-t border-[#E6E4E1]">
+        <div className="container mx-auto px-6 md:px-12 py-16">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+            {/* Brand */}
+            <div className="md:col-span-2">
+              <div className="flex items-center gap-3 mb-4">
+                <img src="/flextab-logo.png?v=2" alt="FlexTab" className="h-8 w-auto" />
+                <span className="text-xl font-bold text-[#0B0B0C]">flextab</span>
+              </div>
+              <p className="text-[16px] text-[#6B6F76] max-w-sm">
+                The workout tracker built for serious lifters. Track every set, visualize progress, and hit new PRs.
+              </p>
+            </div>
+
+            {/* Product Links */}
+            <div>
+              <h4 className="text-[14px] font-semibold text-[#0B0B0C] uppercase tracking-wider mb-4">Product</h4>
+              <ul className="space-y-3">
+                <li><a href="#product-story" className="text-[16px] text-[#6B6F76] hover:text-[#0B0B0C] transition-colors">Features</a></li>
+                <li><a href={getLoginUrl()} className="text-[16px] text-[#6B6F76] hover:text-[#0B0B0C] transition-colors">Pricing</a></li>
+                <li><a href={getLoginUrl()} className="text-[16px] text-[#6B6F76] hover:text-[#0B0B0C] transition-colors">Sign In</a></li>
+              </ul>
+            </div>
+
+            {/* Legal Links */}
+            <div>
+              <h4 className="text-[14px] font-semibold text-[#0B0B0C] uppercase tracking-wider mb-4">Legal</h4>
+              <ul className="space-y-3">
+                <li><a href="#" className="text-[16px] text-[#6B6F76] hover:text-[#0B0B0C] transition-colors">Privacy Policy</a></li>
+                <li><a href="#" className="text-[16px] text-[#6B6F76] hover:text-[#0B0B0C] transition-colors">Terms of Service</a></li>
+                <li><a href="#" className="text-[16px] text-[#6B6F76] hover:text-[#0B0B0C] transition-colors">Contact</a></li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Copyright */}
+          <div className="pt-8 border-t border-[#E6E4E1]">
+            <p className="text-[14px] text-[#6B6F76] text-center">
+              © 2026 FlexTab. Built for serious lifters.
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

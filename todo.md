@@ -539,3 +539,13 @@
 - [x] Remove all other landing page sections (value prop, features grid, philosophy, footer)
 - [x] Make feature screenshot full height and width of page (desktop: h-screen w-full object-contain)
 - [x] Ensure screenshot is not cropped or contained (mobile: carousel with padding, desktop: full viewport)
+
+## Enterprise Landing Page Redesign (2026-02-07)
+- [x] Redesign hero section with social proof badge and refined typography (80px headlines)
+- [x] Create product story zigzag layout (3 features, alternating left/right)
+- [x] Add large screenshots (60% width) with explanatory copy on opposite side
+- [x] Add social proof metrics section (2.5M workouts, 15K PRs, 10K athletes)
+- [x] Create refined footer with product links and legal links
+- [x] Enhance design system: larger typography (80px hero, 52px features, 22px body), generous spacing (40px sections), softer shadows (0.08 opacity)
+- [x] Update copy to be benefit-focused ("See every PR in real-time", "Log every set in seconds", "Watch yourself get stronger")
+- [x] Add subtle scroll animations and parallax effects (hero background scale animation)
