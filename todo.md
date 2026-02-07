@@ -549,3 +549,10 @@
 - [x] Enhance design system: larger typography (80px hero, 52px features, 22px body), generous spacing (40px sections), softer shadows (0.08 opacity)
 - [x] Update copy to be benefit-focused ("See every PR in real-time", "Log every set in seconds", "Watch yourself get stronger")
 - [x] Add subtle scroll animations and parallax effects (hero background scale animation)
+
+## Screenshot Display Fix (2026-02-07)
+- [x] Constrain screenshots to fixed mobile width (375px max-width) on desktop
+- [x] Center screenshots in their containers (flex items-center justify-center)
+- [x] Add subtle device frame styling (2.5rem rounded corners, 8px dark border)
+- [x] Enhance shadow for depth and polish (0_25px_70px with 0.15 opacity)
+- [x] Ensure mobile responsiveness (w-full on small screens, max-w-[375px] on desktop)

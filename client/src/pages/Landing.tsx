@@ -101,12 +101,12 @@ export default function Landing() {
         <div className="container mx-auto px-6 md:px-12 py-24 md:py-40">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             {/* Screenshot */}
-            <div className="order-2 lg:order-1">
-              <div className="relative">
+            <div className="order-2 lg:order-1 flex items-center justify-center">
+              <div className="relative w-full max-w-[375px]">
                 <img 
                   src="https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/sUWhtLsscxMXAbBm.png"
                   alt="Active workout tracking"
-                  className="w-full h-auto rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.08)] border border-[#E6E4E1]"
+                  className="w-full h-auto rounded-[2.5rem] shadow-[0_25px_70px_rgba(0,0,0,0.15)] border-[8px] border-[#1F2937]"
                 />
               </div>
             </div>
@@ -195,12 +195,12 @@ export default function Landing() {
             </div>
 
             {/* Screenshot */}
-            <div>
-              <div className="relative">
+            <div className="flex items-center justify-center">
+              <div className="relative w-full max-w-[375px]">
                 <img 
                   src="https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/ZQcZJelIDPISaKrs.png"
                   alt="Workout history"
-                  className="w-full h-auto rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.08)] border border-[#E6E4E1]"
+                  className="w-full h-auto rounded-[2.5rem] shadow-[0_25px_70px_rgba(0,0,0,0.15)] border-[8px] border-[#1F2937]"
                 />
               </div>
             </div>
@@ -213,12 +213,12 @@ export default function Landing() {
         <div className="container mx-auto px-6 md:px-12 py-24 md:py-40">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             {/* Screenshot */}
-            <div>
-              <div className="relative">
+            <div className="flex items-center justify-center">
+              <div className="relative w-full max-w-[375px]">
                 <img 
                   src="https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/NfNzRYszCpliWVqV.png"
                   alt="Progress charts"
-                  className="w-full h-auto rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.08)] border border-[#E6E4E1]"
+                  className="w-full h-auto rounded-[2.5rem] shadow-[0_25px_70px_rgba(0,0,0,0.15)] border-[8px] border-[#1F2937]"
                 />
               </div>
             </div>
