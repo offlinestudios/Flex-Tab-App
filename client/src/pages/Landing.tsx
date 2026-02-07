@@ -7,7 +7,29 @@ import { useEffect, useRef, useState } from "react";
 
 export default function Landing() {
   const [isLoaded, setIsLoaded] = useState(false);
+  const [activeCard, setActiveCard] = useState(0);
   const observerRef = useRef<IntersectionObserver | null>(null);
+
+  const featureCards = [
+    {
+      id: 0,
+      image: "https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/sUWhtLsscxMXAbBm.png",
+      title: "Start by tracking.",
+      description: "The way you improve is by logging every set. FlexTab works with your phone to track your workouts and visualize your progress over time."
+    },
+    {
+      id: 1,
+      image: "https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/ZQcZJelIDPISaKrs.png",
+      title: "Review your history.",
+      description: "See every workout you've logged. Compare current performance to past sessions and identify patterns in your training."
+    },
+    {
+      id: 2,
+      image: "https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/NfNzRYszCpliWVqV.png",
+      title: "Analyze your progress.",
+      description: "Track strength gains with detailed charts. See how your lifts improve week over week with visual analytics."
+    }
+  ];
 
   useEffect(() => {
     // Trigger initial load animations
@@ -34,6 +56,10 @@ export default function Landing() {
     };
   }, []);
 
+  const handleDotClick = (index: number) => {
+    setActiveCard(index);
+  };
+
   return (
     <div className="min-h-screen bg-[#F7F5F2]">
       {/* PWA Install Prompts */}
@@ -58,7 +84,7 @@ export default function Landing() {
         </div>
       </header>
 
-      {/* Hero Section - Full Width Banner */}
+      {/* Hero Section - Full Width Banner with Left-Aligned Content */}
       <section className="relative bg-[#1F2937] overflow-hidden min-h-[600px] md:min-h-[700px] flex items-center">
         {/* Full-width banner background photo */}
         <div 
@@ -69,113 +95,95 @@ export default function Landing() {
           }}
         />
         
-        <div className="relative container mx-auto px-5 md:px-10 py-16 md:py-24 text-center">
-          <h2 
-            className={`text-[44px] md:text-[64px] font-bold leading-[1.1] mb-6 tracking-tight text-white transition-all duration-400 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}
-            style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
-          >
-            Track Your Fitness
-            <br />
-            With Precision
-          </h2>
-          <p 
-            className={`text-[18px] md:text-[22px] leading-[1.6] mb-10 text-white/90 max-w-2xl mx-auto transition-all duration-400 delay-100 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}
-            style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
-          >
-            A professional workout tracking tool for serious lifters. Log sets, track progress, and hit your goals.
-          </p>
-          
-          <div className="flex flex-col gap-4 max-w-md mx-auto">
-            <Button 
-              onClick={() => window.location.href = getLoginUrl()}
-              className={`bg-white hover:bg-gray-100 text-[#111827] px-8 py-4 h-14 rounded-lg text-lg font-semibold transition-all duration-150 hover:scale-[1.02] hover:shadow-xl active:scale-[0.98] delay-200 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}
+        <div className="relative container mx-auto px-5 md:px-10 py-16 md:py-24">
+          <div className="max-w-2xl">
+            <h2 
+              className={`text-[44px] md:text-[64px] font-bold leading-[1.1] mb-6 tracking-tight text-white transition-all duration-400 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}
               style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
             >
-              Get Started Free
-            </Button>
-            <Button 
-              onClick={() => {
-                document.getElementById('feature-explanation')?.scrollIntoView({ behavior: 'smooth' });
-              }}
-              variant="outline"
-              className={`bg-transparent hover:bg-white/10 text-white border-2 border-white px-8 py-4 h-14 rounded-lg text-lg font-semibold transition-all duration-150 hover:scale-[1.02] active:scale-[0.98] delay-300 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}
+              Track Your Fitness
+              <br />
+              With Precision
+            </h2>
+            <p 
+              className={`text-[18px] md:text-[22px] leading-[1.6] mb-10 text-white/90 transition-all duration-400 delay-100 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}
               style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
             >
-              Learn More
-            </Button>
+              A professional workout tracking tool for serious lifters. Log sets, track progress, and hit your goals.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Button 
+                onClick={() => window.location.href = getLoginUrl()}
+                className={`bg-white hover:bg-gray-100 text-[#111827] px-8 py-4 h-14 rounded-lg text-lg font-semibold transition-all duration-150 hover:scale-[1.02] hover:shadow-xl active:scale-[0.98] delay-200 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}
+                style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
+              >
+                Get Started Free
+              </Button>
+              <Button 
+                onClick={() => {
+                  document.getElementById('feature-explanation')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                variant="outline"
+                className={`bg-transparent hover:bg-white/10 text-white border-2 border-white px-8 py-4 h-14 rounded-lg text-lg font-semibold transition-all duration-150 hover:scale-[1.02] active:scale-[0.98] delay-300 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}
+                style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
+              >
+                Learn More
+              </Button>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Feature Explanation Card (Strava-style) */}
+      {/* Feature Explanation Carousel (Strava-style) */}
       <section id="feature-explanation" className="bg-white">
         <div className="container mx-auto px-5 md:px-10 py-20 md:py-32">
           <div className="max-w-2xl mx-auto">
-            {/* Feature Card */}
-            <Card className="fade-in-on-scroll bg-white border border-[#E6E4E1] rounded-2xl overflow-hidden shadow-lg">
-              {/* Workout Card UI Screenshot */}
-              <div className="relative bg-[#F7F5F2] p-6">
-                <div className="bg-white rounded-xl shadow-md overflow-hidden max-w-sm mx-auto">
-                  {/* Mock Activity Card */}
-                  <div className="relative">
-                    {/* Map placeholder */}
-                    <div className="h-48 bg-gradient-to-br from-gray-200 to-gray-300 relative">
-                      <div className="absolute top-3 left-3 bg-[#FC4C02] text-white px-3 py-1 rounded text-sm font-semibold">
-                        12:00
+            {/* Carousel Container */}
+            <div className="relative overflow-hidden">
+              <div 
+                className="flex transition-transform duration-500 ease-out"
+                style={{ transform: `translateX(-${activeCard * 100}%)` }}
+              >
+                {featureCards.map((card) => (
+                  <div key={card.id} className="w-full flex-shrink-0">
+                    <Card className="bg-white border border-[#E6E4E1] rounded-2xl overflow-hidden shadow-lg">
+                      {/* App Screenshot */}
+                      <div className="relative bg-[#F7F5F2] p-6 flex items-center justify-center min-h-[500px]">
+                        <img 
+                          src={card.image}
+                          alt={`FlexTab ${card.title}`}
+                          className="max-w-full h-auto max-h-[480px] rounded-xl shadow-xl"
+                        />
                       </div>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="text-gray-400 text-center">
-                          <svg className="w-16 h-16 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                          </svg>
-                          <p className="text-sm font-medium">Workout Session</p>
-                        </div>
+
+                      {/* Text Content */}
+                      <div className="p-8 text-center">
+                        <h3 className="text-[28px] md:text-[32px] font-bold leading-[1.2] mb-4 text-[#0B0B0C]">
+                          {card.title}
+                        </h3>
+                        <p className="text-[16px] md:text-[18px] leading-[1.6] text-[#6B6F76]">
+                          {card.description}
+                        </p>
                       </div>
-                    </div>
-                    {/* Activity details */}
-                    <div className="p-4">
-                      <h4 className="font-bold text-lg mb-3 text-[#0B0B0C]">Push Day - Chest & Triceps</h4>
-                      <div className="grid grid-cols-3 gap-3 mb-3">
-                        <div className="text-center">
-                          <p className="text-2xl font-bold text-[#0B0B0C]">12</p>
-                          <p className="text-xs text-[#6B6F76] uppercase">Sets</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-2xl font-bold text-[#0B0B0C]">156</p>
-                          <p className="text-xs text-[#6B6F76] uppercase">Reps</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-2xl font-bold text-[#0B0B0C]">8.2k</p>
-                          <p className="text-xs text-[#6B6F76] uppercase">Volume</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-[#6B6F76]">
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
-                        </svg>
-                        <span>8 kudos</span>
-                      </div>
-                    </div>
+                    </Card>
                   </div>
-                </div>
+                ))}
               </div>
+            </div>
 
-              {/* Text Content */}
-              <div className="p-8 text-center">
-                <h3 className="text-[28px] md:text-[32px] font-bold leading-[1.2] mb-4 text-[#0B0B0C]">
-                  Start by tracking.
-                </h3>
-                <p className="text-[16px] md:text-[18px] leading-[1.6] text-[#6B6F76]">
-                  The way you improve is by logging every set. FlexTab works with your phone to track your workouts and visualize your progress over time.
-                </p>
-              </div>
-            </Card>
-
-            {/* Carousel dots (visual only) */}
+            {/* Carousel Dots */}
             <div className="flex justify-center gap-2 mt-6">
-              <div className="w-2 h-2 rounded-full bg-[#0B0B0C]"></div>
-              <div className="w-2 h-2 rounded-full bg-[#E6E4E1]"></div>
-              <div className="w-2 h-2 rounded-full bg-[#E6E4E1]"></div>
+              {featureCards.map((card) => (
+                <button
+                  key={card.id}
+                  onClick={() => handleDotClick(card.id)}
+                  className={`w-2 h-2 rounded-full transition-colors duration-200 ${
+                    activeCard === card.id ? 'bg-[#0B0B0C]' : 'bg-[#E6E4E1]'
+                  }`}
+                  aria-label={`Go to slide ${card.id + 1}`}
+                />
+              ))}
             </div>
           </div>
         </div>

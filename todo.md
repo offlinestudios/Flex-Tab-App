@@ -496,3 +496,18 @@
   - [x] Use athlete-legs.jpg for tertiary visuals
   - [x] Remove all AI-generated images (UI screenshots and stock photos)
   - [x] Ensure images match quality/aesthetic from user's screenshots
+
+## Hero Layout + Functional Carousel (2026-02-07)
+- [x] Update hero section layout to match desktop version
+  - [x] Change text alignment from center to left
+  - [x] Change CTAs from stacked to side-by-side
+  - [x] Adjust responsive breakpoints for mobile
+- [x] Capture real FlexTab app screenshots
+  - [x] Screenshot 1: Active Workout tab (logging sets + calendar)
+  - [x] Screenshot 2: History tab (workout log table)
+  - [x] Screenshot 3: Progress tab (exercise weight progression charts)
+- [x] Replace mock UI with real app screenshots in feature explanation card
+- [x] Implement functional carousel
+  - [x] Create 3 feature cards (Start by tracking, Review history, Analyze progress)
+  - [x] Add click navigation on carousel dots
+  - [x] Add smooth slide transition animation
