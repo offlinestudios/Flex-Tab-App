@@ -475,3 +475,24 @@
   - [x] Add hero banner photo with UI overlay (like Strava's first section)
   - [x] Implement redesigned landing page with mixed visual system (65% UI, 35% photography)
   - [x] Perform final parity check (PARITY ACHIEVED - photography quieter, UI more authoritative)
+
+## Strava Mobile Landing Page Diagnostic (2026-02-02)
+- [x] Analyze Strava mobile landing page visual architecture
+  - [x] Visit Strava mobile landing page and capture screenshots
+  - [x] Document sectional structure and content hierarchy
+  - [x] Analyze animation patterns and motion design
+  - [x] Document visual assets (photography, UI screenshots, graphics)
+  - [x] Analyze typography, color system, and spacing
+  - [x] Create comprehensive diagnostic report with findings
+
+## Feature Explanation Card + Image System Update (2026-02-07)
+- [x] Add Strava-style feature explanation card to landing page
+  - [x] Design card component (UI screenshot + headline + body copy)
+  - [x] Create "Start by tracking" card showing workout logging flow
+  - [x] Position card after hero section (matches Strava pattern)
+- [x] Replace all landing page images with 3 athlete photos
+  - [x] Use athlete-hero.jpg as full-width banner in hero section (spans entire page)
+  - [x] Use athlete-chest.jpg for secondary visuals
+  - [x] Use athlete-legs.jpg for tertiary visuals
+  - [x] Remove all AI-generated images (UI screenshots and stock photos)
+  - [x] Ensure images match quality/aesthetic from user's screenshots
