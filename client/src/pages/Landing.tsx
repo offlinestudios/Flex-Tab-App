@@ -14,19 +14,19 @@ export default function Landing() {
     {
       id: 0,
       image: "https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/sUWhtLsscxMXAbBm.png",
-      title: "Start by tracking.",
-      description: "The way you improve is by logging every set. FlexTab works with your phone to track your workouts and visualize your progress over time."
+      title: "Start by logging.",
+      description: "The way you improve is by tracking every set. FlexTab works with your phone to record your workouts and visualize your progress over time."
     },
     {
       id: 1,
       image: "https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/ZQcZJelIDPISaKrs.png",
-      title: "Review your history.",
+      title: "Compare your sessions.",
       description: "See every workout you've logged. Compare current performance to past sessions and identify patterns in your training."
     },
     {
       id: 2,
       image: "https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/NfNzRYszCpliWVqV.png",
-      title: "Analyze your progress.",
+      title: "Watch yourself improve.",
       description: "Track strength gains with detailed charts. See how your lifts improve week over week with visual analytics."
     }
   ];
@@ -147,19 +147,19 @@ export default function Landing() {
               >
                 {featureCards.map((card) => (
                   <div key={card.id} className="w-full flex-shrink-0">
-                    <Card className="bg-white border border-[#E6E4E1] rounded-2xl overflow-hidden shadow-lg">
+                    <Card className="bg-white border-none rounded-2xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
                       {/* App Screenshot */}
-                      <div className="relative bg-[#F7F5F2] p-6 flex items-center justify-center min-h-[500px]">
+                      <div className="relative bg-[#F7F5F2] p-4 flex items-center justify-center min-h-[580px]">
                         <img 
                           src={card.image}
                           alt={`FlexTab ${card.title}`}
-                          className="max-w-full h-auto max-h-[480px] rounded-xl shadow-xl"
+                          className="max-w-full h-auto max-h-[560px] rounded-xl shadow-xl"
                         />
                       </div>
 
                       {/* Text Content */}
                       <div className="p-8 text-center">
-                        <h3 className="text-[28px] md:text-[32px] font-bold leading-[1.2] mb-4 text-[#0B0B0C]">
+                        <h3 className="text-[28px] md:text-[32px] font-bold leading-[1.2] mb-4 text-[#0EA5E9]">
                           {card.title}
                         </h3>
                         <p className="text-[16px] md:text-[18px] leading-[1.6] text-[#6B6F76]">
@@ -179,7 +179,7 @@ export default function Landing() {
                   key={card.id}
                   onClick={() => handleDotClick(card.id)}
                   className={`w-2 h-2 rounded-full transition-colors duration-200 ${
-                    activeCard === card.id ? 'bg-[#0B0B0C]' : 'bg-[#E6E4E1]'
+                    activeCard === card.id ? 'bg-[#0EA5E9]' : 'bg-[#E6E4E1]'
                   }`}
                   aria-label={`Go to slide ${card.id + 1}`}
                 />

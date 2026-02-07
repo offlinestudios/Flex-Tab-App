@@ -511,3 +511,16 @@
   - [x] Create 3 feature cards (Start by tracking, Review history, Analyze progress)
   - [x] Add click navigation on carousel dots
   - [x] Add smooth slide transition animation
+
+## Strava-Parity Visual Polish (2026-02-07)
+- [x] Update feature card design to match Strava's visual polish
+  - [x] Add brand accent color (sky blue #0EA5E9) to headlines and carousel dots
+  - [x] Reduce screenshot padding (p-6 → p-4, make images larger)
+  - [x] Add elevated card shadow (shadow-[0_8px_30px_rgb(0,0,0,0.12)])
+  - [x] Increase screenshot size (480px → 560px, 70-80% of card height)
+  - [x] Remove card border (border-none for cleaner look)
+- [x] Tighten headline copy
+  - [x] "Start by tracking." → "Start by logging." (more concrete action)
+  - [x] "Review your history." → "Compare your sessions." (more active)
+  - [x] "Analyze your progress." → "Watch yourself improve." (more motivational)
+- [x] Use FlexTab's existing brand accent colors (sky blue #0EA5E9)
