@@ -135,10 +135,35 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Feature Explanation Carousel (Strava-style) */}
+      {/* Feature Explanation - Desktop: First Card Only, Mobile: Carousel */}
       <section id="feature-explanation" className="bg-white">
         <div className="container mx-auto px-5 md:px-10 py-20 md:py-32">
-          <div className="max-w-2xl mx-auto">
+          {/* Desktop: Show only first card full-width */}
+          <div className="hidden md:block max-w-4xl mx-auto">
+            <div className="space-y-8">
+              {/* App Screenshot - Full Bleed */}
+              <div className="relative w-full flex items-center justify-center">
+                <img 
+                  src={featureCards[0].image}
+                  alt={`FlexTab ${featureCards[0].title}`}
+                  className="w-full h-auto shadow-[0_8px_30px_rgb(0,0,0,0.12)] rounded-xl"
+                />
+              </div>
+
+              {/* Text Content */}
+              <div className="text-center">
+                <h3 className="text-[28px] md:text-[32px] font-bold leading-[1.2] mb-4 text-[#0891B2]">
+                  {featureCards[0].title}
+                </h3>
+                <p className="text-[16px] md:text-[18px] leading-[1.6] text-[#6B6F76]">
+                  {featureCards[0].description}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile: Show carousel with all cards */}
+          <div className="md:hidden max-w-2xl mx-auto">
             {/* Carousel Container */}
             <div className="relative overflow-hidden">
               <div 
@@ -147,39 +172,39 @@ export default function Landing() {
               >
                 {featureCards.map((card) => (
                   <div key={card.id} className="w-full flex-shrink-0">
-                    <Card className="bg-white border-none rounded-2xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
-                      {/* App Screenshot */}
-                      <div className="relative bg-[#F7F5F2] p-4 flex items-center justify-center min-h-[580px]">
+                    <div className="space-y-8">
+                      {/* App Screenshot - Full Bleed */}
+                      <div className="relative w-full flex items-center justify-center">
                         <img 
                           src={card.image}
                           alt={`FlexTab ${card.title}`}
-                          className="max-w-full h-auto max-h-[560px] rounded-xl shadow-xl"
+                          className="w-full h-auto shadow-[0_8px_30px_rgb(0,0,0,0.12)] rounded-xl"
                         />
                       </div>
 
                       {/* Text Content */}
-                      <div className="p-8 text-center">
-                        <h3 className="text-[28px] md:text-[32px] font-bold leading-[1.2] mb-4 text-[#0EA5E9]">
+                      <div className="text-center">
+                        <h3 className="text-[28px] md:text-[32px] font-bold leading-[1.2] mb-4 text-[#0891B2]">
                           {card.title}
                         </h3>
                         <p className="text-[16px] md:text-[18px] leading-[1.6] text-[#6B6F76]">
                           {card.description}
                         </p>
                       </div>
-                    </Card>
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Carousel Dots */}
+            {/* Carousel Dots - Mobile Only */}
             <div className="flex justify-center gap-2 mt-6">
               {featureCards.map((card) => (
                 <button
                   key={card.id}
                   onClick={() => handleDotClick(card.id)}
                   className={`w-2 h-2 rounded-full transition-colors duration-200 ${
-                    activeCard === card.id ? 'bg-[#0EA5E9]' : 'bg-[#E6E4E1]'
+                    activeCard === card.id ? 'bg-[#0891B2]' : 'bg-[#E6E4E1]'
                   }`}
                   aria-label={`Go to slide ${card.id + 1}`}
                 />

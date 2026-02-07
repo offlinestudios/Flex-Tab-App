@@ -524,3 +524,10 @@
   - [x] "Review your history." → "Compare your sessions." (more active)
   - [x] "Analyze your progress." → "Watch yourself improve." (more motivational)
 - [x] Use FlexTab's existing brand accent colors (sky blue #0EA5E9)
+
+## Feature Carousel Design Updates (2026-02-07)
+- [x] Change accent color from sky blue (#0EA5E9) to darker steel blue (#0891B2)
+- [x] Remove screenshot container backgrounds (make full-bleed like Strava)
+- [x] Desktop layout: Show only first feature card (full-width, no carousel navigation)
+- [x] Mobile layout: Show all three cards with carousel navigation
+- [x] Ensure screenshots display at full length without cropping
