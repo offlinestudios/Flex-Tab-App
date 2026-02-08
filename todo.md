@@ -677,3 +677,11 @@
 - [x] Verify athlete-chest.jpg exists in client/public/images/ directory - Found it was deleted and moved to CDN
 - [x] Fix image path in Landing.tsx to correctly reference the athlete photo - Updated to CDN URL
 - [x] Test image loading in browser to confirm fix
+
+## Join Now Section Visual Separation (2026-02-08)
+- [x] Add horizontal divider line above "Join Now" section (border-t with #E6E4E1)
+- [x] Add horizontal divider line below "Join Now" section (border-t with #E6E4E1)
+- [x] Add chevron arrow icon (>) before "Join Now" text (like Strava's design)
+- [x] Ensure dividers span full width with subtle gray color (#E6E4E1)
+- [x] Match Strava's spacing and visual hierarchy (py-16, mb-12, mt-12)
+- [x] Update button text from "Join Now" to "Get Started Free" for clarity

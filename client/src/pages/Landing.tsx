@@ -370,18 +370,29 @@ export default function Landing() {
         </section>
 
         {/* Join Now CTA Section */}
-        <section className="bg-white py-12">
+        <section className="bg-white py-16">
+          {/* Top Divider */}
+          <div className="border-t border-[#E6E4E1] mb-12"></div>
+          
           <div className="container mx-auto px-6 text-center">
-            <h2 className="text-3xl font-bold leading-tight text-[#0B0B0C] tracking-tight mb-4">
-              Join for the tracking, stay for the results.
-            </h2>
+            <div className="flex items-center justify-center gap-4 mb-6">
+              <svg className="w-6 h-6 text-[#1F2937]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+              <h2 className="text-3xl font-bold leading-tight text-[#0B0B0C] tracking-tight">
+                Join Now
+              </h2>
+            </div>
             <p className="text-lg leading-relaxed text-[#6B6F76] max-w-2xl mx-auto mb-8">
-              FlexTab helps serious lifters track every rep, visualize progress, and hit new PRs.
+              Join for the tracking, stay for the results. FlexTab helps serious lifters track every rep, visualize progress, and hit new PRs.
             </p>
             <button className="bg-[#1F2937] text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-[#374151] transition-colors">
-              Join Now
+              Get Started Free
             </button>
           </div>
+          
+          {/* Bottom Divider */}
+          <div className="border-t border-[#E6E4E1] mt-12"></div>
         </section>
 
         {/* Image Section with Shaped Overlay */}
