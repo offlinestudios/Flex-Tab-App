@@ -665,3 +665,10 @@
 - [x] Add image section with shaped overlay using athlete-chest.jpg photo
 - [x] Include "Open, tap, go" headline and descriptive paragraph over shaped image
 - [x] Ensure all new sections maintain FlexTab brand colors (#1F2937, #6B6F76) and spacing consistency
+
+## Image Section Overlay Fixes (2026-02-08)
+- [x] Fix shaped overlay to properly position over bottom of image (not below it)
+- [x] Ensure full athlete-chest.jpg photo is visible with fixed height container (500px)
+- [x] Implement diagonal/angled top edge on white overlay box using clip-path polygon
+- [x] Position text content over the image using absolute positioning
+- [x] Adjust image aspect ratio with object-cover for proper display

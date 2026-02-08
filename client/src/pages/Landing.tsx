@@ -391,17 +391,23 @@ export default function Landing() {
               Open, tap, go.
             </h2>
             
-            <div className="relative">
+            <div className="relative h-[500px] rounded-2xl overflow-hidden">
               {/* Athlete Image */}
               <img 
                 src="/images/athlete-chest.jpg" 
                 alt="Athlete training" 
-                className="w-full h-auto rounded-2xl"
+                className="w-full h-full object-cover"
               />
               
               {/* White Shaped Overlay with Text */}
-              <div className="absolute bottom-0 left-0 right-0 bg-white p-8 rounded-t-[2rem]" style={{ clipPath: 'polygon(0 15%, 100% 0, 100% 100%, 0 100%)' }}>
-                <p className="text-lg leading-relaxed text-[#6B6F76] max-w-lg">
+              <div 
+                className="absolute bottom-0 left-0 right-0 bg-white pt-16 pb-8 px-8"
+                style={{ 
+                  clipPath: 'polygon(0 20%, 100% 0%, 100% 100%, 0% 100%)',
+                  marginBottom: '-2px' // Prevent gap at bottom
+                }}
+              >
+                <p className="text-base leading-relaxed text-[#6B6F76]">
                   Logging your workout with FlexTab is effortless. Open the app, select your exercise, and start tracking sets, reps, and weight instantly.
                 </p>
               </div>
