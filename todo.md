@@ -592,3 +592,10 @@
 - [x] Reduce background scale/zoom to fit more of the image (scale(1.02) instead of scale(1.05))
 - [x] Change footer background from gray (#F7F5F2) to white
 - [x] Ensure text content doesn't overlap important parts of the image (left-aligned content with max-w-2xl)
+
+## Overlay Header/Footer Layout (2026-02-08)
+- [x] Make desktop layout use fixed inset-0 for full viewport height
+- [x] Position header as absolute overlay on top of banner image (bg-white/95 backdrop-blur-sm)
+- [x] Position footer as absolute overlay at bottom of banner image (bg-white/95 backdrop-blur-sm)
+- [x] Ensure banner image shows full athlete (head to lower body visible)
+- [x] Maintain header/footer readability with semi-transparent white backgrounds and backdrop blur

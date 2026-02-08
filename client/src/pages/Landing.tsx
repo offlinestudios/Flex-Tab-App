@@ -18,9 +18,20 @@ export default function Landing() {
       <IOSInstallPrompt />
 
       {/* DESKTOP: Fixed Landing Page (hidden on mobile) */}
-      <div className="hidden md:flex fixed inset-0 overflow-hidden flex-col">
-        {/* White Header */}
-        <header className="relative z-20 bg-white border-b border-[#E6E4E1]">
+      <div className="hidden md:block fixed inset-0 overflow-hidden">
+        {/* Background Image - Full Viewport */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/JfZFeFNwdWYiOfDR.jpg')`,
+            backgroundPosition: 'center center',
+            transform: isLoaded ? 'scale(1.02)' : 'scale(1)',
+            transition: 'transform 8s cubic-bezier(0.16, 1, 0.3, 1)'
+          }}
+        />
+
+        {/* White Header - Overlay */}
+        <header className="absolute top-0 left-0 right-0 z-20 bg-white/95 backdrop-blur-sm border-b border-[#E6E4E1]">
           <div className="container mx-auto px-12 py-6 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <img src="/flextab-logo.png?v=2" alt="FlexTab" className="h-10 w-auto" />
@@ -37,21 +48,9 @@ export default function Landing() {
           </div>
         </header>
 
-        {/* Hero Content */}
-        <div className="relative flex-1 flex items-center">
-          {/* Background Image */}
-          <div 
-            className="absolute inset-0 bg-cover bg-center"
-            style={{
-              backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/JfZFeFNwdWYiOfDR.jpg')`,
-              backgroundPosition: 'center center',
-              transform: isLoaded ? 'scale(1.02)' : 'scale(1)',
-              transition: 'transform 8s cubic-bezier(0.16, 1, 0.3, 1)'
-            }}
-          />
-
-          {/* Left-Aligned Content */}
-          <div className="relative z-10 container mx-auto px-12">
+        {/* Hero Content - Centered Vertically */}
+        <div className="absolute inset-0 flex items-center z-10">
+          <div className="container mx-auto px-12">
             <div className="max-w-2xl">
               <h2 className="text-7xl font-bold leading-tight mb-6 tracking-tight text-white">
                 Track Your
@@ -82,8 +81,8 @@ export default function Landing() {
           </div>
         </div>
 
-        {/* Footer */}
-        <footer className="relative z-20 bg-white border-t border-[#E6E4E1]">
+        {/* Footer - Overlay */}
+        <footer className="absolute bottom-0 left-0 right-0 z-20 bg-white/95 backdrop-blur-sm border-t border-[#E6E4E1]">
           <div className="container mx-auto px-12 py-12">
             {/* Main Footer Content */}
             <div className="grid grid-cols-3 gap-16 mb-12">
