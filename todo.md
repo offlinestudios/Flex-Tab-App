@@ -586,3 +586,9 @@
 - [x] Add Legal column (Privacy Policy, Terms of Service, Contact) with uppercase heading
 - [x] Add bottom copyright row ("© 2026 FlexTab. Built for serious lifters.") with border-t
 - [x] Use proper spacing and typography (py-12, space-y-3, text-sm links, bg-[#F7F5F2])
+
+## Banner Image and Footer Adjustments (2026-02-08)
+- [x] Adjust banner image positioning to show full athlete (backgroundPosition: 'center center' instead of 'center 30%')
+- [x] Reduce background scale/zoom to fit more of the image (scale(1.02) instead of scale(1.05))
+- [x] Change footer background from gray (#F7F5F2) to white
+- [x] Ensure text content doesn't overlap important parts of the image (left-aligned content with max-w-2xl)

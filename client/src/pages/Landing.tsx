@@ -44,8 +44,8 @@ export default function Landing() {
             className="absolute inset-0 bg-cover bg-center"
             style={{
               backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/JfZFeFNwdWYiOfDR.jpg')`,
-              backgroundPosition: 'center 30%',
-              transform: isLoaded ? 'scale(1.05)' : 'scale(1)',
+              backgroundPosition: 'center center',
+              transform: isLoaded ? 'scale(1.02)' : 'scale(1)',
               transition: 'transform 8s cubic-bezier(0.16, 1, 0.3, 1)'
             }}
           />
@@ -83,7 +83,7 @@ export default function Landing() {
         </div>
 
         {/* Footer */}
-        <footer className="relative z-20 bg-[#F7F5F2] border-t border-[#E6E4E1]">
+        <footer className="relative z-20 bg-white border-t border-[#E6E4E1]">
           <div className="container mx-auto px-12 py-12">
             {/* Main Footer Content */}
             <div className="grid grid-cols-3 gap-16 mb-12">
