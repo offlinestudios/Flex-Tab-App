@@ -13,15 +13,18 @@ export default function Landing() {
   const screenshots = [
     {
       url: "https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/sUWhtLsscxMXAbBm.png",
-      alt: "Active workout tracking"
+      alt: "Active workout tracking",
+      title: "Log every set in real-time."
     },
     {
       url: "https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/ZQcZJelIDPISaKrs.png",
-      alt: "Workout history"
+      alt: "Workout history",
+      title: "Review your complete workout history."
     },
     {
       url: "https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/NfNzRYszCpliWVqV.png",
-      alt: "Progress charts"
+      alt: "Progress charts",
+      title: "Track strength gains over time."
     }
   ];
 
@@ -302,9 +305,9 @@ export default function Landing() {
         </section>
 
         {/* Unified Feature Card with Swipeable Carousel */}
-        <section className="bg-white py-12">
+        <section className="bg-white py-8">
           <div className="container mx-auto px-6">
-            <div className="space-y-6">
+            <div className="space-y-4">
               {/* Swipeable Screenshot Carousel */}
               <div 
                 className="relative overflow-hidden"
@@ -318,13 +321,11 @@ export default function Landing() {
                 >
                   {screenshots.map((screenshot, index) => (
                     <div key={index} className="w-full flex-shrink-0 flex items-center justify-center">
-                      <div className="relative w-full max-w-[280px]">
-                        <img 
-                          src={screenshot.url}
-                          alt={screenshot.alt}
-                          className="w-full h-auto rounded-[2.5rem] shadow-[0_25px_70px_rgba(0,0,0,0.15)] border-[8px] border-[#1F2937]"
-                        />
-                      </div>
+                      <img 
+                        src={screenshot.url}
+                        alt={screenshot.alt}
+                        className="w-full max-w-[200px] h-auto rounded-[2rem] shadow-[0_20px_60px_rgba(0,0,0,0.12)] border-[6px] border-[#1F2937]"
+                      />
                     </div>
                   ))}
                 </div>
@@ -346,40 +347,11 @@ export default function Landing() {
                 ))}
               </div>
 
-              {/* Unified Copy */}
+              {/* Dynamic Title */}
               <div className="text-center">
-                <h3 className="text-3xl font-bold leading-tight mb-3 text-[#0B0B0C] tracking-tight">
-                  Start by sweating.
+                <h3 className="text-2xl font-bold leading-tight text-[#0B0B0C] tracking-tight">
+                  {screenshots[currentSlide].title}
                 </h3>
-                <p className="text-base leading-relaxed text-[#6B6F76] mb-5">
-                  The way you "post" in this network is by being active. FlexTab works with your mobile phone to track your workouts and share your efforts with friends.
-                </p>
-                <ul className="space-y-3 text-left max-w-md mx-auto">
-                  <li className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#0891B2]/10 flex items-center justify-center mt-0.5">
-                      <svg className="w-4 h-4 text-[#0891B2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                    <span className="text-base text-[#6B6F76]">Log every set in seconds — no complex forms</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#0891B2]/10 flex items-center justify-center mt-0.5">
-                      <svg className="w-4 h-4 text-[#0891B2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                    <span className="text-base text-[#6B6F76]">Compare your sessions instantly with complete history</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#0891B2]/10 flex items-center justify-center mt-0.5">
-                      <svg className="w-4 h-4 text-[#0891B2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                    <span className="text-base text-[#6B6F76]">Watch yourself get stronger with visual progress charts</span>
-                  </li>
-                </ul>
               </div>
             </div>
           </div>

@@ -633,3 +633,16 @@
 - [x] Reduce section padding from py-20 to py-12, space-y-8 to space-y-6
 - [x] Reduce headline from text-4xl to text-3xl, description from text-lg to text-base
 - [x] Ensure carousel dots, headline, and full description remain visible without scrolling
+
+## Strava-Style Minimalist Feature Card (2026-02-08)
+- [x] Reduce screenshot size dramatically to 200px (from 280px)
+- [x] Remove gray background/container - phone graphic stands alone with just shadow
+- [x] Make title text smaller (reduced from text-3xl to text-2xl)
+- [x] Remove all bullet points below title
+- [x] Add dynamic title text that changes for each carousel slide:
+  - Slide 1: "Log every set in real-time."
+  - Slide 2: "Review your complete workout history."
+  - Slide 3: "Track strength gains over time."
+- [x] Keep titles original to FlexTab, not copying Strava's messaging
+- [x] Maintain clean, minimal aesthetic matching Strava's design philosophy
+- [x] Reduce section padding from py-12 to py-8, spacing from space-y-6 to space-y-4
