@@ -646,3 +646,11 @@
 - [x] Keep titles original to FlexTab, not copying Strava's messaging
 - [x] Maintain clean, minimal aesthetic matching Strava's design philosophy
 - [x] Reduce section padding from py-12 to py-8, spacing from space-y-6 to space-y-4
+
+## Feature Card Polish (2026-02-08)
+- [x] Add descriptive paragraph below each dynamic title (one paragraph per slide)
+- [x] Change carousel dots color from cyan (#0891B2) to dark blue (#1F2937)
+- [x] Simplify carousel dot animation (removed horizontal expansion, just color change)
+- [x] Dots now use consistent colors: active=#1F2937, inactive=#E6E4E1, hover=#6B6F76
+- [x] Added feature-specific descriptions for each slide
+- [x] Ensure color consistency across all mobile landing page elements

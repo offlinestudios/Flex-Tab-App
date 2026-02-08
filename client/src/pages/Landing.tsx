@@ -14,17 +14,20 @@ export default function Landing() {
     {
       url: "https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/sUWhtLsscxMXAbBm.png",
       alt: "Active workout tracking",
-      title: "Log every set in real-time."
+      title: "Log every set in real-time.",
+      description: "Track sets, reps, and weight with a simple interface. No complex forms—just tap and log."
     },
     {
       url: "https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/ZQcZJelIDPISaKrs.png",
       alt: "Workout history",
-      title: "Review your complete workout history."
+      title: "Review your complete workout history.",
+      description: "See every workout session at a glance. Compare performance and spot trends instantly."
     },
     {
       url: "https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/NfNzRYszCpliWVqV.png",
       alt: "Progress charts",
-      title: "Track strength gains over time."
+      title: "Track strength gains over time.",
+      description: "Visual charts show your progress. Watch yourself get stronger week after week."
     }
   ];
 
@@ -337,21 +340,24 @@ export default function Landing() {
                   <button
                     key={index}
                     onClick={() => setCurrentSlide(index)}
-                    className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                    className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 ${
                       index === currentSlide 
-                        ? 'bg-[#0891B2] w-8' 
-                        : 'bg-[#E6E4E1] hover:bg-[#0891B2]/50'
+                        ? 'bg-[#1F2937]' 
+                        : 'bg-[#E6E4E1] hover:bg-[#6B6F76]'
                     }`}
                     aria-label={`Go to slide ${index + 1}`}
                   />
                 ))}
               </div>
 
-              {/* Dynamic Title */}
-              <div className="text-center">
-                <h3 className="text-2xl font-bold leading-tight text-[#0B0B0C] tracking-tight">
+              {/* Dynamic Title and Description */}
+              <div className="text-center px-4">
+                <h3 className="text-2xl font-bold leading-tight text-[#0B0B0C] tracking-tight mb-3">
                   {screenshots[currentSlide].title}
                 </h3>
+                <p className="text-base leading-relaxed text-[#6B6F76] max-w-md mx-auto">
+                  {screenshots[currentSlide].description}
+                </p>
               </div>
             </div>
           </div>
