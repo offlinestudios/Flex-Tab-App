@@ -459,24 +459,6 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* Join Now Section */}
-        <section className="bg-white py-16">
-          {/* Top Divider */}
-          <div className="border-t border-[#E6E4E1] mb-12"></div>
-          
-          <div className="container mx-auto px-6 text-center">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <ChevronRight className="w-7 h-7 text-[#FC4C02]" />
-              <h2 className="text-3xl font-bold leading-tight text-[#FC4C02] tracking-tight">
-                Join Now
-              </h2>
-            </div>
-          </div>
-          
-          {/* Bottom Divider */}
-          <div className="border-t border-[#E6E4E1] mt-12"></div>
-        </section>
-
         {/* Final CTA */}
         <section 
           className="relative py-32 overflow-hidden"
