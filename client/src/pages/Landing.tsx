@@ -53,11 +53,9 @@ export default function Landing() {
           <div className="container mx-auto px-12">
             <div className="max-w-2xl">
               <h2 className="text-7xl font-bold leading-tight mb-6 tracking-tight text-white">
-                Track Your
+                See every PR
                 <br />
-                Fitness
-                <br />
-                With Precision
+                in real-time
               </h2>
               <p className="text-2xl leading-relaxed text-white/90 mb-10">
                 A professional workout tracking tool for serious lifters. Log sets, track progress, and hit your goals.
@@ -214,6 +212,44 @@ export default function Landing() {
                 </button>
               </div>
             </div>
+          </div>
+          
+          {/* Animated Scroll Arrow */}
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10">
+            <a 
+              href="#who-we-are"
+              className="flex flex-col items-center gap-2 text-white/70 hover:text-white transition-colors group"
+              onClick={(e) => {
+                e.preventDefault();
+                document.getElementById('who-we-are')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+            >
+              <svg 
+                className="w-6 h-6 animate-bounce"
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M19 9l-7 7-7-7" 
+                />
+              </svg>
+            </a>
+          </div>
+        </section>
+
+        {/* Who We Are Section */}
+        <section id="who-we-are" className="bg-white py-16">
+          <div className="container mx-auto px-6">
+            <h3 className="text-xs font-bold text-[#6B6F76] uppercase tracking-wider text-center mb-6">
+              Who We Are
+            </h3>
+            <p className="text-lg leading-relaxed text-[#0B0B0C] text-center max-w-2xl mx-auto">
+              If you're serious about lifting, FlexTab was made for you. Our mobile app enhances the experience of strength training and connects lifters from around the world. We're the workout tracker built for progress, precision, and PRs.
+            </p>
           </div>
         </section>
 

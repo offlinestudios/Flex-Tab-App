@@ -604,3 +604,10 @@
 - [x] Adjust hero content vertical positioning to center between header and footer (top-[88px] bottom-[340px])
 - [x] Account for header and footer heights when calculating center position
 - [x] Ensure text doesn't overlap with header or footer
+
+## Desktop CTA Text Update + Mobile Enhancements (2026-02-08)
+- [x] Update desktop hero headline to "See every PR in real-time" (match mobile version)
+- [x] Add animated downward arrow at bottom of mobile hero section (bouncing animation with animate-bounce)
+- [x] Add "Who We Are" section below mobile hero with FlexTab mission statement
+- [x] Ensure mobile layout is scrollable (not fixed like desktop)
+- [x] Arrow scrolls smoothly to "Who We Are" section when tapped (smooth scroll behavior)
