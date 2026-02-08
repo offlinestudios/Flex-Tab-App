@@ -6,10 +6,54 @@ import { useEffect, useState } from "react";
 
 export default function Landing() {
   const [isLoaded, setIsLoaded] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
+
+  const screenshots = [
+    {
+      url: "https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/sUWhtLsscxMXAbBm.png",
+      alt: "Active workout tracking"
+    },
+    {
+      url: "https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/ZQcZJelIDPISaKrs.png",
+      alt: "Workout history"
+    },
+    {
+      url: "https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/NfNzRYszCpliWVqV.png",
+      alt: "Progress charts"
+    }
+  ];
 
   useEffect(() => {
     setIsLoaded(true);
   }, []);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe && currentSlide < screenshots.length - 1) {
+      setCurrentSlide(currentSlide + 1);
+    }
+    if (isRightSwipe && currentSlide > 0) {
+      setCurrentSlide(currentSlide - 1);
+    }
+
+    setTouchStart(0);
+    setTouchEnd(0);
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -116,7 +160,7 @@ export default function Landing() {
                     </a>
                   </li>
                   <li>
-                    <a href="#" onClick={() => window.location.href = getLoginUrl()} className="text-sm text-[#6B6F76] hover:text-[#0891B2] transition-colors cursor-pointer">
+                    <a href={getLoginUrl()} className="text-sm text-[#6B6F76] hover:text-[#0891B2] transition-colors">
                       Sign In
                     </a>
                   </li>
@@ -257,30 +301,58 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* Product Story - Feature 1 */}
+        {/* Unified Feature Card with Swipeable Carousel */}
         <section className="bg-white py-20">
           <div className="container mx-auto px-6">
             <div className="space-y-8">
-              {/* Screenshot */}
-              <div className="flex items-center justify-center">
-                <div className="relative w-full max-w-[375px]">
-                  <img 
-                    src="https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/sUWhtLsscxMXAbBm.png"
-                    alt="Active workout tracking"
-                    className="w-full h-auto rounded-[2.5rem] shadow-[0_25px_70px_rgba(0,0,0,0.15)] border-[8px] border-[#1F2937]"
-                  />
+              {/* Swipeable Screenshot Carousel */}
+              <div 
+                className="relative overflow-hidden"
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+              >
+                <div 
+                  className="flex transition-transform duration-300 ease-out"
+                  style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+                >
+                  {screenshots.map((screenshot, index) => (
+                    <div key={index} className="w-full flex-shrink-0 flex items-center justify-center">
+                      <div className="relative w-full max-w-[375px]">
+                        <img 
+                          src={screenshot.url}
+                          alt={screenshot.alt}
+                          className="w-full h-auto rounded-[2.5rem] shadow-[0_25px_70px_rgba(0,0,0,0.15)] border-[8px] border-[#1F2937]"
+                        />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              {/* Copy */}
+              {/* Carousel Dots */}
+              <div className="flex items-center justify-center gap-2">
+                {screenshots.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentSlide(index)}
+                    className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                      index === currentSlide 
+                        ? 'bg-[#0891B2] w-8' 
+                        : 'bg-[#E6E4E1] hover:bg-[#0891B2]/50'
+                    }`}
+                    aria-label={`Go to slide ${index + 1}`}
+                  />
+                ))}
+              </div>
+
+              {/* Unified Copy */}
               <div className="text-center">
                 <h3 className="text-4xl font-bold leading-tight mb-4 text-[#0B0B0C] tracking-tight">
-                  Log every set
-                  <br />
-                  in seconds
+                  Start by sweating.
                 </h3>
                 <p className="text-lg leading-relaxed text-[#6B6F76] mb-6">
-                  No complex forms. No wasted time. Just tap the exercise, enter your numbers, and get back to lifting.
+                  The way you "post" in this network is by being active. FlexTab works with your mobile phone to track your workouts and share your efforts with friends.
                 </p>
                 <ul className="space-y-3 text-left max-w-md mx-auto">
                   <li className="flex items-start gap-3">
@@ -289,7 +361,7 @@ export default function Landing() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
-                    <span className="text-base text-[#6B6F76]">Pre-loaded with 50+ exercises, add your own in one tap</span>
+                    <span className="text-base text-[#6B6F76]">Log every set in seconds — no complex forms</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#0891B2]/10 flex items-center justify-center mt-0.5">
@@ -297,7 +369,7 @@ export default function Landing() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
-                    <span className="text-base text-[#6B6F76]">Auto-saves every set — never lose your workout data</span>
+                    <span className="text-base text-[#6B6F76]">Compare your sessions instantly with complete history</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#0891B2]/10 flex items-center justify-center mt-0.5">
@@ -305,119 +377,7 @@ export default function Landing() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
-                    <span className="text-base text-[#6B6F76]">Works offline, syncs when you're back online</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Product Story - Feature 2 */}
-        <section className="bg-[#F7F5F2] py-20">
-          <div className="container mx-auto px-6">
-            <div className="space-y-8">
-              {/* Screenshot */}
-              <div className="flex items-center justify-center">
-                <div className="relative w-full max-w-[375px]">
-                  <img 
-                    src="https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/ZQcZJelIDPISaKrs.png"
-                    alt="Workout history"
-                    className="w-full h-auto rounded-[2.5rem] shadow-[0_25px_70px_rgba(0,0,0,0.15)] border-[8px] border-[#1F2937]"
-                  />
-                </div>
-              </div>
-
-              {/* Copy */}
-              <div className="text-center">
-                <h3 className="text-4xl font-bold leading-tight mb-4 text-[#0B0B0C] tracking-tight">
-                  Compare your
-                  <br />
-                  sessions instantly
-                </h3>
-                <p className="text-lg leading-relaxed text-[#6B6F76] mb-6">
-                  See your complete workout history at a glance. Compare today's lifts with last week, last month, or your all-time best.
-                </p>
-                <ul className="space-y-3 text-left max-w-md mx-auto">
-                  <li className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#0891B2]/10 flex items-center justify-center mt-0.5">
-                      <svg className="w-4 h-4 text-[#0891B2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                    <span className="text-base text-[#6B6F76]">Calendar view shows every workout day</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#0891B2]/10 flex items-center justify-center mt-0.5">
-                      <svg className="w-4 h-4 text-[#0891B2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                    <span className="text-base text-[#6B6F76]">Filter by exercise, date range, or muscle group</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#0891B2]/10 flex items-center justify-center mt-0.5">
-                      <svg className="w-4 h-4 text-[#0891B2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                    <span className="text-base text-[#6B6F76]">Export your data anytime, anywhere</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Product Story - Feature 3 */}
-        <section className="bg-white py-20">
-          <div className="container mx-auto px-6">
-            <div className="space-y-8">
-              {/* Screenshot */}
-              <div className="flex items-center justify-center">
-                <div className="relative w-full max-w-[375px]">
-                  <img 
-                    src="https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/NfNzRYszCpliWVqV.png"
-                    alt="Progress charts"
-                    className="w-full h-auto rounded-[2.5rem] shadow-[0_25px_70px_rgba(0,0,0,0.15)] border-[8px] border-[#1F2937]"
-                  />
-                </div>
-              </div>
-
-              {/* Copy */}
-              <div className="text-center">
-                <h3 className="text-4xl font-bold leading-tight mb-4 text-[#0B0B0C] tracking-tight">
-                  Watch yourself
-                  <br />
-                  get stronger
-                </h3>
-                <p className="text-lg leading-relaxed text-[#6B6F76] mb-6">
-                  Track strength gains with detailed charts. See how your lifts improve week over week with visual analytics.
-                </p>
-                <ul className="space-y-3 text-left max-w-md mx-auto">
-                  <li className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#0891B2]/10 flex items-center justify-center mt-0.5">
-                      <svg className="w-4 h-4 text-[#0891B2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                    <span className="text-base text-[#6B6F76]">Weight progression charts for every exercise</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#0891B2]/10 flex items-center justify-center mt-0.5">
-                      <svg className="w-4 h-4 text-[#0891B2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                    <span className="text-base text-[#6B6F76]">Volume tracking shows total work over time</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#0891B2]/10 flex items-center justify-center mt-0.5">
-                      <svg className="w-4 h-4 text-[#0891B2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                    <span className="text-base text-[#6B6F76]">Personal records automatically highlighted</span>
+                    <span className="text-base text-[#6B6F76]">Watch yourself get stronger with visual progress charts</span>
                   </li>
                 </ul>
               </div>
@@ -448,24 +408,44 @@ export default function Landing() {
           <div className="container mx-auto px-6">
             <div className="grid grid-cols-2 gap-8 mb-8">
               <div>
-                <h4 className="font-bold text-[#0B0B0C] mb-3">Product</h4>
-                <ul className="space-y-2">
-                  <li><a href="#" className="text-[#6B6F76] hover:text-[#0891B2] transition-colors">Features</a></li>
-                  <li><a href="#" className="text-[#6B6F76] hover:text-[#0891B2] transition-colors">Pricing</a></li>
-                  <li><a href="#" className="text-[#6B6F76] hover:text-[#0891B2] transition-colors">About</a></li>
+                <h4 className="text-xs font-bold text-[#0B0B0C] uppercase tracking-wider mb-4">
+                  Product
+                </h4>
+                <ul className="space-y-3">
+                  <li>
+                    <a href="#" className="text-sm text-[#6B6F76]">
+                      Features
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="text-sm text-[#6B6F76]">
+                      Pricing
+                    </a>
+                  </li>
                 </ul>
               </div>
               <div>
-                <h4 className="font-bold text-[#0B0B0C] mb-3">Legal</h4>
-                <ul className="space-y-2">
-                  <li><a href="#" className="text-[#6B6F76] hover:text-[#0891B2] transition-colors">Privacy</a></li>
-                  <li><a href="#" className="text-[#6B6F76] hover:text-[#0891B2] transition-colors">Terms</a></li>
-                  <li><a href="#" className="text-[#6B6F76] hover:text-[#0891B2] transition-colors">Contact</a></li>
+                <h4 className="text-xs font-bold text-[#0B0B0C] uppercase tracking-wider mb-4">
+                  Legal
+                </h4>
+                <ul className="space-y-3">
+                  <li>
+                    <a href="#" className="text-sm text-[#6B6F76]">
+                      Privacy
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="text-sm text-[#6B6F76]">
+                      Terms
+                    </a>
+                  </li>
                 </ul>
               </div>
             </div>
-            <div className="text-center text-sm text-[#6B6F76] pt-6 border-t border-[#E6E4E1]">
-              © 2026 FlexTab. All rights reserved.
+            <div className="text-center pt-8 border-t border-[#E6E4E1]">
+              <p className="text-sm text-[#6B6F76]">
+                © 2026 FlexTab. Built for serious lifters.
+              </p>
             </div>
           </div>
         </footer>

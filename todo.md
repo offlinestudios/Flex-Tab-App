@@ -616,3 +616,12 @@
 - [x] Change desktop hero headline to "Track Your Fitness With Precision" (text-7xl, 3 lines)
 - [x] Change mobile hero headline to "Track Your Fitness With Precision" (text-5xl, 3 lines)
 - [x] Ensure both desktop and mobile use the same headline
+
+## Unified Feature Card with Swipeable Carousel (2026-02-08)
+- [x] Replace three separate feature sections with single unified feature card (like Strava's "Start by sweating")
+- [x] Combine all three screenshots (logging, tracking, comparing) into one swipeable carousel
+- [x] Add carousel dots/indicators below screenshots to show position (1 of 3, 2 of 3, 3 of 3)
+- [x] Enable touch swipe gestures for mobile navigation between screenshots
+- [x] Keep single headline "Start by sweating." and unified description
+- [x] Maintain device frame styling (375px width, rounded corners, shadow)
+- [x] Ensure smooth transitions between carousel slides (300ms ease-out)
