@@ -48,8 +48,8 @@ export default function Landing() {
           </div>
         </header>
 
-        {/* Hero Content - Centered Vertically */}
-        <div className="absolute inset-0 flex items-center z-10">
+        {/* Hero Content - Centered Between Header and Footer */}
+        <div className="absolute top-[88px] bottom-[340px] left-0 right-0 flex items-center z-10">
           <div className="container mx-auto px-12">
             <div className="max-w-2xl">
               <h2 className="text-7xl font-bold leading-tight mb-6 tracking-tight text-white">

@@ -599,3 +599,8 @@
 - [x] Position footer as absolute overlay at bottom of banner image (bg-white/95 backdrop-blur-sm)
 - [x] Ensure banner image shows full athlete (head to lower body visible)
 - [x] Maintain header/footer readability with semi-transparent white backgrounds and backdrop blur
+
+## CTA Text Positioning Adjustment (2026-02-08)
+- [x] Adjust hero content vertical positioning to center between header and footer (top-[88px] bottom-[340px])
+- [x] Account for header and footer heights when calculating center position
+- [x] Ensure text doesn't overlap with header or footer
