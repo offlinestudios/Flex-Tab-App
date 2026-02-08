@@ -654,3 +654,14 @@
 - [x] Dots now use consistent colors: active=#1F2937, inactive=#E6E4E1, hover=#6B6F76
 - [x] Added feature-specific descriptions for each slide
 - [x] Ensure color consistency across all mobile landing page elements
+
+## Mobile Landing Page Enhancements (2026-02-08)
+- [x] Add fade transition on carousel title and description text when slides change (0.4s ease-out animation)
+- [x] Add "Join Now" CTA button section after carousel with headline "Join for the tracking, stay for the results"
+- [x] Create "Explore our features" section with icon + title + description cards:
+  - [x] Body Measurements tracking card ("Track & Measure")
+  - [x] Custom Exercises card ("Build & Customize")
+  - [x] Visual Calendar card ("Visualize & Stay Consistent")
+- [x] Add image section with shaped overlay using athlete-chest.jpg photo
+- [x] Include "Open, tap, go" headline and descriptive paragraph over shaped image
+- [x] Ensure all new sections maintain FlexTab brand colors (#1F2937, #6B6F76) and spacing consistency

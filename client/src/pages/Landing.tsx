@@ -350,13 +350,115 @@ export default function Landing() {
                 ))}
               </div>
 
-              {/* Dynamic Title and Description */}
+              {/* Dynamic Title and Description with Fade Transition */}
               <div className="text-center px-4">
-                <h3 className="text-2xl font-bold leading-tight text-[#0B0B0C] tracking-tight mb-3">
+                <h3 
+                  key={`title-${currentSlide}`}
+                  className="text-2xl font-bold leading-tight text-[#0B0B0C] tracking-tight mb-3 animate-fade-in"
+                >
                   {screenshots[currentSlide].title}
                 </h3>
-                <p className="text-base leading-relaxed text-[#6B6F76] max-w-md mx-auto">
+                <p 
+                  key={`desc-${currentSlide}`}
+                  className="text-base leading-relaxed text-[#6B6F76] max-w-md mx-auto animate-fade-in"
+                >
                   {screenshots[currentSlide].description}
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Join Now CTA Section */}
+        <section className="bg-white py-12">
+          <div className="container mx-auto px-6 text-center">
+            <h2 className="text-3xl font-bold leading-tight text-[#0B0B0C] tracking-tight mb-4">
+              Join for the tracking, stay for the results.
+            </h2>
+            <p className="text-lg leading-relaxed text-[#6B6F76] max-w-2xl mx-auto mb-8">
+              FlexTab helps serious lifters track every rep, visualize progress, and hit new PRs.
+            </p>
+            <button className="bg-[#1F2937] text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-[#374151] transition-colors">
+              Join Now
+            </button>
+          </div>
+        </section>
+
+        {/* Image Section with Shaped Overlay */}
+        <section className="bg-white py-16 overflow-hidden">
+          <div className="container mx-auto px-6">
+            <h2 className="text-3xl font-bold leading-tight text-[#0B0B0C] tracking-tight mb-8 text-center">
+              Open, tap, go.
+            </h2>
+            
+            <div className="relative">
+              {/* Athlete Image */}
+              <img 
+                src="/images/athlete-chest.jpg" 
+                alt="Athlete training" 
+                className="w-full h-auto rounded-2xl"
+              />
+              
+              {/* White Shaped Overlay with Text */}
+              <div className="absolute bottom-0 left-0 right-0 bg-white p-8 rounded-t-[2rem]" style={{ clipPath: 'polygon(0 15%, 100% 0, 100% 100%, 0 100%)' }}>
+                <p className="text-lg leading-relaxed text-[#6B6F76] max-w-lg">
+                  Logging your workout with FlexTab is effortless. Open the app, select your exercise, and start tracking sets, reps, and weight instantly.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Explore Features Section */}
+        <section className="bg-white py-16">
+          <div className="container mx-auto px-6">
+            <h2 className="text-3xl font-bold leading-tight text-[#0B0B0C] tracking-tight mb-12 text-center">
+              Explore our features.
+            </h2>
+            
+            <div className="space-y-12 max-w-md mx-auto">
+              {/* Body Measurements Card */}
+              <div className="text-center">
+                <div className="flex justify-center mb-4">
+                  <svg className="w-16 h-16 text-[#1F2937]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                </div>
+                <h3 className="text-2xl font-bold leading-tight text-[#0B0B0C] tracking-tight mb-3">
+                  Track & Measure
+                </h3>
+                <p className="text-base leading-relaxed text-[#6B6F76]">
+                  Log body measurements alongside your workouts. Track weight, chest, waist, arms, and thighs to see your transformation.
+                </p>
+              </div>
+
+              {/* Custom Exercises Card */}
+              <div className="text-center">
+                <div className="flex justify-center mb-4">
+                  <svg className="w-16 h-16 text-[#1F2937]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                  </svg>
+                </div>
+                <h3 className="text-2xl font-bold leading-tight text-[#0B0B0C] tracking-tight mb-3">
+                  Build & Customize
+                </h3>
+                <p className="text-base leading-relaxed text-[#6B6F76]">
+                  Create custom exercises tailored to your routine. Add any movement, track it your way, and build your perfect workout plan.
+                </p>
+              </div>
+
+              {/* Visual Calendar Card */}
+              <div className="text-center">
+                <div className="flex justify-center mb-4">
+                  <svg className="w-16 h-16 text-[#1F2937]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <h3 className="text-2xl font-bold leading-tight text-[#0B0B0C] tracking-tight mb-3">
+                  Visualize & Stay Consistent
+                </h3>
+                <p className="text-base leading-relaxed text-[#6B6F76]">
+                  See your workout consistency at a glance with the visual calendar. Never miss a training day again.
                 </p>
               </div>
             </div>
