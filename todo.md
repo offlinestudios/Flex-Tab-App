@@ -708,3 +708,9 @@
 - [x] Add "Log In" link at bottom of footer list in orange color (#FC4C02) with hover state (#E04002)
 - [x] Maintain proper spacing between footer links (space-y-4, pt-4 for Log In)
 - [x] Keep copyright at bottom with divider line (left-aligned like Strava)
+
+## CTA Button Style Update (2026-02-08)
+- [x] Change CTA button from solid dark blue pill to transparent/outlined style
+- [x] Match header "Sign In" button appearance (transparent with white border-2 and text)
+- [x] Ensure button is visible and readable over dark background image
+- [x] Maintain hover effects and transitions (hover:bg-white/10, hover:scale-[1.02])
