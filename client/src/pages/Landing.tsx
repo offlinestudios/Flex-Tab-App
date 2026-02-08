@@ -83,19 +83,77 @@ export default function Landing() {
         </div>
 
         {/* Footer */}
-        <footer className="relative z-20 bg-white/95 backdrop-blur-sm border-t border-[#E6E4E1]">
-          <div className="container mx-auto px-12 py-6">
-            <div className="flex items-center justify-between">
-              <div className="flex gap-8">
-                <a href="#" className="text-sm text-[#6B6F76] hover:text-[#0891B2] transition-colors font-medium">Features</a>
-                <a href="#" className="text-sm text-[#6B6F76] hover:text-[#0891B2] transition-colors font-medium">Pricing</a>
-                <a href="#" className="text-sm text-[#6B6F76] hover:text-[#0891B2] transition-colors font-medium">About</a>
+        <footer className="relative z-20 bg-[#F7F5F2] border-t border-[#E6E4E1]">
+          <div className="container mx-auto px-12 py-12">
+            {/* Main Footer Content */}
+            <div className="grid grid-cols-3 gap-16 mb-12">
+              {/* Brand Column */}
+              <div>
+                <div className="flex items-center gap-3 mb-4">
+                  <img src="/flextab-logo.png?v=2" alt="FlexTab" className="h-8 w-auto" />
+                  <h3 className="text-xl font-bold tracking-tight text-[#0B0B0C]">
+                    flextab
+                  </h3>
+                </div>
+                <p className="text-sm text-[#6B6F76] leading-relaxed">
+                  The workout tracker built for serious lifters. Track every set, visualize progress, and hit new PRs.
+                </p>
               </div>
-              <div className="flex gap-8">
-                <a href="#" className="text-sm text-[#6B6F76] hover:text-[#0891B2] transition-colors font-medium">Privacy</a>
-                <a href="#" className="text-sm text-[#6B6F76] hover:text-[#0891B2] transition-colors font-medium">Terms</a>
-                <a href="#" className="text-sm text-[#6B6F76] hover:text-[#0891B2] transition-colors font-medium">Contact</a>
+
+              {/* Product Column */}
+              <div>
+                <h4 className="text-xs font-bold text-[#0B0B0C] uppercase tracking-wider mb-4">
+                  Product
+                </h4>
+                <ul className="space-y-3">
+                  <li>
+                    <a href="#" className="text-sm text-[#6B6F76] hover:text-[#0891B2] transition-colors">
+                      Features
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="text-sm text-[#6B6F76] hover:text-[#0891B2] transition-colors">
+                      Pricing
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" onClick={() => window.location.href = getLoginUrl()} className="text-sm text-[#6B6F76] hover:text-[#0891B2] transition-colors cursor-pointer">
+                      Sign In
+                    </a>
+                  </li>
+                </ul>
               </div>
+
+              {/* Legal Column */}
+              <div>
+                <h4 className="text-xs font-bold text-[#0B0B0C] uppercase tracking-wider mb-4">
+                  Legal
+                </h4>
+                <ul className="space-y-3">
+                  <li>
+                    <a href="#" className="text-sm text-[#6B6F76] hover:text-[#0891B2] transition-colors">
+                      Privacy Policy
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="text-sm text-[#6B6F76] hover:text-[#0891B2] transition-colors">
+                      Terms of Service
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="text-sm text-[#6B6F76] hover:text-[#0891B2] transition-colors">
+                      Contact
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Copyright */}
+            <div className="pt-8 border-t border-[#E6E4E1]">
+              <p className="text-sm text-[#6B6F76] text-center">
+                © 2026 FlexTab. Built for serious lifters.
+              </p>
             </div>
           </div>
         </footer>

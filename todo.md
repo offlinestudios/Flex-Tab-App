@@ -578,3 +578,11 @@
 - [x] Add two CTAs: "Get Started Free" (primary white) + "Learn More" (secondary outline with border-2)
 - [x] Add footer with product and legal links (Features, Pricing, About / Privacy, Terms, Contact)
 - [x] Maintain enterprise-level polish and typography (7xl headline, 2xl subheadline, generous spacing)
+
+## Professional Footer Update (2026-02-08)
+- [x] Replace minimal single-row footer with multi-column layout (grid-cols-3 gap-16)
+- [x] Add left column with logo and tagline
+- [x] Add Product column (Features, Pricing, Sign In) with uppercase heading
+- [x] Add Legal column (Privacy Policy, Terms of Service, Contact) with uppercase heading
+- [x] Add bottom copyright row ("© 2026 FlexTab. Built for serious lifters.") with border-t
+- [x] Use proper spacing and typography (py-12, space-y-3, text-sm links, bg-[#F7F5F2])
