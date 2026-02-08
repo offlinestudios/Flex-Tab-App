@@ -53,9 +53,11 @@ export default function Landing() {
           <div className="container mx-auto px-12">
             <div className="max-w-2xl">
               <h2 className="text-7xl font-bold leading-tight mb-6 tracking-tight text-white">
-                See every PR
+                Track Your
                 <br />
-                in real-time
+                Fitness
+                <br />
+                With Precision
               </h2>
               <p className="text-2xl leading-relaxed text-white/90 mb-10">
                 A professional workout tracking tool for serious lifters. Log sets, track progress, and hit your goals.
@@ -189,9 +191,11 @@ export default function Landing() {
           <div className="relative container mx-auto px-6 py-20">
             <div className="max-w-2xl">
               <h2 className="text-5xl font-bold leading-tight mb-6 tracking-tight text-white">
-                See every PR
+                Track Your
                 <br />
-                in real-time
+                Fitness
+                <br />
+                With Precision
               </h2>
               <p className="text-xl leading-relaxed text-white/90 mb-8">
                 The workout tracker built for serious lifters. Log every set, visualize progress, and hit new PRs faster.

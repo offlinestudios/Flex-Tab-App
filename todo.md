@@ -611,3 +611,8 @@
 - [x] Add "Who We Are" section below mobile hero with FlexTab mission statement
 - [x] Ensure mobile layout is scrollable (not fixed like desktop)
 - [x] Arrow scrolls smoothly to "Who We Are" section when tapped (smooth scroll behavior)
+
+## Headline Correction (2026-02-08)
+- [x] Change desktop hero headline to "Track Your Fitness With Precision" (text-7xl, 3 lines)
+- [x] Change mobile hero headline to "Track Your Fitness With Precision" (text-5xl, 3 lines)
+- [x] Ensure both desktop and mobile use the same headline
