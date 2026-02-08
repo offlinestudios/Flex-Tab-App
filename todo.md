@@ -697,3 +697,14 @@
 - [x] Ensure footer has proper spacing (py-16, mb-12), typography hierarchy, and professional layout
 - [x] Match footer color scheme to desktop version (#0B0B0C, #6B6F76, #E6E4E1)
 - [x] Add hover states to footer links (hover:text-[#0B0B0C])
+
+## CTA and Footer Strava-Style Refinement (2026-02-08)
+- [x] Simplify CTA section to single "Join Now" button with chevron icon
+- [x] Position button below the paragraph text (not inline)
+- [x] Redesign footer from two-column grid to Strava's vertical list layout
+- [x] Remove category headers (PRODUCT, LEGAL) for cleaner vertical list
+- [x] Keep logo and tagline at top of footer
+- [x] List all links vertically without grouping: Features, Pricing, Sign In, Privacy Policy, Terms of Service, Contact
+- [x] Add "Log In" link at bottom of footer list in orange color (#FC4C02) with hover state (#E04002)
+- [x] Maintain proper spacing between footer links (space-y-4, pt-4 for Log In)
+- [x] Keep copyright at bottom with divider line (left-aligned like Strava)

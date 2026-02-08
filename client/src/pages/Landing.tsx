@@ -3,6 +3,7 @@ import { InstallPrompt } from "@/components/InstallPrompt";
 import { IOSInstallPrompt } from "@/components/IOSInstallPrompt";
 import { getLoginUrl } from "@/const";
 import { useEffect, useState } from "react";
+import { ChevronRight } from "lucide-react";
 
 export default function Landing() {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -492,17 +493,18 @@ export default function Landing() {
           }}
         >
           <div className="container mx-auto px-6 text-center relative z-10">
-            <h3 className="text-4xl font-bold leading-tight mb-4 text-white tracking-tight max-w-2xl mx-auto">
-              Start tracking your progress today
+            <h3 className="text-4xl font-bold leading-tight mb-6 text-white tracking-tight max-w-2xl mx-auto flex items-center justify-center gap-3">
+              <ChevronRight className="w-8 h-8" />
+              Join Now
             </h3>
             <p className="text-lg leading-relaxed text-white/90 mb-8 max-w-xl mx-auto">
-              Get started free. No credit card required.
+              Join for the tracking, stay for the results. FlexTab helps serious lifters track every rep, visualize progress, and hit new PRs.
             </p>
             <Button 
               onClick={() => window.location.href = getLoginUrl()}
               className="bg-[#1F2937] hover:bg-[#374151] text-white px-10 py-6 rounded-full font-bold text-lg shadow-xl transition-all duration-150 hover:scale-[1.02] active:scale-[0.98]"
             >
-              Get started free
+              Join Now
             </Button>
           </div>
         </section>
@@ -521,57 +523,53 @@ export default function Landing() {
               </p>
             </div>
 
-            {/* Footer Links */}
-            <div className="grid grid-cols-2 gap-8 mb-12">
-              <div>
-                <h4 className="text-xs font-bold text-[#0B0B0C] uppercase tracking-wider mb-4">
-                  PRODUCT
-                </h4>
-                <ul className="space-y-3">
-                  <li>
-                    <a href="#" className="text-sm text-[#6B6F76] hover:text-[#0B0B0C] transition-colors">
-                      Features
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" className="text-sm text-[#6B6F76] hover:text-[#0B0B0C] transition-colors">
-                      Pricing
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" className="text-sm text-[#6B6F76] hover:text-[#0B0B0C] transition-colors">
-                      Sign In
-                    </a>
-                  </li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-[#0B0B0C] uppercase tracking-wider mb-4">
-                  LEGAL
-                </h4>
-                <ul className="space-y-3">
-                  <li>
-                    <a href="#" className="text-sm text-[#6B6F76] hover:text-[#0B0B0C] transition-colors">
-                      Privacy Policy
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" className="text-sm text-[#6B6F76] hover:text-[#0B0B0C] transition-colors">
-                      Terms of Service
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" className="text-sm text-[#6B6F76] hover:text-[#0B0B0C] transition-colors">
-                      Contact
-                    </a>
-                  </li>
-                </ul>
-              </div>
-            </div>
+            {/* Footer Links - Vertical List */}
+            <nav className="mb-12">
+              <ul className="space-y-4">
+                <li>
+                  <a href="#" className="text-base text-[#6B6F76] hover:text-[#0B0B0C] transition-colors">
+                    Features
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-base text-[#6B6F76] hover:text-[#0B0B0C] transition-colors">
+                    Pricing
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-base text-[#6B6F76] hover:text-[#0B0B0C] transition-colors">
+                    Sign In
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-base text-[#6B6F76] hover:text-[#0B0B0C] transition-colors">
+                    Privacy Policy
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-base text-[#6B6F76] hover:text-[#0B0B0C] transition-colors">
+                    Terms of Service
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-base text-[#6B6F76] hover:text-[#0B0B0C] transition-colors">
+                    Contact
+                  </a>
+                </li>
+                <li className="pt-4">
+                  <a 
+                    href={getLoginUrl()} 
+                    className="text-base text-[#FC4C02] hover:text-[#E04002] transition-colors font-medium"
+                  >
+                    Log In
+                  </a>
+                </li>
+              </ul>
+            </nav>
 
             {/* Copyright */}
             <div className="pt-8 border-t border-[#E6E4E1]">
-              <p className="text-sm text-[#6B6F76] text-center">
+              <p className="text-sm text-[#6B6F76]">
                 © 2026 FlexTab. Built for serious lifters.
               </p>
             </div>
