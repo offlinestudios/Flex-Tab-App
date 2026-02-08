@@ -483,17 +483,24 @@ export default function Landing() {
         </section>
 
         {/* Final CTA */}
-        <section className="bg-[#F7F5F2] py-20">
-          <div className="container mx-auto px-6 text-center">
-            <h3 className="text-4xl font-bold leading-tight mb-4 text-[#0B0B0C] tracking-tight max-w-2xl mx-auto">
+        <section 
+          className="relative py-32 overflow-hidden"
+          style={{
+            backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/irKQQAnhGsKossSs.jpg')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+          }}
+        >
+          <div className="container mx-auto px-6 text-center relative z-10">
+            <h3 className="text-4xl font-bold leading-tight mb-4 text-white tracking-tight max-w-2xl mx-auto">
               Start tracking your progress today
             </h3>
-            <p className="text-lg leading-relaxed text-[#6B6F76] mb-8 max-w-xl mx-auto">
+            <p className="text-lg leading-relaxed text-white/90 mb-8 max-w-xl mx-auto">
               Get started free. No credit card required.
             </p>
             <Button 
               onClick={() => window.location.href = getLoginUrl()}
-              className="bg-[#0891B2] hover:bg-[#0E7490] text-white px-10 py-6 rounded-xl font-bold text-lg shadow-lg transition-all duration-150 hover:scale-[1.02] active:scale-[0.98]"
+              className="bg-[#1F2937] hover:bg-[#374151] text-white px-10 py-6 rounded-full font-bold text-lg shadow-xl transition-all duration-150 hover:scale-[1.02] active:scale-[0.98]"
             >
               Get started free
             </Button>
@@ -501,46 +508,70 @@ export default function Landing() {
         </section>
 
         {/* Footer */}
-        <footer className="bg-white border-t border-[#E6E4E1] py-12">
+        <footer className="bg-white border-t border-[#E6E4E1] py-16">
           <div className="container mx-auto px-6">
-            <div className="grid grid-cols-2 gap-8 mb-8">
+            {/* Logo and Tagline */}
+            <div className="mb-12">
+              <div className="flex items-center gap-3 mb-3">
+                <img src="/flextab-icon.png" alt="FlexTab" className="h-8 w-8" />
+                <span className="text-xl font-bold text-[#0B0B0C]">flextab</span>
+              </div>
+              <p className="text-sm text-[#6B6F76] max-w-xs">
+                The workout tracker built for serious lifters. Track every set, visualize progress, and hit new PRs.
+              </p>
+            </div>
+
+            {/* Footer Links */}
+            <div className="grid grid-cols-2 gap-8 mb-12">
               <div>
                 <h4 className="text-xs font-bold text-[#0B0B0C] uppercase tracking-wider mb-4">
-                  Product
+                  PRODUCT
                 </h4>
                 <ul className="space-y-3">
                   <li>
-                    <a href="#" className="text-sm text-[#6B6F76]">
+                    <a href="#" className="text-sm text-[#6B6F76] hover:text-[#0B0B0C] transition-colors">
                       Features
                     </a>
                   </li>
                   <li>
-                    <a href="#" className="text-sm text-[#6B6F76]">
+                    <a href="#" className="text-sm text-[#6B6F76] hover:text-[#0B0B0C] transition-colors">
                       Pricing
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="text-sm text-[#6B6F76] hover:text-[#0B0B0C] transition-colors">
+                      Sign In
                     </a>
                   </li>
                 </ul>
               </div>
               <div>
                 <h4 className="text-xs font-bold text-[#0B0B0C] uppercase tracking-wider mb-4">
-                  Legal
+                  LEGAL
                 </h4>
                 <ul className="space-y-3">
                   <li>
-                    <a href="#" className="text-sm text-[#6B6F76]">
-                      Privacy
+                    <a href="#" className="text-sm text-[#6B6F76] hover:text-[#0B0B0C] transition-colors">
+                      Privacy Policy
                     </a>
                   </li>
                   <li>
-                    <a href="#" className="text-sm text-[#6B6F76]">
-                      Terms
+                    <a href="#" className="text-sm text-[#6B6F76] hover:text-[#0B0B0C] transition-colors">
+                      Terms of Service
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="text-sm text-[#6B6F76] hover:text-[#0B0B0C] transition-colors">
+                      Contact
                     </a>
                   </li>
                 </ul>
               </div>
             </div>
-            <div className="text-center pt-8 border-t border-[#E6E4E1]">
-              <p className="text-sm text-[#6B6F76]">
+
+            {/* Copyright */}
+            <div className="pt-8 border-t border-[#E6E4E1]">
+              <p className="text-sm text-[#6B6F76] text-center">
                 © 2026 FlexTab. Built for serious lifters.
               </p>
             </div>

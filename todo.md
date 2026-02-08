@@ -685,3 +685,15 @@
 - [x] Ensure dividers span full width with subtle gray color (#E6E4E1)
 - [x] Match Strava's spacing and visual hierarchy (py-16, mb-12, mt-12)
 - [x] Update button text from "Join Now" to "Get Started Free" for clarity
+
+## Enterprise-Level CTA and Footer Upgrade (2026-02-08)
+- [x] Replace plain CTA section with background image (athlete-legs CDN URL: irKQQAnhGsKossSs.jpg)
+- [x] Add dark overlay (rgba(0, 0, 0, 0.6)) to CTA background for text readability
+- [x] Change button color from cyan to brand dark blue (#1F2937) with rounded-full style
+- [x] Ensure CTA text is white (text-white, text-white/90) and highly visible over image
+- [x] Upgrade footer to enterprise-level design matching desktop footer structure
+- [x] Add comprehensive footer sections: Product (Features, Pricing, Sign In), Legal (Privacy, Terms, Contact)
+- [x] Include FlexTab logo and tagline in footer
+- [x] Ensure footer has proper spacing (py-16, mb-12), typography hierarchy, and professional layout
+- [x] Match footer color scheme to desktop version (#0B0B0C, #6B6F76, #E6E4E1)
+- [x] Add hover states to footer links (hover:text-[#0B0B0C])
