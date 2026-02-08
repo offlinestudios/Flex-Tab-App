@@ -672,3 +672,8 @@
 - [x] Implement diagonal/angled top edge on white overlay box using clip-path polygon
 - [x] Position text content over the image using absolute positioning
 - [x] Adjust image aspect ratio with object-cover for proper display
+
+## Image Path Fix (2026-02-08)
+- [x] Verify athlete-chest.jpg exists in client/public/images/ directory - Found it was deleted and moved to CDN
+- [x] Fix image path in Landing.tsx to correctly reference the athlete photo - Updated to CDN URL
+- [x] Test image loading in browser to confirm fix
