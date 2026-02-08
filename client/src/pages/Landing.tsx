@@ -17,56 +17,88 @@ export default function Landing() {
       <InstallPrompt />
       <IOSInstallPrompt />
 
-      {/* DESKTOP: Fixed Login Page (hidden on mobile) */}
-      <div className="hidden md:block fixed inset-0 overflow-hidden">
-        {/* Background Image */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/JfZFeFNwdWYiOfDR.jpg')`,
-            backgroundPosition: 'center 30%',
-            transform: isLoaded ? 'scale(1.05)' : 'scale(1)',
-            transition: 'transform 8s cubic-bezier(0.16, 1, 0.3, 1)'
-          }}
-        />
-
-        {/* Logo (Top Left) */}
-        <div className="absolute top-8 left-12 z-10 flex items-center gap-3">
-          <img src="/flextab-logo.png?v=2" alt="FlexTab" className="h-10 w-auto" />
-          <h1 className="text-2xl font-bold tracking-tight text-white">
-            flextab
-          </h1>
-        </div>
-
-        {/* Login Card (Center) */}
-        <div className="relative z-10 flex items-center justify-center h-full">
-          <div className="bg-white rounded-2xl shadow-2xl p-12 max-w-md w-full mx-6">
-            <h2 className="text-4xl font-bold text-[#0B0B0C] mb-3 tracking-tight">
-              See every PR
-              <br />
-              in real-time
-            </h2>
-            <p className="text-lg text-[#6B6F76] mb-8 leading-relaxed">
-              The workout tracker built for serious lifters. Log every set, visualize progress, and hit new PRs faster.
-            </p>
-            
+      {/* DESKTOP: Fixed Landing Page (hidden on mobile) */}
+      <div className="hidden md:flex fixed inset-0 overflow-hidden flex-col">
+        {/* White Header */}
+        <header className="relative z-20 bg-white border-b border-[#E6E4E1]">
+          <div className="container mx-auto px-12 py-6 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <img src="/flextab-logo.png?v=2" alt="FlexTab" className="h-10 w-auto" />
+              <h1 className="text-2xl font-bold tracking-tight text-[#0B0B0C]">
+                flextab
+              </h1>
+            </div>
             <Button 
               onClick={() => window.location.href = getLoginUrl()}
-              className="w-full bg-[#0891B2] hover:bg-[#0E7490] text-white px-8 py-6 rounded-xl font-bold text-lg transition-all duration-150 hover:scale-[1.02] active:scale-[0.98] shadow-lg"
+              className="bg-[#111827] hover:bg-[#1F2937] text-white px-8 py-3 rounded-lg font-semibold transition-all duration-150"
             >
-              Get started free — no credit card
+              Sign In
             </Button>
+          </div>
+        </header>
 
-            <div className="mt-6 text-center">
-              <button 
-                onClick={() => window.location.href = getLoginUrl()}
-                className="text-[#0891B2] hover:text-[#0E7490] font-semibold transition-colors"
-              >
-                Already have an account? Sign in
-              </button>
+        {/* Hero Content */}
+        <div className="relative flex-1 flex items-center">
+          {/* Background Image */}
+          <div 
+            className="absolute inset-0 bg-cover bg-center"
+            style={{
+              backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/JfZFeFNwdWYiOfDR.jpg')`,
+              backgroundPosition: 'center 30%',
+              transform: isLoaded ? 'scale(1.05)' : 'scale(1)',
+              transition: 'transform 8s cubic-bezier(0.16, 1, 0.3, 1)'
+            }}
+          />
+
+          {/* Left-Aligned Content */}
+          <div className="relative z-10 container mx-auto px-12">
+            <div className="max-w-2xl">
+              <h2 className="text-7xl font-bold leading-tight mb-6 tracking-tight text-white">
+                Track Your
+                <br />
+                Fitness
+                <br />
+                With Precision
+              </h2>
+              <p className="text-2xl leading-relaxed text-white/90 mb-10">
+                A professional workout tracking tool for serious lifters. Log sets, track progress, and hit your goals.
+              </p>
+              
+              <div className="flex gap-4">
+                <Button 
+                  onClick={() => window.location.href = getLoginUrl()}
+                  className="bg-white hover:bg-gray-100 text-[#111827] px-10 py-6 rounded-xl font-bold text-lg transition-all duration-150 hover:scale-[1.02] active:scale-[0.98] shadow-xl"
+                >
+                  Get Started Free
+                </Button>
+                <Button 
+                  onClick={() => window.location.href = getLoginUrl()}
+                  className="bg-transparent hover:bg-white/10 text-white border-2 border-white/50 hover:border-white px-10 py-6 rounded-xl font-bold text-lg transition-all duration-150"
+                >
+                  Learn More
+                </Button>
+              </div>
             </div>
           </div>
         </div>
+
+        {/* Footer */}
+        <footer className="relative z-20 bg-white/95 backdrop-blur-sm border-t border-[#E6E4E1]">
+          <div className="container mx-auto px-12 py-6">
+            <div className="flex items-center justify-between">
+              <div className="flex gap-8">
+                <a href="#" className="text-sm text-[#6B6F76] hover:text-[#0891B2] transition-colors font-medium">Features</a>
+                <a href="#" className="text-sm text-[#6B6F76] hover:text-[#0891B2] transition-colors font-medium">Pricing</a>
+                <a href="#" className="text-sm text-[#6B6F76] hover:text-[#0891B2] transition-colors font-medium">About</a>
+              </div>
+              <div className="flex gap-8">
+                <a href="#" className="text-sm text-[#6B6F76] hover:text-[#0891B2] transition-colors font-medium">Privacy</a>
+                <a href="#" className="text-sm text-[#6B6F76] hover:text-[#0891B2] transition-colors font-medium">Terms</a>
+                <a href="#" className="text-sm text-[#6B6F76] hover:text-[#0891B2] transition-colors font-medium">Contact</a>
+              </div>
+            </div>
+          </div>
+        </footer>
       </div>
 
       {/* MOBILE: Scrolling Landing Page (hidden on desktop) */}

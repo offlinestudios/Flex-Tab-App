@@ -569,3 +569,12 @@
 - [x] Implement responsive switching (desktop: hidden md:block, mobile: block md:hidden)
 - [x] Ensure desktop layout is completely static (fixed inset-0 overflow-hidden)
 - [x] Ensure mobile layout shows all product features and CTAs (3 feature sections + footer)
+
+## Desktop Landing Redesign (2026-02-07)
+- [x] Replace centered login card with left-aligned content layout
+- [x] Add white header with logo and Sign In button
+- [x] Update headline to "Track Your Fitness With Precision" (text-7xl, 3 lines)
+- [x] Add descriptive subheadline below headline (text-2xl)
+- [x] Add two CTAs: "Get Started Free" (primary white) + "Learn More" (secondary outline with border-2)
+- [x] Add footer with product and legal links (Features, Pricing, About / Privacy, Terms, Contact)
+- [x] Maintain enterprise-level polish and typography (7xl headline, 2xl subheadline, generous spacing)
