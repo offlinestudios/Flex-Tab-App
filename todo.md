@@ -562,3 +562,10 @@
 
 ## Remove Social Proof Metrics Section (2026-02-07)
 - [x] Remove social proof metrics section (2.5M+ workouts, 15K+ PRs, 10K+ athletes) - not accurate for pre-launch
+
+## Strava-Style Landing Page (2026-02-07)
+- [x] Create fixed desktop login page (non-scrolling, full-screen hero with login overlay)
+- [x] Create scrolling mobile landing page (hero, features, screenshots, footer)
+- [x] Implement responsive switching (desktop: hidden md:block, mobile: block md:hidden)
+- [x] Ensure desktop layout is completely static (fixed inset-0 overflow-hidden)
+- [x] Ensure mobile layout shows all product features and CTAs (3 feature sections + footer)
