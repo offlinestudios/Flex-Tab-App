@@ -719,3 +719,11 @@
 - [x] Remove "Get Started Free" button section that appears before final CTA
 - [x] Keep only the "Join Now" section with background image and transparent button
 - [x] Ensure smooth flow from feature sections directly to final CTA
+
+## Add "Join Now" Section with Orange Branding (2026-02-08)
+- [x] Create new "Join Now" section between feature sections and final CTA
+- [x] Use orange color (#FC4C02) for chevron icon and heading (matching footer Log In link)
+- [x] Add horizontal divider lines above and below section (border-t border-[#E6E4E1])
+- [x] Keep white background consistent with FlexTab aesthetic
+- [x] Position between "Open, tap, go" image section and final CTA with background
+- [x] Ensure proper spacing and visual hierarchy (py-16, mb-12, mt-12)
