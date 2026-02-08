@@ -553,7 +553,7 @@ export default function Landing() {
                 <li className="pt-4">
                   <a 
                     href={getLoginUrl()} 
-                    className="text-base text-[#FC4C02] hover:text-[#E04002] transition-colors font-medium"
+                    className="text-base text-[#1F2937] hover:text-[#374151] transition-colors font-medium"
                   >
                     Log In
                   </a>

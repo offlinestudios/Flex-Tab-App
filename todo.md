@@ -727,3 +727,8 @@
 - [x] Keep white background consistent with FlexTab aesthetic
 - [x] Position between "Open, tap, go" image section and final CTA with background
 - [x] Ensure proper spacing and visual hierarchy (py-16, mb-12, mt-12)
+
+## Change Log In Link Color to Dark Blue (2026-02-08)
+- [x] Update footer "Log In" link from orange (#FC4C02) to dark blue (#1F2937)
+- [x] Update hover state to match dark blue theme (#374151)
+- [x] Ensure consistent branding with website's primary button colors
