@@ -625,3 +625,11 @@
 - [x] Keep single headline "Start by sweating." and unified description
 - [x] Maintain device frame styling (375px width, rounded corners, shadow)
 - [x] Ensure smooth transitions between carousel slides (300ms ease-out)
+
+## Viewport-Fit Feature Card (2026-02-08)
+- [x] Reduce screenshot size to fit entire feature card within viewport (no scrolling needed)
+- [x] Match Strava's compact layout: graphic + dots + headline + description all visible above fold
+- [x] Reduce screenshot max-width from 375px to 280px
+- [x] Reduce section padding from py-20 to py-12, space-y-8 to space-y-6
+- [x] Reduce headline from text-4xl to text-3xl, description from text-lg to text-base
+- [x] Ensure carousel dots, headline, and full description remain visible without scrolling

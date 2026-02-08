@@ -302,9 +302,9 @@ export default function Landing() {
         </section>
 
         {/* Unified Feature Card with Swipeable Carousel */}
-        <section className="bg-white py-20">
+        <section className="bg-white py-12">
           <div className="container mx-auto px-6">
-            <div className="space-y-8">
+            <div className="space-y-6">
               {/* Swipeable Screenshot Carousel */}
               <div 
                 className="relative overflow-hidden"
@@ -318,7 +318,7 @@ export default function Landing() {
                 >
                   {screenshots.map((screenshot, index) => (
                     <div key={index} className="w-full flex-shrink-0 flex items-center justify-center">
-                      <div className="relative w-full max-w-[375px]">
+                      <div className="relative w-full max-w-[280px]">
                         <img 
                           src={screenshot.url}
                           alt={screenshot.alt}
@@ -348,10 +348,10 @@ export default function Landing() {
 
               {/* Unified Copy */}
               <div className="text-center">
-                <h3 className="text-4xl font-bold leading-tight mb-4 text-[#0B0B0C] tracking-tight">
+                <h3 className="text-3xl font-bold leading-tight mb-3 text-[#0B0B0C] tracking-tight">
                   Start by sweating.
                 </h3>
-                <p className="text-lg leading-relaxed text-[#6B6F76] mb-6">
+                <p className="text-base leading-relaxed text-[#6B6F76] mb-5">
                   The way you "post" in this network is by being active. FlexTab works with your mobile phone to track your workouts and share your efforts with friends.
                 </p>
                 <ul className="space-y-3 text-left max-w-md mx-auto">
