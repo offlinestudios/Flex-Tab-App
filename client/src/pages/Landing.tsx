@@ -469,10 +469,6 @@ export default function Landing() {
           }}
         >
           <div className="container mx-auto px-6 text-center relative z-10">
-            <h3 className="text-4xl font-bold leading-tight mb-6 text-white tracking-tight max-w-2xl mx-auto flex items-center justify-center gap-3">
-              <ChevronRight className="w-8 h-8" />
-              Join Now
-            </h3>
             <p className="text-lg leading-relaxed text-white/90 mb-8 max-w-xl mx-auto">
               Join for the tracking, stay for the results. FlexTab helps serious lifters track every rep, visualize progress, and hit new PRs.
             </p>
