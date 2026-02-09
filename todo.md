@@ -823,3 +823,9 @@
 - [x] Fix broken athlete hero image in "Start Your Workout" card on Active tab
 - [x] Add logout button to sidebar bottom
 - [x] Add settings option to sidebar navigation
+
+## Settings Modal Implementation (2026-02-09)
+- [x] Create SettingsDialog component with modal popup (similar to ChatGPT/Manus settings)
+- [x] Add settings options in modal: theme, units, notifications
+- [x] Update UserMenu Settings button to open modal instead of navigate to /settings page
+- [x] Test settings modal functionality
