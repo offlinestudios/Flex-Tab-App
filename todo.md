@@ -874,4 +874,10 @@
 - [x] Fix sparkline to show flat line when there's no change between measurements
 - [x] Update trend indicator colors to match neutral palette (text-slate-600)
 - [x] Test sparkline behavior with various data scenarios (14/14 vitest tests passed)
-- [ ] Create checkpoint after fixes
+- [x] Create checkpoint after fixes (version: b4780882)
+
+## Progress Tab 2-Column Layout (2026-02-09)
+- [x] Update Progress tab statistics cards to display in 2-column grid
+- [x] Match measurements tab grid layout (grid-cols-2)
+- [x] Test responsive layout on mobile and desktop
+- [ ] Create checkpoint after fix

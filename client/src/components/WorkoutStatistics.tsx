@@ -113,7 +113,7 @@ export function WorkoutStatistics({
       {/* All-Time Statistics */}
       <div>
         <h3 className="text-lg font-bold text-slate-900 mb-4">All-Time Statistics</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           <Card className="data-card p-4 animate-scale-in">
             <p className="text-sm text-slate-600 font-medium">Total Workouts</p>
             <p className="text-3xl font-bold text-slate-900 mt-2">
@@ -144,7 +144,7 @@ export function WorkoutStatistics({
         </div>
 
         {/* Additional Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        <div className="grid grid-cols-2 gap-4 mt-4">
           <Card className="data-card p-4 animate-scale-in">
             <p className="text-sm text-slate-600 font-medium">Total Sets</p>
             <p className="text-2xl font-bold text-slate-900 mt-2">
@@ -182,7 +182,7 @@ export function WorkoutStatistics({
           <h3 className="text-lg font-bold text-slate-900 mb-4">
             Workout for {selectedDate}
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <Card className="data-card p-4 animate-scale-in">
               <p className="text-sm text-slate-600 font-medium">Exercises</p>
               <p className="text-3xl font-bold text-slate-900 mt-2">
