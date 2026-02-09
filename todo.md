@@ -798,3 +798,9 @@
 - [x] Apply rounded corners to athlete image element only (added rounded-2xl class to img)
 - [x] Keep text overlay with diagonal clip-path clean (no rounded corners)
 - [x] Verify visual appearance matches design intent
+
+## Apply Glass Morphism to CTA Join Now Button (2026-02-09)
+- [x] Update Join Now button in CTA section to use glass morphism effect
+- [x] Replace solid dark background with transparent/semi-transparent background
+- [x] Add semi-transparent white border with hover effect (border-white/30 hover:border-white/50)
+- [x] Verify visual consistency with "See how it works" button style

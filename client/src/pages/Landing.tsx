@@ -494,7 +494,7 @@ export default function Landing() {
             </p>
             <Button 
               onClick={() => window.location.href = getLoginUrl()}
-              className="bg-transparent border-2 border-white hover:bg-white/10 text-white px-10 py-6 rounded-lg font-bold text-lg transition-all duration-150 hover:scale-[1.02] active:scale-[0.98]"
+              className="bg-transparent border-2 border-white/30 hover:border-white/50 text-white px-10 py-6 rounded-xl font-bold text-lg transition-all duration-300"
             >
               Join Now
             </Button>
