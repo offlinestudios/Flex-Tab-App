@@ -880,4 +880,11 @@
 - [x] Update Progress tab statistics cards to display in 2-column grid
 - [x] Match measurements tab grid layout (grid-cols-2)
 - [x] Test responsive layout on mobile and desktop
+- [x] Create checkpoint after fix (version: 5010259c)
+
+## History Tab Mobile Layout Fix (2026-02-09)
+- [x] Wrap workout session tables in Card containers (already using data-card)
+- [x] Add proper padding to prevent content touching screen edges (increased from px-3 to px-4 on mobile)
+- [x] Match Progress tab chart card styling (white background, rounded corners, shadow)
+- [x] Test on mobile to ensure proper containment
 - [ ] Create checkpoint after fix

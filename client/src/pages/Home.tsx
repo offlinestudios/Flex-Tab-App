@@ -648,7 +648,7 @@ export default function Home() {
                     const stats = calculateStats(session.exercises);
                     return (
                       <Card key={session.date} className="data-card overflow-hidden animate-slide-up">
-                        <div className="px-3 md:px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+                        <div className="px-4 md:px-6 py-4 border-b border-slate-200 flex justify-between items-center">
                           <h3 className="text-lg font-bold text-slate-900">
                             {formatDateFull(session.date)}
                           </h3>
@@ -666,22 +666,22 @@ export default function Home() {
                           <table className="w-full text-xs md:text-sm">
                             <thead>
                               <tr className="border-b border-slate-200 bg-slate-50">
-                                <th className="px-3 md:px-6 py-4 text-left font-semibold text-slate-700">
+                                <th className="px-4 md:px-6 py-4 text-left font-semibold text-slate-700">
                                   Exercise
                                 </th>
-                                <th className="px-3 md:px-6 py-4 text-center font-semibold text-slate-700">
+                                <th className="px-4 md:px-6 py-4 text-center font-semibold text-slate-700">
                                   Sets
                                 </th>
-                                <th className="px-3 md:px-6 py-4 text-center font-semibold text-slate-700">
+                                <th className="px-4 md:px-6 py-4 text-center font-semibold text-slate-700">
                                   Reps
                                 </th>
-                                <th className="px-3 md:px-6 py-4 text-center font-semibold text-slate-700">
+                                <th className="px-4 md:px-6 py-4 text-center font-semibold text-slate-700">
                                   Weight
                                 </th>
                                 <th className="hidden md:table-cell px-6 py-4 text-center font-semibold text-slate-700">
                                   Time
                                 </th>
-                                <th className="px-3 md:px-6 py-4 text-center font-semibold text-slate-700">
+                                <th className="px-4 md:px-6 py-4 text-center font-semibold text-slate-700">
                                   Actions
                                 </th>
                               </tr>
@@ -692,22 +692,22 @@ export default function Home() {
                                   key={log.id}
                                   className="border-b border-slate-200 hover:bg-slate-50 transition-colors"
                                 >
-                                  <td className="px-3 md:px-6 py-4 font-medium text-slate-900">
+                                  <td className="px-4 md:px-6 py-4 font-medium text-slate-900">
                                     {log.exercise}
                                   </td>
-                                  <td className="px-3 md:px-6 py-4 text-center text-slate-600">
+                                  <td className="px-4 md:px-6 py-4 text-center text-slate-600">
                                     {log.sets}
                                   </td>
-                                  <td className="px-3 md:px-6 py-4 text-center text-slate-600">
+                                  <td className="px-4 md:px-6 py-4 text-center text-slate-600">
                                     {log.reps}
                                   </td>
-                                  <td className="px-3 md:px-6 py-4 text-center text-slate-600">
+                                  <td className="px-4 md:px-6 py-4 text-center text-slate-600">
                                     {log.weight}
                                   </td>
                                   <td className="hidden md:table-cell px-6 py-4 text-center text-slate-600">
                                     {log.time}
                                   </td>
-                                  <td className="px-3 md:px-6 py-4">
+                                  <td className="px-4 md:px-6 py-4">
                                     <div className="flex gap-2 justify-center">
                                       <button
                                         onClick={() => handleEditLog(log)}
@@ -732,7 +732,7 @@ export default function Home() {
                             </tbody>
                           </table>
                         </div>
-                        <div className="px-2 md:px-6 py-4 bg-slate-50 border-t border-slate-200 grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+                        <div className="px-4 md:px-6 py-4 bg-slate-50 border-t border-slate-200 grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
                           <div>
                             <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">
                               Total Reps
