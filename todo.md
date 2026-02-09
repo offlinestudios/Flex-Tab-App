@@ -788,3 +788,8 @@
 - [x] Style button to match FlexTab brand (dark background, proper spacing)
 - [x] Center button with even spacing above and below
 - [x] Ensure button navigates to sign-in page
+
+## Workout Description Section Rounded Corners Bug (2026-02-09)
+- [x] Investigate visible rounded corners at bottom of workout description text paragraph (parent container had rounded-2xl class)
+- [x] Remove or adjust border-radius styling causing the artifact (removed rounded-2xl class)
+- [x] Verify clean edges after fix

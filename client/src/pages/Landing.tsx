@@ -387,7 +387,7 @@ export default function Landing() {
               Open, tap, go.
             </h2>
             
-            <div className="relative h-[500px] rounded-2xl overflow-hidden">
+            <div className="relative h-[500px] overflow-hidden">
               {/* Athlete Image */}
               <img 
                 src="https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/NAaefWABsVyggQYW.jpg" 
