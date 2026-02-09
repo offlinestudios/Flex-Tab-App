@@ -848,3 +848,10 @@
 - [x] Use absolute positioning for user menu to anchor it to bottom
 - [x] Test fix manually via browser console (confirmed visible at 1024-1088px within 1100px viewport)
 - [x] Update Home.tsx with correct layout (inline styles for height and positioning)
+
+## Measurements Tab Redesign (2026-02-09)
+- [x] Replace single large card with individual metric cards in grid layout
+- [x] Add trend indicators (up/down arrows) for each metric
+- [x] Calculate and display comparison text (e.g., "↑ +2 lbs from last week")
+- [x] Use charcoal/neutral color scheme for cards
+- [x] Test measurements UI on desktop and mobile (14/14 vitest tests passed)

@@ -2,14 +2,72 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, Edit2 } from "lucide-react";
+import { Plus, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { useState } from "react";
-import { formatDateFull } from "@/lib/dateUtils";
 import { trpc } from "@/lib/trpc";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+
+interface MetricCardProps {
+  title: string;
+  value: number;
+  unit: string;
+  trend: "up" | "down" | "neutral";
+  change: number | null;
+  onClick: () => void;
+}
+
+function MetricCard({ title, value, unit, trend, change, onClick }: MetricCardProps) {
+  const trendColors = {
+    up: "text-green-600",
+    down: "text-red-600",
+    neutral: "text-slate-400",
+  };
+
+  const TrendIcon = trend === "up" ? TrendingUp : trend === "down" ? TrendingDown : Minus;
+
+  return (
+    <Card 
+      className="card-premium p-6 cursor-pointer hover:shadow-lg transition-all"
+      onClick={onClick}
+    >
+      <div className="space-y-3">
+        <h3 className="text-sm font-medium text-slate-600">{title}</h3>
+        <div className="flex items-baseline gap-2">
+          <span className="text-3xl font-bold text-slate-900">
+            {value > 0 ? value : "—"}
+          </span>
+          {value > 0 && (
+            <span className="text-sm text-slate-500">{unit}</span>
+          )}
+        </div>
+        {change !== null && value > 0 && (
+          <div className={`flex items-center gap-1 text-sm ${trendColors[trend]}`}>
+            <TrendIcon className="w-4 h-4" />
+            <span>
+              {trend === "up" ? "+" : trend === "down" ? "" : ""}
+              {Math.abs(change).toFixed(1)} {unit} from last
+            </span>
+          </div>
+        )}
+        {change === null && value > 0 && (
+          <div className="text-sm text-slate-400">
+            <Minus className="w-4 h-4 inline mr-1" />
+            No previous data
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+}
 
 export function BodyMeasurements() {
-  const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [showDialog, setShowDialog] = useState(false);
   const [formData, setFormData] = useState({
     weight: "",
     chest: "",
@@ -25,60 +83,22 @@ export function BodyMeasurements() {
   // Mutations
   const addMeasurementMutation = trpc.workout.addMeasurement.useMutation({
     onMutate: async (newMeasurement) => {
-      // Cancel outgoing refetches
       await utils.workout.getMeasurements.cancel();
-      
-      // Snapshot previous value
       const previousMeasurements = utils.workout.getMeasurements.getData();
       
-      // Optimistically update to the new value
       utils.workout.getMeasurements.setData(undefined, (old) => {
         const optimisticMeasurement = {
-          id: Date.now(), // Temporary ID
-          userId: 0, // Will be set by server
+          id: Date.now(),
+          userId: 0,
           ...newMeasurement,
           createdAt: new Date(),
         };
         return old ? [...old, optimisticMeasurement] : [optimisticMeasurement];
       });
       
-      // Return context with previous value
       return { previousMeasurements };
     },
     onError: (err, newMeasurement, context) => {
-      // Rollback on error
-      if (context?.previousMeasurements) {
-        utils.workout.getMeasurements.setData(undefined, context.previousMeasurements);
-      }
-    },
-    onSettled: () => {
-      // Refetch to ensure server state
-      utils.workout.getMeasurements.invalidate();
-    },
-  });
-
-  const updateMeasurementMutation = trpc.workout.updateMeasurement.useMutation({
-    onMutate: async (updatedMeasurement) => {
-      // Cancel outgoing refetches
-      await utils.workout.getMeasurements.cancel();
-      
-      // Snapshot previous value
-      const previousMeasurements = utils.workout.getMeasurements.getData();
-      
-      // Optimistically update
-      utils.workout.getMeasurements.setData(undefined, (old) => {
-        if (!old) return old;
-        return old.map((measurement) =>
-          measurement.id === updatedMeasurement.id
-            ? { ...measurement, ...updatedMeasurement }
-            : measurement
-        );
-      });
-      
-      return { previousMeasurements };
-    },
-    onError: (err, updatedMeasurement, context) => {
-      // Rollback on error
       if (context?.previousMeasurements) {
         utils.workout.getMeasurements.setData(undefined, context.previousMeasurements);
       }
@@ -88,36 +108,7 @@ export function BodyMeasurements() {
     },
   });
 
-  const deleteMeasurementMutation = trpc.workout.deleteMeasurement.useMutation({
-    onMutate: async (deletedMeasurement) => {
-      // Cancel outgoing refetches
-      await utils.workout.getMeasurements.cancel();
-      
-      // Snapshot previous value
-      const previousMeasurements = utils.workout.getMeasurements.getData();
-      
-      // Optimistically remove from list
-      utils.workout.getMeasurements.setData(undefined, (old) => {
-        if (!old) return old;
-        return old.filter((measurement) => measurement.id !== deletedMeasurement.id);
-      });
-      
-      return { previousMeasurements };
-    },
-    onError: (err, deletedMeasurement, context) => {
-      // Rollback on error
-      if (context?.previousMeasurements) {
-        utils.workout.getMeasurements.setData(undefined, context.previousMeasurements);
-      }
-      alert(`Failed to delete measurement: ${err.message}`);
-    },
-    onSettled: () => {
-      utils.workout.getMeasurements.invalidate();
-    },
-  });
-
-  const handleAddMeasurement = async () => {
-    // All fields are optional - save any combination of measurements
+  const handleSaveMeasurement = async () => {
     const hasAnyMeasurement = formData.weight || formData.chest || formData.waist || formData.arms || formData.thighs;
     
     if (hasAnyMeasurement) {
@@ -143,99 +134,111 @@ export function BodyMeasurements() {
         arms: "",
         thighs: "",
       });
-      setShowForm(false);
+      setShowDialog(false);
     }
   };
 
-  const handleEditMeasurement = (measurement: typeof measurements[0]) => {
-    setEditingId(measurement.id);
-    setFormData({
-      weight: measurement.weight.toString(),
-      chest: measurement.chest.toString(),
-      waist: measurement.waist.toString(),
-      arms: measurement.arms.toString(),
-      thighs: measurement.thighs.toString(),
-    });
-  };
-
-  const handleSaveEdit = async (measurementId: number) => {
-    // All fields are optional - save any combination of measurements
-    const hasAnyMeasurement = formData.weight || formData.chest || formData.waist || formData.arms || formData.thighs;
-    
-    if (hasAnyMeasurement) {
-      await updateMeasurementMutation.mutateAsync({
-        id: measurementId,
-        weight: formData.weight ? parseFloat(formData.weight) : 0,
-        chest: formData.chest ? parseFloat(formData.chest) : 0,
-        waist: formData.waist ? parseFloat(formData.waist) : 0,
-        arms: formData.arms ? parseFloat(formData.arms) : 0,
-        thighs: formData.thighs ? parseFloat(formData.thighs) : 0,
-      });
-
-      setEditingId(null);
-      setFormData({
-        weight: "",
-        chest: "",
-        waist: "",
-        arms: "",
-        thighs: "",
-      });
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setEditingId(null);
-    setFormData({
-      weight: "",
-      chest: "",
-      waist: "",
-      arms: "",
-      thighs: "",
-    });
-  };
-
-  const handleDeleteMeasurement = async (id: number) => {
-    await deleteMeasurementMutation.mutateAsync({ id });
-  };
-
+  // Sort measurements by date (newest first)
   const sortedMeasurements = [...measurements].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
-  const calculateProgress = () => {
-    if (sortedMeasurements.length < 2) return null;
+  // Get latest and previous measurements for trend calculation
+  const latestMeasurement = sortedMeasurements[0];
+  const previousMeasurement = sortedMeasurements[1];
 
-    const latest = sortedMeasurements[0];
-    const oldest = sortedMeasurements[sortedMeasurements.length - 1];
-
+  // Calculate trends
+  const calculateTrend = (current: number, previous: number | undefined): { trend: "up" | "down" | "neutral", change: number | null } => {
+    if (!previous || previous === 0) return { trend: "neutral", change: null };
+    const change = current - previous;
+    if (Math.abs(change) < 0.1) return { trend: "neutral", change: 0 };
     return {
-      weightChange: latest.weight - oldest.weight,
-      chestChange: latest.chest - oldest.chest,
-      waistChange: latest.waist - oldest.waist,
-      armsChange: latest.arms - oldest.arms,
-      thighsChange: latest.thighs - oldest.thighs,
+      trend: change > 0 ? "up" : "down",
+      change: change,
     };
   };
 
-  const progress = calculateProgress();
+  const weightTrend = latestMeasurement ? calculateTrend(latestMeasurement.weight, previousMeasurement?.weight) : { trend: "neutral" as const, change: null };
+  const chestTrend = latestMeasurement ? calculateTrend(latestMeasurement.chest, previousMeasurement?.chest) : { trend: "neutral" as const, change: null };
+  const waistTrend = latestMeasurement ? calculateTrend(latestMeasurement.waist, previousMeasurement?.waist) : { trend: "neutral" as const, change: null };
+  const armsTrend = latestMeasurement ? calculateTrend(latestMeasurement.arms, previousMeasurement?.arms) : { trend: "neutral" as const, change: null };
+  const thighsTrend = latestMeasurement ? calculateTrend(latestMeasurement.thighs, previousMeasurement?.thighs) : { trend: "neutral" as const, change: null };
 
   return (
     <div className="space-y-6">
-      {/* Add Measurement Form */}
-      {!showForm && editingId === null ? (
-        <Button
-          onClick={() => setShowForm(true)}
-          className="w-full bg-slate-800 hover:bg-slate-900 text-white"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Body Measurement
-        </Button>
-      ) : showForm ? (
-        <Card className="card-premium p-6 animate-scale-in">
-          <h3 className="text-lg font-bold text-slate-900 mb-4">
-            New Measurement
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Date header and Add button */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-slate-900">
+          {latestMeasurement 
+            ? new Date(latestMeasurement.date).toLocaleDateString("en-US", { 
+                month: "short", 
+                day: "numeric", 
+                year: "numeric" 
+              })
+            : "No measurements yet"}
+        </h2>
+      </div>
+
+      {/* Metric Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <MetricCard
+          title="Weight"
+          value={latestMeasurement?.weight || 0}
+          unit="lbs"
+          trend={weightTrend.trend}
+          change={weightTrend.change}
+          onClick={() => setShowDialog(true)}
+        />
+        <MetricCard
+          title="Chest"
+          value={latestMeasurement?.chest || 0}
+          unit="in"
+          trend={chestTrend.trend}
+          change={chestTrend.change}
+          onClick={() => setShowDialog(true)}
+        />
+        <MetricCard
+          title="Waist"
+          value={latestMeasurement?.waist || 0}
+          unit="in"
+          trend={waistTrend.trend}
+          change={waistTrend.change}
+          onClick={() => setShowDialog(true)}
+        />
+        <MetricCard
+          title="Arms"
+          value={latestMeasurement?.arms || 0}
+          unit="in"
+          trend={armsTrend.trend}
+          change={armsTrend.change}
+          onClick={() => setShowDialog(true)}
+        />
+        <MetricCard
+          title="Thighs"
+          value={latestMeasurement?.thighs || 0}
+          unit="in"
+          trend={thighsTrend.trend}
+          change={thighsTrend.change}
+          onClick={() => setShowDialog(true)}
+        />
+      </div>
+
+      {/* Log New Measurement Button */}
+      <Button
+        onClick={() => setShowDialog(true)}
+        className="w-full bg-slate-800 hover:bg-slate-900 text-white"
+      >
+        <Plus className="w-4 h-4 mr-2" />
+        Log New Measurement
+      </Button>
+
+      {/* Add Measurement Dialog */}
+      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Log New Measurement</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-4 py-4">
             <div>
               <Label htmlFor="weight" className="text-sm font-medium">
                 Weight (lbs)
@@ -254,7 +257,7 @@ export function BodyMeasurements() {
             </div>
             <div>
               <Label htmlFor="chest" className="text-sm font-medium">
-                Chest (inches)
+                Chest (in)
               </Label>
               <Input
                 id="chest"
@@ -270,7 +273,7 @@ export function BodyMeasurements() {
             </div>
             <div>
               <Label htmlFor="waist" className="text-sm font-medium">
-                Waist (inches)
+                Waist (in)
               </Label>
               <Input
                 id="waist"
@@ -286,7 +289,7 @@ export function BodyMeasurements() {
             </div>
             <div>
               <Label htmlFor="arms" className="text-sm font-medium">
-                Arms (inches)
+                Arms (in)
               </Label>
               <Input
                 id="arms"
@@ -302,7 +305,7 @@ export function BodyMeasurements() {
             </div>
             <div>
               <Label htmlFor="thighs" className="text-sm font-medium">
-                Thighs (inches)
+                Thighs (in)
               </Label>
               <Input
                 id="thighs"
@@ -317,275 +320,31 @@ export function BodyMeasurements() {
               />
             </div>
           </div>
-          <div className="flex gap-3 mt-6">
+          <DialogFooter>
             <Button
-              onClick={handleAddMeasurement}
-              disabled={addMeasurementMutation.isPending}
-              className="flex-1 bg-slate-800 hover:bg-slate-900 text-white"
-            >
-              {addMeasurementMutation.isPending ? "Saving..." : "Save Measurement"}
-            </Button>
-            <Button
-              onClick={() => setShowForm(false)}
               variant="outline"
-              className="flex-1"
+              onClick={() => {
+                setShowDialog(false);
+                setFormData({
+                  weight: "",
+                  chest: "",
+                  waist: "",
+                  arms: "",
+                  thighs: "",
+                });
+              }}
             >
               Cancel
             </Button>
-          </div>
-        </Card>
-      ) : null}
-
-      {/* Progress Summary */}
-      {progress && (
-        <Card className="data-card bg-gradient-to-br from-slate-50 to-slate-100 animate-fade-in">
-          <h3 className="text-lg font-bold text-slate-900 mb-4">
-            Progress Since Start
-          </h3>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div>
-              <p className="text-sm text-slate-600 font-medium">Weight</p>
-              <p
-                className={`text-2xl font-bold mt-2 ${
-                  progress.weightChange < 0
-                    ? "text-green-600"
-                    : "text-slate-900"
-                }`}
-              >
-                {progress.weightChange > 0 ? "+" : ""}
-                {progress.weightChange.toFixed(1)} lbs
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-slate-600 font-medium">Chest</p>
-              <p
-                className={`text-2xl font-bold mt-2 ${
-                  progress.chestChange > 0 ? "text-green-600" : "text-slate-900"
-                }`}
-              >
-                {progress.chestChange > 0 ? "+" : ""}
-                {progress.chestChange.toFixed(1)}"
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-slate-600 font-medium">Waist</p>
-              <p
-                className={`text-2xl font-bold mt-2 ${
-                  progress.waistChange < 0
-                    ? "text-green-600"
-                    : "text-slate-900"
-                }`}
-              >
-                {progress.waistChange > 0 ? "+" : ""}
-                {progress.waistChange.toFixed(1)}"
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-slate-600 font-medium">Arms</p>
-              <p
-                className={`text-2xl font-bold mt-2 ${
-                  progress.armsChange > 0 ? "text-green-600" : "text-slate-900"
-                }`}
-              >
-                {progress.armsChange > 0 ? "+" : ""}
-                {progress.armsChange.toFixed(1)}"
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-slate-600 font-medium">Thighs</p>
-              <p
-                className={`text-2xl font-bold mt-2 ${
-                  progress.thighsChange > 0
-                    ? "text-green-600"
-                    : "text-slate-900"
-                }`}
-              >
-                {progress.thighsChange > 0 ? "+" : ""}
-                {progress.thighsChange.toFixed(1)}"
-              </p>
-            </div>
-          </div>
-        </Card>
-      )}
-
-      {/* Measurements History */}
-      <div>
-        <h3 className="text-lg font-bold text-slate-900 mb-4">
-          Measurement History
-        </h3>
-        {sortedMeasurements.length === 0 ? (
-          <Card className="card-premium p-8 text-center animate-fade-in">
-            <p className="text-slate-600">No measurements recorded yet</p>
-          </Card>
-        ) : (
-          <div className="space-y-3">
-            {sortedMeasurements.map((measurement) => (
-              editingId === measurement.id ? (
-                <Card key={measurement.id} className="card-premium p-6 animate-scale-in">
-                  <h4 className="text-lg font-bold text-slate-900 mb-4">
-                    Edit Measurement - {formatDateFull(measurement.date)}
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="edit-weight" className="text-sm font-medium">
-                        Weight (lbs)
-                      </Label>
-                      <Input
-                        id="edit-weight"
-                        type="number"
-                        step="0.1"
-                        value={formData.weight}
-                        onChange={(e) =>
-                          setFormData({ ...formData, weight: e.target.value })
-                        }
-                        className="mt-1"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="edit-chest" className="text-sm font-medium">
-                        Chest (inches)
-                      </Label>
-                      <Input
-                        id="edit-chest"
-                        type="number"
-                        step="0.1"
-                        value={formData.chest}
-                        onChange={(e) =>
-                          setFormData({ ...formData, chest: e.target.value })
-                        }
-                        className="mt-1"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="edit-waist" className="text-sm font-medium">
-                        Waist (inches)
-                      </Label>
-                      <Input
-                        id="edit-waist"
-                        type="number"
-                        step="0.1"
-                        value={formData.waist}
-                        onChange={(e) =>
-                          setFormData({ ...formData, waist: e.target.value })
-                        }
-                        className="mt-1"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="edit-arms" className="text-sm font-medium">
-                        Arms (inches)
-                      </Label>
-                      <Input
-                        id="edit-arms"
-                        type="number"
-                        step="0.1"
-                        value={formData.arms}
-                        onChange={(e) =>
-                          setFormData({ ...formData, arms: e.target.value })
-                        }
-                        className="mt-1"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="edit-thighs" className="text-sm font-medium">
-                        Thighs (inches)
-                      </Label>
-                      <Input
-                        id="edit-thighs"
-                        type="number"
-                        step="0.1"
-                        value={formData.thighs}
-                        onChange={(e) =>
-                          setFormData({ ...formData, thighs: e.target.value })
-                        }
-                        className="mt-1"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex gap-3 mt-6">
-                    <Button
-                      onClick={() => handleSaveEdit(measurement.id)}
-                      disabled={updateMeasurementMutation.isPending}
-                      className="flex-1 bg-slate-800 hover:bg-slate-900 text-white"
-                    >
-                      {updateMeasurementMutation.isPending ? "Saving..." : "Save Changes"}
-                    </Button>
-                    <Button
-                      onClick={handleCancelEdit}
-                      variant="outline"
-                      className="flex-1"
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </Card>
-              ) : (
-                <Card
-                  key={measurement.id}
-                  className="data-card p-4"
-                >
-                  <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                    <div className="flex-1">
-                      <p className="font-semibold text-slate-900">
-                        {formatDateFull(measurement.date)}
-                      </p>
-                      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-3 text-sm">
-                        <div>
-                          <p className="text-slate-600">Weight</p>
-                          <p className="font-medium text-slate-900">
-                            {measurement.weight} lbs
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-slate-600">Chest</p>
-                          <p className="font-medium text-slate-900">
-                            {measurement.chest}"
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-slate-600">Waist</p>
-                          <p className="font-medium text-slate-900">
-                            {measurement.waist}"
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-slate-600">Arms</p>
-                          <p className="font-medium text-slate-900">
-                            {measurement.arms}"
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-slate-600">Thighs</p>
-                          <p className="font-medium text-slate-900">
-                            {measurement.thighs}"
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex gap-2 md:flex-col">
-                      <button
-                        onClick={() => handleEditMeasurement(measurement)}
-                        className="p-2 hover:bg-blue-50 rounded-lg transition-colors text-blue-600"
-                        title="Edit"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteMeasurement(measurement.id)}
-                        disabled={deleteMeasurementMutation.isPending}
-                        className="p-2 hover:bg-red-50 rounded-lg transition-colors text-red-600 disabled:opacity-50"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                </Card>
-              )
-            ))}
-          </div>
-        )}
-      </div>
+            <Button
+              onClick={handleSaveMeasurement}
+              className="bg-slate-800 hover:bg-slate-900 text-white"
+            >
+              Save Measurement
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
