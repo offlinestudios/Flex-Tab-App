@@ -894,4 +894,11 @@
 - [x] Identify why Progress cards have margins but History cards extend edge-to-edge (overflow-hidden was clipping shadows/borders)
 - [x] Remove overflow-hidden from Card to show proper shadows and borders
 - [x] Test on mobile to ensure proper containment with visible gaps
+- [x] Create checkpoint after fix (version: 6e025e55)
+
+## History Tab Horizontal Margins (2026-02-09)
+- [x] Identify why History cards extend full-width while Progress cards have side margins (cards lacked horizontal margins)
+- [x] Add horizontal margins/padding to History tab cards (mx-2 md:mx-0)
+- [x] Ensure grey background is visible on left/right sides like Progress tab
+- [x] Test on mobile to match Progress tab visual spacing
 - [ ] Create checkpoint after fix

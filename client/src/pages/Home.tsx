@@ -647,7 +647,7 @@ export default function Home() {
                   sortedSessions.map((session) => {
                     const stats = calculateStats(session.exercises);
                     return (
-                      <Card key={session.date} className="data-card animate-slide-up">
+                      <Card key={session.date} className="data-card animate-slide-up mx-2 md:mx-0">
                         <div className="px-4 md:px-6 py-4 border-b border-slate-200 flex justify-between items-center">
                           <h3 className="text-lg font-bold text-slate-900">
                             {formatDateFull(session.date)}
