@@ -866,4 +866,12 @@
 - [x] Change measurements grid from single column mobile to 2-column on all screen sizes
 - [x] Match mockup design showing Weight/Chest, Waist/Arms, Thighs in 2-column layout
 - [x] Test responsive layout on mobile and desktop (14/14 vitest tests passed)
-- [ ] Create checkpoint after fix
+- [x] Create checkpoint after fix (version: defda1f5)
+
+## Measurements Sparkline Color & Logic Fix (2026-02-09)
+- [x] Replace green/red sparkline colors with neutral grey/dark blue (#64748b slate-500)
+- [x] Fix sparkline to show flat line when only one data point exists
+- [x] Fix sparkline to show flat line when there's no change between measurements
+- [x] Update trend indicator colors to match neutral palette (text-slate-600)
+- [x] Test sparkline behavior with various data scenarios (14/14 vitest tests passed)
+- [ ] Create checkpoint after fixes

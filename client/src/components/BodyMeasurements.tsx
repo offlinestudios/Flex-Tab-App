@@ -26,8 +26,8 @@ interface MetricCardProps {
 
 function MetricCard({ title, value, unit, trend, change, sparklineData, onClick }: MetricCardProps) {
   const trendColors = {
-    up: "text-green-600",
-    down: "text-red-600",
+    up: "text-slate-600",
+    down: "text-slate-600",
     neutral: "text-slate-400",
   };
 
@@ -43,7 +43,13 @@ function MetricCard({ title, value, unit, trend, change, sparklineData, onClick 
     
     const min = Math.min(...data);
     const max = Math.max(...data);
-    const range = max - min || 1;
+    const range = max - min;
+    
+    // If all values are the same (no change), draw a flat line
+    if (range === 0) {
+      const y = height / 2;
+      return `M 0,${y} L ${width},${y}`;
+    }
     
     const points = data.map((val, i) => {
       const x = (i / (data.length - 1)) * width;
@@ -79,8 +85,8 @@ function MetricCard({ title, value, unit, trend, change, sparklineData, onClick 
             <svg width="100%" height="20" viewBox="0 0 100 20" preserveAspectRatio="none" className="w-full">
               <defs>
                 <linearGradient id={`gradient-${title}`} x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor={trend === "up" ? "#10b981" : trend === "down" ? "#ef4444" : "#94a3b8"} stopOpacity="0.2" />
-                  <stop offset="100%" stopColor={trend === "up" ? "#10b981" : trend === "down" ? "#ef4444" : "#94a3b8"} stopOpacity="0.05" />
+                  <stop offset="0%" stopColor="#64748b" stopOpacity="0.15" />
+                  <stop offset="100%" stopColor="#64748b" stopOpacity="0.03" />
                 </linearGradient>
               </defs>
               <path
@@ -90,7 +96,7 @@ function MetricCard({ title, value, unit, trend, change, sparklineData, onClick 
               <path
                 d={sparklinePath}
                 fill="none"
-                stroke={trend === "up" ? "#10b981" : trend === "down" ? "#ef4444" : "#94a3b8"}
+                stroke="#64748b"
                 strokeWidth="1.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
