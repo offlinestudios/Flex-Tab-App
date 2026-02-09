@@ -69,7 +69,7 @@ export function WorkoutCalendar({
   };
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 p-6">
+    <div className="card-premium p-6 animate-fade-in">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-bold text-slate-900">{monthName}</h3>
         <div className="flex gap-2">

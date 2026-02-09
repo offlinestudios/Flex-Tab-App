@@ -231,7 +231,7 @@ export function BodyMeasurements() {
           Add Body Measurement
         </Button>
       ) : showForm ? (
-        <Card className="p-6 bg-white border-slate-200">
+        <Card className="card-premium p-6 animate-scale-in">
           <h3 className="text-lg font-bold text-slate-900 mb-4">
             New Measurement
           </h3>
@@ -338,7 +338,7 @@ export function BodyMeasurements() {
 
       {/* Progress Summary */}
       {progress && (
-        <Card className="p-6 bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200">
+        <Card className="data-card bg-gradient-to-br from-slate-50 to-slate-100 animate-fade-in">
           <h3 className="text-lg font-bold text-slate-900 mb-4">
             Progress Since Start
           </h3>
@@ -414,14 +414,14 @@ export function BodyMeasurements() {
           Measurement History
         </h3>
         {sortedMeasurements.length === 0 ? (
-          <Card className="p-8 text-center bg-white border-slate-200">
+          <Card className="card-premium p-8 text-center animate-fade-in">
             <p className="text-slate-600">No measurements recorded yet</p>
           </Card>
         ) : (
           <div className="space-y-3">
             {sortedMeasurements.map((measurement) => (
               editingId === measurement.id ? (
-                <Card key={measurement.id} className="p-6 bg-white border-slate-200">
+                <Card key={measurement.id} className="card-premium p-6 animate-scale-in">
                   <h4 className="text-lg font-bold text-slate-900 mb-4">
                     Edit Measurement - {formatDateFull(measurement.date)}
                   </h4>
@@ -522,7 +522,7 @@ export function BodyMeasurements() {
               ) : (
                 <Card
                   key={measurement.id}
-                  className="p-4 bg-white border-slate-200 hover:shadow-md transition-shadow"
+                  className="data-card p-4"
                 >
                   <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                     <div className="flex-1">

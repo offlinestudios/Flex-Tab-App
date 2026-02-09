@@ -512,7 +512,7 @@ export default function Home() {
                   <div className="lg:col-span-2 space-y-4">
                     {/* Exercise Cards - shown first on mobile, first on desktop */}
                     {selectedExercises.length === 0 ? (
-                      <Card className="relative overflow-hidden bg-white border-slate-200 shadow-lg">
+                      <Card className="card-premium animate-fade-in">
                         {/* Hero Image with Overlay */}
                         <div className="relative h-64 md:h-80">
                           <img 
@@ -559,7 +559,7 @@ export default function Home() {
                           volume: todaySession.exercises.reduce((sum, set) => sum + (set.sets * set.reps * set.weight), 0),
                         };
                         return (
-                          <Card className="p-6 bg-white border-slate-200 shadow-md hover:shadow-lg transition-shadow">
+                          <Card className="data-card animate-slide-up">
                             <div className="flex justify-between items-center mb-4">
                               <h3 className="text-lg font-semibold text-slate-900">Today's Workout</h3>
                             </div>
@@ -632,7 +632,7 @@ export default function Home() {
               {/* History Tab */}
               <TabsContent value="history" className="space-y-6">
                 {sortedSessions.length === 0 ? (
-                  <Card className="p-12 text-center bg-white border-slate-200">
+                  <Card className="card-premium p-12 text-center animate-fade-in">
                     <p className="text-slate-600 text-lg">No workout history yet</p>
                     <p className="text-slate-500">
                       Log your first set to start tracking
@@ -642,7 +642,7 @@ export default function Home() {
                   sortedSessions.map((session) => {
                     const stats = calculateStats(session.exercises);
                     return (
-                      <Card key={session.date} className="overflow-hidden bg-white border-slate-200">
+                      <Card key={session.date} className="data-card overflow-hidden animate-slide-up">
                         <div className="px-3 md:px-6 py-4 border-b border-slate-200 flex justify-between items-center">
                           <h3 className="text-lg font-bold text-slate-900">
                             {formatDateFull(session.date)}
@@ -971,7 +971,7 @@ function ExerciseCard({ exercise, onLogSet, onRemove }: ExerciseCardProps) {
   };
 
   return (
-    <Card className="p-6 bg-white border-slate-200 relative">
+    <Card className="data-card relative animate-scale-in">
       {onRemove && (
         <button
           onClick={() => onRemove(exercise.id)}

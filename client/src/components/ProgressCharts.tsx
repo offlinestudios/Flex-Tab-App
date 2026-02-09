@@ -52,7 +52,7 @@ export default function ProgressCharts({ setLogs, measurements }: ProgressCharts
             if (data.length === 0) return null;
 
             return (
-              <div key={exercise} className="bg-slate-50 rounded-lg p-6 border border-slate-200">
+              <div key={exercise} className="data-card bg-slate-50 animate-slide-up">
                 <h4 className="text-md font-medium text-slate-800 mb-4">{exercise}</h4>
                 <ResponsiveContainer width="100%" height={250}>
                   <LineChart data={data}>

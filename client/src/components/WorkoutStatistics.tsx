@@ -114,28 +114,28 @@ export function WorkoutStatistics({
       <div>
         <h3 className="text-lg font-bold text-slate-900 mb-4">All-Time Statistics</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="p-4 bg-white border-slate-200 shadow-sm">
+          <Card className="data-card p-4 animate-scale-in">
             <p className="text-sm text-slate-600 font-medium">Total Workouts</p>
             <p className="text-3xl font-bold text-slate-900 mt-2">
               {allTimeStats.totalWorkouts}
             </p>
           </Card>
 
-          <Card className="p-4 bg-white border-slate-200 shadow-sm">
+          <Card className="data-card p-4 animate-scale-in">
             <p className="text-sm text-slate-600 font-medium">Total Reps</p>
             <p className="text-3xl font-bold text-slate-900 mt-2">
               {allTimeStats.totalReps.toLocaleString()}
             </p>
           </Card>
 
-          <Card className="p-4 bg-white border-slate-200 shadow-sm">
+          <Card className="data-card p-4 animate-scale-in">
             <p className="text-sm text-slate-600 font-medium">Total Volume (lbs)</p>
             <p className="text-3xl font-bold text-slate-900 mt-2">
               {(allTimeStats.totalVolume / 1000).toFixed(1)}k
             </p>
           </Card>
 
-          <Card className="p-4 bg-white border-slate-200 shadow-sm">
+          <Card className="data-card p-4 animate-scale-in">
             <p className="text-sm text-slate-600 font-medium">Unique Exercises</p>
             <p className="text-3xl font-bold text-slate-900 mt-2">
               {allTimeStats.uniqueExercises}
@@ -145,14 +145,14 @@ export function WorkoutStatistics({
 
         {/* Additional Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-          <Card className="p-4 bg-white border-slate-200 shadow-sm">
+          <Card className="data-card p-4 animate-scale-in">
             <p className="text-sm text-slate-600 font-medium">Total Sets</p>
             <p className="text-2xl font-bold text-slate-900 mt-2">
               {allTimeStats.totalSets}
             </p>
           </Card>
 
-          <Card className="p-4 bg-white border-slate-200 shadow-sm">
+          <Card className="data-card p-4 animate-scale-in">
             <p className="text-sm text-slate-600 font-medium">Current Streak</p>
             <p className="text-2xl font-bold text-slate-900 mt-2">
               {currentStreak} day{currentStreak !== 1 ? "s" : ""}
@@ -183,28 +183,28 @@ export function WorkoutStatistics({
             Workout for {selectedDate}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card className="p-4 bg-white border-slate-200 shadow-sm">
+            <Card className="data-card p-4 animate-scale-in">
               <p className="text-sm text-slate-600 font-medium">Exercises</p>
               <p className="text-3xl font-bold text-slate-900 mt-2">
                 {selectedDateStats.exerciseCount}
               </p>
             </Card>
 
-            <Card className="p-4 bg-white border-slate-200 shadow-sm">
+            <Card className="data-card p-4 animate-scale-in">
               <p className="text-sm text-slate-600 font-medium">Total Sets</p>
               <p className="text-3xl font-bold text-slate-900 mt-2">
                 {selectedDateStats.totalSets}
               </p>
             </Card>
 
-            <Card className="p-4 bg-white border-slate-200 shadow-sm">
+            <Card className="data-card p-4 animate-scale-in">
               <p className="text-sm text-slate-600 font-medium">Total Reps</p>
               <p className="text-3xl font-bold text-slate-900 mt-2">
                 {selectedDateStats.totalReps}
               </p>
             </Card>
 
-            <Card className="p-4 bg-white border-slate-200 shadow-sm">
+            <Card className="data-card p-4 animate-scale-in">
               <p className="text-sm text-slate-600 font-medium">Total Volume (lbs)</p>
               <p className="text-3xl font-bold text-slate-900 mt-2">
                 {selectedDateStats.totalVolume.toLocaleString()}
