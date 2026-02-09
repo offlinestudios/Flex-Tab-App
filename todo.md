@@ -887,4 +887,11 @@
 - [x] Add proper padding to prevent content touching screen edges (increased from px-3 to px-4 on mobile)
 - [x] Match Progress tab chart card styling (white background, rounded corners, shadow)
 - [x] Test on mobile to ensure proper containment
+- [x] Create checkpoint after fix (version: 8c8c64ad)
+
+## History Tab Card Margins Fix (2026-02-09)
+- [x] Compare Progress tab and History tab card container layouts
+- [x] Identify why Progress cards have margins but History cards extend edge-to-edge (overflow-hidden was clipping shadows/borders)
+- [x] Remove overflow-hidden from Card to show proper shadows and borders
+- [x] Test on mobile to ensure proper containment with visible gaps
 - [ ] Create checkpoint after fix
