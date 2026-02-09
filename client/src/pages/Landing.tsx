@@ -1,12 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { getLoginUrl } from "@/const";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { IOSInstallPrompt } from "@/components/IOSInstallPrompt";
 import { useEffect, useState } from "react";
 import { ChevronRight } from "lucide-react";
 
 export default function Landing() {
+  const [, setLocation] = useLocation();
   const [isLoaded, setIsLoaded] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [touchStart, setTouchStart] = useState(0);
@@ -70,7 +71,7 @@ export default function Landing() {
       <IOSInstallPrompt />
 
       {/* DESKTOP: Fixed Landing Page (hidden on mobile) */}
-      <div className="hidden md:block fixed inset-0 overflow-hidden">
+      <div className="hidden md:block fixed inset-0 overflow-hidden pointer-events-none">
         {/* Background Image - Full Viewport */}
         <div 
           className="absolute inset-0 bg-cover bg-center"
@@ -83,7 +84,7 @@ export default function Landing() {
         />
 
         {/* White Header - Overlay */}
-        <header className="absolute top-0 left-0 right-0 z-20 bg-white/95 backdrop-blur-sm border-b border-[#E6E4E1]">
+        <header className="absolute top-0 left-0 right-0 z-20 bg-white/95 backdrop-blur-sm border-b border-[#E6E4E1] pointer-events-auto">
           <div className="container mx-auto px-12 py-6 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <img src="/flextab-logo.png?v=2" alt="FlexTab" className="h-10 w-auto" />
@@ -101,7 +102,7 @@ export default function Landing() {
         </header>
 
         {/* Hero Content - Centered Between Header and Footer */}
-        <div className="absolute top-[88px] bottom-[340px] left-0 right-0 flex items-center z-10">
+        <div className="absolute top-[88px] bottom-[340px] left-0 right-0 flex items-center z-10 pointer-events-auto">
           <div className="container mx-auto px-12">
             <div className="max-w-2xl">
               <h2 className="text-7xl font-bold leading-tight mb-6 tracking-tight text-white">
@@ -134,7 +135,7 @@ export default function Landing() {
         </div>
 
         {/* Footer - Overlay */}
-        <footer className="absolute bottom-0 left-0 right-0 z-20 bg-white/95 backdrop-blur-sm border-t border-[#E6E4E1]">
+        <footer className="absolute bottom-0 left-0 right-0 z-20 bg-white/95 backdrop-blur-sm border-t border-[#E6E4E1] pointer-events-auto">
           <div className="container mx-auto px-12 py-12">
             {/* Main Footer Content */}
             <div className="grid grid-cols-3 gap-16 mb-12">
@@ -158,17 +159,17 @@ export default function Landing() {
                 </h4>
                 <ul className="space-y-3">
                   <li>
-                    <a href="#" className="text-sm text-[#6B6F76] hover:text-[#0891B2] transition-colors">
+                    <a href="#" className="text-sm text-[#6B6F76] hover:text-[#6B6F76]/70 transition-colors">
                       Features
                     </a>
                   </li>
                   <li>
-                    <a href="#" className="text-sm text-[#6B6F76] hover:text-[#0891B2] transition-colors">
+                    <a href="#" className="text-sm text-[#6B6F76] hover:text-[#6B6F76]/70 transition-colors">
                       Pricing
                     </a>
                   </li>
                   <li>
-                    <a href={getLoginUrl()} className="text-sm text-[#6B6F76] hover:text-[#0891B2] transition-colors">
+                    <a href={getLoginUrl()} className="text-sm text-[#6B6F76] hover:text-[#6B6F76]/70 transition-colors">
                       Sign In
                     </a>
                   </li>
@@ -182,17 +183,23 @@ export default function Landing() {
                 </h4>
                 <ul className="space-y-3">
                   <li>
-                    <a href="#" className="text-sm text-[#6B6F76] hover:text-[#0891B2] transition-colors">
+                    <a 
+                      href="/privacy"
+                      className="text-sm text-[#6B6F76] hover:text-[#6B6F76]/70 transition-colors"
+                    >
                       Privacy Policy
                     </a>
                   </li>
                   <li>
-                    <a href="#" className="text-sm text-[#6B6F76] hover:text-[#0891B2] transition-colors">
+                    <a 
+                      href="/terms"
+                      className="text-sm text-[#6B6F76] hover:text-[#6B6F76]/70 transition-colors"
+                    >
                       Terms of Service
                     </a>
                   </li>
                   <li>
-                    <a href="#" className="text-sm text-[#6B6F76] hover:text-[#0891B2] transition-colors">
+                    <a href="#" className="text-sm text-[#6B6F76] hover:text-[#6B6F76]/70 transition-colors">
                       Contact
                     </a>
                   </li>
@@ -483,7 +490,7 @@ export default function Landing() {
         </section>
 
         {/* Footer */}
-        <footer className="bg-white border-t border-[#E6E4E1] py-16">
+        <footer className="relative z-50 bg-white border-t border-[#E6E4E1] py-16">
           <div className="container mx-auto px-6">
             {/* Logo and Tagline */}
             <div className="mb-12">
@@ -500,27 +507,33 @@ export default function Landing() {
             <nav className="mb-12">
               <ul className="space-y-4">
                 <li>
-                  <a href="#" className="text-base text-[#6B6F76] hover:text-[#0B0B0C] transition-colors">
+                  <a href="#" className="text-base text-[#6B6F76] hover:text-[#6B6F76]/70 transition-colors">
                     Features
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="text-base text-[#6B6F76] hover:text-[#0B0B0C] transition-colors">
+                  <a href="#" className="text-base text-[#6B6F76] hover:text-[#6B6F76]/70 transition-colors">
                     Pricing
                   </a>
                 </li>
                 <li>
-                  <Link href="/privacy" className="text-base text-[#6B6F76] hover:text-[#6B6F76]/70 transition-colors">
+                  <a 
+                    href="/privacy"
+                    className="text-base text-[#6B6F76] hover:text-[#6B6F76]/70 transition-colors"
+                  >
                     Privacy Policy
-                  </Link>
+                  </a>
                 </li>
                 <li>
-                  <Link href="/terms" className="text-base text-[#6B6F76] hover:text-[#6B6F76]/70 transition-colors">
+                  <a 
+                    href="/terms"
+                    className="text-base text-[#6B6F76] hover:text-[#6B6F76]/70 transition-colors"
+                  >
                     Terms of Service
-                  </Link>
+                  </a>
                 </li>
                 <li>
-                  <a href="#" className="text-base text-[#6B6F76] hover:text-[#0B0B0C] transition-colors">
+                  <a href="#" className="text-base text-[#6B6F76] hover:text-[#6B6F76]/70 transition-colors">
                     Contact
                   </a>
                 </li>

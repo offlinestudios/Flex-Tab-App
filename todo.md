@@ -770,3 +770,7 @@
 ## Footer Link Fixes (2026-02-09)
 - [x] Fix footer Privacy Policy and Terms of Service link navigation
 - [x] Update footer link hover colors to match brand color palette (use grey instead of current color)
+
+## Desktop Footer Link Bug (2026-02-09)
+- [x] Fix footer Privacy Policy and Terms of Service links not working on desktop (changed href from # to /privacy and /terms)
+- [x] Ensure hover colors are consistent between mobile and desktop (all footer links now use hover:text-[#6B6F76]/70)
