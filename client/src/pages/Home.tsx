@@ -647,7 +647,7 @@ export default function Home() {
                   sortedSessions.map((session) => {
                     const stats = calculateStats(session.exercises);
                     return (
-                      <Card key={session.date} className="data-card animate-slide-up mx-2 md:mx-0">
+                      <Card key={session.date} className="card-premium animate-slide-up">
                         <div className="px-4 md:px-6 py-4 border-b border-slate-200 flex justify-between items-center">
                           <h3 className="text-lg font-bold text-slate-900">
                             {formatDateFull(session.date)}
@@ -669,10 +669,10 @@ export default function Home() {
                                 <th className="px-4 md:px-6 py-4 text-left font-semibold text-slate-700">
                                   Exercise
                                 </th>
-                                <th className="px-4 md:px-6 py-4 text-center font-semibold text-slate-700">
+                                <th className="hidden sm:table-cell px-4 md:px-6 py-4 text-center font-semibold text-slate-700">
                                   Sets
                                 </th>
-                                <th className="px-4 md:px-6 py-4 text-center font-semibold text-slate-700">
+                                <th className="hidden sm:table-cell px-4 md:px-6 py-4 text-center font-semibold text-slate-700">
                                   Reps
                                 </th>
                                 <th className="px-4 md:px-6 py-4 text-center font-semibold text-slate-700">
@@ -695,10 +695,10 @@ export default function Home() {
                                   <td className="px-4 md:px-6 py-4 font-medium text-slate-900">
                                     {log.exercise}
                                   </td>
-                                  <td className="px-4 md:px-6 py-4 text-center text-slate-600">
+                                  <td className="hidden sm:table-cell px-4 md:px-6 py-4 text-center text-slate-600">
                                     {log.sets}
                                   </td>
-                                  <td className="px-4 md:px-6 py-4 text-center text-slate-600">
+                                  <td className="hidden sm:table-cell px-4 md:px-6 py-4 text-center text-slate-600">
                                     {log.reps}
                                   </td>
                                   <td className="px-4 md:px-6 py-4 text-center text-slate-600">

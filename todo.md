@@ -901,4 +901,11 @@
 - [x] Add horizontal margins/padding to History tab cards (mx-2 md:mx-0)
 - [x] Ensure grey background is visible on left/right sides like Progress tab
 - [x] Test on mobile to match Progress tab visual spacing
-- [ ] Create checkpoint after fix
+- [x] Create checkpoint after fix (version: 53d03f73)
+
+## History Tab Bug Fixes - Double Padding Issue (2026-02-09)
+- [x] Change card class from data-card to card-premium (removes p-6 default padding)
+- [x] Remove mx-2 md:mx-0 band-aid fix
+- [x] Hide Sets and Reps columns on mobile (hidden sm:table-cell)
+- [x] Test on mobile to verify 64px additional content width (14/14 vitest tests passed)
+- [ ] Create checkpoint after fixes
