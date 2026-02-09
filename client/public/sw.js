@@ -1,4 +1,4 @@
-const CACHE_NAME = 'flextab-v2';
+const CACHE_NAME = 'flextab-v3';
 const urlsToCache = [
   '/',
   '/app',

@@ -774,3 +774,11 @@
 ## Desktop Footer Link Bug (2026-02-09)
 - [x] Fix footer Privacy Policy and Terms of Service links not working on desktop (changed href from # to /privacy and /terms)
 - [x] Ensure hover colors are consistent between mobile and desktop (all footer links now use hover:text-[#6B6F76]/70)
+
+## Duplicate Landing Page Issue (2026-02-09)
+- [x] Investigate why two different landing page versions exist (service worker cache issue)
+- [x] Check routing configuration in App.tsx (only one Landing component mapped to /)
+- [x] Check if old landing page component still exists (no duplicate files found)
+- [x] Remove old landing page version or fix routing (bumped service worker cache version from v2 to v3)
+- [ ] User to test navigation flow (landing → privacy → back button) after closing all tabs and reopening
+- [ ] User to verify only one landing page version loads (may need to clear browser cache)
