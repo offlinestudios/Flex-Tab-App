@@ -19,10 +19,11 @@ interface MetricCardProps {
   unit: string;
   trend: "up" | "down" | "neutral";
   change: number | null;
+  sparklineData: number[];
   onClick: () => void;
 }
 
-function MetricCard({ title, value, unit, trend, change, onClick }: MetricCardProps) {
+function MetricCard({ title, value, unit, trend, change, sparklineData, onClick }: MetricCardProps) {
   const trendColors = {
     up: "text-green-600",
     down: "text-red-600",
@@ -30,6 +31,30 @@ function MetricCard({ title, value, unit, trend, change, onClick }: MetricCardPr
   };
 
   const TrendIcon = trend === "up" ? TrendingUp : trend === "down" ? TrendingDown : Minus;
+
+  // Generate sparkline path
+  const generateSparklinePath = (data: number[]) => {
+    if (data.length < 2) return "";
+    
+    const width = 100;
+    const height = 20;
+    const padding = 2;
+    
+    const min = Math.min(...data);
+    const max = Math.max(...data);
+    const range = max - min || 1;
+    
+    const points = data.map((val, i) => {
+      const x = (i / (data.length - 1)) * width;
+      const y = height - padding - ((val - min) / range) * (height - padding * 2);
+      return `${x},${y}`;
+    });
+    
+    return `M ${points.join(" L ")}`;
+  };
+
+  const sparklinePath = generateSparklinePath(sparklineData);
+  const hasSparkline = sparklineData.length >= 2;
 
   return (
     <Card 
@@ -46,6 +71,33 @@ function MetricCard({ title, value, unit, trend, change, onClick }: MetricCardPr
             <span className="text-sm text-slate-500">{unit}</span>
           )}
         </div>
+        
+        {/* Sparkline */}
+        {hasSparkline && value > 0 && (
+          <div className="relative h-5 -mx-2">
+            <svg width="100%" height="20" viewBox="0 0 100 20" preserveAspectRatio="none" className="w-full">
+              <defs>
+                <linearGradient id={`gradient-${title}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor={trend === "up" ? "#10b981" : trend === "down" ? "#ef4444" : "#94a3b8"} stopOpacity="0.2" />
+                  <stop offset="100%" stopColor={trend === "up" ? "#10b981" : trend === "down" ? "#ef4444" : "#94a3b8"} stopOpacity="0.05" />
+                </linearGradient>
+              </defs>
+              <path
+                d={`${sparklinePath} L 100,20 L 0,20 Z`}
+                fill={`url(#gradient-${title})`}
+              />
+              <path
+                d={sparklinePath}
+                fill="none"
+                stroke={trend === "up" ? "#10b981" : trend === "down" ? "#ef4444" : "#94a3b8"}
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+        )}
+        
         {change !== null && value > 0 && (
           <div className={`flex items-center gap-1 text-sm ${trendColors[trend]}`}>
             <TrendIcon className="w-4 h-4" />
@@ -164,6 +216,21 @@ export function BodyMeasurements() {
   const armsTrend = latestMeasurement ? calculateTrend(latestMeasurement.arms, previousMeasurement?.arms) : { trend: "neutral" as const, change: null };
   const thighsTrend = latestMeasurement ? calculateTrend(latestMeasurement.thighs, previousMeasurement?.thighs) : { trend: "neutral" as const, change: null };
 
+  // Generate sparkline data (last 5 measurements)
+  const getSparklineData = (metric: 'weight' | 'chest' | 'waist' | 'arms' | 'thighs') => {
+    return sortedMeasurements
+      .slice(0, 5)
+      .reverse()
+      .map(m => m[metric])
+      .filter(v => v > 0);
+  };
+
+  const weightSparkline = getSparklineData('weight');
+  const chestSparkline = getSparklineData('chest');
+  const waistSparkline = getSparklineData('waist');
+  const armsSparkline = getSparklineData('arms');
+  const thighsSparkline = getSparklineData('thighs');
+
   return (
     <div className="space-y-6">
       {/* Date header and Add button */}
@@ -187,6 +254,7 @@ export function BodyMeasurements() {
           unit="lbs"
           trend={weightTrend.trend}
           change={weightTrend.change}
+          sparklineData={weightSparkline}
           onClick={() => setShowDialog(true)}
         />
         <MetricCard
@@ -195,6 +263,7 @@ export function BodyMeasurements() {
           unit="in"
           trend={chestTrend.trend}
           change={chestTrend.change}
+          sparklineData={chestSparkline}
           onClick={() => setShowDialog(true)}
         />
         <MetricCard
@@ -203,6 +272,7 @@ export function BodyMeasurements() {
           unit="in"
           trend={waistTrend.trend}
           change={waistTrend.change}
+          sparklineData={waistSparkline}
           onClick={() => setShowDialog(true)}
         />
         <MetricCard
@@ -211,6 +281,7 @@ export function BodyMeasurements() {
           unit="in"
           trend={armsTrend.trend}
           change={armsTrend.change}
+          sparklineData={armsSparkline}
           onClick={() => setShowDialog(true)}
         />
         <MetricCard
@@ -219,6 +290,7 @@ export function BodyMeasurements() {
           unit="in"
           trend={thighsTrend.trend}
           change={thighsTrend.change}
+          sparklineData={thighsSparkline}
           onClick={() => setShowDialog(true)}
         />
       </div>

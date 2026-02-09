@@ -855,3 +855,9 @@
 - [x] Calculate and display comparison text (e.g., "↑ +2 lbs from last week")
 - [x] Use charcoal/neutral color scheme for cards
 - [x] Test measurements UI on desktop and mobile (14/14 vitest tests passed)
+
+## Measurement Sparkline Visualization (2026-02-09)
+- [x] Add subtle SVG sparkline trend line to each metric card
+- [x] Add gradient fill below the sparkline (matching mockup design)
+- [x] Generate sparkline data from measurement history (last 5 measurements)
+- [x] Test sparkline visualization on desktop and mobile (14/14 vitest tests passed)
