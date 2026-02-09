@@ -782,3 +782,9 @@
 - [x] Remove old landing page version or fix routing (bumped service worker cache version from v2 to v3)
 - [ ] User to test navigation flow (landing → privacy → back button) after closing all tabs and reopening
 - [ ] User to verify only one landing page version loads (may need to clear browser cache)
+
+## Mobile Landing Page CTA Button (2026-02-09)
+- [x] Add "Join Now" CTA button between workout description and features section on mobile
+- [x] Style button to match FlexTab brand (dark background, proper spacing)
+- [x] Center button with even spacing above and below
+- [x] Ensure button navigates to sign-in page

@@ -411,6 +411,18 @@ export default function Landing() {
           </div>
         </section>
 
+        {/* Join Now CTA */}
+        <section className="bg-white py-12">
+          <div className="container mx-auto px-6 flex justify-center">
+            <Button 
+              onClick={() => window.location.href = getLoginUrl()}
+              className="bg-[#111827] hover:bg-[#1F2937] text-white px-12 py-4 rounded-xl font-bold text-lg shadow-lg transition-all hover:shadow-xl"
+            >
+              Join Now
+            </Button>
+          </div>
+        </section>
+
         {/* Explore Features Section */}
         <section className="bg-white py-16">
           <div className="container mx-auto px-6">
