@@ -793,3 +793,8 @@
 - [x] Investigate visible rounded corners at bottom of workout description text paragraph (parent container had rounded-2xl class)
 - [x] Remove or adjust border-radius styling causing the artifact (removed rounded-2xl class)
 - [x] Verify clean edges after fix
+
+## Add Rounded Corners to Athlete Photo (2026-02-09)
+- [x] Apply rounded corners to athlete image element only (added rounded-2xl class to img)
+- [x] Keep text overlay with diagonal clip-path clean (no rounded corners)
+- [x] Verify visual appearance matches design intent
