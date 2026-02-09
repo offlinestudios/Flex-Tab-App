@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+// Updated 2026-02-09 - Metric cards with sparklines
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -247,7 +248,7 @@ export function BodyMeasurements() {
       </div>
 
       {/* Metric Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <MetricCard
           title="Weight"
           value={latestMeasurement?.weight || 0}

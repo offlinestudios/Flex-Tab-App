@@ -861,3 +861,9 @@
 - [x] Add gradient fill below the sparkline (matching mockup design)
 - [x] Generate sparkline data from measurement history (last 5 measurements)
 - [x] Test sparkline visualization on desktop and mobile (14/14 vitest tests passed)
+
+## Measurements Tab 2-Column Layout Fix (2026-02-09)
+- [x] Change measurements grid from single column mobile to 2-column on all screen sizes
+- [x] Match mockup design showing Weight/Chest, Waist/Arms, Thighs in 2-column layout
+- [x] Test responsive layout on mobile and desktop (14/14 vitest tests passed)
+- [ ] Create checkpoint after fix
