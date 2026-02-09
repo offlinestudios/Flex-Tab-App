@@ -829,3 +829,9 @@
 - [x] Add settings options in modal: theme, units, notifications
 - [x] Update UserMenu Settings button to open modal instead of navigate to /settings page
 - [x] Test settings modal functionality
+
+## User Menu Consolidation (2026-02-09)
+- [x] Consolidate user profile, settings, and logout into single clickable button
+- [x] Show popup menu with Settings and Logout options when user profile clicked
+- [x] Settings option opens settings modal dialog
+- [x] Logout option triggers logout with confirmation
