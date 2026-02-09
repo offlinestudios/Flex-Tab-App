@@ -509,17 +509,12 @@ export default function Landing() {
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="text-base text-[#6B6F76] hover:text-[#0B0B0C] transition-colors">
-                    Sign In
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-base text-[#6B6F76] hover:text-[#0B0B0C] transition-colors">
+                  <a href="/privacy" className="text-base text-[#6B6F76] hover:text-[#0B0B0C] transition-colors">
                     Privacy Policy
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="text-base text-[#6B6F76] hover:text-[#0B0B0C] transition-colors">
+                  <a href="/terms" className="text-base text-[#6B6F76] hover:text-[#0B0B0C] transition-colors">
                     Terms of Service
                   </a>
                 </li>

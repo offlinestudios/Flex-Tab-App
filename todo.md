@@ -755,3 +755,14 @@
 - [x] Upload black-male-incline-bench.jpg to S3 for CDN hosting (NAaefWABsVyggQYW.jpg)
 - [x] Update Landing.tsx "Open, tap, go" section with new image URL
 - [x] Verify image displays correctly with proper aspect ratio and rounded corners
+
+## Remove Duplicate Sign In from Mobile Footer (2026-02-09)
+- [x] Remove "Sign In" link from footer navigation list
+- [x] Keep only "Log In" at bottom of footer for cleaner mobile UX
+- [x] Verify footer displays correctly on mobile
+
+## Create Legal Pages (2026-02-09)
+- [x] Create Privacy Policy page with comprehensive privacy information
+- [x] Create Terms of Service page with user agreement and app usage terms
+- [x] Add routes for /privacy and /terms in App.tsx
+- [x] Link footer Privacy Policy and Terms of Service to new pages (/privacy, /terms)
