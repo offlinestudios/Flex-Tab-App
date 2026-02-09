@@ -817,3 +817,9 @@
 - [x] Add success animations for completed actions (animate-success class ready, can be applied to buttons on success)
 - [x] Ensure consistent typography and spacing throughout
 - [x] Test all logged-in screens for visual consistency (all 14 tests passing)
+
+
+## Dashboard UI Fixes (2026-02-09 Afternoon)
+- [x] Fix broken athlete hero image in "Start Your Workout" card on Active tab
+- [x] Add logout button to sidebar bottom
+- [x] Add settings option to sidebar navigation

@@ -516,9 +516,9 @@ export default function Home() {
                         {/* Hero Image with Overlay */}
                         <div className="relative h-64 md:h-80">
                           <img 
-                            src="/images/athlete-hero.jpg" 
+                            src="https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/NAaefWABsVyggQYW.jpg" 
                             alt="Athlete training" 
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover rounded-t-2xl"
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
                           <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
