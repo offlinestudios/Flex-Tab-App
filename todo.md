@@ -743,3 +743,15 @@
 - [x] Remove "Join Now" heading with chevron icon from CTA section
 - [x] Keep only the paragraph text and transparent button
 - [x] Eliminate redundancy - button already says "Join Now"
+
+## Generate Custom Black Male Athlete Image (2026-02-08)
+- [ ] Generate image of Black male performing incline bench press
+- [ ] Facial features: oval face, masculine modelesque jawline, mostly clean-shaven
+- [ ] Appearance: youthful yet mature
+- [ ] Environment: match current banner gym (dark dramatic lighting, gym equipment visible)
+- [ ] Present to user for approval before implementing
+
+## Replace "Open, tap, go" Section Image (2026-02-09)
+- [x] Upload black-male-incline-bench.jpg to S3 for CDN hosting (NAaefWABsVyggQYW.jpg)
+- [x] Update Landing.tsx "Open, tap, go" section with new image URL
+- [x] Verify image displays correctly with proper aspect ratio and rounded corners

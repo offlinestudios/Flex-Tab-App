@@ -382,8 +382,8 @@ export default function Landing() {
             <div className="relative h-[500px] rounded-2xl overflow-hidden">
               {/* Athlete Image */}
               <img 
-                src="https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/aLKEmQTdFhQzOzgb.jpg" 
-                alt="Athlete training" 
+                src="https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/NAaefWABsVyggQYW.jpg" 
+                alt="Athlete performing incline bench press" 
                 className="w-full h-full object-cover"
               />
               
