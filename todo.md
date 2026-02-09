@@ -766,3 +766,7 @@
 - [x] Create Terms of Service page with user agreement and app usage terms
 - [x] Add routes for /privacy and /terms in App.tsx
 - [x] Link footer Privacy Policy and Terms of Service to new pages (/privacy, /terms)
+
+## Footer Link Fixes (2026-02-09)
+- [x] Fix footer Privacy Policy and Terms of Service link navigation
+- [x] Update footer link hover colors to match brand color palette (use grey instead of current color)

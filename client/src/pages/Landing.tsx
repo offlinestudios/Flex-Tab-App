@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
+import { getLoginUrl } from "@/const";
+import { Link } from "wouter";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { IOSInstallPrompt } from "@/components/IOSInstallPrompt";
-import { getLoginUrl } from "@/const";
 import { useEffect, useState } from "react";
 import { ChevronRight } from "lucide-react";
 
@@ -509,14 +510,14 @@ export default function Landing() {
                   </a>
                 </li>
                 <li>
-                  <a href="/privacy" className="text-base text-[#6B6F76] hover:text-[#0B0B0C] transition-colors">
+                  <Link href="/privacy" className="text-base text-[#6B6F76] hover:text-[#6B6F76]/70 transition-colors">
                     Privacy Policy
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="/terms" className="text-base text-[#6B6F76] hover:text-[#0B0B0C] transition-colors">
+                  <Link href="/terms" className="text-base text-[#6B6F76] hover:text-[#6B6F76]/70 transition-colors">
                     Terms of Service
-                  </a>
+                  </Link>
                 </li>
                 <li>
                   <a href="#" className="text-base text-[#6B6F76] hover:text-[#0B0B0C] transition-colors">
