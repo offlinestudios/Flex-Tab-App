@@ -835,3 +835,16 @@
 - [x] Show popup menu with Settings and Logout options when user profile clicked
 - [x] Settings option opens settings modal dialog
 - [x] Logout option triggers logout with confirmation
+
+## Fix Missing User Button (2026-02-09)
+- [ ] Investigate why UserMenu component is not rendering in sidebar
+- [ ] Ensure UserMenu is properly placed at bottom of sidebar
+- [ ] Verify user profile button displays with avatar, name, and email
+- [ ] Test dropdown menu functionality (Settings and Logout options)
+
+## User Button Visibility Fix (2026-02-09 Afternoon)
+- [x] Fix user profile button not visible at bottom of sidebar (was 57px off-screen)
+- [x] Adjust sidebar height to account for header (calc(100vh - 73px) instead of h-screen)
+- [x] Use absolute positioning for user menu to anchor it to bottom
+- [x] Test fix manually via browser console (confirmed visible at 1024-1088px within 1100px viewport)
+- [x] Update Home.tsx with correct layout (inline styles for height and positioning)

@@ -21,7 +21,7 @@ export function ExerciseSidebar({
   onAddCustom,
 }: ExerciseSidebarProps) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {/* Preset Exercises with Collapsible Categories */}
       {Object.entries(groupedExercises).map(([category, exercises]) => {
         // Map categories to athlete images
@@ -112,7 +112,7 @@ export function ExerciseSidebar({
       {/* Add Custom Exercise Button */}
       <button
         onClick={onAddCustom}
-        className="w-full flex items-center gap-2 px-4 py-3 bg-slate-800 text-white rounded-lg hover:bg-slate-900 transition-all font-medium"
+        className="w-full flex items-center gap-2 px-4 py-2.5 bg-slate-800 text-white rounded-lg hover:bg-slate-900 transition-all font-medium text-sm"
       >
         <Plus className="w-4 h-4" />
         Add Custom Exercise

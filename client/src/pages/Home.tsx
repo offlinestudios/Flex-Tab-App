@@ -456,16 +456,21 @@ export default function Home() {
       <div className="flex">
         {/* Sidebar */}
         <aside
-          className={`fixed w-80 bg-white border-r border-slate-200 h-screen transition-transform duration-300 z-30 ${
+          className={`fixed w-80 bg-white border-r border-slate-200 transition-transform duration-300 z-30 ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
           }`}
+          style={{ height: 'calc(100vh - 73px)', top: '73px' }}
         >
-          <div className="flex flex-col h-full">
-            <div className="flex-1 overflow-y-auto min-h-0">
-              <div className="p-6">
-                <h2 className="text-xl font-bold text-slate-900 mb-6">
-                  Workout Builder
-                </h2>
+          <div className="relative h-full">
+            {/* Fixed header */}
+            <div className="px-6 py-4 border-b border-slate-200">
+              <h2 className="text-xl font-bold text-slate-900">
+                Workout Builder
+              </h2>
+            </div>
+            {/* Scrollable content with padding at bottom for user menu */}
+            <div className="overflow-y-auto pb-20" style={{ height: 'calc(100% - 73px)' }}>
+              <div className="p-4">
                 <ExerciseSidebar
                   groupedExercises={groupedExercises}
                   customExercises={customExercises}
@@ -477,8 +482,8 @@ export default function Home() {
                 />
               </div>
             </div>
-            {/* User Menu at bottom of sidebar - always visible */}
-            <div className="flex-shrink-0 p-4 border-t border-slate-200 bg-slate-50">
+            {/* User Menu - absolutely positioned at bottom */}
+            <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-slate-200 bg-slate-50">
               <UserMenu />
             </div>
           </div>
