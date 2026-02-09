@@ -56,6 +56,12 @@ export default function ProgressCharts({ setLogs, measurements }: ProgressCharts
                 <h4 className="text-md font-medium text-slate-800 mb-4">{exercise}</h4>
                 <ResponsiveContainer width="100%" height={250}>
                   <LineChart data={data}>
+                    <defs>
+                      <linearGradient id={`gradient-${exercise.replace(/\s+/g, '-')}`} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#64748b" stopOpacity={0.3} />
+                        <stop offset="100%" stopColor="#64748b" stopOpacity={0.05} />
+                      </linearGradient>
+                    </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                     <XAxis 
                       dataKey="date" 
@@ -78,10 +84,11 @@ export default function ProgressCharts({ setLogs, measurements }: ProgressCharts
                     <Line 
                       type="monotone" 
                       dataKey="weight" 
-                      stroke="#334155" 
-                      strokeWidth={3}
-                      dot={{ fill: '#1e293b', r: 5 }}
-                      activeDot={{ r: 7 }}
+                      stroke="#64748b" 
+                      strokeWidth={2}
+                      fill={`url(#gradient-${exercise.replace(/\s+/g, '-')})`}
+                      dot={{ fill: '#64748b', r: 4 }}
+                      activeDot={{ r: 6 }}
                       name="Weight"
                       isAnimationActive={true}
                     />

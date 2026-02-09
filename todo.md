@@ -908,4 +908,11 @@
 - [x] Remove mx-2 md:mx-0 band-aid fix
 - [x] Hide Sets and Reps columns on mobile (hidden sm:table-cell)
 - [x] Test on mobile to verify 64px additional content width (14/14 vitest tests passed)
-- [ ] Create checkpoint after fixes
+- [x] Create checkpoint after fixes (version: 268c14d5)
+
+## Progress Charts Gradient Fill (2026-02-09)
+- [x] Find ProgressCharts component and understand current chart library (Recharts)
+- [x] Add gradient fill to exercise weight progression line charts
+- [x] Match gradient color/opacity from measurements sparklines (#64748b slate-500, 30% to 5%)
+- [x] Test gradient appearance on all exercise charts (14/14 vitest tests passed)
+- [ ] Create checkpoint after implementation
