@@ -1,10 +1,10 @@
 import { trpc } from "@/lib/trpc";
 import { UNAUTHED_ERR_MSG } from '@shared/const';
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
 import { httpBatchLink, TRPCClientError } from "@trpc/client";
 import { createRoot } from "react-dom/client";
 import superjson from "superjson";
-import { Toaster } from "sonner";
+
 import App from "./App";
 import { getLoginUrl } from "./const";
 import "./index.css";
@@ -69,9 +69,6 @@ if ('serviceWorker' in navigator) {
 
 createRoot(document.getElementById("root")!).render(
   <trpc.Provider client={trpcClient} queryClient={queryClient}>
-    <QueryClientProvider client={queryClient}>
-      <Toaster position="top-right" richColors />
-      <App />
-    </QueryClientProvider>
+    <App />
   </trpc.Provider>
 );

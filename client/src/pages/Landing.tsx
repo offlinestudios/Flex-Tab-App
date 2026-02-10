@@ -1,13 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { getLoginUrl } from "@/const";
-import { Link, useLocation } from "wouter";
+
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { IOSInstallPrompt } from "@/components/IOSInstallPrompt";
 import { useEffect, useState } from "react";
 import { ChevronRight } from "lucide-react";
 
 export default function Landing() {
-  const [, setLocation] = useLocation();
+
   const [isLoaded, setIsLoaded] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [touchStart, setTouchStart] = useState(0);
@@ -15,22 +15,22 @@ export default function Landing() {
 
   const screenshots = [
     {
-      url: "https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/sUWhtLsscxMXAbBm.png",
+      url: "/screenshot-active.png",
       alt: "Active workout tracking",
       title: "Log every set in real-time.",
       description: "Track sets, reps, and weight with a simple interface. No complex forms—just tap and log."
     },
     {
-      url: "https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/ZQcZJelIDPISaKrs.png",
-      alt: "Workout history",
-      title: "Review your complete workout history.",
-      description: "See every workout session at a glance. Compare performance and spot trends instantly."
+      url: "/screenshot-measurements.png",
+      alt: "Body measurements tracking",
+      title: "Track body measurements over time.",
+      description: "Monitor weight, chest, waist, arms, and thighs. See progress with visual sparklines."
     },
     {
-      url: "https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/NfNzRYszCpliWVqV.png",
-      alt: "Progress charts",
-      title: "Track strength gains over time.",
-      description: "Visual charts show your progress. Watch yourself get stronger week after week."
+      url: "/screenshot-progress.png",
+      alt: "Exercise progress charts",
+      title: "Visualize strength gains with charts.",
+      description: "Track weight progression for each exercise. Watch yourself get stronger week after week."
     }
   ];
 

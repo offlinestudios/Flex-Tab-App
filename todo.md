@@ -1009,4 +1009,13 @@
 - [x] Verified secure and httpOnly flags are set for security
 - [x] Test session persistence after closing and reopening PWA (sameSite: lax should improve persistence)
 - [x] Run vitest to ensure all tests pass (14/14)
-- [ ] Create checkpoint after fix
+- [x] Create checkpoint after fix (version: 99b31ed2)
+
+## Update Landing Page Phone Mockup Screenshots (2026-02-10)
+- [x] Copy new screenshots to project public directory
+- [x] Rename screenshots for clarity (screenshot-active.png, screenshot-measurements.png, screenshot-progress.png)
+- [x] Update landing page component to reference new screenshot files
+- [x] Update screenshot titles and descriptions to match new content
+- [ ] Test landing page phone mockup carousel
+- [ ] Run vitest to ensure all tests pass (14/14)
+- [ ] Create checkpoint after update
