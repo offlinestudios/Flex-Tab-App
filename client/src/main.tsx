@@ -4,10 +4,17 @@ import { QueryClient } from "@tanstack/react-query";
 import { httpBatchLink, TRPCClientError } from "@trpc/client";
 import { createRoot } from "react-dom/client";
 import superjson from "superjson";
+import { ClerkProvider } from '@clerk/clerk-react';
 
 import App from "./App";
 import { getLoginUrl } from "./const";
 import "./index.css";
+
+const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+
+if (!CLERK_PUBLISHABLE_KEY) {
+  throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY environment variable');
+}
 
 const queryClient = new QueryClient();
 
@@ -68,7 +75,9 @@ if ('serviceWorker' in navigator) {
 }
 
 createRoot(document.getElementById("root")!).render(
-  <trpc.Provider client={trpcClient} queryClient={queryClient}>
-    <App />
-  </trpc.Provider>
+  <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
+    <trpc.Provider client={trpcClient} queryClient={queryClient}>
+      <App />
+    </trpc.Provider>
+  </ClerkProvider>
 );

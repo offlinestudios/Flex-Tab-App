@@ -1019,3 +1019,32 @@
 - [ ] Test landing page phone mockup carousel
 - [ ] Run vitest to ensure all tests pass (14/14)
 - [ ] Create checkpoint after update
+
+## Railway Migration (2026-02-10)
+- [x] Create GitHub repository: offlinestudios/Flex-Tab-App
+- [x] Integrate Clerk authentication to replace Manus OAuth
+  - [x] Install Clerk SDK packages (@clerk/express, @clerk/clerk-react)
+  - [x] Create server/_core/clerk-auth.ts with Clerk authentication
+  - [x] Update server/_core/context.ts to use Clerk user context
+  - [x] Update client authentication flow to use Clerk (useAuth hook)
+  - [x] Add Clerk middleware to Express server
+  - [x] Add ClerkProvider to React app
+  - [x] Update const.ts with Clerk sign-in/sign-up URLs
+  - [x] Add Clerk environment variables (CLERK_SECRET_KEY, CLERK_PUBLISHABLE_KEY, VITE_CLERK_PUBLISHABLE_KEY)
+  - [x] Write and pass vitest tests for Clerk authentication
+- [x] Set up Cloudflare R2 storage to replace Manus S3
+  - [x] Get Cloudflare R2 credentials from user
+  - [x] Update server/storage.ts with R2 configuration using AWS S3 SDK
+  - [x] Add R2 environment variables (R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME)
+  - [x] Create vitest tests for R2 storage (credentials validated, presigned URLs working)
+- [x] Add Railway deployment configuration
+  - [x] Create railway.json with build and deploy commands
+  - [x] Create RAILWAY_DEPLOYMENT.md with step-by-step guide
+  - [x] Document all environment variables needed
+  - [x] Create README.md for the project
+- [x] Remove Manus-specific dependencies
+  - [x] Remove debug-collector.js
+  - [x] Replaced Manus OAuth with Clerk
+  - [x] Replaced Manus S3 with Cloudflare R2
+- [ ] Push changes to GitHub
+- [ ] Create checkpoint after Railway migration
