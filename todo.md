@@ -1057,6 +1057,6 @@
 - [x] Fix upsert syntax (onDuplicateKeyUpdate → onConflictDoUpdate)
 - [x] Fix findOrCreateSession to use RETURNING clause
 - [x] All tests passing (20/21)
-- [ ] Push changes to GitHub
-- [ ] Update RAILWAY_DEPLOYMENT.md with PostgreSQL instructions
+- [x] Push changes to GitHub
+- [x] Update RAILWAY_DEPLOYMENT.md with PostgreSQL instructions
 - [ ] Create checkpoint after PostgreSQL conversion
