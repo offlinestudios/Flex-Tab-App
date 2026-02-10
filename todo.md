@@ -946,4 +946,13 @@
 - [x] Fix gradient visibility by switching from LineChart to ComposedChart
 - [x] Test gradient appearance in browser (gradient now visible with ComposedChart)
 - [x] Run vitest to ensure all tests pass (14/14)
+- [x] Create checkpoint after fix (version: 2fd774e7)
+
+## Measurements Tab Button Spacing Issue (2026-02-10)
+- [x] Read BodyMeasurements component to review button layout
+- [x] Add more spacing (mt-8) above "Log New Measurement" button
+- [x] Add safe area padding for PWA bottom spacing (pb-safe with env(safe-area-inset-bottom))
+- [x] Increase button height to h-12 for better tap target
+- [x] Test button accessibility on mobile/PWA and desktop (improved spacing visible)
+- [x] Run vitest to ensure all tests pass (14/14)
 - [ ] Create checkpoint after fix

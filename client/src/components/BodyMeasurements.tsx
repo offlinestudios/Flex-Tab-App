@@ -303,13 +303,15 @@ export function BodyMeasurements() {
       </div>
 
       {/* Log New Measurement Button */}
-      <Button
-        onClick={() => setShowDialog(true)}
-        className="w-full bg-slate-800 hover:bg-slate-900 text-white"
-      >
-        <Plus className="w-4 h-4 mr-2" />
-        Log New Measurement
-      </Button>
+      <div className="mt-8 pb-safe">
+        <Button
+          onClick={() => setShowDialog(true)}
+          className="w-full bg-slate-800 hover:bg-slate-900 text-white h-12"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Log New Measurement
+        </Button>
+      </div>
 
       {/* Add Measurement Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
