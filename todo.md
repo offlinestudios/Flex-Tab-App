@@ -955,4 +955,13 @@
 - [x] Increase button height to h-12 for better tap target
 - [x] Test button accessibility on mobile/PWA and desktop (improved spacing visible)
 - [x] Run vitest to ensure all tests pass (14/14)
+- [x] Create checkpoint after fix (version: 832bc30e)
+
+## PWA Sidebar Detachment During Scroll (2026-02-10)
+- [x] Read Home.tsx to review header and sidebar layout structure
+- [x] Investigate sticky positioning and z-index of header vs sidebar (sidebar had top:73px causing gap)
+- [x] Fix coordination by changing sidebar to top-0 with paddingTop:73px
+- [x] Ensure header and sidebar move together (both now start from top-0)
+- [x] Test scroll behavior on PWA mobile view (sidebar now aligned with header)
+- [x] Run vitest to ensure all tests pass (14/14)
 - [ ] Create checkpoint after fix

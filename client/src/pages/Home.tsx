@@ -456,10 +456,10 @@ export default function Home() {
       <div className="flex">
         {/* Sidebar */}
         <aside
-          className={`fixed w-80 bg-white border-r border-slate-200 transition-transform duration-300 z-30 ${
+          className={`fixed top-0 w-80 bg-white border-r border-slate-200 transition-transform duration-300 z-30 ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
           }`}
-          style={{ height: 'calc(100vh - 73px)', top: '73px' }}
+          style={{ height: '100vh', paddingTop: '73px' }}
         >
           <div className="relative h-full">
             {/* Fixed header */}
@@ -469,7 +469,7 @@ export default function Home() {
               </h2>
             </div>
             {/* Scrollable content with padding at bottom for user menu */}
-            <div className="overflow-y-auto pb-20" style={{ height: 'calc(100% - 73px)' }}>
+            <div className="overflow-y-auto pb-20" style={{ height: 'calc(100% - 73px - 73px)' }}>
               <div className="p-4">
                 <ExerciseSidebar
                   groupedExercises={groupedExercises}
