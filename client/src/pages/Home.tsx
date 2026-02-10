@@ -85,6 +85,10 @@ export default function Home() {
   const [editFormData, setEditFormData] = useState<SetLog | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
+  
+  // Swipe gesture tracking
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
   // Load custom exercises from API
   const { data: customExercisesData } = trpc.workout.getCustomExercises.useQuery(undefined, {
@@ -406,6 +410,31 @@ export default function Home() {
     }));
   };
 
+  // Swipe gesture handlers
+  const minSwipeDistance = 100; // Minimum distance for swipe to register
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    
+    // Close sidebar on left swipe (swipe from right to left on the sidebar)
+    if (isLeftSwipe && sidebarOpen) {
+      setSidebarOpen(false);
+    }
+  };
+
   const groupedExercises = PRESET_EXERCISES.reduce(
     (acc, exercise) => {
       if (!acc[exercise.category]) {
@@ -460,6 +489,9 @@ export default function Home() {
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
           }`}
           style={{ height: '100vh', paddingTop: '73px' }}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
         >
           <div className="relative h-full">
             {/* Fixed header */}

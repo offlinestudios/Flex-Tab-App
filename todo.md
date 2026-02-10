@@ -964,4 +964,13 @@
 - [x] Ensure header and sidebar move together (both now start from top-0)
 - [x] Test scroll behavior on PWA mobile view (sidebar now aligned with header)
 - [x] Run vitest to ensure all tests pass (14/14)
-- [ ] Create checkpoint after fix
+- [x] Create checkpoint after fix (version: b3ee8468)
+
+## Swipe Gesture to Close Sidebar (2026-02-10)
+- [x] Add touch event handlers (touchstart, touchmove, touchend) to sidebar
+- [x] Implement swipe detection logic (track touch position and calculate swipe distance)
+- [x] Close sidebar when left swipe exceeds threshold (100px)
+- [ ] Add visual feedback during swipe (optional: sidebar follows finger) - skipped for simplicity
+- [x] Test swipe gesture on mobile/PWA (swipe left on sidebar closes it)
+- [x] Run vitest to ensure all tests pass (14/14)
+- [ ] Create checkpoint after implementation
