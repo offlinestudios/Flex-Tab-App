@@ -466,7 +466,7 @@ export default function Home() {
   return (
     <div className="min-h-screen overflow-x-hidden" style={{background: 'linear-gradient(to bottom right, #F7F5F2, #F3F1EE)'}}>
       {/* Header with Hamburger and Title Side by Side */}
-      <header className="sticky top-0 z-40 bg-white shadow-sm" style={{borderBottom: '1px solid #E6E4E1'}}>
+      <header className="sticky top-0 z-50 bg-white shadow-sm" style={{borderBottom: '1px solid #E6E4E1'}}>
         <div className="flex items-center gap-4 px-4 py-4 md:px-6">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -491,7 +491,10 @@ export default function Home() {
           className={`fixed top-0 w-80 bg-white border-r border-slate-200 transition-transform duration-300 z-30 ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
           }`}
-          style={{ height: '100vh', paddingTop: '73px' }}
+          style={{ 
+            height: '100dvh', /* Use dvh for proper mobile viewport height */
+            paddingTop: 'max(73px, env(safe-area-inset-top))' /* Account for notch */
+          }}
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}

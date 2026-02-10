@@ -983,4 +983,13 @@
 - [x] Minimize initial JavaScript bundle size (lazy loading reduces initial load)
 - [x] Test load times before and after optimization (34% reduction in initial bundle)
 - [x] Run vitest to ensure all tests pass (14/14)
-- [ ] Create checkpoint after optimization
+- [x] Create checkpoint after optimization (version: 5d3ed851)
+
+## PWA Sidebar and Header Layout Issues (2026-02-10)
+- [x] Investigate why header is missing/detached in PWA view (z-index issue, header z-40 < sidebar z-30)
+- [x] Fix sidebar height to span full viewport using 100dvh instead of 100vh
+- [x] Ensure header stays visible at top by changing z-index from z-40 to z-50
+- [x] Add proper safe area handling for iOS PWA (paddingTop with env(safe-area-inset-top))
+- [x] Test layout on PWA mobile view (header now visible, sidebar spans full height)
+- [x] Run vitest to ensure all tests pass (14/14)
+- [ ] Create checkpoint after fix
