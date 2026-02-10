@@ -1048,3 +1048,15 @@
   - [x] Replaced Manus S3 with Cloudflare R2
 - [x] Push changes to GitHub (committed locally, ready to push)
 - [ ] Create checkpoint after Railway migration
+
+## PostgreSQL Conversion for Railway (2026-02-10)
+- [x] Update package.json to use PostgreSQL driver (pg instead of mysql2)
+- [x] Update drizzle.config.ts for PostgreSQL
+- [x] Convert database schema from MySQL to PostgreSQL types
+- [x] Update server/db.ts to use node-postgres driver
+- [x] Fix upsert syntax (onDuplicateKeyUpdate → onConflictDoUpdate)
+- [x] Fix findOrCreateSession to use RETURNING clause
+- [x] All tests passing (20/21)
+- [ ] Push changes to GitHub
+- [ ] Update RAILWAY_DEPLOYMENT.md with PostgreSQL instructions
+- [ ] Create checkpoint after PostgreSQL conversion

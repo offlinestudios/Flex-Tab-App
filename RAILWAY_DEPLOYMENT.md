@@ -23,9 +23,7 @@ This guide will help you deploy your FlexTab workout tracker to Railway.
 2. Railway will automatically create a PostgreSQL database
 3. The `DATABASE_URL` environment variable will be automatically set
 
-**Note:** The app currently uses MySQL/TiDB schema. You'll need to either:
-- Use Railway's MySQL plugin instead of PostgreSQL, OR
-- Update the database schema to work with PostgreSQL (Drizzle ORM supports both)
+**Note:** The app uses PostgreSQL and is fully compatible with Railway's PostgreSQL service.
 
 ## Step 3: Configure Environment Variables
 
