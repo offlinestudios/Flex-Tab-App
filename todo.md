@@ -279,7 +279,7 @@
 - [ ] Verify tRPC query is fetching data correctly on desktop
 - [ ] Fix desktop-specific issue
 - [ ] Test on both desktop and mobile to confirm fix
-- [ ] Create checkpoint after fix
+- [x] Create checkpoint after fix (version: 64f06074)
 
 ## Optimistic Updates for Measurements (2026-02-01)
 - [x] Review current measurement mutation implementation in BodyMeasurements.tsx
@@ -309,7 +309,7 @@
 - [ ] Fix delete functionality for workout sets
 - [ ] Test on desktop browser
 - [ ] Test on mobile browser
-- [ ] Create checkpoint after fixes
+- [x] Create checkpoint after fix (version: 64f06074)es
 
 ## Consecutive Delete Bug (2026-02-01)
 - [x] User can delete first workout set, but cannot delete subsequent sets (reported issue)
@@ -929,5 +929,12 @@
 - [x] Debug why gradient fill isn't appearing under line charts (Line component doesn't support fill)
 - [x] Fix gradient rendering by changing Line to Area component
 - [x] Test gradient appearance in browser (gradient now rendering correctly)
+- [x] Run vitest to ensure all tests pass (14/14)
+- [x] Create checkpoint after fix (version: 64f06074)
+
+## Progress Charts Blank After Area Component Fix (2026-02-10)
+- [x] Investigate why charts are completely blank after switching to Area component (Area alone doesn't render line)
+- [x] Fix chart rendering by using both Area (gradient fill, no stroke) + Line (visible line with dots)
+- [x] Test chart appearance in browser (charts now rendering with gradient fill and visible line)
 - [x] Run vitest to ensure all tests pass (14/14)
 - [ ] Create checkpoint after fix

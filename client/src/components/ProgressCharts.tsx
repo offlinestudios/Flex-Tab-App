@@ -84,9 +84,15 @@ export default function ProgressCharts({ setLogs, measurements }: ProgressCharts
                     <Area 
                       type="monotone" 
                       dataKey="weight" 
+                      stroke="none"
+                      fill={`url(#gradient-${exercise.replace(/\s+/g, '-')})`}
+                      isAnimationActive={true}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="weight" 
                       stroke="#64748b" 
                       strokeWidth={2}
-                      fill={`url(#gradient-${exercise.replace(/\s+/g, '-')})`}
                       dot={{ fill: '#64748b', r: 4 }}
                       activeDot={{ r: 6 }}
                       name="Weight"
