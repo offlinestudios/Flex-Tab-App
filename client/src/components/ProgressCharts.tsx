@@ -1,4 +1,4 @@
-import { LineChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface SetLog {
   id: string;
@@ -55,7 +55,7 @@ export default function ProgressCharts({ setLogs, measurements }: ProgressCharts
               <div key={exercise} className="data-card bg-slate-50 animate-slide-up">
                 <h4 className="text-md font-medium text-slate-800 mb-4">{exercise}</h4>
                 <ResponsiveContainer width="100%" height={250}>
-                  <LineChart data={data}>
+                  <ComposedChart data={data}>
                     <defs>
                       <linearGradient id={`gradient-${exercise.replace(/\s+/g, '-')}`} x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#64748b" stopOpacity={0.3} />
@@ -98,7 +98,7 @@ export default function ProgressCharts({ setLogs, measurements }: ProgressCharts
                       name="Weight"
                       isAnimationActive={true}
                     />
-                  </LineChart>
+                  </ComposedChart>
                 </ResponsiveContainer>
               </div>
             );
