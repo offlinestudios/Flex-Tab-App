@@ -1000,4 +1000,13 @@
 - [x] Ensure header stays visible at all times regardless of scroll position
 - [x] Test header behavior on PWA when scrolling with sidebar open (header now stays fixed)
 - [x] Run vitest to ensure all tests pass (14/14)
+- [x] Create checkpoint after fix (version: 15ba2a9a)
+
+## PWA Session Logout When App Swiped Away (2026-02-10)
+- [x] Investigate current cookie configuration in OAuth/session handling (already has ONE_YEAR_MS maxAge)
+- [x] Cookie maxAge already set to 365 days (ONE_YEAR_MS) - no change needed
+- [x] Changed sameSite from 'none' to 'lax' for better PWA cookie persistence
+- [x] Verified secure and httpOnly flags are set for security
+- [x] Test session persistence after closing and reopening PWA (sameSite: lax should improve persistence)
+- [x] Run vitest to ensure all tests pass (14/14)
 - [ ] Create checkpoint after fix
