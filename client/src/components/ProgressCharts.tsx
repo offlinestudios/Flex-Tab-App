@@ -1,4 +1,4 @@
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface SetLog {
   id: string;
@@ -81,7 +81,7 @@ export default function ProgressCharts({ setLogs, measurements }: ProgressCharts
                       }}
                       formatter={(value) => `${value} lbs`}
                     />
-                    <Line 
+                    <Area 
                       type="monotone" 
                       dataKey="weight" 
                       stroke="#64748b" 

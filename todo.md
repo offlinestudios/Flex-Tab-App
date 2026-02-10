@@ -922,4 +922,12 @@
 - [x] Update table to show Reps column on mobile (keep Sets hidden)
 - [x] Test mobile layout to ensure rep count is visible
 - [x] Run vitest to ensure all tests pass (14/14)
+- [x] Create checkpoint after fix (version: 08947a84)
+
+## Progress Charts Gradient Not Rendering (2026-02-10)
+- [x] Read ProgressCharts.tsx to review gradient implementation
+- [x] Debug why gradient fill isn't appearing under line charts (Line component doesn't support fill)
+- [x] Fix gradient rendering by changing Line to Area component
+- [x] Test gradient appearance in browser (gradient now rendering correctly)
+- [x] Run vitest to ensure all tests pass (14/14)
 - [ ] Create checkpoint after fix
