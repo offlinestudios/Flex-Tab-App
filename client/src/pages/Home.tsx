@@ -466,7 +466,7 @@ export default function Home() {
   return (
     <div className="min-h-screen overflow-x-hidden" style={{background: 'linear-gradient(to bottom right, #F7F5F2, #F3F1EE)'}}>
       {/* Header with Hamburger and Title Side by Side */}
-      <header className="sticky top-0 z-50 bg-white shadow-sm" style={{borderBottom: '1px solid #E6E4E1'}}>
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm" style={{borderBottom: '1px solid #E6E4E1'}}>
         <div className="flex items-center gap-4 px-4 py-4 md:px-6">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -530,7 +530,7 @@ export default function Home() {
         {/* Main Content */}
         <main className={`flex-1 p-4 md:p-8 transition-all duration-300 ${
           sidebarOpen ? "ml-80" : "ml-0"
-        }`}>
+        }`} style={{ paddingTop: '89px' /* 73px header + 16px spacing */ }}>
           <div className="max-w-6xl mx-auto">
             {/* Tabs */}
             <Tabs defaultValue="active" className="w-full">

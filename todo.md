@@ -992,4 +992,12 @@
 - [x] Add proper safe area handling for iOS PWA (paddingTop with env(safe-area-inset-top))
 - [x] Test layout on PWA mobile view (header now visible, sidebar spans full height)
 - [x] Run vitest to ensure all tests pass (14/14)
+- [x] Create checkpoint after fix (version: 4eebe7f2)
+
+## Header Scrolls Away When Sidebar Open (2026-02-10)
+- [x] Change header from sticky to fixed positioning (added left-0 right-0)
+- [x] Adjust main content padding-top to account for fixed header height (89px = 73px header + 16px spacing)
+- [x] Ensure header stays visible at all times regardless of scroll position
+- [x] Test header behavior on PWA when scrolling with sidebar open (header now stays fixed)
+- [x] Run vitest to ensure all tests pass (14/14)
 - [ ] Create checkpoint after fix
