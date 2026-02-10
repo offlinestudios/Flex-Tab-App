@@ -672,7 +672,7 @@ export default function Home() {
                                 <th className="hidden sm:table-cell px-4 md:px-6 py-4 text-center font-semibold text-slate-700">
                                   Sets
                                 </th>
-                                <th className="hidden sm:table-cell px-4 md:px-6 py-4 text-center font-semibold text-slate-700">
+                                <th className="px-4 md:px-6 py-4 text-center font-semibold text-slate-700">
                                   Reps
                                 </th>
                                 <th className="px-4 md:px-6 py-4 text-center font-semibold text-slate-700">
@@ -698,7 +698,7 @@ export default function Home() {
                                   <td className="hidden sm:table-cell px-4 md:px-6 py-4 text-center text-slate-600">
                                     {log.sets}
                                   </td>
-                                  <td className="hidden sm:table-cell px-4 md:px-6 py-4 text-center text-slate-600">
+                                  <td className="px-4 md:px-6 py-4 text-center text-slate-600">
                                     {log.reps}
                                   </td>
                                   <td className="px-4 md:px-6 py-4 text-center text-slate-600">

@@ -915,4 +915,11 @@
 - [x] Add gradient fill to exercise weight progression line charts
 - [x] Match gradient color/opacity from measurements sparklines (#64748b slate-500, 30% to 5%)
 - [x] Test gradient appearance on all exercise charts (14/14 vitest tests passed)
-- [ ] Create checkpoint after implementation
+- [x] Create checkpoint after implementation (version: 5c8fcdd4)
+
+## History Tab - Show Rep Count on Mobile (2026-02-10)
+- [x] Read current History tab implementation in Home.tsx
+- [x] Update table to show Reps column on mobile (keep Sets hidden)
+- [x] Test mobile layout to ensure rep count is visible
+- [x] Run vitest to ensure all tests pass (14/14)
+- [ ] Create checkpoint after fix
