@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { Menu, Plus, Trash2, Edit2, X, Dumbbell, Target, Weight, Activity, TrendingUp, Calendar } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
@@ -15,11 +15,14 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { WorkoutCalendar } from "@/components/WorkoutCalendar";
-import { WorkoutStatistics } from "@/components/WorkoutStatistics";
-import { BodyMeasurements } from "@/components/BodyMeasurements";
-import ProgressCharts from "@/components/ProgressCharts";
+
+// Lazy load heavy components for better performance
+const WorkoutCalendar = lazy(() => import("@/components/WorkoutCalendar").then(m => ({ default: m.WorkoutCalendar })));
+const WorkoutStatistics = lazy(() => import("@/components/WorkoutStatistics").then(m => ({ default: m.WorkoutStatistics })));
+const BodyMeasurements = lazy(() => import("@/components/BodyMeasurements").then(m => ({ default: m.BodyMeasurements })));
+const ProgressCharts = lazy(() => import("@/components/ProgressCharts"));
 import { formatDateFull } from "@/lib/dateUtils";
+import { Loader2 } from "lucide-react";
 import { PRESET_EXERCISES as EXPANDED_EXERCISES, EXERCISE_CATEGORIES } from "@/lib/exercises";
 import { ExerciseSidebar } from "@/components/ExerciseSidebar";
 import { ShareWorkout } from "@/components/ShareWorkout";
@@ -652,18 +655,30 @@ export default function Home() {
                     })()}
                   </div>
                   <div className="lg:col-span-1">
-                    <WorkoutCalendar
-                      workoutDates={workoutSessions.map(s => s.date)}
-                      selectedDate={selectedDate}
-                      onDateSelect={setSelectedDate}
-                    />
+                    <Suspense fallback={
+                      <div className="flex items-center justify-center py-12">
+                        <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+                      </div>
+                    }>
+                      <WorkoutCalendar
+                        workoutDates={workoutSessions.map(s => s.date)}
+                        selectedDate={selectedDate}
+                        onDateSelect={setSelectedDate}
+                      />
+                    </Suspense>
                   </div>
                 </div>
               </TabsContent>
 
               {/* Measurements Tab */}
               <TabsContent value="measurements">
-                <BodyMeasurements />
+                <Suspense fallback={
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+                  </div>
+                }>
+                  <BodyMeasurements />
+                </Suspense>
               </TabsContent>
 
               {/* History Tab */}
@@ -806,16 +821,22 @@ export default function Home() {
 
               {/* Progress Tab */}
               <TabsContent value="progress" className="space-y-6">
-                <div className="space-y-6">
-                  <WorkoutStatistics
-                    workoutSessions={workoutSessions}
-                    selectedDate={selectedDate}
-                  />
-                  <ProgressCharts
-                    setLogs={workoutSessions.flatMap(s => s.exercises)}
-                    measurements={measurements}
-                  />
-                </div>
+                <Suspense fallback={
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+                  </div>
+                }>
+                  <div className="space-y-6">
+                    <WorkoutStatistics
+                      workoutSessions={workoutSessions}
+                      selectedDate={selectedDate}
+                    />
+                    <ProgressCharts
+                      setLogs={workoutSessions.flatMap(s => s.exercises)}
+                      measurements={measurements}
+                    />
+                  </div>
+                </Suspense>
               </TabsContent>
             </Tabs>
           </div>
