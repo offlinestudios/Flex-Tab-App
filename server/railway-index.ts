@@ -29,10 +29,12 @@ async function startServer() {
   );
   
   // Serve static files from dist/public
-  // In production, __dirname is /app/dist (where the built server code lives)
-  // So we need to go up one level and into dist/public
-  const staticPath = path.resolve(__dirname, "..", "dist", "public");
+  // In Railway production: server code is at /app/dist/index.js
+  // Frontend files are at /app/dist/public
+  // So __dirname is /app/dist, and we need ./public
+  const staticPath = path.join(__dirname, "public");
 
+  console.log('[Server] __dirname:', __dirname);
   console.log('[Server] Serving static files from:', staticPath);
   app.use(express.static(staticPath));
 
@@ -45,6 +47,10 @@ async function startServer() {
       console.error("[Server] Missing index.html at:", indexPath);
       console.error("[Server] __dirname:", __dirname);
       console.error("[Server] staticPath:", staticPath);
+      console.error("[Server] Files in __dirname:", fs.readdirSync(__dirname));
+      if (fs.existsSync(path.join(__dirname, "public"))) {
+        console.error("[Server] Files in public:", fs.readdirSync(path.join(__dirname, "public")));
+      }
       return res.status(500).send("Build output missing. Did you run vite build?");
     }
     
