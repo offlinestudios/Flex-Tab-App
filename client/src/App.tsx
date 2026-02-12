@@ -18,8 +18,8 @@ function Router() {
   return (
     <Switch>
       <Route path={"/"} component={Landing} />
-      <Route path={"/sign-in"} component={SignInPage} />
-      <Route path={"/sign-up"} component={SignUpPage} />
+      <Route path="/sign-in/:rest*" component={SignInPage} />
+      <Route path="/sign-up/:rest*" component={SignUpPage} />
       <Route path={"/dashboard"} component={Home} />
       <Route path={"/app"} component={Home} />
       <Route path={"/settings"} component={Settings} />
