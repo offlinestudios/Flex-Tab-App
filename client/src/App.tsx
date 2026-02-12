@@ -10,12 +10,17 @@ import Landing from "./pages/Landing";
 import Settings from "./pages/Settings";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
+import SignInPage from "./pages/SignIn";
+import SignUpPage from "./pages/SignUp";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
       <Route path={"/"} component={Landing} />
+      <Route path={"/sign-in"} component={SignInPage} />
+      <Route path={"/sign-up"} component={SignUpPage} />
+      <Route path={"/dashboard"} component={Home} />
       <Route path={"/app"} component={Home} />
       <Route path={"/settings"} component={Settings} />
       <Route path={"/privacy"} component={PrivacyPolicy} />
