@@ -1,4 +1,4 @@
-const CACHE_NAME = 'flextab-v4-supabase';
+const CACHE_NAME = 'flextab-v5-network-first';
 const urlsToCache = [
   '/',
   '/app',
@@ -33,18 +33,40 @@ self.addEventListener('fetch', (event) => {
     return; // let the request go to the network normally
   }
 
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Cache hit - return response
-        if (response) {
+  // Use network-first strategy for HTML to always get latest version
+  const isHTMLRequest = event.request.headers.get('accept')?.includes('text/html');
+  
+  if (isHTMLRequest) {
+    // Network-first for HTML
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          // Cache the new version
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
           return response;
-        }
-        
-        // Clone the request
-        const fetchRequest = event.request.clone();
-        
-        return fetch(fetchRequest).then((response) => {
+        })
+        .catch(() => {
+          // Fallback to cache if offline
+          return caches.match(event.request);
+        })
+    );
+  } else {
+    // Cache-first for assets (JS, CSS, images)
+    event.respondWith(
+      caches.match(event.request)
+        .then((response) => {
+          // Cache hit - return response
+          if (response) {
+            return response;
+          }
+          
+          // Clone the request
+          const fetchRequest = event.request.clone();
+          
+          return fetch(fetchRequest).then((response) => {
           // Check if valid response
           if (!response || response.status !== 200 || response.type !== 'basic') {
             return response;
