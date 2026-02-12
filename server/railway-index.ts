@@ -38,8 +38,15 @@ async function startServer() {
   console.log('[Server] Serving static files from:', staticPath);
   app.use(express.static(staticPath));
 
-  // Handle client-side routing - serve index.html for all routes
-  app.get("*", (_req, res) => {
+  // Handle client-side routing - serve index.html for navigation requests only
+  // Don't intercept requests for static assets (they have file extensions)
+  app.get("*", (req, res) => {
+    // If the request is for a file (has extension), return 404
+    const ext = path.extname(req.path);
+    if (ext) {
+      return res.status(404).send('File not found');
+    }
+    
     const indexPath = path.join(staticPath, "index.html");
     
     // Sanity check: make sure index.html exists
