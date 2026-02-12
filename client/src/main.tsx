@@ -10,6 +10,7 @@ import App from "./App";
 import { getLoginUrl } from "./const";
 import "./index.css";
 
+// Clerk configuration - requires VITE_CLERK_PUBLISHABLE_KEY at build time
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 if (!CLERK_PUBLISHABLE_KEY) {
