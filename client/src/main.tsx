@@ -1,21 +1,14 @@
 import { trpc } from "@/lib/trpc";
 import { UNAUTHED_ERR_MSG } from '@shared/const';
-import { QueryClient } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink, TRPCClientError } from "@trpc/client";
 import { createRoot } from "react-dom/client";
 import superjson from "superjson";
-import { ClerkProvider } from '@clerk/clerk-react';
+import { supabase } from "@/lib/supabase";
 
 import App from "./App";
 import { getLoginUrl } from "./const";
 import "./index.css";
-
-// Clerk configuration - requires VITE_CLERK_PUBLISHABLE_KEY at build time
-const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-
-if (!CLERK_PUBLISHABLE_KEY) {
-  throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY environment variable');
-}
 
 const queryClient = new QueryClient();
 
@@ -51,10 +44,17 @@ const trpcClient = trpc.createClient({
     httpBatchLink({
       url: "/api/trpc",
       transformer: superjson,
-      fetch(input, init) {
+      async fetch(input, init) {
+        // Get Supabase session and add token to headers
+        const { data: { session } } = await supabase.auth.getSession();
+        
         return globalThis.fetch(input, {
           ...(init ?? {}),
           credentials: "include",
+          headers: {
+            ...init?.headers,
+            ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+          },
         });
       },
     }),
@@ -76,9 +76,9 @@ if ('serviceWorker' in navigator) {
 }
 
 createRoot(document.getElementById("root")!).render(
-  <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
+  <QueryClientProvider client={queryClient}>
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <App />
     </trpc.Provider>
-  </ClerkProvider>
+  </QueryClientProvider>
 );
