@@ -2,6 +2,7 @@ import express from "express";
 import { createServer } from "http";
 import path from "path";
 import { fileURLToPath } from "url";
+import fs from "fs";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { clerkMiddleware } from "@clerk/express";
 import { appRouter } from "./railway-routers";
@@ -32,18 +33,27 @@ async function startServer() {
     })
   );
   
-  // Serve static files from dist/public in production
-  const staticPath =
-    process.env.NODE_ENV === "production"
-      ? path.resolve(__dirname, "public")
-      : path.resolve(__dirname, "..", "dist", "public");
+  // Serve static files from dist/public
+  // In production, __dirname is /app/dist (where the built server code lives)
+  // So we need to go up one level and into dist/public
+  const staticPath = path.resolve(__dirname, "..", "dist", "public");
 
   console.log('[Server] Serving static files from:', staticPath);
   app.use(express.static(staticPath));
 
   // Handle client-side routing - serve index.html for all routes
   app.get("*", (_req, res) => {
-    res.sendFile(path.join(staticPath, "index.html"));
+    const indexPath = path.join(staticPath, "index.html");
+    
+    // Sanity check: make sure index.html exists
+    if (!fs.existsSync(indexPath)) {
+      console.error("[Server] Missing index.html at:", indexPath);
+      console.error("[Server] __dirname:", __dirname);
+      console.error("[Server] staticPath:", staticPath);
+      return res.status(500).send("Build output missing. Did you run vite build?");
+    }
+    
+    res.sendFile(indexPath);
   });
 
   const port = process.env.PORT || 3000;
