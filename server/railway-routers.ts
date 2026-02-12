@@ -9,7 +9,7 @@ export const appRouter = router({
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(() => {
-      // Clerk handles logout on the client side
+      // Supabase handles logout on the client side
       return { success: true } as const;
     }),
   }),
