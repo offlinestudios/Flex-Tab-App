@@ -36,17 +36,22 @@ async function startServer() {
 
   console.log('[Server] __dirname:', __dirname);
   console.log('[Server] Serving static files from:', staticPath);
+  
+  // Add logging middleware to debug static file requests
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/assets/')) {
+      const fullPath = path.join(staticPath, req.path);
+      console.log('[Server] Asset request:', req.path);
+      console.log('[Server] Looking for file at:', fullPath);
+      console.log('[Server] File exists:', fs.existsSync(fullPath));
+    }
+    next();
+  });
+  
   app.use(express.static(staticPath));
 
-  // Handle client-side routing - serve index.html for navigation requests only
-  // Don't intercept requests for static assets (they have file extensions)
+  // Handle client-side routing - serve index.html for all non-asset routes
   app.get("*", (req, res) => {
-    // If the request is for a file (has extension), return 404
-    const ext = path.extname(req.path);
-    if (ext) {
-      return res.status(404).send('File not found');
-    }
-    
     const indexPath = path.join(staticPath, "index.html");
     
     // Sanity check: make sure index.html exists
