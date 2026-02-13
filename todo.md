@@ -1060,3 +1060,18 @@
 - [x] Push changes to GitHub
 - [x] Update RAILWAY_DEPLOYMENT.md with PostgreSQL instructions
 - [ ] Create checkpoint after PostgreSQL conversion
+
+## Supabase Authentication Migration (2026-02-13)
+- [x] Remove Clerk authentication dependencies
+- [x] Install Supabase Auth packages (@supabase/supabase-js, @supabase/auth-ui-react)
+- [x] Create Supabase client configuration
+- [x] Update SignIn and SignUp pages to use Supabase Auth UI
+- [x] Update useAuth hook for Supabase session management
+- [x] Fix service worker cache-first strategy causing stale HTML (changed to network-first for HTML)
+- [x] Downgrade React from 19.2.1 to 18.3.1 to fix version conflict with @supabase/auth-ui-react
+- [x] Fix VITE_SUPABASE_URL mismatch in Railway environment variables
+- [x] Configure Google OAuth in Google Cloud Console
+- [x] Enable Google provider in Supabase dashboard
+- [ ] Fix OAuth redirect loop - user lands on /sign-in after successful login instead of /dashboard
+- [ ] Implement service worker force update to clear old cached versions
+- [ ] Test complete authentication flow end-to-end
