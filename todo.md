@@ -1094,9 +1094,45 @@
 - [ ] Verify dashboard renders smoothly without flickering
 
 ## tRPC Workout Endpoints Not Working (2026-02-13)
-- [ ] Investigate why workout.getCustomExercises endpoint returns 404
-- [ ] Investigate why workout.getSetLogs endpoint returns 404
-- [ ] Investigate why workout.getMeasurements endpoint returns 404
-- [ ] Check if workout router is properly registered in server/routers.ts
-- [ ] Verify Railway deployment is serving the correct backend code
-- [ ] Test all tRPC endpoints work after fix
+- [x] Investigate why workout.getCustomExercises endpoint returns 404
+- [x] Investigate why workout.getSetLogs endpoint returns 404
+- [x] Investigate why workout.getMeasurements endpoint returns 404
+- [x] Check if workout router is properly registered in server/routers.ts
+- [x] CRITICAL FIX: Replaced Clerk auth with Supabase auth in server/_core/context.ts
+- [x] Pushed fix to GitHub - Railway deploying now
+- [ ] Test all tRPC endpoints work after Railway deployment completes
+
+## Railway Database Migration (2026-02-13)
+- [ ] Railway PostgreSQL database is empty - no tables exist
+- [ ] Error: "relation users does not exist"
+- [ ] Need to run database migrations to create all tables:
+  - [ ] users table
+  - [ ] workout_sessions table
+  - [ ] set_logs table
+  - [ ] measurements table
+  - [ ] custom_exercises table
+- [ ] Run `pnpm db:push` with Railway DATABASE_URL
+- [ ] Verify tables exist in Railway PostgreSQL
+- [ ] Test authentication creates user record
+- [ ] Test workout endpoints work after migration
+
+## Railway Database Migration Fix (2026-02-13)
+- [x] Delete old MySQL migration files from drizzle/ directory
+- [x] Create empty _journal.json for drizzle-kit
+- [x] Generate fresh PostgreSQL migrations using drizzle-kit generate
+- [x] Install PostgreSQL client (psql) in sandbox
+- [x] Execute migrations against Railway PostgreSQL database
+- [x] Verify all tables created successfully (users, custom_exercises, measurements, set_logs, workout_sessions)
+- [x] Restart dev server to test database connection
+- [x] Test authentication flow on Railway deployment (www.flextab.app)
+- [x] Verify user dropdown menu shows Settings/Logout options
+- [x] Verify dashboard glitching/flickering has stopped
+- [x] Verify all tRPC queries working (getCustomExercises, getSetLogs, getMeasurements)
+- [ ] User to verify dropdown menu on their end (may need cache clear)
+- [ ] Proceed with remaining UI improvements from original request
+
+## User Dropdown Menu Positioning Bug (2026-02-13)
+- [ ] Fix dropdown menu rendering above viewport (currently at top: -182px, completely off-screen)
+- [ ] Change dropdown side from "top" to "bottom" or adjust positioning
+- [ ] Test dropdown visibility after fix
+- [ ] Create checkpoint after fix

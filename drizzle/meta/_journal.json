@@ -1,26 +1,12 @@
 {
   "version": "7",
-  "dialect": "mysql",
+  "dialect": "postgresql",
   "entries": [
     {
       "idx": 0,
-      "version": "5",
-      "when": 1768943471342,
-      "tag": "0000_dapper_kronos",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "5",
-      "when": 1768943532387,
-      "tag": "0001_sour_vector",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "5",
-      "when": 1769970411778,
-      "tag": "0002_mean_black_tom",
+      "version": "7",
+      "when": 1771010688306,
+      "tag": "0000_square_nocturne",
       "breakpoints": true
     }
   ]
