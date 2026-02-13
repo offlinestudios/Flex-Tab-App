@@ -1,4 +1,4 @@
-const CACHE_NAME = 'flextab-v5-network-first';
+const CACHE_NAME = 'flextab-v6-dropdown-fix';
 const urlsToCache = [
   '/',
   '/app',
@@ -54,14 +54,30 @@ self.addEventListener('fetch', (event) => {
         })
     );
   } else {
-    // Cache-first for assets (JS, CSS, images)
-    event.respondWith(
-      caches.match(event.request)
-        .then((response) => {
-          // Cache hit - return response
-          if (response) {
+    // Network-first for JS/CSS to always get latest code, cache-first for images
+    const isJavaScriptOrCSS = url.pathname.includes('/assets/') && (url.pathname.endsWith('.js') || url.pathname.endsWith('.css'));
+    
+    if (isJavaScriptOrCSS) {
+      // Network-first for JS/CSS
+      event.respondWith(
+        fetch(event.request)
+          .then((response) => {
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseToCache);
+            });
             return response;
-          }
+          })
+          .catch(() => caches.match(event.request))
+      );
+    } else {
+      // Cache-first for images and other assets
+      event.respondWith(
+        caches.match(event.request)
+          .then((response) => {
+            if (response) {
+              return response;
+            }
           
           // Clone the request
           const fetchRequest = event.request.clone();
