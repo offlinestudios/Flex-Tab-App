@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { LogOut, Settings } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { trpc } from "@/lib/trpc";
+import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -12,23 +12,33 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { SettingsDialog } from "@/components/SettingsDialog";
+import { useLocation } from "wouter";
 
 export function UserMenu() {
   const { user } = useAuth();
+  const [, setLocation] = useLocation();
   const [settingsOpen, setSettingsOpen] = useState(false);
-  
-  const logoutMutation = trpc.auth.logout.useMutation({
-    onSuccess: () => {
-      toast.success("Logged out successfully");
-      window.location.href = "/";
-    },
-    onError: () => {
-      toast.error("Failed to logout");
-    },
-  });
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const handleLogout = () => {
-    logoutMutation.mutate();
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        toast.error("Failed to logout");
+        console.error("Logout error:", error);
+      } else {
+        toast.success("Logged out successfully");
+        // Redirect to sign-in page
+        setLocation("/sign-in");
+      }
+    } catch (err) {
+      toast.error("Failed to logout");
+      console.error("Logout error:", err);
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   if (!user) return null;
@@ -65,11 +75,11 @@ export function UserMenu() {
           <DropdownMenuSeparator className="bg-slate-200" />
           <DropdownMenuItem
             onClick={handleLogout}
-            disabled={logoutMutation.isPending}
+            disabled={isLoggingOut}
             className="cursor-pointer text-red-600 focus:bg-red-50 focus:text-red-700"
           >
             <LogOut className="w-4 h-4 mr-2" />
-            {logoutMutation.isPending ? "Logging out..." : "Logout"}
+            {isLoggingOut ? "Logging out..." : "Logout"}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

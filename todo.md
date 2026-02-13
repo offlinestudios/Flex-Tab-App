@@ -1072,6 +1072,12 @@
 - [x] Fix VITE_SUPABASE_URL mismatch in Railway environment variables
 - [x] Configure Google OAuth in Google Cloud Console
 - [x] Enable Google provider in Supabase dashboard
-- [ ] Fix OAuth redirect loop - user lands on /sign-in after successful login instead of /dashboard
-- [ ] Implement service worker force update to clear old cached versions
+- [x] Fix OAuth redirect loop - user lands on /sign-in after successful login instead of /dashboard
+- [x] Implement service worker force update to clear old cached versions
 - [ ] Test complete authentication flow end-to-end
+
+## User Menu & Logout Fix (2026-02-13)
+- [ ] Fix user menu button not responding to clicks
+- [ ] Implement Supabase logout functionality (replace old Manus OAuth logout)
+- [ ] Test logout redirects to sign-in page
+- [ ] Verify Settings link works from user menu
