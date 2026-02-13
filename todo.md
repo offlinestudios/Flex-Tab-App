@@ -1150,3 +1150,12 @@
 - [x] Test edit and delete functionality
 - [x] Deploy to Railway (successful)
 - [ ] Create checkpoint
+
+## Add Open Graph and Twitter Card Meta Tags (2026-02-13)
+- [x] Find the banner image URL from landing page
+- [x] Add Open Graph meta tags (og:title, og:description, og:image, og:url, og:type)
+- [x] Add Twitter Card meta tags (twitter:card, twitter:title, twitter:description, twitter:image)
+- [x] Add standard meta description tag
+- [ ] Deploy to Railway
+- [ ] Test social sharing preview
+- [ ] Create checkpoint
