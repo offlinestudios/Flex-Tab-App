@@ -1159,3 +1159,16 @@
 - [x] Deploy to Railway
 - [x] Verified Instagram DM preview support
 - [ ] Create checkpoint
+
+## Create Custom Professional Open Graph Image (2026-02-13)
+- [x] Generate custom OG image (1200x630px) with:
+  - Landing page hero image as background
+  - FlexTab logo
+  - "Track Your Fitness With Precision" headline
+  - Tagline text
+  - Professional branded design
+- [x] Upload image to public folder (og-image.png)
+- [x] Update og:image and twitter:image meta tags
+- [ ] Deploy to Railway
+- [ ] Verify preview shows new custom image
+- [ ] Create checkpoint
