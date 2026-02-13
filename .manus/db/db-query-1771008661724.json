@@ -1,0 +1,16 @@
+{
+  "query": "SELECT id, openId, name, email FROM users WHERE email = 'julian@offlinestudios.ca';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3BA4WAF6tt66vim.b57a597c2c0d --database CggWhQmGmDTYobNoV67ZAX --execute SELECT id, openId, name, email FROM users WHERE email = 'julian@offlinestudios.ca';",
+  "rows": [
+    {
+      "id": "1",
+      "openId": "f4dJqHGZu4wep6Zkko4BDv",
+      "name": "Julian Ross",
+      "email": "julian@offlinestudios.ca"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\topenId\tname\temail\n1\tf4dJqHGZu4wep6Zkko4BDv\tJulian Ross\tjulian@offlinestudios.ca\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

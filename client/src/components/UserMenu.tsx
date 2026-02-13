@@ -64,7 +64,7 @@ export function UserMenu() {
             </div>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56 bg-white border-slate-200">
+        <DropdownMenuContent side="top" align="start" className="w-56 bg-white border-slate-200 mb-2">
           <DropdownMenuItem 
             onClick={() => setSettingsOpen(true)}
             className="cursor-pointer text-slate-700 focus:bg-slate-100"

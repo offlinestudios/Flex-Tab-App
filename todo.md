@@ -1077,7 +1077,18 @@
 - [ ] Test complete authentication flow end-to-end
 
 ## User Menu & Logout Fix (2026-02-13)
-- [ ] Fix user menu button not responding to clicks
-- [ ] Implement Supabase logout functionality (replace old Manus OAuth logout)
+- [x] Fix user menu button not responding to clicks
+- [x] Implement Supabase logout functionality (replace old Manus OAuth logout)
 - [ ] Test logout redirects to sign-in page
 - [ ] Verify Settings link works from user menu
+
+## Data Migration: Manus Database → Railway PostgreSQL (2026-02-13)
+- [x] Exported Julian's data from Manus database (10 sessions, 92 sets, 2 measurements, 9 custom exercises)
+- [x] Decision: Skip migration - Julian will start fresh on Railway deployment
+- [x] Cleaned up migration scripts
+
+## User Menu & Dashboard Glitching Issues (2026-02-13)
+- [ ] Fix user menu dropdown not appearing when clicking user button
+- [ ] Investigate and fix dashboard screen glitching every 10 seconds
+- [ ] Test user menu shows Settings and Logout options
+- [ ] Verify dashboard renders smoothly without flickering

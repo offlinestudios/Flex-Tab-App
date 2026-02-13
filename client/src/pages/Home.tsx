@@ -96,6 +96,8 @@ export default function Home() {
   // Load custom exercises from API
   const { data: customExercisesData } = trpc.workout.getCustomExercises.useQuery(undefined, {
     enabled: isAuthenticated,
+    refetchOnWindowFocus: false,
+    refetchInterval: false,
   });
   const utils = trpc.useUtils();
   
@@ -238,11 +240,15 @@ export default function Home() {
   // Load set logs from API
   const { data: setLogsData } = trpc.workout.getSetLogs.useQuery(undefined, {
     enabled: isAuthenticated,
+    refetchOnWindowFocus: false,
+    refetchInterval: false,
   });
 
   // Load measurements from API
   const { data: measurementsData } = trpc.workout.getMeasurements.useQuery(undefined, {
     enabled: isAuthenticated,
+    refetchOnWindowFocus: false,
+    refetchInterval: false,
   });
 
   // Sync custom exercises with API data
