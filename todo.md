@@ -1147,5 +1147,6 @@
 - [x] Implement edit measurement dialog/form
 - [x] Implement delete confirmation
 - [x] Update tRPC procedures for edit/delete operations (already existed)
-- [ ] Test edit and delete functionality
-- [ ] Create checkpoint and deploy to Railway
+- [x] Test edit and delete functionality
+- [x] Deploy to Railway (successful)
+- [ ] Create checkpoint
