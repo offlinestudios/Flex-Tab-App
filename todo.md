@@ -1156,6 +1156,6 @@
 - [x] Add Open Graph meta tags (og:title, og:description, og:image, og:url, og:type)
 - [x] Add Twitter Card meta tags (twitter:card, twitter:title, twitter:description, twitter:image)
 - [x] Add standard meta description tag
-- [ ] Deploy to Railway
-- [ ] Test social sharing preview
+- [x] Deploy to Railway
+- [x] Verified Instagram DM preview support
 - [ ] Create checkpoint
