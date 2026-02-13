@@ -1088,7 +1088,15 @@
 - [x] Cleaned up migration scripts
 
 ## User Menu & Dashboard Glitching Issues (2026-02-13)
-- [ ] Fix user menu dropdown not appearing when clicking user button
-- [ ] Investigate and fix dashboard screen glitching every 10 seconds
+- [x] Fix user menu dropdown not appearing when clicking user button
+- [x] Investigate and fix dashboard screen glitching every 10 seconds
 - [ ] Test user menu shows Settings and Logout options
 - [ ] Verify dashboard renders smoothly without flickering
+
+## tRPC Workout Endpoints Not Working (2026-02-13)
+- [ ] Investigate why workout.getCustomExercises endpoint returns 404
+- [ ] Investigate why workout.getSetLogs endpoint returns 404
+- [ ] Investigate why workout.getMeasurements endpoint returns 404
+- [ ] Check if workout router is properly registered in server/routers.ts
+- [ ] Verify Railway deployment is serving the correct backend code
+- [ ] Test all tRPC endpoints work after fix
