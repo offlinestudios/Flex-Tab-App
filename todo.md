@@ -1140,3 +1140,12 @@
 - [x] Test dropdown functionality after Railway deployment
 - [ ] Fix Railway GitHub connection issue (branch not found)
 - [ ] Create Manus checkpoint and test deployment
+
+## Add Edit/Delete Functionality for Measurements (2026-02-13)
+- [x] Add edit button to measurement cards
+- [x] Add delete button to measurement cards
+- [x] Implement edit measurement dialog/form
+- [x] Implement delete confirmation
+- [x] Update tRPC procedures for edit/delete operations (already existed)
+- [ ] Test edit and delete functionality
+- [ ] Create checkpoint and deploy to Railway

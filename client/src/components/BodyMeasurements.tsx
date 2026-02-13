@@ -1,9 +1,9 @@
 import { Card } from "@/components/ui/card";
-// Updated 2026-02-09 - Metric cards with sparklines
+// Updated 2026-02-13 - Added edit/delete functionality
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Plus, TrendingUp, TrendingDown, Minus, Edit2, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import {
@@ -12,7 +12,18 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface MetricCardProps {
   title: string;
@@ -127,6 +138,8 @@ function MetricCard({ title, value, unit, trend, change, sparklineData, onClick 
 
 export function BodyMeasurements() {
   const [showDialog, setShowDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [editingMeasurement, setEditingMeasurement] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     weight: "",
     chest: "",
@@ -167,24 +180,85 @@ export function BodyMeasurements() {
     },
   });
 
+  const updateMeasurementMutation = trpc.workout.updateMeasurement.useMutation({
+    onMutate: async (updatedMeasurement) => {
+      await utils.workout.getMeasurements.cancel();
+      const previousMeasurements = utils.workout.getMeasurements.getData();
+      
+      utils.workout.getMeasurements.setData(undefined, (old) => {
+        if (!old) return old;
+        return old.map(m => 
+          m.id === updatedMeasurement.id 
+            ? { ...m, ...updatedMeasurement }
+            : m
+        );
+      });
+      
+      return { previousMeasurements };
+    },
+    onError: (err, updatedMeasurement, context) => {
+      if (context?.previousMeasurements) {
+        utils.workout.getMeasurements.setData(undefined, context.previousMeasurements);
+      }
+    },
+    onSettled: () => {
+      utils.workout.getMeasurements.invalidate();
+    },
+  });
+
+  const deleteMeasurementMutation = trpc.workout.deleteMeasurement.useMutation({
+    onMutate: async (deletedMeasurement) => {
+      await utils.workout.getMeasurements.cancel();
+      const previousMeasurements = utils.workout.getMeasurements.getData();
+      
+      utils.workout.getMeasurements.setData(undefined, (old) => {
+        if (!old) return old;
+        return old.filter(m => m.id !== deletedMeasurement.id);
+      });
+      
+      return { previousMeasurements };
+    },
+    onError: (err, deletedMeasurement, context) => {
+      if (context?.previousMeasurements) {
+        utils.workout.getMeasurements.setData(undefined, context.previousMeasurements);
+      }
+    },
+    onSettled: () => {
+      utils.workout.getMeasurements.invalidate();
+    },
+  });
+
   const handleSaveMeasurement = async () => {
     const hasAnyMeasurement = formData.weight || formData.chest || formData.waist || formData.arms || formData.thighs;
     
     if (hasAnyMeasurement) {
-      const today = new Date().toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "numeric",
-        day: "numeric",
-      });
+      if (editingMeasurement) {
+        // Update existing measurement
+        await updateMeasurementMutation.mutateAsync({
+          id: editingMeasurement,
+          weight: formData.weight ? parseFloat(formData.weight) : undefined,
+          chest: formData.chest ? parseFloat(formData.chest) : undefined,
+          waist: formData.waist ? parseFloat(formData.waist) : undefined,
+          arms: formData.arms ? parseFloat(formData.arms) : undefined,
+          thighs: formData.thighs ? parseFloat(formData.thighs) : undefined,
+        });
+      } else {
+        // Add new measurement
+        const today = new Date().toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "numeric",
+          day: "numeric",
+        });
 
-      await addMeasurementMutation.mutateAsync({
-        date: today,
-        weight: formData.weight ? parseFloat(formData.weight) : 0,
-        chest: formData.chest ? parseFloat(formData.chest) : 0,
-        waist: formData.waist ? parseFloat(formData.waist) : 0,
-        arms: formData.arms ? parseFloat(formData.arms) : 0,
-        thighs: formData.thighs ? parseFloat(formData.thighs) : 0,
-      });
+        await addMeasurementMutation.mutateAsync({
+          date: today,
+          weight: formData.weight ? parseFloat(formData.weight) : 0,
+          chest: formData.chest ? parseFloat(formData.chest) : 0,
+          waist: formData.waist ? parseFloat(formData.waist) : 0,
+          arms: formData.arms ? parseFloat(formData.arms) : 0,
+          thighs: formData.thighs ? parseFloat(formData.thighs) : 0,
+        });
+      }
 
       setFormData({
         weight: "",
@@ -193,7 +267,31 @@ export function BodyMeasurements() {
         arms: "",
         thighs: "",
       });
+      setEditingMeasurement(null);
       setShowDialog(false);
+    }
+  };
+
+  const handleEditMeasurement = () => {
+    const latest = sortedMeasurements[0];
+    if (latest) {
+      setEditingMeasurement(latest.id);
+      setFormData({
+        weight: latest.weight > 0 ? latest.weight.toString() : "",
+        chest: latest.chest > 0 ? latest.chest.toString() : "",
+        waist: latest.waist > 0 ? latest.waist.toString() : "",
+        arms: latest.arms > 0 ? latest.arms.toString() : "",
+        thighs: latest.thighs > 0 ? latest.thighs.toString() : "",
+      });
+      setShowDialog(true);
+    }
+  };
+
+  const handleDeleteMeasurement = async () => {
+    const latest = sortedMeasurements[0];
+    if (latest) {
+      await deleteMeasurementMutation.mutateAsync({ id: latest.id });
+      setShowDeleteDialog(false);
     }
   };
 
@@ -240,7 +338,7 @@ export function BodyMeasurements() {
 
   return (
     <div className="space-y-6">
-      {/* Date header and Add button */}
+      {/* Date header with Edit/Delete buttons */}
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-slate-900">
           {latestMeasurement 
@@ -251,6 +349,26 @@ export function BodyMeasurements() {
               })
             : "No measurements yet"}
         </h2>
+        {latestMeasurement && (
+          <div className="flex gap-2">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={handleEditMeasurement}
+              className="text-slate-600 hover:text-slate-900"
+            >
+              <Edit2 className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => setShowDeleteDialog(true)}
+              className="text-slate-600 hover:text-red-600"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Metric Cards Grid */}
@@ -262,7 +380,10 @@ export function BodyMeasurements() {
           trend={weightTrend.trend}
           change={weightTrend.change}
           sparklineData={weightSparkline}
-          onClick={() => setShowDialog(true)}
+          onClick={() => {
+            setEditingMeasurement(null);
+            setShowDialog(true);
+          }}
         />
         <MetricCard
           title="Chest"
@@ -271,7 +392,10 @@ export function BodyMeasurements() {
           trend={chestTrend.trend}
           change={chestTrend.change}
           sparklineData={chestSparkline}
-          onClick={() => setShowDialog(true)}
+          onClick={() => {
+            setEditingMeasurement(null);
+            setShowDialog(true);
+          }}
         />
         <MetricCard
           title="Waist"
@@ -280,7 +404,10 @@ export function BodyMeasurements() {
           trend={waistTrend.trend}
           change={waistTrend.change}
           sparklineData={waistSparkline}
-          onClick={() => setShowDialog(true)}
+          onClick={() => {
+            setEditingMeasurement(null);
+            setShowDialog(true);
+          }}
         />
         <MetricCard
           title="Arms"
@@ -289,7 +416,10 @@ export function BodyMeasurements() {
           trend={armsTrend.trend}
           change={armsTrend.change}
           sparklineData={armsSparkline}
-          onClick={() => setShowDialog(true)}
+          onClick={() => {
+            setEditingMeasurement(null);
+            setShowDialog(true);
+          }}
         />
         <MetricCard
           title="Thighs"
@@ -298,14 +428,27 @@ export function BodyMeasurements() {
           trend={thighsTrend.trend}
           change={thighsTrend.change}
           sparklineData={thighsSparkline}
-          onClick={() => setShowDialog(true)}
+          onClick={() => {
+            setEditingMeasurement(null);
+            setShowDialog(true);
+          }}
         />
       </div>
 
       {/* Log New Measurement Button */}
       <div className="mt-8 pb-safe">
         <Button
-          onClick={() => setShowDialog(true)}
+          onClick={() => {
+            setEditingMeasurement(null);
+            setFormData({
+              weight: "",
+              chest: "",
+              waist: "",
+              arms: "",
+              thighs: "",
+            });
+            setShowDialog(true);
+          }}
           className="w-full bg-slate-800 hover:bg-slate-900 text-white h-12"
         >
           <Plus className="w-4 h-4 mr-2" />
@@ -313,11 +456,25 @@ export function BodyMeasurements() {
         </Button>
       </div>
 
-      {/* Add Measurement Dialog */}
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+      {/* Add/Edit Measurement Dialog */}
+      <Dialog open={showDialog} onOpenChange={(open) => {
+        setShowDialog(open);
+        if (!open) {
+          setEditingMeasurement(null);
+          setFormData({
+            weight: "",
+            chest: "",
+            waist: "",
+            arms: "",
+            thighs: "",
+          });
+        }
+      }}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Log New Measurement</DialogTitle>
+            <DialogTitle>
+              {editingMeasurement ? "Edit Measurement" : "Log New Measurement"}
+            </DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-4">
             <div>
@@ -406,6 +563,7 @@ export function BodyMeasurements() {
               variant="outline"
               onClick={() => {
                 setShowDialog(false);
+                setEditingMeasurement(null);
                 setFormData({
                   weight: "",
                   chest: "",
@@ -421,11 +579,37 @@ export function BodyMeasurements() {
               onClick={handleSaveMeasurement}
               className="bg-slate-800 hover:bg-slate-900 text-white"
             >
-              Save Measurement
+              {editingMeasurement ? "Update Measurement" : "Save Measurement"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Measurement?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this measurement from{" "}
+              {latestMeasurement && new Date(latestMeasurement.date).toLocaleDateString("en-US", { 
+                month: "short", 
+                day: "numeric", 
+                year: "numeric" 
+              })}? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteMeasurement}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
