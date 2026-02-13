@@ -1132,7 +1132,10 @@
 - [ ] Proceed with remaining UI improvements from original request
 
 ## User Dropdown Menu Positioning Bug (2026-02-13)
-- [ ] Fix dropdown menu rendering above viewport (currently at top: -182px, completely off-screen)
-- [ ] Change dropdown side from "top" to "bottom" or adjust positioning
-- [ ] Test dropdown visibility after fix
+- [x] Fix dropdown menu rendering above viewport (currently at top: -182px, completely off-screen)
+- [x] Change dropdown side from "top" to "bottom" or adjust positioning
+- [x] Fix Radix UI DropdownMenuItem to use onSelect instead of onClick
+  - [x] Updated UserMenu.tsx (Settings and Logout items)
+  - [x] Updated DashboardLayout.tsx (Sign out item)
+- [ ] Test dropdown functionality after Railway deployment
 - [ ] Create checkpoint after fix

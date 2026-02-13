@@ -66,7 +66,7 @@ export function UserMenu() {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-56 bg-white border-slate-200">
           <DropdownMenuItem 
-            onClick={() => setSettingsOpen(true)}
+            onSelect={() => setSettingsOpen(true)}
             className="cursor-pointer text-slate-700 focus:bg-slate-100"
           >
             <Settings className="w-4 h-4 mr-2" />
@@ -74,7 +74,7 @@ export function UserMenu() {
           </DropdownMenuItem>
           <DropdownMenuSeparator className="bg-slate-200" />
           <DropdownMenuItem
-            onClick={handleLogout}
+            onSelect={handleLogout}
             disabled={isLoggingOut}
             className="cursor-pointer text-red-600 focus:bg-red-50 focus:text-red-700"
           >
