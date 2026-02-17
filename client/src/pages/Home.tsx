@@ -22,7 +22,6 @@ const WorkoutStatistics = lazy(() => import("@/components/WorkoutStatistics").th
 const BodyMeasurements = lazy(() => import("@/components/BodyMeasurements").then(m => ({ default: m.BodyMeasurements })));
 const ProgressCharts = lazy(() => import("@/components/ProgressCharts"));
 import { formatDateFull } from "@/lib/dateUtils";
-import { getExerciseIllustration } from "@/lib/exerciseIllustrations";
 import { Loader2 } from "lucide-react";
 import { PRESET_EXERCISES as EXPANDED_EXERCISES, EXERCISE_CATEGORIES } from "@/lib/exercises";
 import { ExerciseSidebar } from "@/components/ExerciseSidebar";
@@ -1004,7 +1003,6 @@ function ExerciseCard({ exercise, onLogSet, onRemove }: ExerciseCardProps) {
   const [reps, setReps] = useState(0);
   const [weight, setWeight] = useState(0);
   const [isLogging, setIsLogging] = useState(false);
-  const illustrationPath = getExerciseIllustration(exercise.name);
 
   const handleSetChange = (value: string) => {
     if (value === "") {
@@ -1044,293 +1042,148 @@ function ExerciseCard({ exercise, onLogSet, onRemove }: ExerciseCardProps) {
       {onRemove && (
         <button
           onClick={() => onRemove(exercise.id)}
-          className="absolute top-3 right-3 p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded transition-colors z-10"
+          className="absolute top-3 right-3 p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded transition-colors"
           title="Remove exercise"
         >
           <X size={20} />
         </button>
       )}
-      
-      {/* Desktop: Side-by-side layout */}
-      <div className="hidden md:flex gap-6">
-        {/* Left: Illustration */}
-        {illustrationPath && (
-          <div className="w-1/3 flex-shrink-0">
-            <div className="bg-stone-100 rounded-lg p-4 h-full flex items-center justify-center">
-              <img
-                src={illustrationPath}
-                alt={`${exercise.name} form demonstration`}
-                className="w-full h-auto object-contain max-h-48"
-              />
-            </div>
+      <h3 className="text-lg font-bold text-slate-900 mb-4 pr-8">{exercise.name}</h3>
+      <div className="grid grid-cols-3 gap-4 mb-4">
+        {/* Sets */}
+        <div>
+          <Label htmlFor={`sets-${exercise.id}`} className="text-slate-700">
+            Sets
+          </Label>
+          <div className="hidden md:flex items-center gap-2 mt-2">
+            <button
+              onClick={() => setSets(Math.max(0, sets - 1))}
+              className="px-3 py-2 bg-slate-200 hover:bg-slate-300 active:bg-slate-400 rounded font-semibold text-slate-700 transition-colors duration-75"
+            >
+              −
+            </button>
+            <Input
+              id={`sets-${exercise.id}`}
+              type="text"
+              inputMode="numeric"
+              value={sets}
+              onChange={(e) => handleSetChange(e.target.value)}
+              className="flex-1 border-slate-300 text-center"
+            />
+            <button
+              onClick={() => setSets(sets + 1)}
+              className="px-3 py-2 bg-slate-200 hover:bg-slate-300 active:bg-slate-400 rounded font-semibold text-slate-700 transition-colors duration-75"
+            >
+              +
+            </button>
           </div>
-        )}
-        
-        {/* Right: Exercise details */}
-        <div className={illustrationPath ? "flex-1" : "w-full"}>
-          <div className="flex items-center gap-2 mb-4">
-            <h3 className="text-lg font-bold text-slate-900 pr-8">{exercise.name}</h3>
-            <span className="px-2 py-1 text-xs font-medium bg-slate-800 text-white rounded-full">
-              {exercise.category}
-            </span>
-          </div>
-          <DesktopControls
-            exercise={exercise}
-            sets={sets}
-            reps={reps}
-            weight={weight}
-            setSets={setSets}
-            setReps={setReps}
-            setWeight={setWeight}
-            handleSetChange={handleSetChange}
-            handleRepsChange={handleRepsChange}
-            handleWeightChange={handleWeightChange}
-          />
-          <Button
-            onClick={async () => {
-              if (sets === 0 || reps === 0) {
-                alert("Please enter sets and reps");
-                return;
-              }
-              setIsLogging(true);
-              try {
-                await onLogSet(exercise.name, sets, reps, weight);
-                setSets(0);
-                setReps(0);
-                setWeight(0);
-              } catch (error) {
-                console.error("Failed to log set:", error);
-                alert("Failed to log set. Please try again.");
-              } finally {
-                setIsLogging(false);
-              }
-            }}
-            disabled={isLogging}
-            className="w-full bg-slate-800 hover:bg-slate-900 active:bg-black text-white font-medium transition-colors duration-75 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLogging ? "Logging..." : "Log Set"}
-          </Button>
-        </div>
-      </div>
-      
-      {/* Mobile: Stacked layout */}
-      <div className="md:hidden">
-        <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-lg font-bold text-slate-900 pr-8">{exercise.name}</h3>
-          <span className="px-2 py-1 text-xs font-medium bg-slate-800 text-white rounded-full">
-            {exercise.category}
-          </span>
-        </div>
-        
-        {illustrationPath && (
-          <div className="mb-4">
-            <div className="bg-stone-100 rounded-lg p-4">
-              <img
-                src={illustrationPath}
-                alt={`${exercise.name} form demonstration`}
-                className="w-full h-auto object-contain max-h-40 mx-auto"
-              />
-            </div>
-          </div>
-        )}
-        
-        <MobileControls
-          exercise={exercise}
-          sets={sets}
-          reps={reps}
-          weight={weight}
-          handleSetChange={handleSetChange}
-          handleRepsChange={handleRepsChange}
-          handleWeightChange={handleWeightChange}
-        />
-        <Button
-          onClick={async () => {
-            if (sets === 0 || reps === 0) {
-              alert("Please enter sets and reps");
-              return;
-            }
-            setIsLogging(true);
-            try {
-              await onLogSet(exercise.name, sets, reps, weight);
-              setSets(0);
-              setReps(0);
-              setWeight(0);
-            } catch (error) {
-              console.error("Failed to log set:", error);
-              alert("Failed to log set. Please try again.");
-            } finally {
-              setIsLogging(false);
-            }
-          }}
-          disabled={isLogging}
-          className="w-full bg-slate-800 hover:bg-slate-900 active:bg-black text-white font-medium transition-colors duration-75 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isLogging ? "Logging..." : "Log Set"}
-        </Button>
-      </div>
-    </Card>
-  );
-}
-
-// Desktop controls component
-function DesktopControls({
-  exercise,
-  sets,
-  reps,
-  weight,
-  setSets,
-  setReps,
-  setWeight,
-  handleSetChange,
-  handleRepsChange,
-  handleWeightChange,
-}: any) {
-  return (
-    <div className="grid grid-cols-3 gap-4 mb-4">
-      {/* Sets */}
-      <div>
-        <Label htmlFor={`sets-${exercise.id}`} className="text-slate-700">
-          Sets
-        </Label>
-        <div className="flex items-center gap-2 mt-2">
-          <button
-            onClick={() => setSets(Math.max(0, sets - 1))}
-            className="px-3 py-2 bg-slate-200 hover:bg-slate-300 active:bg-slate-400 rounded font-semibold text-slate-700 transition-colors duration-75"
-          >
-            −
-          </button>
           <Input
-            id={`sets-${exercise.id}`}
+            id={`sets-mobile-${exercise.id}`}
             type="text"
             inputMode="numeric"
             value={sets}
             onChange={(e) => handleSetChange(e.target.value)}
-            className="flex-1 border-slate-300 text-center"
+            className="md:hidden mt-2 border-slate-300 text-center"
           />
-          <button
-            onClick={() => setSets(sets + 1)}
-            className="px-3 py-2 bg-slate-200 hover:bg-slate-300 active:bg-slate-400 rounded font-semibold text-slate-700 transition-colors duration-75"
-          >
-            +
-          </button>
         </div>
-      </div>
-      {/* Reps */}
-      <div>
-        <Label htmlFor={`reps-${exercise.id}`} className="text-slate-700">
-          Reps
-        </Label>
-        <div className="flex items-center gap-2 mt-2">
-          <button
-            onClick={() => setReps(Math.max(0, reps - 1))}
-            className="px-3 py-2 bg-slate-200 hover:bg-slate-300 active:bg-slate-400 rounded font-semibold text-slate-700 transition-colors duration-75"
-          >
-            −
-          </button>
+        {/* Reps */}
+        <div>
+          <Label htmlFor={`reps-${exercise.id}`} className="text-slate-700">
+            Reps
+          </Label>
+          <div className="hidden md:flex items-center gap-2 mt-2">
+            <button
+              onClick={() => setReps(Math.max(0, reps - 1))}
+              className="px-3 py-2 bg-slate-200 hover:bg-slate-300 active:bg-slate-400 rounded font-semibold text-slate-700 transition-colors duration-75"
+            >
+              −
+            </button>
+            <Input
+              id={`reps-${exercise.id}`}
+              type="text"
+              inputMode="numeric"
+              value={reps}
+              onChange={(e) => handleRepsChange(e.target.value)}
+              className="flex-1 border-slate-300 text-center"
+            />
+            <button
+              onClick={() => setReps(reps + 1)}
+              className="px-3 py-2 bg-slate-200 hover:bg-slate-300 active:bg-slate-400 rounded font-semibold text-slate-700 transition-colors duration-75"
+            >
+              +
+            </button>
+          </div>
           <Input
-            id={`reps-${exercise.id}`}
+            id={`reps-mobile-${exercise.id}`}
             type="text"
             inputMode="numeric"
             value={reps}
             onChange={(e) => handleRepsChange(e.target.value)}
-            className="flex-1 border-slate-300 text-center"
+            className="md:hidden mt-2 border-slate-300 text-center"
           />
-          <button
-            onClick={() => setReps(reps + 1)}
-            className="px-3 py-2 bg-slate-200 hover:bg-slate-300 active:bg-slate-400 rounded font-semibold text-slate-700 transition-colors duration-75"
-          >
-            +
-          </button>
         </div>
-      </div>
-      {/* Weight */}
-      <div>
-        <Label htmlFor={`weight-${exercise.id}`} className="text-slate-700">
-          Weight (lbs)
-        </Label>
-        <div className="flex items-center gap-2 mt-2">
-          <button
-            onClick={() => setWeight(Math.max(0, weight - 5))}
-            className="px-3 py-2 bg-slate-200 hover:bg-slate-300 active:bg-slate-400 rounded font-semibold text-slate-700 transition-colors duration-75"
-          >
-            −
-          </button>
+        {/* Weight */}
+        <div>
+          <Label htmlFor={`weight-${exercise.id}`} className="text-slate-700">
+            Weight (lbs)
+          </Label>
+          <div className="hidden md:flex items-center gap-2 mt-2">
+            <button
+              onClick={() => setWeight(Math.max(0, weight - 5))}
+              className="px-3 py-2 bg-slate-200 hover:bg-slate-300 active:bg-slate-400 rounded font-semibold text-slate-700 transition-colors duration-75"
+            >
+              −
+            </button>
+            <Input
+              id={`weight-${exercise.id}`}
+              type="text"
+              inputMode="numeric"
+              value={weight}
+              onChange={(e) => handleWeightChange(e.target.value)}
+              className="flex-1 border-slate-300 text-center"
+            />
+            <button
+              onClick={() => setWeight(weight + 5)}
+              className="px-3 py-2 bg-slate-200 hover:bg-slate-300 active:bg-slate-400 rounded font-semibold text-slate-700 transition-colors duration-75"
+            >
+              +
+            </button>
+          </div>
           <Input
-            id={`weight-${exercise.id}`}
+            id={`weight-mobile-${exercise.id}`}
             type="text"
             inputMode="numeric"
             value={weight}
             onChange={(e) => handleWeightChange(e.target.value)}
-            className="flex-1 border-slate-300 text-center"
+            className="md:hidden mt-2 border-slate-300 text-center"
           />
-          <button
-            onClick={() => setWeight(weight + 5)}
-            className="px-3 py-2 bg-slate-200 hover:bg-slate-300 active:bg-slate-400 rounded font-semibold text-slate-700 transition-colors duration-75"
-          >
-            +
-          </button>
         </div>
       </div>
-    </div>
+      <Button
+        onClick={async () => {
+          if (sets === 0 || reps === 0) {
+            alert("Please enter sets and reps");
+            return;
+          }
+          setIsLogging(true);
+          try {
+            await onLogSet(exercise.name, sets, reps, weight);
+            // Reset form after successful log
+            setSets(0);
+            setReps(0);
+            setWeight(0);
+          } catch (error) {
+            console.error("Failed to log set:", error);
+            alert("Failed to log set. Please try again.");
+          } finally {
+            setIsLogging(false);
+          }
+        }}
+        disabled={isLogging}
+        className="w-full bg-slate-800 hover:bg-slate-900 active:bg-black text-white font-medium transition-colors duration-75 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {isLogging ? "Logging..." : "Log Set"}
+      </Button>
+    </Card>
   );
 }
-
-// Mobile controls component
-function MobileControls({
-  exercise,
-  sets,
-  reps,
-  weight,
-  handleSetChange,
-  handleRepsChange,
-  handleWeightChange,
-}: any) {
-  return (
-    <div className="grid grid-cols-3 gap-4 mb-4">
-      {/* Sets */}
-      <div>
-        <Label htmlFor={`sets-mobile-${exercise.id}`} className="text-slate-700">
-          Sets
-        </Label>
-        <Input
-          id={`sets-mobile-${exercise.id}`}
-          type="text"
-          inputMode="numeric"
-          value={sets}
-          onChange={(e) => handleSetChange(e.target.value)}
-          className="mt-2 border-slate-300 text-center"
-        />
-      </div>
-      {/* Reps */}
-      <div>
-        <Label htmlFor={`reps-mobile-${exercise.id}`} className="text-slate-700">
-          Reps
-        </Label>
-        <Input
-          id={`reps-mobile-${exercise.id}`}
-          type="text"
-          inputMode="numeric"
-          value={reps}
-          onChange={(e) => handleRepsChange(e.target.value)}
-          className="mt-2 border-slate-300 text-center"
-        />
-      </div>
-      {/* Weight */}
-      <div>
-        <Label htmlFor={`weight-mobile-${exercise.id}`} className="text-slate-700">
-          Weight (lbs)
-        </Label>
-        <Input
-          id={`weight-mobile-${exercise.id}`}
-          type="text"
-          inputMode="numeric"
-          value={weight}
-          onChange={(e) => handleWeightChange(e.target.value)}
-          className="mt-2 border-slate-300 text-center"
-        />
-      </div>
-    </div>
-  );
-}
-
-
