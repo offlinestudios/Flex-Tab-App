@@ -1443,3 +1443,18 @@
   - [x] Display as read-only (no +/- buttons)
   - [x] Remove flame icon
   - [x] Match Distance field styling
+
+## Stopwatch & Cardio Logging Fixes (2026-02-18)
+- [x] Fix stopwatch resetting when switching tabs
+  - [x] Persist stopwatch state (elapsed time, isRunning) in parent component
+  - [x] Keep stopwatch running in background when navigating between tabs
+  - [x] Restore stopwatch state when returning to Active tab
+- [x] Add proper Stop button to cardio stopwatch
+  - [x] Change button flow: Start → Pause → Resume → Stop
+  - [x] Stop button finalizes the workout time
+  - [x] After Stop, enable "Log Cardio Session" button
+  - [x] Reset button clears everything and starts over
+- [ ] Verify cardio sessions appear in History tab
+  - [ ] Check that logged cardio workouts save to database
+  - [ ] Ensure History tab displays cardio with duration/distance/calories
+  - [ ] Test that cardio appears immediately after logging

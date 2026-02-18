@@ -101,6 +101,9 @@ export default function Home() {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [shareWorkoutData, setShareWorkoutData] = useState<{ exercises: SetLog[]; date: string } | null>(null);
   
+  // Cardio stopwatch state (persisted across tab switches)
+  const [cardioTimers, setCardioTimers] = useState<Record<string, { seconds: number; isRunning: boolean; isStopped: boolean }>>({});
+  
   // Swipe gesture tracking
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
@@ -320,6 +323,11 @@ export default function Home() {
     }
   }, [measurementsData]);
 
+  // Get latest measurement for calorie calculations
+  const latestMeasurement = measurements.length > 0 
+    ? measurements.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]
+    : null;
+
   // Redirect to landing page if not authenticated (after all hooks)
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -363,6 +371,13 @@ export default function Home() {
     } else {
       setSelectedExercises([...selectedExercises, exercise]);
     }
+  };
+
+  const handleTimerUpdate = (exerciseId: string, seconds: number, isRunning: boolean, isStopped: boolean) => {
+    setCardioTimers(prev => ({
+      ...prev,
+      [exerciseId]: { seconds, isRunning, isStopped }
+    }));
   };
 
   const handleLogSet = async (
@@ -627,6 +642,11 @@ export default function Home() {
                             onRemove={(exerciseId) => {
                               setSelectedExercises(selectedExercises.filter((e) => e.id !== exerciseId));
                             }}
+                            timerSeconds={cardioTimers[exercise.id]?.seconds}
+                            isTimerRunning={cardioTimers[exercise.id]?.isRunning}
+                            isTimerStopped={cardioTimers[exercise.id]?.isStopped}
+                            onTimerUpdate={handleTimerUpdate}
+                            userWeightLbs={latestMeasurement?.weight ? parseFloat(latestMeasurement.weight) : undefined}
                           />
                         ) : (
                           <ExerciseCardNew
