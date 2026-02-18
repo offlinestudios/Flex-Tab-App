@@ -1501,6 +1501,6 @@
 - [x] Remove distance tracking, calories, pace calculations
 - [x] Make cardio input as simple as weight exercises (just 3 fields: Sets, Reps, Weight)
 - [x] Remove timer-related props from CardioExerciseCard usage in Home.tsx
-- [ ] Test simplified cardio logging
-- [ ] Push changes to GitHub
+- [x] Test simplified cardio logging
+- [x] Push changes to GitHub
 - [ ] Create checkpoint after simplification
