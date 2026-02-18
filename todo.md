@@ -1172,3 +1172,16 @@
 - [ ] Deploy to Railway
 - [ ] Verify preview shows new custom image
 - [ ] Create checkpoint
+
+## Mobile Active Tab UX Redesign (2026-02-18)
+- [x] Upload athlete exercise photos to S3 CDN
+- [x] Generate realistic exercise photos for top 12 exercises (Bench Press, Squats, Deadlifts, Pull-Ups, Shoulder Press, Barbell Rows, Bicep Curls, Tricep Dips, Lat Pulldown, Leg Press, Dumbbell Press, Ab Wheel)
+- [x] Create exercisePhotos.ts mapping file with S3 URLs
+- [x] Redesign ExerciseCard for full-screen mobile layout
+- [x] Add calendar icon button to sidebar
+- [x] Create CalendarModal component
+- [x] Update increment controls: Sets +1, Reps +1, Weight +5 lbs
+- [x] Remove calendar from Active tab mobile view
+- [ ] Test responsive behavior on mobile and desktop
+- [ ] Run vitest tests
+- [ ] Create checkpoint and deploy to GitHub

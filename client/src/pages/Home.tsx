@@ -27,6 +27,8 @@ import { PRESET_EXERCISES as EXPANDED_EXERCISES, EXERCISE_CATEGORIES } from "@/l
 import { ExerciseSidebar } from "@/components/ExerciseSidebar";
 import { ShareWorkout } from "@/components/ShareWorkout";
 import { UserMenu } from "@/components/UserMenu";
+import { ExerciseCardNew } from "@/components/ExerciseCardNew";
+import { CalendarModal } from "@/components/CalendarModal";
 
 interface Exercise {
   id: string;
@@ -88,6 +90,7 @@ export default function Home() {
   const [editFormData, setEditFormData] = useState<SetLog | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
+  const [showCalendarModal, setShowCalendarModal] = useState(false);
   
   // Swipe gesture tracking
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -508,9 +511,19 @@ export default function Home() {
           <div className="relative h-full">
             {/* Fixed header */}
             <div className="px-6 py-4 border-b border-slate-200">
-              <h2 className="text-xl font-bold text-slate-900">
-                Workout Builder
-              </h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-slate-900">
+                  Workout Builder
+                </h2>
+                {/* Calendar button - only visible on mobile */}
+                <button
+                  onClick={() => setShowCalendarModal(true)}
+                  className="lg:hidden p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                  title="View Calendar"
+                >
+                  <Calendar size={20} className="text-slate-700" />
+                </button>
+              </div>
             </div>
             {/* Scrollable content with padding at bottom for user menu */}
             <div className="overflow-y-auto pb-20" style={{ height: 'calc(100% - 73px - 73px)' }}>
@@ -587,7 +600,7 @@ export default function Home() {
                       </Card>
                     ) : (
                       selectedExercises.map((exercise) => (
-                        <ExerciseCard
+                        <ExerciseCardNew
                           key={exercise.id}
                           exercise={exercise}
                           onLogSet={handleLogSet}
@@ -663,7 +676,8 @@ export default function Home() {
                       return null;
                     })()}
                   </div>
-                  <div className="lg:col-span-1">
+                  {/* Calendar - hidden on mobile, shown on desktop */}
+                  <div className="hidden lg:block lg:col-span-1">
                     <Suspense fallback={
                       <div className="flex items-center justify-center py-12">
                         <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
@@ -988,6 +1002,15 @@ export default function Home() {
           onClick={() => setSidebarOpen(false)}
         />
       )}
+
+      {/* Calendar Modal - for mobile */}
+      <CalendarModal
+        open={showCalendarModal}
+        onOpenChange={setShowCalendarModal}
+        workoutDates={workoutSessions.map(s => s.date)}
+        selectedDate={selectedDate}
+        onDateSelect={setSelectedDate}
+      />
     </div>
   );
 }
