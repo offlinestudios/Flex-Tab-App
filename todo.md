@@ -1244,7 +1244,14 @@
 - [x] Push fix to GitHub
 
 ## Remove Extra Background Layer (2026-02-18)
-- [ ] Identify source of blue/purple background behind illustration
-- [ ] Remove extra background layer - should only be gray bg-slate-100
-- [ ] Ensure gray background fills entire container like mockup
+- [x] Identify source of blue/purple background behind illustration (rounded-lg creating smaller container)
+- [x] Remove extra background layer - should only be gray bg-slate-100
+- [x] Ensure gray background fills entire container like mockup (removed rounded-lg)
+- [x] Push fix to GitHub
+
+## Fix Image Container Structure (2026-02-18)
+- [ ] Add padding/margin around gray container to create white space
+- [ ] Add rounded-lg back to gray container
+- [ ] Remove blue/purple outer container
+- [ ] Match mockup: single gray rounded rectangle with white space around it
 - [ ] Push fix to GitHub
