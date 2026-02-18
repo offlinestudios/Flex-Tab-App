@@ -1218,6 +1218,12 @@
 - [ ] Create checkpoint after UI fixes
 
 ## Image Container Corner Fix (2026-02-18)
-- [ ] Add rounded-lg to image container divs to hide gray background edges
-- [ ] Push fix to GitHub
+- [x] Add rounded-lg overflow-hidden to mobile image container div
+- [x] Push fix to GitHub
 - [ ] Verify on mobile after deployment
+
+## Image Display Fix (2026-02-18)
+- [ ] Change object-cover to object-contain to show full illustration without cropping
+- [ ] Remove gray background (bg-slate-100) from image container
+- [ ] Push fix to GitHub
+- [ ] Verify full illustration displays correctly on mobile
