@@ -199,7 +199,7 @@ export function CardioExerciseCard({
 
         {/* Exercise Photo */}
         {exercisePhoto && (
-          <div className="w-full bg-slate-50">
+          <div className="w-full bg-slate-100">
             <img
               src={exercisePhoto}
               alt={exercise.name}
@@ -222,7 +222,7 @@ export function CardioExerciseCard({
               {!isTimerRunning && !isTimerStopped && (
                 <Button
                   onClick={handleStart}
-                  className="flex-1"
+                  className="flex-1 bg-slate-800 hover:bg-slate-900 active:bg-black text-white"
                 >
                   <Play className="w-4 h-4 mr-2" />
                   Start
@@ -234,7 +234,7 @@ export function CardioExerciseCard({
                   <Button
                     onClick={handlePause}
                     variant="outline"
-                    className="flex-1"
+                    className="flex-1 bg-white"
                   >
                     <Pause className="w-4 h-4 mr-2" />
                     Pause
@@ -242,7 +242,7 @@ export function CardioExerciseCard({
                   <Button
                     onClick={handleStop}
                     variant="outline"
-                    className="flex-1"
+                    className="flex-1 bg-white"
                   >
                     <Square className="w-4 h-4 mr-2" />
                     Stop
@@ -254,7 +254,7 @@ export function CardioExerciseCard({
                 <>
                   <Button
                     onClick={handleStart}
-                    className="flex-1"
+                    className="flex-1 bg-slate-800 hover:bg-slate-900 active:bg-black text-white"
                   >
                     <Play className="w-4 h-4 mr-2" />
                     Resume
@@ -262,7 +262,7 @@ export function CardioExerciseCard({
                   <Button
                     onClick={handleStop}
                     variant="outline"
-                    className="flex-1"
+                    className="flex-1 bg-white"
                   >
                     <Square className="w-4 h-4 mr-2" />
                     Stop
@@ -345,7 +345,7 @@ export function CardioExerciseCard({
             <Button
               onClick={handleLogCardio}
               disabled={isLogging || !isTimerStopped}
-              className="w-full"
+              className="w-full bg-slate-800 hover:bg-slate-900 active:bg-black text-white font-medium py-6 text-lg transition-colors duration-75 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLogging ? "Logging..." : "Log Cardio Session"}
             </Button>
@@ -366,7 +366,7 @@ export function CardioExerciseCard({
       <div className="hidden lg:flex">
         {/* Left: Exercise Photo */}
         {exercisePhoto && (
-          <div className="w-64 bg-slate-50 flex-shrink-0">
+          <div className="w-64 bg-slate-100 flex-shrink-0">
             <img
               src={exercisePhoto}
               alt={exercise.name}
@@ -401,7 +401,7 @@ export function CardioExerciseCard({
               <Button
                 onClick={handleStart}
                 size="sm"
-                className="flex-1"
+                className="flex-1 bg-slate-800 hover:bg-slate-900 active:bg-black text-white"
               >
                   <Play className="w-4 h-4 mr-2" />
                   Start
@@ -414,7 +414,7 @@ export function CardioExerciseCard({
                     onClick={handlePause}
                     variant="outline"
                     size="sm"
-                    className="flex-1"
+                    className="flex-1 bg-white"
                   >
                     <Pause className="w-4 h-4 mr-2" />
                     Pause
@@ -423,7 +423,7 @@ export function CardioExerciseCard({
                     onClick={handleStop}
                     variant="outline"
                     size="sm"
-                    className="flex-1"
+                    className="flex-1 bg-white"
                   >
                     <Square className="w-4 h-4 mr-2" />
                     Stop
@@ -436,7 +436,7 @@ export function CardioExerciseCard({
                   <Button
                     onClick={handleStart}
                     size="sm"
-                    className="flex-1"
+                    className="flex-1 bg-slate-800 hover:bg-slate-900 active:bg-black text-white"
                   >
                     <Play className="w-4 h-4 mr-2" />
                     Resume
@@ -445,7 +445,7 @@ export function CardioExerciseCard({
                     onClick={handleStop}
                     variant="outline"
                     size="sm"
-                    className="flex-1"
+                    className="flex-1 bg-white"
                   >
                     <Square className="w-4 h-4 mr-2" />
                     Stop
@@ -529,7 +529,7 @@ export function CardioExerciseCard({
             <Button
               onClick={handleLogCardio}
               disabled={isLogging || !isTimerStopped}
-              className="w-full"
+              className="w-full bg-slate-800 hover:bg-slate-900 active:bg-black text-white font-medium py-6 text-lg transition-colors duration-75 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLogging ? "Logging..." : "Log Cardio Session"}
             </Button>

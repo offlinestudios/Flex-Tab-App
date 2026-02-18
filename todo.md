@@ -1485,3 +1485,11 @@
   - [x] Remove dark button styling, restore original light styling
   - [x] Ensure all backgrounds match original design (light, clean aesthetic)
   - [x] Keep functionality intact (background timer, Stop button, etc.)
+
+## Brand Color Consistency Fixes (2026-02-18)
+- [x] Fix cardio card styling to match weight exercise brand colors
+  - [x] Change Start/Resume/Stop buttons from black to dark blue brand color (match "Log Set" button)
+  - [x] Change "Log Cardio Session" button from gray to dark blue brand color
+  - [x] Add light gray background (bg-slate-100) to exercise photo section (match Bench Press)
+  - [x] Ensure +/- buttons match weight exercise styling
+  - [x] Verify all buttons use consistent brand colors throughout app
