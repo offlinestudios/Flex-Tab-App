@@ -1238,7 +1238,13 @@
 - [x] Create checkpoint after matching mockup design (version: b5aeb896)
 
 ## Image Container Sizing Fix (2026-02-18)
-- [ ] Remove padding from image container (gray background should fill entire rounded rectangle)
-- [ ] Illustration should fill most of the gray container space
-- [ ] Match mockup where gray background encompasses the full container
+- [x] Remove padding from image container (gray background should fill entire rounded rectangle)
+- [x] Illustration should fill most of the gray container space
+- [x] Match mockup where gray background encompasses the full container
+- [x] Push fix to GitHub
+
+## Remove Extra Background Layer (2026-02-18)
+- [ ] Identify source of blue/purple background behind illustration
+- [ ] Remove extra background layer - should only be gray bg-slate-100
+- [ ] Ensure gray background fills entire container like mockup
 - [ ] Push fix to GitHub
