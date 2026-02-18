@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Minus, Plus, MapPin, Bike, PersonStanding, Waves, Zap, Play, Pause, RotateCcw, Flame } from "lucide-react";
+import { X, Minus, Plus, MapPin, Bike, PersonStanding, Waves, Zap, Play, Pause, RotateCcw } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -203,13 +203,12 @@ export function CardioExerciseCard({ exercise, onLogSet, onRemove, userWeightLbs
 
         {/* Counter controls */}
         <div className="flex-1 px-4 space-y-4">
-          {/* Calories Burned (auto-calculated) */}
+          {/* Calories (auto-calculated) */}
           <div className="flex items-center justify-between py-3 border-b border-slate-200">
-            <Label className="text-slate-700 font-medium flex items-center gap-2">
-              <Flame className="w-4 h-4 text-orange-500" />
-              Calories Burned
+            <Label className="text-slate-700 font-medium">
+              Calories
             </Label>
-            <div className="text-2xl font-bold text-orange-600">
+            <div className="text-2xl font-bold text-slate-900">
               {caloriesBurned}
             </div>
           </div>
@@ -350,12 +349,11 @@ export function CardioExerciseCard({ exercise, onLogSet, onRemove, userWeightLbs
             {/* Metrics Grid */}
             <div className="grid grid-cols-2 gap-4">
               {/* Calories */}
-              <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
-                <Label className="text-xs font-medium text-orange-700 flex items-center gap-1 mb-1">
-                  <Flame className="w-3 h-3" />
+              <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <Label className="text-xs font-medium text-slate-700 mb-1 block">
                   Calories
                 </Label>
-                <div className="text-xl font-bold text-orange-600">
+                <div className="text-xl font-bold text-slate-900">
                   {caloriesBurned}
                 </div>
               </div>
