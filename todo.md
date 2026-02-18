@@ -1235,4 +1235,10 @@
 - [x] Position badge to the right side of the title
 - [x] Keep rounded corners on container
 - [x] Push changes to GitHub
-- [ ] Create checkpoint after matching mockup design
+- [x] Create checkpoint after matching mockup design (version: b5aeb896)
+
+## Image Container Sizing Fix (2026-02-18)
+- [ ] Remove padding from image container (gray background should fill entire rounded rectangle)
+- [ ] Illustration should fill most of the gray container space
+- [ ] Match mockup where gray background encompasses the full container
+- [ ] Push fix to GitHub
