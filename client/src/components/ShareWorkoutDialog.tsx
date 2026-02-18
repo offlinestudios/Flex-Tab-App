@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Share2, Copy, Download, Calendar, X } from "lucide-react";
+import { Share2, Copy, Download, Calendar, X, Dumbbell, Link } from "lucide-react";
 import { toast } from "sonner";
 
 interface SetLog {
@@ -135,9 +135,11 @@ ${exerciseList}
           {/* Card Header with Logo and Date */}
           <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-200">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">F</span>
-              </div>
+              <img
+                src="/flextab-logo.png"
+                alt="FlexTab Logo"
+                className="w-8 h-8 rounded-lg object-cover"
+              />
               <div>
                 <h3 className="font-semibold text-slate-900">FlexTab Workout</h3>
                 <p className="text-xs text-slate-500">{formattedDate}</p>
@@ -165,7 +167,7 @@ ${exerciseList}
           {/* Exercises Section */}
           <div>
             <h4 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
-              <span className="text-lg">🏋️</span>
+              <Dumbbell className="w-5 h-5 text-slate-700" />
               Exercises:
             </h4>
             <div className="space-y-0">
@@ -194,7 +196,7 @@ ${exerciseList}
 
           {/* Footer Link */}
           <div className="mt-6 pt-4 border-t border-slate-200 flex items-center justify-center gap-2 text-xs text-slate-500">
-            <span>🔗</span>
+            <Link className="w-4 h-4" />
             <span>Track your workouts at https://www.flextab.app</span>
           </div>
         </div>
@@ -203,7 +205,7 @@ ${exerciseList}
         <div className="px-4 pb-4 space-y-3">
           <Button
             onClick={handleShare}
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded-xl h-12"
+            className="w-full bg-slate-900 hover:bg-black text-white rounded-xl h-12"
           >
             <Share2 className="w-4 h-4 mr-2" />
             Share via...
