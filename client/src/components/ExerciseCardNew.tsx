@@ -51,16 +51,16 @@ export function ExerciseCardNew({ exercise, onLogSet, onRemove }: ExerciseCardPr
       {/* Mobile: Full-screen card layout */}
       <div className="md:hidden flex flex-col min-h-[600px]">
         {/* Header with title and category badge */}
-        <div className="flex flex-col gap-2 p-4 border-b border-slate-200">
+        <div className="flex items-center justify-between p-4 border-b border-slate-200">
           <h3 className="text-xl font-bold text-slate-900">{exercise.name}</h3>
-          <span className="px-3 py-1 bg-slate-800 text-white text-xs font-medium rounded-full w-fit">
+          <span className="px-3 py-1 bg-slate-800 text-white text-xs font-medium rounded-full">
             {exercise.category}
           </span>
         </div>
 
         {/* Exercise photo */}
         {exercisePhoto && (
-          <div className="relative w-full aspect-video rounded-lg overflow-hidden">
+          <div className="relative w-full aspect-video bg-slate-100 rounded-lg overflow-hidden p-6">
             <img
               src={exercisePhoto}
               alt={`${exercise.name} demonstration`}
@@ -166,7 +166,7 @@ export function ExerciseCardNew({ exercise, onLogSet, onRemove }: ExerciseCardPr
         <div className="flex items-start gap-4 p-4">
           {/* Exercise photo (desktop - left side) */}
           {exercisePhoto && (
-            <div className="flex-shrink-0 w-48 h-32 rounded-lg overflow-hidden">
+            <div className="flex-shrink-0 w-48 h-32 bg-slate-100 rounded-lg overflow-hidden p-4">
               <img
                 src={exercisePhoto}
                 alt={`${exercise.name} demonstration`}
@@ -177,9 +177,9 @@ export function ExerciseCardNew({ exercise, onLogSet, onRemove }: ExerciseCardPr
 
           {/* Controls (desktop - right side) */}
           <div className="flex-1">
-            <div className="flex flex-col gap-2 mb-4">
+            <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-slate-900">{exercise.name}</h3>
-              <span className="px-2 py-1 bg-slate-800 text-white text-xs font-medium rounded-full w-fit">
+              <span className="px-2 py-1 bg-slate-800 text-white text-xs font-medium rounded-full">
                 {exercise.category}
               </span>
             </div>
