@@ -1229,10 +1229,10 @@
 - [ ] Verify full illustration displays correctly on mobile
 
 ## Match Exercise Card to Mockup (2026-02-18)
-- [ ] Add light gray background (bg-slate-100) back to image container
-- [ ] Add padding (p-4 or p-6) inside image container for breathing room
-- [ ] Move category badge back to horizontal layout (beside exercise name, not below)
-- [ ] Position badge to the right side of the title
-- [ ] Keep rounded corners on container
-- [ ] Push changes to GitHub
+- [x] Add light gray background (bg-slate-100) back to image container
+- [x] Add padding (p-6 mobile, p-4 desktop) inside image container for breathing room
+- [x] Move category badge back to horizontal layout (beside exercise name, not below)
+- [x] Position badge to the right side of the title
+- [x] Keep rounded corners on container
+- [x] Push changes to GitHub
 - [ ] Create checkpoint after matching mockup design
