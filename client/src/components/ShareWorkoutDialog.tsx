@@ -2,6 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Share2, Copy, Download, Calendar, X, Dumbbell, Link } from "lucide-react";
 import { toast } from "sonner";
+import { PRESET_EXERCISES } from "@/lib/exercises";
 
 interface SetLog {
   id: string;
@@ -33,12 +34,16 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date }: Shar
     if (existing) {
       existing.totalSets += exercise.sets;
     } else {
+      // Find category from PRESET_EXERCISES by matching exercise name
+      const presetExercise = PRESET_EXERCISES.find(e => e.name === exercise.exercise);
+      const category = presetExercise?.category || exercise.category || 'General';
+      
       acc.push({
         exercise: exercise.exercise,
         totalSets: exercise.sets,
         reps: exercise.reps,
         weight: exercise.weight,
-        category: exercise.category || 'General'
+        category
       });
     }
     return acc;
@@ -109,9 +114,9 @@ ${exerciseList}
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md p-0 gap-0 bg-slate-100">
+      <DialogContent className="max-w-md max-h-[90vh] p-0 gap-0 bg-slate-100 overflow-hidden flex flex-col">
         {/* Header */}
-        <DialogHeader className="p-6 pb-4 bg-slate-100">
+        <DialogHeader className="p-6 pb-4 bg-slate-100 flex-shrink-0">
           <div className="flex items-start justify-between">
             <div>
               <DialogTitle className="text-2xl font-bold text-slate-900">
@@ -130,8 +135,9 @@ ${exerciseList}
           </div>
         </DialogHeader>
 
-        {/* Content Card */}
-        <div className="mx-4 mb-4 bg-white rounded-2xl shadow-sm p-6">
+        {/* Content Card - Scrollable */}
+        <div className="flex-1 overflow-y-auto px-4">
+          <div className="mb-4 bg-white rounded-2xl shadow-sm p-6">
           {/* Card Header with Logo and Date */}
           <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-200">
             <div className="flex items-center gap-2">
@@ -201,8 +207,10 @@ ${exerciseList}
           </div>
         </div>
 
+        </div>
+
         {/* Action Buttons */}
-        <div className="px-4 pb-4 space-y-3">
+        <div className="px-4 pb-4 space-y-3 flex-shrink-0 bg-slate-100">
           <Button
             onClick={handleShare}
             className="w-full bg-slate-900 hover:bg-black text-white rounded-xl h-12"

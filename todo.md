@@ -1313,3 +1313,12 @@
 - [x] Replace "F" placeholder with actual FlexTab logo image
 - [ ] Push to GitHub for Railway deployment
 - [ ] Create checkpoint after fixes
+
+## Fix Share Dialog Layout Issues (2026-02-18)
+- [x] Dialog too tall - "Download as Image" button cut off at bottom
+- [x] Add scrolling to dialog content (max-h-[90vh] with overflow-y-auto)
+- [x] Fix "Share Workout" title being cut off at top (flex-shrink-0 on header)
+- [x] Show actual exercise categories (Core, Chest, Arms) instead of "General"
+- [x] Map exercise names to categories from PRESET_EXERCISES
+- [ ] Push to GitHub for Railway deployment
+- [ ] Create checkpoint after fixes
