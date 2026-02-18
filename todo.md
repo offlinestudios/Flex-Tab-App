@@ -1263,4 +1263,10 @@
 - [x] Keep rounded corners (rounded-2xl mobile, rounded-lg desktop)
 - [x] Result: Image itself has rounded edges, no background container visible
 - [x] Push fix to GitHub
-- [ ] Create final checkpoint
+- [x] Create final checkpoint (version: 4d887e06)
+
+## Fix Image Aspect Ratio (2026-02-18)
+- [ ] Change aspect-video to aspect-square in mobile layout (images are 1024x1024 square)
+- [ ] Verify desktop layout doesn't need aspect ratio changes (fixed width/height)
+- [ ] Push fix to GitHub
+- [ ] Test on mobile to verify square images display correctly

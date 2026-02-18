@@ -61,7 +61,7 @@ export function ExerciseCardNew({ exercise, onLogSet, onRemove }: ExerciseCardPr
         {/* Exercise photo */}
         {exercisePhoto && (
           <div className="mx-4 mb-4">
-            <div className="relative w-full aspect-video rounded-2xl overflow-hidden">
+            <div className="relative w-full aspect-square rounded-2xl overflow-hidden">
               <img
                 src={exercisePhoto}
                 alt={`${exercise.name} demonstration`}
