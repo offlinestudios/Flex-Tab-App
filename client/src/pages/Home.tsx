@@ -648,12 +648,6 @@ export default function Home() {
                             onRemove={(exerciseId) => {
                               setSelectedExercises(selectedExercises.filter((e) => e.id !== exerciseId));
                             }}
-                            startTimestamp={cardioTimers[exercise.id]?.startTimestamp}
-                            pausedElapsed={cardioTimers[exercise.id]?.pausedElapsed}
-                            isTimerRunning={cardioTimers[exercise.id]?.isRunning}
-                            isTimerStopped={cardioTimers[exercise.id]?.isStopped}
-                            onTimerUpdate={handleTimerUpdate}
-                            userWeightLbs={latestMeasurement?.weight ? parseFloat(latestMeasurement.weight) : undefined}
                           />
                         ) : (
                           <ExerciseCardNew

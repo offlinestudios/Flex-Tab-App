@@ -1493,3 +1493,14 @@
   - [x] Add light gray background (bg-slate-100) to exercise photo section (match Bench Press)
   - [x] Ensure +/- buttons match weight exercise styling
   - [x] Verify all buttons use consistent brand colors throughout app
+
+## Cardio Exercise Simplification (2026-02-18)
+- [ ] Regenerate cycling image to clearly show the bike (current image doesn't show bike well)
+- [x] Simplify CardioExerciseCard to match weight exercise format (Sets/Reps/Weight with +/- buttons)
+- [x] Remove complex stopwatch/timer interface from cardio cards
+- [x] Remove distance tracking, calories, pace calculations
+- [x] Make cardio input as simple as weight exercises (just 3 fields: Sets, Reps, Weight)
+- [x] Remove timer-related props from CardioExerciseCard usage in Home.tsx
+- [ ] Test simplified cardio logging
+- [ ] Push changes to GitHub
+- [ ] Create checkpoint after simplification

@@ -1,17 +1,9 @@
-import { useState, useEffect } from "react";
-import { X, Minus, Plus, MapPin, Play, Pause, RotateCcw, Square } from "lucide-react";
+import { useState } from "react";
+import { X, Minus, Plus } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { getExercisePhoto } from "@/utils/exercisePhotos";
-import { calculateCalories, calculatePace } from "@/utils/calorieCalculations";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 interface Exercise {
   id: string;
@@ -34,514 +26,255 @@ interface CardioExerciseCardProps {
     calories?: number
   ) => Promise<void>;
   onRemove?: (exerciseId: string) => void;
-  userWeightLbs?: number; // Optional user weight for calorie calculations
-  // Lifted state props for stopwatch persistence (timestamp-based)
-  startTimestamp?: number | null;
-  pausedElapsed?: number;
-  isTimerRunning?: boolean;
-  isTimerStopped?: boolean;
-  onTimerUpdate?: (exerciseId: string, startTimestamp: number | null, pausedElapsed: number, isRunning: boolean, isStopped: boolean) => void;
 }
 
 export function CardioExerciseCard({ 
   exercise, 
   onLogSet, 
-  onRemove, 
-  userWeightLbs,
-  startTimestamp: externalStartTimestamp,
-  pausedElapsed: externalPausedElapsed,
-  isTimerRunning: externalIsTimerRunning,
-  isTimerStopped: externalIsTimerStopped,
-  onTimerUpdate
+  onRemove
 }: CardioExerciseCardProps) {
-  const [distance, setDistance] = useState(0);
-  const [distanceUnit, setDistanceUnit] = useState<'miles' | 'km'>('miles');
+  const [sets, setSets] = useState(0);
+  const [reps, setReps] = useState(0);
+  const [weight, setWeight] = useState(0);
   const [isLogging, setIsLogging] = useState(false);
-  
-  // Use external state if provided, otherwise use local state
-  const [localStartTimestamp, setLocalStartTimestamp] = useState<number | null>(null);
-  const [localPausedElapsed, setLocalPausedElapsed] = useState(0);
-  const [localIsTimerRunning, setLocalIsTimerRunning] = useState(false);
-  const [localIsTimerStopped, setLocalIsTimerStopped] = useState(false);
-  
-  const startTimestamp = externalStartTimestamp !== undefined ? externalStartTimestamp : localStartTimestamp;
-  const pausedElapsed = externalPausedElapsed !== undefined ? externalPausedElapsed : localPausedElapsed;
-  const isTimerRunning = externalIsTimerRunning !== undefined ? externalIsTimerRunning : localIsTimerRunning;
-  const isTimerStopped = externalIsTimerStopped !== undefined ? externalIsTimerStopped : localIsTimerStopped;
 
-  // Calculate current elapsed time based on timestamp
-  const [currentTime, setCurrentTime] = useState(Date.now());
-  
-  // Update current time every 100ms when timer is running
-  useEffect(() => {
-    if (isTimerRunning) {
-      const interval = setInterval(() => {
-        setCurrentTime(Date.now());
-      }, 100);
-      return () => clearInterval(interval);
-    }
-  }, [isTimerRunning]);
-  
-  // Calculate elapsed seconds
-  const timerSeconds = isTimerRunning && startTimestamp
-    ? Math.floor((currentTime - startTimestamp) / 1000) + pausedElapsed
-    : pausedElapsed;
+  const exercisePhoto = getExercisePhoto(exercise.name);
 
-  const formatTime = (totalSeconds: number) => {
-    const mins = Math.floor(totalSeconds / 60);
-    const secs = totalSeconds % 60;
-    return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
-  };
-
-  const handleStart = () => {
-    const now = Date.now();
-    if (onTimerUpdate) {
-      onTimerUpdate(exercise.id, now, pausedElapsed, true, false);
-    } else {
-      setLocalStartTimestamp(now);
-      setLocalIsTimerRunning(true);
-      setLocalIsTimerStopped(false);
-    }
-  };
-
-  const handlePause = () => {
-    const elapsed = startTimestamp ? Math.floor((Date.now() - startTimestamp) / 1000) + pausedElapsed : pausedElapsed;
-    if (onTimerUpdate) {
-      onTimerUpdate(exercise.id, null, elapsed, false, false);
-    } else {
-      setLocalStartTimestamp(null);
-      setLocalPausedElapsed(elapsed);
-      setLocalIsTimerRunning(false);
-    }
-  };
-
-  const handleStop = () => {
-    const elapsed = startTimestamp ? Math.floor((Date.now() - startTimestamp) / 1000) + pausedElapsed : pausedElapsed;
-    if (onTimerUpdate) {
-      onTimerUpdate(exercise.id, null, elapsed, false, true);
-    } else {
-      setLocalStartTimestamp(null);
-      setLocalPausedElapsed(elapsed);
-      setLocalIsTimerRunning(false);
-      setLocalIsTimerStopped(true);
-    }
-  };
-
-  const handleReset = () => {
-    if (onTimerUpdate) {
-      onTimerUpdate(exercise.id, null, 0, false, false);
-    } else {
-      setLocalStartTimestamp(null);
-      setLocalPausedElapsed(0);
-      setLocalIsTimerRunning(false);
-      setLocalIsTimerStopped(false);
-    }
-    setDistance(0);
-  };
-
-  const handleLogCardio = async () => {
-    if (!isTimerStopped || timerSeconds === 0) {
-      alert("Please stop the timer before logging your cardio session.");
+  const handleLogSet = async () => {
+    if (sets === 0 || reps === 0) {
+      alert("Please enter sets and reps");
       return;
     }
-
     setIsLogging(true);
     try {
-      const durationMinutes = Math.floor(timerSeconds / 60);
-      const weightKg = userWeightLbs ? userWeightLbs * 0.453592 : 70; // Default 70kg if no weight
-      const calories = calculateCalories(exercise.name, durationMinutes, weightKg);
-
-      await onLogSet(
-        exercise.name,
-        1, // sets (placeholder for cardio)
-        0, // reps (placeholder for cardio)
-        0, // weight (placeholder for cardio)
-        exercise.category,
-        durationMinutes,
-        distance,
-        distanceUnit,
-        calories
-      );
-
-      // Reset after successful log
-      handleReset();
+      await onLogSet(exercise.name, sets, reps, weight, exercise.category);
+      // Reset form after successful log
+      setSets(0);
+      setReps(0);
+      setWeight(0);
     } catch (error) {
-      console.error("Failed to log cardio:", error);
-      alert("Failed to log cardio. Please try again.");
+      console.error("Failed to log set:", error);
+      alert("Failed to log set. Please try again.");
     } finally {
       setIsLogging(false);
     }
   };
 
-  const exercisePhoto = getExercisePhoto(exercise.name);
-  
-  // Calculate real-time calories
-  const durationMinutes = Math.floor(timerSeconds / 60);
-  const weightKg = userWeightLbs ? userWeightLbs * 0.453592 : 70;
-  const calories = calculateCalories(exercise.name, durationMinutes, weightKg);
-  
-  // Calculate pace if distance > 0
-  const pace = distance > 0 ? calculatePace(durationMinutes, distance, distanceUnit) : null;
-
   return (
-    <Card className="overflow-hidden bg-white border-slate-200 shadow-sm">
-      {/* Mobile Layout */}
-      <div className="block lg:hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-200">
-          <div>
-            <h3 className="text-lg font-semibold text-slate-900">{exercise.name}</h3>
-            <span className="inline-block px-2 py-1 text-xs font-medium text-white bg-slate-800 rounded-full mt-1">
-              {exercise.category}
-            </span>
-          </div>
+    <Card className="data-card relative animate-scale-in overflow-hidden">
+      {/* Mobile: Full-screen card layout */}
+      <div className="md:hidden flex flex-col min-h-[600px]">
+        {/* Header with title and category badge */}
+        <div className="flex items-center justify-between p-4">
+          <h3 className="text-xl font-bold text-slate-900">{exercise.name}</h3>
+          <span className="px-3 py-1 bg-slate-800 text-white text-xs font-medium rounded-full">
+            {exercise.category}
+          </span>
         </div>
 
-        {/* Exercise Photo */}
+        {/* Exercise photo */}
         {exercisePhoto && (
-          <div className="w-full bg-slate-100">
-            <img
-              src={exercisePhoto}
-              alt={exercise.name}
-              className="w-full h-64 object-contain"
-            />
+          <div className="mx-4 mb-4">
+            <div className="relative w-full aspect-square rounded-2xl overflow-hidden">
+              <img
+                src={exercisePhoto}
+                alt={`${exercise.name} demonstration`}
+                className="w-full h-full object-cover"
+              />
+            </div>
           </div>
         )}
 
-        {/* Timer Section */}
-        <div className="p-6 space-y-4">
-          <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
-            <div className="flex items-center justify-between mb-3">
-              <Label className="text-sm font-medium text-slate-700">Stopwatch</Label>
-              <div className="text-3xl font-bold text-slate-900 font-mono">
-                {formatTime(timerSeconds)}
-              </div>
-            </div>
-            
-            <div className="flex gap-2">
-              {!isTimerRunning && !isTimerStopped && (
-                <Button
-                  onClick={handleStart}
-                  className="flex-1 bg-slate-800 hover:bg-slate-900 active:bg-black text-white"
-                >
-                  <Play className="w-4 h-4 mr-2" />
-                  Start
-                </Button>
-              )}
-              
-              {isTimerRunning && (
-                <>
-                  <Button
-                    onClick={handlePause}
-                    variant="outline"
-                    className="flex-1 bg-white"
-                  >
-                    <Pause className="w-4 h-4 mr-2" />
-                    Pause
-                  </Button>
-                  <Button
-                    onClick={handleStop}
-                    variant="outline"
-                    className="flex-1 bg-white"
-                  >
-                    <Square className="w-4 h-4 mr-2" />
-                    Stop
-                  </Button>
-                </>
-              )}
-              
-              {!isTimerRunning && timerSeconds > 0 && !isTimerStopped && (
-                <>
-                  <Button
-                    onClick={handleStart}
-                    className="flex-1 bg-slate-800 hover:bg-slate-900 active:bg-black text-white"
-                  >
-                    <Play className="w-4 h-4 mr-2" />
-                    Resume
-                  </Button>
-                  <Button
-                    onClick={handleStop}
-                    variant="outline"
-                    className="flex-1 bg-white"
-                  >
-                    <Square className="w-4 h-4 mr-2" />
-                    Stop
-                  </Button>
-                </>
-              )}
-              
-              {isTimerStopped && (
-                <Button
-                  onClick={handleReset}
-                  variant="outline"
-                  className="w-full"
-                >
-                  <RotateCcw className="w-4 h-4 mr-2" />
-                  Reset
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {/* Calories Display */}
+        {/* Counter controls */}
+        <div className="flex-1 p-4 space-y-4">
+          {/* Sets */}
           <div className="flex items-center justify-between py-3 border-b border-slate-200">
-            <Label className="text-sm font-medium text-slate-700">Calories</Label>
-            <span className="text-2xl font-bold text-slate-900">{calories}</span>
+            <Label className="text-slate-700 font-medium">Sets</Label>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setSets(Math.max(0, sets - 1))}
+                className="w-10 h-10 flex items-center justify-center bg-slate-100 hover:bg-slate-200 active:bg-slate-300 rounded-full transition-colors"
+              >
+                <Minus size={20} className="text-slate-700" />
+              </button>
+              <span className="text-2xl font-bold text-slate-900 w-16 text-center">{sets}</span>
+              <button
+                onClick={() => setSets(sets + 1)}
+                className="w-10 h-10 flex items-center justify-center bg-slate-100 hover:bg-slate-200 active:bg-slate-300 rounded-full transition-colors"
+              >
+                <Plus size={20} className="text-slate-700" />
+              </button>
+            </div>
           </div>
 
-          {/* Distance Controls */}
+          {/* Reps */}
           <div className="flex items-center justify-between py-3 border-b border-slate-200">
-            <div className="flex items-center gap-2">
-              <MapPin className="w-5 h-5 text-slate-600" />
-              <Label className="text-sm font-medium text-slate-700">Distance</Label>
-            </div>
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setDistance(Math.max(0, distance - 0.1))}
-                className="h-8 w-8 p-0 rounded-full"
+            <Label className="text-slate-700 font-medium">Reps</Label>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setReps(Math.max(0, reps - 1))}
+                className="w-10 h-10 flex items-center justify-center bg-slate-100 hover:bg-slate-200 active:bg-slate-300 rounded-full transition-colors"
               >
-                <Minus className="w-4 h-4" />
-              </Button>
-              <span className="text-2xl font-bold text-slate-900 min-w-[60px] text-center">
-                {distance.toFixed(1)}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setDistance(distance + 0.1)}
-                className="h-8 w-8 p-0 rounded-full"
+                <Minus size={20} className="text-slate-700" />
+              </button>
+              <span className="text-2xl font-bold text-slate-900 w-16 text-center">{reps}</span>
+              <button
+                onClick={() => setReps(reps + 1)}
+                className="w-10 h-10 flex items-center justify-center bg-slate-100 hover:bg-slate-200 active:bg-slate-300 rounded-full transition-colors"
               >
-                <Plus className="w-4 h-4" />
-              </Button>
+                <Plus size={20} className="text-slate-700" />
+              </button>
             </div>
           </div>
 
-          {/* Distance Unit Selector */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-slate-700">Distance Unit</Label>
-            <Select value={distanceUnit} onValueChange={(value: 'miles' | 'km') => setDistanceUnit(value)}>
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="miles">Miles</SelectItem>
-                <SelectItem value="km">Kilometers</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Pace Display */}
-          {pace && (
-            <div className="flex items-center justify-between py-2 text-sm text-slate-600">
-              <span>Pace:</span>
-              <span className="font-medium">{pace}</span>
+          {/* Weight */}
+          <div className="flex items-center justify-between py-3 border-b border-slate-200">
+            <Label className="text-slate-700 font-medium">Weight (lbs)</Label>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setWeight(Math.max(0, weight - 5))}
+                className="w-10 h-10 flex items-center justify-center bg-slate-100 hover:bg-slate-200 active:bg-slate-300 rounded-full transition-colors"
+              >
+                <Minus size={20} className="text-slate-700" />
+              </button>
+              <span className="text-2xl font-bold text-slate-900 w-16 text-center">{weight}</span>
+              <button
+                onClick={() => setWeight(weight + 5)}
+                className="w-10 h-10 flex items-center justify-center bg-slate-100 hover:bg-slate-200 active:bg-slate-300 rounded-full transition-colors"
+              >
+                <Plus size={20} className="text-slate-700" />
+              </button>
             </div>
-          )}
+          </div>
+        </div>
 
-          {/* Action Buttons */}
-          <div className="space-y-3 pt-2">
+        {/* Action buttons */}
+        <div className="p-4 space-y-2">
+          <Button
+            onClick={handleLogSet}
+            disabled={isLogging}
+            className="w-full bg-slate-800 hover:bg-slate-900 active:bg-black text-white font-medium py-6 text-lg transition-colors duration-75"
+          >
+            {isLogging ? "Logging..." : "Log Set"}
+          </Button>
+          {onRemove && (
             <Button
-              onClick={handleLogCardio}
-              disabled={isLogging || !isTimerStopped}
-              className="w-full bg-slate-800 hover:bg-slate-900 active:bg-black text-white font-medium py-6 text-lg transition-colors duration-75 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={() => onRemove(exercise.id)}
+              variant="ghost"
+              className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
             >
-              {isLogging ? "Logging..." : "Log Cardio Session"}
+              Remove Exercise
             </Button>
-            {onRemove && (
-              <Button
-                onClick={() => onRemove(exercise.id)}
-                variant="outline"
-                className="w-full text-red-600 border-red-200 hover:bg-red-50"
-              >
-                Remove Exercise
-              </Button>
-            )}
-          </div>
+          )}
         </div>
       </div>
 
-      {/* Desktop Layout */}
-      <div className="hidden lg:flex">
-        {/* Left: Exercise Photo */}
+      {/* Desktop: Horizontal layout */}
+      <div className="hidden md:flex">
+        {/* Left: Exercise photo */}
         {exercisePhoto && (
-          <div className="w-64 bg-slate-100 flex-shrink-0">
+          <div className="w-64 flex-shrink-0 bg-slate-100">
             <img
               src={exercisePhoto}
-              alt={exercise.name}
+              alt={`${exercise.name} demonstration`}
               className="w-full h-full object-cover"
             />
           </div>
         )}
 
         {/* Right: Controls */}
-        <div className="flex-1 p-6">
+        <div className="flex-1 p-6 flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="text-xl font-semibold text-slate-900">{exercise.name}</h3>
+              <h3 className="text-xl font-bold text-slate-900">{exercise.name}</h3>
               <span className="inline-block px-2 py-1 text-xs font-medium text-white bg-slate-800 rounded-full mt-1">
                 {exercise.category}
               </span>
             </div>
-          </div>
-
-          {/* Timer Section - Compact */}
-          <div className="bg-slate-50 rounded-lg p-4 border border-slate-200 mb-4">
-            <div className="flex items-center justify-between mb-3">
-              <Label className="text-sm font-medium text-slate-700">Stopwatch</Label>
-              <div className="text-2xl font-bold text-slate-900 font-mono">
-                {formatTime(timerSeconds)}
-              </div>
-            </div>
-            
-            <div className="flex gap-2">
-              {!isTimerRunning && !isTimerStopped && (
-              <Button
-                onClick={handleStart}
-                size="sm"
-                className="flex-1 bg-slate-800 hover:bg-slate-900 active:bg-black text-white"
-              >
-                  <Play className="w-4 h-4 mr-2" />
-                  Start
-                </Button>
-              )}
-              
-              {isTimerRunning && (
-                <>
-                  <Button
-                    onClick={handlePause}
-                    variant="outline"
-                    size="sm"
-                    className="flex-1 bg-white"
-                  >
-                    <Pause className="w-4 h-4 mr-2" />
-                    Pause
-                  </Button>
-                  <Button
-                    onClick={handleStop}
-                    variant="outline"
-                    size="sm"
-                    className="flex-1 bg-white"
-                  >
-                    <Square className="w-4 h-4 mr-2" />
-                    Stop
-                  </Button>
-                </>
-              )}
-              
-              {!isTimerRunning && timerSeconds > 0 && !isTimerStopped && (
-                <>
-                  <Button
-                    onClick={handleStart}
-                    size="sm"
-                    className="flex-1 bg-slate-800 hover:bg-slate-900 active:bg-black text-white"
-                  >
-                    <Play className="w-4 h-4 mr-2" />
-                    Resume
-                  </Button>
-                  <Button
-                    onClick={handleStop}
-                    variant="outline"
-                    size="sm"
-                    className="flex-1 bg-white"
-                  >
-                    <Square className="w-4 h-4 mr-2" />
-                    Stop
-                  </Button>
-                </>
-              )}
-              
-              {isTimerStopped && (
-                <Button
-                  onClick={handleReset}
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                >
-                  <RotateCcw className="w-4 h-4 mr-2" />
-                  Reset
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {/* Stats Grid */}
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            {/* Calories */}
-            <div className="flex flex-col">
-              <Label className="text-xs text-slate-600 mb-1">Calories</Label>
-              <span className="text-xl font-bold text-slate-900">{calories}</span>
-            </div>
-
-            {/* Distance */}
-            <div className="flex flex-col">
-              <Label className="text-xs text-slate-600 mb-1">Distance</Label>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setDistance(Math.max(0, distance - 0.1))}
-                  className="h-7 w-7 p-0 rounded-full"
-                >
-                  <Minus className="w-3 h-3" />
-                </Button>
-                <span className="text-xl font-bold text-slate-900 min-w-[50px] text-center">
-                  {distance.toFixed(1)}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setDistance(distance + 0.1)}
-                  className="h-7 w-7 p-0 rounded-full"
-                >
-                  <Plus className="w-3 h-3" />
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Distance Unit */}
-          <div className="mb-4">
-            <Label className="text-xs text-slate-600 mb-1 block">Distance Unit</Label>
-            <Select value={distanceUnit} onValueChange={(value: 'miles' | 'km') => setDistanceUnit(value)}>
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="miles">Miles</SelectItem>
-                <SelectItem value="km">Kilometers</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Pace */}
-          {pace && (
-            <div className="flex items-center justify-between py-2 text-sm text-slate-600 mb-4">
-              <span>Pace:</span>
-              <span className="font-medium">{pace}</span>
-            </div>
-          )}
-
-          {/* Action Buttons */}
-          <div className="space-y-2">
-            <Button
-              onClick={handleLogCardio}
-              disabled={isLogging || !isTimerStopped}
-              className="w-full bg-slate-800 hover:bg-slate-900 active:bg-black text-white font-medium py-6 text-lg transition-colors duration-75 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLogging ? "Logging..." : "Log Cardio Session"}
-            </Button>
             {onRemove && (
-              <Button
+              <button
                 onClick={() => onRemove(exercise.id)}
-                variant="outline"
-                className="w-full text-red-600 border-red-200 hover:bg-red-50"
+                className="text-slate-400 hover:text-red-500 transition-colors"
+                aria-label="Remove exercise"
               >
-                Remove Exercise
-              </Button>
+                <X size={24} />
+              </button>
             )}
+          </div>
+
+          {/* Counter controls */}
+          <div className="space-y-4 flex-1">
+            {/* Sets */}
+            <div className="flex items-center justify-between py-3 border-b border-slate-200">
+              <Label className="text-slate-700 font-medium">Sets</Label>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => setSets(Math.max(0, sets - 1))}
+                  className="w-10 h-10 flex items-center justify-center bg-slate-100 hover:bg-slate-200 active:bg-slate-300 rounded-full transition-colors"
+                >
+                  <Minus size={20} className="text-slate-700" />
+                </button>
+                <span className="text-2xl font-bold text-slate-900 w-16 text-center">{sets}</span>
+                <button
+                  onClick={() => setSets(sets + 1)}
+                  className="w-10 h-10 flex items-center justify-center bg-slate-100 hover:bg-slate-200 active:bg-slate-300 rounded-full transition-colors"
+                >
+                  <Plus size={20} className="text-slate-700" />
+                </button>
+              </div>
+            </div>
+
+            {/* Reps */}
+            <div className="flex items-center justify-between py-3 border-b border-slate-200">
+              <Label className="text-slate-700 font-medium">Reps</Label>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => setReps(Math.max(0, reps - 1))}
+                  className="w-10 h-10 flex items-center justify-center bg-slate-100 hover:bg-slate-200 active:bg-slate-300 rounded-full transition-colors"
+                >
+                  <Minus size={20} className="text-slate-700" />
+                </button>
+                <span className="text-2xl font-bold text-slate-900 w-16 text-center">{reps}</span>
+                <button
+                  onClick={() => setReps(reps + 1)}
+                  className="w-10 h-10 flex items-center justify-center bg-slate-100 hover:bg-slate-200 active:bg-slate-300 rounded-full transition-colors"
+                >
+                  <Plus size={20} className="text-slate-700" />
+                </button>
+              </div>
+            </div>
+
+            {/* Weight */}
+            <div className="flex items-center justify-between py-3 border-b border-slate-200">
+              <Label className="text-slate-700 font-medium">Weight (lbs)</Label>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => setWeight(Math.max(0, weight - 5))}
+                  className="w-10 h-10 flex items-center justify-center bg-slate-100 hover:bg-slate-200 active:bg-slate-300 rounded-full transition-colors"
+                >
+                  <Minus size={20} className="text-slate-700" />
+                </button>
+                <span className="text-2xl font-bold text-slate-900 w-16 text-center">{weight}</span>
+                <button
+                  onClick={() => setWeight(weight + 5)}
+                  className="w-10 h-10 flex items-center justify-center bg-slate-100 hover:bg-slate-200 active:bg-slate-300 rounded-full transition-colors"
+                >
+                  <Plus size={20} className="text-slate-700" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Action button */}
+          <div className="mt-6">
+            <Button
+              onClick={handleLogSet}
+              disabled={isLogging}
+              className="w-full bg-slate-800 hover:bg-slate-900 active:bg-black text-white font-medium py-6 text-lg transition-colors duration-75"
+            >
+              {isLogging ? "Logging..." : "Log Set"}
+            </Button>
           </div>
         </div>
       </div>
