@@ -373,7 +373,8 @@ export default function Home() {
     category?: string,
     duration?: number,
     distance?: number,
-    distanceUnit?: 'miles' | 'km'
+    distanceUnit?: 'miles' | 'km',
+    calories?: number
   ) => {
     const today = new Date().toLocaleDateString("en-US", {
       year: "numeric",
@@ -399,6 +400,7 @@ export default function Home() {
       duration,
       distance,
       distanceUnit,
+      calories,
     });
   };
 

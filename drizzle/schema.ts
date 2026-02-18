@@ -51,6 +51,12 @@ export const setLogs = pgTable("set_logs", {
   reps: integer("reps").notNull(),
   weight: integer("weight").notNull(),
   time: varchar("time", { length: 20 }).notNull(), // Format: "HH:MM:SS AM/PM"
+  // Cardio-specific fields
+  category: text("category"), // Exercise category (e.g., "Cardio", "Chest", "Back")
+  duration: integer("duration"), // Duration in minutes (for cardio)
+  distance: decimal("distance", { precision: 6, scale: 2 }), // Distance (for cardio)
+  distanceUnit: varchar("distanceUnit", { length: 10 }), // "miles" or "km"
+  calories: integer("calories"), // Calories burned (for cardio)
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

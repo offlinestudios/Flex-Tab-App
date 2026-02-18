@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { X, Minus, Plus, Timer, MapPin, Bike, PersonStanding, Waves, Zap, Play, Pause, RotateCcw } from "lucide-react";
+import { X, Minus, Plus, MapPin, Bike, PersonStanding, Waves, Zap, Play, Pause, RotateCcw, Flame } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { getExercisePhoto } from "@/utils/exercisePhotos";
+import { calculateCalories, calculatePace } from "@/utils/calorieCalculations";
 import {
   Select,
   SelectContent,
@@ -29,13 +30,14 @@ interface CardioExerciseCardProps {
     category?: string,
     duration?: number,
     distance?: number,
-    distanceUnit?: 'miles' | 'km'
+    distanceUnit?: 'miles' | 'km',
+    calories?: number
   ) => Promise<void>;
   onRemove?: (exerciseId: string) => void;
+  userWeightLbs?: number; // Optional user weight for calorie calculations
 }
 
-export function CardioExerciseCard({ exercise, onLogSet, onRemove }: CardioExerciseCardProps) {
-  const [duration, setDuration] = useState(0); // Duration in minutes
+export function CardioExerciseCard({ exercise, onLogSet, onRemove, userWeightLbs }: CardioExerciseCardProps) {
   const [distance, setDistance] = useState(0);
   const [distanceUnit, setDistanceUnit] = useState<'miles' | 'km'>('miles');
   const [isLogging, setIsLogging] = useState(false);
@@ -62,17 +64,21 @@ export function CardioExerciseCard({ exercise, onLogSet, onRemove }: CardioExerc
     setTimerSeconds(0);
   };
 
-  const applyTimerToDuration = () => {
-    const minutes = Math.floor(timerSeconds / 60);
-    setDuration(minutes);
-    resetTimer();
-  };
-
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
+
+  // Calculate duration in minutes from stopwatch
+  const durationMinutes = Math.floor(timerSeconds / 60);
+
+  // Calculate calories burned (use user weight or default to 154 lbs / 70 kg)
+  const weightKg = userWeightLbs ? userWeightLbs * 0.453592 : 70;
+  const caloriesBurned = calculateCalories(exercise.name, durationMinutes, weightKg);
+
+  // Calculate pace if distance is entered
+  const pace = distance > 0 ? calculatePace(durationMinutes, distance, distanceUnit) : '--:--';
 
   // Get exercise-specific icon
   const getExerciseIcon = () => {
@@ -88,8 +94,8 @@ export function CardioExerciseCard({ exercise, onLogSet, onRemove }: CardioExerc
   const exercisePhoto = getExercisePhoto(exercise.name);
 
   const handleLogSet = async () => {
-    if (duration === 0) {
-      alert("Please enter duration (minutes)");
+    if (timerSeconds === 0) {
+      alert("Please start the stopwatch and complete your cardio session before logging.");
       return;
     }
     setIsLogging(true);
@@ -102,12 +108,12 @@ export function CardioExerciseCard({ exercise, onLogSet, onRemove }: CardioExerc
         0, // reps placeholder
         0, // weight placeholder
         exercise.category,
-        duration,
+        durationMinutes,
         distance,
-        distanceUnit
+        distanceUnit,
+        caloriesBurned
       );
       // Reset form after successful log
-      setDuration(0);
       setDistance(0);
       setTimerSeconds(0);
       setIsTimerRunning(false);
@@ -191,43 +197,20 @@ export function CardioExerciseCard({ exercise, onLogSet, onRemove }: CardioExerc
               >
                 <RotateCcw className="w-4 h-4" />
               </Button>
-              {timerSeconds > 0 && (
-                <Button
-                  type="button"
-                  onClick={applyTimerToDuration}
-                  variant="default"
-                  size="sm"
-                  className="bg-slate-900 hover:bg-slate-800"
-                >
-                  Apply
-                </Button>
-              )}
             </div>
           </div>
         </div>
 
         {/* Counter controls */}
         <div className="flex-1 px-4 space-y-4">
-          {/* Duration */}
+          {/* Calories Burned (auto-calculated) */}
           <div className="flex items-center justify-between py-3 border-b border-slate-200">
             <Label className="text-slate-700 font-medium flex items-center gap-2">
-              <Timer className="w-4 h-4" />
-              Duration (min)
+              <Flame className="w-4 h-4 text-orange-500" />
+              Calories Burned
             </Label>
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => decrementValue(setDuration, duration, 5)}
-                className="w-10 h-10 flex items-center justify-center bg-slate-100 hover:bg-slate-200 active:bg-slate-300 rounded-full transition-colors"
-              >
-                <Minus size={20} className="text-slate-700" />
-              </button>
-              <span className="text-2xl font-bold text-slate-900 w-16 text-center">{duration}</span>
-              <button
-                onClick={() => incrementValue(setDuration, duration, 5)}
-                className="w-10 h-10 flex items-center justify-center bg-slate-100 hover:bg-slate-200 active:bg-slate-300 rounded-full transition-colors"
-              >
-                <Plus size={20} className="text-slate-700" />
-              </button>
+            <div className="text-2xl font-bold text-orange-600">
+              {caloriesBurned}
             </div>
           </div>
 
@@ -255,7 +238,7 @@ export function CardioExerciseCard({ exercise, onLogSet, onRemove }: CardioExerc
           </div>
 
           {/* Distance Unit */}
-          <div className="py-3">
+          <div className="py-3 border-b border-slate-200">
             <Label className="text-slate-700 font-medium mb-2 block">Distance Unit</Label>
             <Select value={distanceUnit} onValueChange={(value: 'miles' | 'km') => setDistanceUnit(value)}>
               <SelectTrigger className="w-full">
@@ -267,13 +250,23 @@ export function CardioExerciseCard({ exercise, onLogSet, onRemove }: CardioExerc
               </SelectContent>
             </Select>
           </div>
+
+          {/* Pace (auto-calculated) */}
+          {distance > 0 && durationMinutes > 0 && (
+            <div className="flex items-center justify-between py-3">
+              <Label className="text-slate-700 font-medium">Average Pace</Label>
+              <div className="text-lg font-bold text-slate-900">
+                {pace}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Log Cardio Session button */}
         <div className="p-4">
           <Button
             onClick={handleLogSet}
-            disabled={isLogging || duration === 0}
+            disabled={isLogging || timerSeconds === 0}
             className="w-full bg-slate-800 hover:bg-slate-900 active:bg-black text-white font-medium py-6 text-lg transition-colors duration-75 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLogging ? "Logging..." : "Log Cardio Session"}
@@ -297,34 +290,34 @@ export function CardioExerciseCard({ exercise, onLogSet, onRemove }: CardioExerc
             className="absolute top-3 right-3 p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded transition-colors z-10"
             title="Remove exercise"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         )}
-        <div className="flex items-start gap-4 p-4">
-          {/* Exercise photo (desktop - left side) */}
+        <div className="flex gap-6 p-6">
+          {/* Left: Exercise photo */}
           {exercisePhoto && (
-            <div className="flex-shrink-0 w-48 h-32 rounded-lg overflow-hidden">
+            <div className="w-48 h-48 flex-shrink-0">
               <img
                 src={exercisePhoto}
                 alt={`${exercise.name} demonstration`}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover rounded-lg"
               />
             </div>
           )}
 
-          {/* Controls (desktop - right side) */}
-          <div className="flex-1">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-slate-900">{exercise.name}</h3>
-              <span className="px-2 py-1 bg-slate-800 text-white text-xs font-medium rounded-full">
+          {/* Right: Controls */}
+          <div className="flex-1 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-bold text-slate-900">{exercise.name}</h3>
+              <span className="px-3 py-1 bg-slate-800 text-white text-xs font-medium rounded-full">
                 {exercise.category}
               </span>
             </div>
 
             {/* Timer Section */}
-            <div className="mb-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
+            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
               <div className="flex items-center justify-between mb-2">
-                <Label className="text-xs font-medium text-slate-700">Stopwatch</Label>
+                <Label className="text-sm font-medium text-slate-700">Stopwatch</Label>
                 <div className="text-xl font-mono font-bold text-slate-900">
                   {formatTime(timerSeconds)}
                 </div>
@@ -335,12 +328,12 @@ export function CardioExerciseCard({ exercise, onLogSet, onRemove }: CardioExerc
                   onClick={toggleTimer}
                   variant="outline"
                   size="sm"
-                  className="flex-1 text-xs"
+                  className="flex-1"
                 >
                   {isTimerRunning ? (
-                    <><Pause className="w-3 h-3 mr-1" /> Pause</>
+                    <><Pause className="w-4 h-4 mr-2" /> Pause</>
                   ) : (
-                    <><Play className="w-3 h-3 mr-1" /> Start</>
+                    <><Play className="w-4 h-4 mr-2" /> Start</>
                   )}
                 </Button>
                 <Button
@@ -349,86 +342,75 @@ export function CardioExerciseCard({ exercise, onLogSet, onRemove }: CardioExerc
                   variant="outline"
                   size="sm"
                 >
-                  <RotateCcw className="w-3 h-3" />
+                  <RotateCcw className="w-4 h-4" />
                 </Button>
-                {timerSeconds > 0 && (
-                  <Button
-                    type="button"
-                    onClick={applyTimerToDuration}
-                    variant="default"
-                    size="sm"
-                    className="bg-slate-900 hover:bg-slate-800 text-xs"
-                  >
-                    Apply
-                  </Button>
-                )}
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              {/* Duration */}
-              <div>
-                <Label className="text-slate-700 text-sm flex items-center gap-1">
-                  <Timer className="w-3 h-3" />
-                  Duration (min)
+            {/* Metrics Grid */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* Calories */}
+              <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
+                <Label className="text-xs font-medium text-orange-700 flex items-center gap-1 mb-1">
+                  <Flame className="w-3 h-3" />
+                  Calories
                 </Label>
-                <div className="flex items-center gap-2 mt-2">
-                  <button
-                    onClick={() => decrementValue(setDuration, duration, 5)}
-                    className="px-3 py-2 bg-slate-200 hover:bg-slate-300 active:bg-slate-400 rounded font-semibold text-slate-700 transition-colors duration-75"
-                  >
-                    −
-                  </button>
-                  <span className="flex-1 text-center text-lg font-bold text-slate-900">{duration}</span>
-                  <button
-                    onClick={() => incrementValue(setDuration, duration, 5)}
-                    className="px-3 py-2 bg-slate-200 hover:bg-slate-300 active:bg-slate-400 rounded font-semibold text-slate-700 transition-colors duration-75"
-                  >
-                    +
-                  </button>
+                <div className="text-xl font-bold text-orange-600">
+                  {caloriesBurned}
                 </div>
               </div>
+
               {/* Distance */}
-              <div>
-                <Label className="text-slate-700 text-sm flex items-center gap-1">
+              <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <Label className="text-xs font-medium text-slate-700 flex items-center gap-1 mb-1">
                   <MapPin className="w-3 h-3" />
                   Distance
                 </Label>
-                <div className="flex items-center gap-2 mt-2">
+                <div className="flex items-center gap-2">
                   <button
                     onClick={() => decrementValue(setDistance, distance, 0.5)}
-                    className="px-3 py-2 bg-slate-200 hover:bg-slate-300 active:bg-slate-400 rounded font-semibold text-slate-700 transition-colors duration-75"
+                    className="w-6 h-6 flex items-center justify-center bg-slate-200 hover:bg-slate-300 rounded transition-colors"
                   >
-                    −
+                    <Minus size={14} />
                   </button>
-                  <span className="flex-1 text-center text-lg font-bold text-slate-900">{distance.toFixed(1)}</span>
+                  <span className="text-lg font-bold text-slate-900 w-12 text-center">{distance.toFixed(1)}</span>
                   <button
                     onClick={() => incrementValue(setDistance, distance, 0.5)}
-                    className="px-3 py-2 bg-slate-200 hover:bg-slate-300 active:bg-slate-400 rounded font-semibold text-slate-700 transition-colors duration-75"
+                    className="w-6 h-6 flex items-center justify-center bg-slate-200 hover:bg-slate-300 rounded transition-colors"
                   >
-                    +
+                    <Plus size={14} />
                   </button>
                 </div>
               </div>
             </div>
 
-            {/* Distance Unit */}
-            <div className="mb-3">
-              <Select value={distanceUnit} onValueChange={(value: 'miles' | 'km') => setDistanceUnit(value)}>
-                <SelectTrigger className="w-full text-sm">
-                  <SelectValue placeholder="Select unit" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="miles">Miles</SelectItem>
-                  <SelectItem value="km">Kilometers</SelectItem>
-                </SelectContent>
-              </Select>
+            {/* Distance Unit & Pace */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-xs font-medium text-slate-700 mb-1 block">Unit</Label>
+                <Select value={distanceUnit} onValueChange={(value: 'miles' | 'km') => setDistanceUnit(value)}>
+                  <SelectTrigger className="w-full h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="miles">Miles</SelectItem>
+                    <SelectItem value="km">Kilometers</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {distance > 0 && durationMinutes > 0 && (
+                <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                  <Label className="text-xs font-medium text-slate-700 mb-1 block">Pace</Label>
+                  <div className="text-lg font-bold text-slate-900">{pace}</div>
+                </div>
+              )}
             </div>
 
+            {/* Log Button */}
             <Button
               onClick={handleLogSet}
-              disabled={isLogging || duration === 0}
-              className="w-full bg-slate-800 hover:bg-slate-900 active:bg-black text-white font-medium transition-colors duration-75 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isLogging || timerSeconds === 0}
+              className="w-full bg-slate-800 hover:bg-slate-900 text-white font-medium"
             >
               {isLogging ? "Logging..." : "Log Cardio Session"}
             </Button>

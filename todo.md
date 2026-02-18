@@ -1407,7 +1407,31 @@
   - [ ] Auto-calculate pace (min/mile or min/km)
   - [ ] Estimate calories based on activity type, duration, distance, user weight
   - [ ] For indoor: timer only, optional manual distance entry
-- [ ] Test cardio card visual consistency
+- [x] Test cardio card visual consistency
 - [ ] Test GPS tracking on mobile device
+- [x] Push to GitHub for Railway deployment
+- [x] Create checkpoint after implementation
+
+## Cardio History & Progress Charts (2026-02-18)
+- [x] Replace manual Duration field with Calorie Counter
+  - [x] Remove Duration +/- controls (stopwatch auto-tracks time)
+  - [x] Add Calories Burned display (calculated automatically)
+  - [x] Calculate calories using MET values based on activity type, duration, distance, weight
+  - [x] Use latest body weight from measurements or default to 70kg/154lbs
+  - [x] Auto-use stopwatch timer value when logging
+  - [x] Require stopwatch to have run before allowing log
+- [ ] Update History tab to display cardio exercises properly
+  - [ ] Detect cardio vs weight exercises by category
+  - [ ] Show cardio as "30 min • 3.5 miles • 8:34/mile" instead of sets/reps/weight
+  - [ ] Update table headers to be dynamic (Duration/Distance/Pace for cardio)
+  - [ ] Update ShareWorkoutDialog to handle cardio format
+- [ ] Create cardio-specific progress charts
+  - [ ] Distance over time chart (line chart showing miles/km per session)
+  - [ ] Pace improvement chart (line chart showing min/mile or min/km trends)
+  - [ ] Duration trends chart (total cardio minutes per week/month)
+  - [ ] Add exercise filter dropdown (select specific cardio activity like "Cycling")
+  - [ ] Show different metrics for different cardio types (e.g., Cycling: distance + avg speed)
+- [ ] Test cardio history display
+- [ ] Test cardio progress charts with sample data
 - [ ] Push to GitHub for Railway deployment
 - [ ] Create checkpoint after implementation
