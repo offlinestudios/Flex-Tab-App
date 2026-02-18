@@ -1478,3 +1478,10 @@
   - [x] Timer continues running when browser tab goes to background
   - [x] Update every 100ms when running for smooth display
   - [ ] Optional: Add Wake Lock API to prevent screen sleep during workout
+
+## Revert Unintended UI Style Changes (2026-02-18)
+- [x] Restore original CardioExerciseCard styling
+  - [x] Change stopwatch section background from dark navy to light gray (bg-slate-50)
+  - [x] Remove dark button styling, restore original light styling
+  - [x] Ensure all backgrounds match original design (light, clean aesthetic)
+  - [x] Keep functionality intact (background timer, Stop button, etc.)

@@ -222,7 +222,7 @@ export function CardioExerciseCard({
               {!isTimerRunning && !isTimerStopped && (
                 <Button
                   onClick={handleStart}
-                  className="flex-1 bg-slate-800 hover:bg-slate-700 text-white"
+                  className="flex-1"
                 >
                   <Play className="w-4 h-4 mr-2" />
                   Start
@@ -254,7 +254,7 @@ export function CardioExerciseCard({
                 <>
                   <Button
                     onClick={handleStart}
-                    className="flex-1 bg-slate-800 hover:bg-slate-700 text-white"
+                    className="flex-1"
                   >
                     <Play className="w-4 h-4 mr-2" />
                     Resume
@@ -345,7 +345,7 @@ export function CardioExerciseCard({
             <Button
               onClick={handleLogCardio}
               disabled={isLogging || !isTimerStopped}
-              className="w-full bg-slate-800 hover:bg-slate-700 text-white"
+              className="w-full"
             >
               {isLogging ? "Logging..." : "Log Cardio Session"}
             </Button>
@@ -398,11 +398,11 @@ export function CardioExerciseCard({
             
             <div className="flex gap-2">
               {!isTimerRunning && !isTimerStopped && (
-                <Button
-                  onClick={handleStart}
-                  size="sm"
-                  className="flex-1 bg-slate-800 hover:bg-slate-700 text-white"
-                >
+              <Button
+                onClick={handleStart}
+                size="sm"
+                className="flex-1"
+              >
                   <Play className="w-4 h-4 mr-2" />
                   Start
                 </Button>
@@ -436,7 +436,7 @@ export function CardioExerciseCard({
                   <Button
                     onClick={handleStart}
                     size="sm"
-                    className="flex-1 bg-slate-800 hover:bg-slate-700 text-white"
+                    className="flex-1"
                   >
                     <Play className="w-4 h-4 mr-2" />
                     Resume
@@ -529,7 +529,7 @@ export function CardioExerciseCard({
             <Button
               onClick={handleLogCardio}
               disabled={isLogging || !isTimerStopped}
-              className="w-full bg-slate-800 hover:bg-slate-700 text-white"
+              className="w-full"
             >
               {isLogging ? "Logging..." : "Log Cardio Session"}
             </Button>
