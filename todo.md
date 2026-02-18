@@ -1504,3 +1504,16 @@
 - [x] Test simplified cardio logging
 - [x] Push changes to GitHub
 - [ ] Create checkpoint after simplification
+
+## Cardio Card Redesign - Proper Implementation (2026-02-18)
+- [x] Upload user-provided cycling image to S3
+- [x] Update exercisePhotos.ts with new cycling image URL
+- [x] Redesign CardioExerciseCard to match weight exercise visual layout
+- [x] Keep cardio-specific fields: Stopwatch/Timer, Distance (+/- buttons), Calories (auto-calculated)
+- [x] Use same visual structure: photo at top, fields below, Log button at bottom
+- [x] Restore timer props (startTimestamp, pausedElapsed, isTimerRunning, isTimerStopped, onTimerUpdate)
+- [x] Restore userWeightLbs prop for calorie calculation
+- [x] Update Home.tsx to pass all required props to CardioExerciseCard
+- [x] Test cardio logging with timer and distance
+- [ ] Push changes to GitHub
+- [ ] Create checkpoint

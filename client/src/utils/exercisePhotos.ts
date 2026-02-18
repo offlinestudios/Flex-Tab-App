@@ -18,7 +18,7 @@ export const exercisePhotos: Record<string, string> = {
 
   // Cardio exercises with line-art illustrations
   "Running": "https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/hQRgbXjnlnnDLpLl.png",
-  "Cycling": "https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/zBbIfozHcvxgRMkO.png",
+  "Cycling": "https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/iaTgaDBxRuaJdokX.png",
   "Swimming": "https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/uOjSrZrQYScKtduo.png",
   "Jump Rope": "https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/ICXGTzUYlIMfqqrE.png",
   "Rowing Machine": "https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/FZtVMWrFQQnFMtsV.png",
