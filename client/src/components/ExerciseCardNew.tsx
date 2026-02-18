@@ -3,7 +3,7 @@ import { X, Minus, Plus } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { getExercisePhoto } from "@/lib/exercisePhotos";
+import { getExercisePhoto } from "@/utils/exercisePhotos";
 
 interface Exercise {
   id: string;
@@ -51,22 +51,11 @@ export function ExerciseCardNew({ exercise, onLogSet, onRemove }: ExerciseCardPr
       {/* Mobile: Full-screen card layout */}
       <div className="md:hidden flex flex-col min-h-[600px]">
         {/* Header with title and category badge */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-200">
-          <div className="flex items-center gap-3">
-            <h3 className="text-xl font-bold text-slate-900">{exercise.name}</h3>
-            <span className="px-3 py-1 bg-slate-800 text-white text-xs font-medium rounded-full">
-              {exercise.category}
-            </span>
-          </div>
-          {onRemove && (
-            <button
-              onClick={() => onRemove(exercise.id)}
-              className="p-2 text-slate-400 hover:text-red-500 transition-colors"
-              title="Remove exercise"
-            >
-              <X size={20} />
-            </button>
-          )}
+        <div className="flex items-center gap-3 p-4 border-b border-slate-200">
+          <h3 className="text-xl font-bold text-slate-900">{exercise.name}</h3>
+          <span className="px-3 py-1 bg-slate-800 text-white text-xs font-medium rounded-full">
+            {exercise.category}
+          </span>
         </div>
 
         {/* Exercise photo */}

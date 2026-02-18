@@ -1185,3 +1185,27 @@
 - [ ] Test responsive behavior on mobile and desktop
 - [ ] Run vitest tests
 - [ ] Create checkpoint and deploy to GitHub
+
+## Implement Line-Art Exercise Illustrations (2026-02-18)
+- [ ] Generate 11 remaining line-art illustrations (Squats, Deadlifts, Pull-Ups, Shoulder Press, Barbell Rows, Bicep Curls, Tricep Dips, Lat Pulldown, Leg Press, Dumbbell Press, Ab Wheel)
+- [ ] Upload all 12 line-art illustrations to S3 CDN
+- [ ] Create exerciseIllustrations.ts mapping file with S3 URLs
+- [ ] Update ExerciseCardNew component to remove X button in top-right corner
+- [ ] Replace realistic photos with line-art illustrations in ExerciseCardNew
+- [ ] Test responsive behavior on mobile and desktop
+- [ ] Save checkpoint and deploy to GitHub
+
+## Line-Art Exercise Illustrations (2026-02-18)
+- [x] Generate 11 line-art illustrations matching approved bench press template style
+  - [x] Squats, Deadlifts, Pull-Ups, Shoulder Press
+  - [x] Barbell Rows, Bicep Curls, Tricep Dips, Lat Pulldown
+  - [x] Leg Press, Dumbbell Press, Ab Wheel
+- [x] Copy approved bench press line-art template
+- [x] Upload all 12 illustrations to S3 CDN
+- [x] Create exercisePhotos.ts mapping file with CDN URLs
+- [x] Update ExerciseCardNew component to use new mapping file path
+- [x] Remove X button from mobile exercise card header (keep only "Remove Exercise" link at bottom)
+- [ ] Push changes to GitHub
+- [ ] Deploy to Railway
+- [ ] Test on mobile to verify line-art illustrations and X button removal
+- [ ] Create checkpoint after implementation
