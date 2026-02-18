@@ -15,6 +15,10 @@ interface SetLog {
   weight: number;
   time: string;
   category?: string;
+  // Cardio-specific fields
+  duration?: number;
+  distance?: number;
+  distanceUnit?: 'miles' | 'km';
 }
 
 interface ShareWorkoutDialogProps {
@@ -47,11 +51,14 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date }: Shar
         totalSets: exercise.sets,
         reps: exercise.reps,
         weight: exercise.weight,
-        category
+        category,
+        duration: exercise.duration,
+        distance: exercise.distance,
+        distanceUnit: exercise.distanceUnit
       });
     }
     return acc;
-  }, [] as Array<{ exercise: string; totalSets: number; reps: number; weight: number; category: string }>);
+  }, [] as Array<{ exercise: string; totalSets: number; reps: number; weight: number; category: string; duration?: number; distance?: number; distanceUnit?: 'miles' | 'km' }>);
 
   // Format date
   const formattedDate = new Date(date).toLocaleDateString('en-US', {
@@ -230,7 +237,16 @@ ${exerciseList}
                       {exercise.exercise}:
                     </span>
                     <span className="text-sm text-slate-600">
-                      {exercise.totalSets}×{exercise.reps} @ {exercise.weight} lbs
+                      {exercise.category === 'Cardio' ? (
+                        // Cardio format: duration + distance
+                        <>
+                          {exercise.duration ? `${exercise.duration} min` : ''}
+                          {exercise.distance && exercise.distanceUnit ? ` • ${exercise.distance} ${exercise.distanceUnit}` : ''}
+                        </>
+                      ) : (
+                        // Regular format: sets × reps @ weight
+                        `${exercise.totalSets}×${exercise.reps} @ ${exercise.weight} lbs`
+                      )}
                     </span>
                   </div>
                   <span className="text-xs px-2 py-1 bg-slate-200 text-slate-700 rounded-full">

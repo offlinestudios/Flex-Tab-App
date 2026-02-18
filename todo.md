@@ -1349,3 +1349,15 @@
 - [ ] Test cardio exercises in workout builder sidebar
 - [ ] Push to GitHub for Railway deployment
 - [ ] Create checkpoint after implementation
+
+## Cardio-Specific Tracking (2026-02-18)
+- [x] Update SetLog interface to support cardio fields (duration in minutes, distance, distanceUnit)
+- [x] Create CardioExerciseCard component with time/duration and distance inputs
+- [x] Add unit selector for distance (miles/kilometers)
+- [x] Update Home.tsx to render CardioExerciseCard for cardio category exercises
+- [x] Update handleLogSet to handle cardio-specific data
+- [x] Update ShareWorkoutDialog to display cardio exercises with time + distance format
+- [ ] Update backend schema and tRPC procedures to store cardio data (will work with localStorage for now)
+- [ ] Test cardio logging and display in Today's Workout and History
+- [ ] Push to GitHub for Railway deployment
+- [ ] Create checkpoint after implementation

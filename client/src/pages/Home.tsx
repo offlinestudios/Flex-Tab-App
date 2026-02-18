@@ -29,6 +29,7 @@ import { ExerciseSidebar } from "@/components/ExerciseSidebar";
 import { ShareWorkoutDialog } from "@/components/ShareWorkoutDialog";
 import { UserMenu } from "@/components/UserMenu";
 import { ExerciseCardNew } from "@/components/ExerciseCardNew";
+import { CardioExerciseCard } from "@/components/CardioExerciseCard";
 import { CalendarModal } from "@/components/CalendarModal";
 
 interface Exercise {
@@ -47,6 +48,10 @@ interface SetLog {
   weight: number;
   time: string;
   category?: string; // Exercise category (Core, Chest, Arms, etc.)
+  // Cardio-specific fields
+  duration?: number; // Duration in minutes for cardio exercises
+  distance?: number; // Distance covered (miles or kilometers)
+  distanceUnit?: 'miles' | 'km'; // Unit for distance measurement
 }
 
 interface WorkoutSession {
@@ -365,7 +370,10 @@ export default function Home() {
     sets: number,
     reps: number,
     weight: number,
-    category?: string
+    category?: string,
+    duration?: number,
+    distance?: number,
+    distanceUnit?: 'miles' | 'km'
   ) => {
     const today = new Date().toLocaleDateString("en-US", {
       year: "numeric",
@@ -388,6 +396,9 @@ export default function Home() {
       weight,
       time,
       category: category || 'General',
+      duration,
+      distance,
+      distanceUnit,
     });
   };
 
@@ -606,14 +617,25 @@ export default function Home() {
                       </Card>
                     ) : (
                       selectedExercises.map((exercise) => (
-                        <ExerciseCardNew
-                          key={exercise.id}
-                          exercise={exercise}
-                          onLogSet={handleLogSet}
-                          onRemove={(exerciseId) => {
-                            setSelectedExercises(selectedExercises.filter((e) => e.id !== exerciseId));
-                          }}
-                        />
+                        exercise.category === 'Cardio' ? (
+                          <CardioExerciseCard
+                            key={exercise.id}
+                            exercise={exercise}
+                            onLogSet={handleLogSet}
+                            onRemove={(exerciseId) => {
+                              setSelectedExercises(selectedExercises.filter((e) => e.id !== exerciseId));
+                            }}
+                          />
+                        ) : (
+                          <ExerciseCardNew
+                            key={exercise.id}
+                            exercise={exercise}
+                            onLogSet={handleLogSet}
+                            onRemove={(exerciseId) => {
+                              setSelectedExercises(selectedExercises.filter((e) => e.id !== exerciseId));
+                            }}
+                          />
+                        )
                       ))
                     )}
                     {/* Today's Workout Summary - shown after exercise cards */}

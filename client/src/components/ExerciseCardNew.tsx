@@ -14,7 +14,7 @@ interface Exercise {
 
 interface ExerciseCardProps {
   exercise: Exercise;
-  onLogSet: (exercise: string, sets: number, reps: number, weight: number, category?: string) => Promise<void>;
+  onLogSet: (exercise: string, sets: number, reps: number, weight: number, category?: string, duration?: number, distance?: number, distanceUnit?: 'miles' | 'km') => Promise<void>;
   onRemove?: (exerciseId: string) => void;
 }
 
