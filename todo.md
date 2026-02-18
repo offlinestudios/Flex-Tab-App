@@ -1211,8 +1211,13 @@
 - [x] Create checkpoint after implementation (version: c42ed45e)
 
 ## Exercise Card UI Fixes (2026-02-18)
-- [ ] Round corners of exercise illustration images to match app design
-- [ ] Move category badge below exercise name (vertical stack instead of horizontal)
-- [ ] Push changes to GitHub for Railway deployment
+- [x] Round corners of exercise illustration images to match app design
+- [x] Move category badge below exercise name (vertical stack instead of horizontal)
+- [x] Push changes to GitHub for Railway deployment
 - [ ] Verify fixes on mobile after deployment
 - [ ] Create checkpoint after UI fixes
+
+## Image Container Corner Fix (2026-02-18)
+- [ ] Add rounded-lg to image container divs to hide gray background edges
+- [ ] Push fix to GitHub
+- [ ] Verify on mobile after deployment
