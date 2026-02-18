@@ -61,11 +61,11 @@ export function ExerciseCardNew({ exercise, onLogSet, onRemove }: ExerciseCardPr
         {/* Exercise photo */}
         {exercisePhoto && (
           <div className="mx-4 mb-4">
-            <div className="relative w-full aspect-video bg-slate-100 rounded-2xl overflow-hidden">
+            <div className="relative w-full aspect-video rounded-2xl overflow-hidden">
               <img
                 src={exercisePhoto}
                 alt={`${exercise.name} demonstration`}
-                className="w-full h-full object-contain p-6"
+                className="w-full h-full object-cover"
               />
             </div>
           </div>
@@ -168,11 +168,11 @@ export function ExerciseCardNew({ exercise, onLogSet, onRemove }: ExerciseCardPr
         <div className="flex items-start gap-4 p-4">
           {/* Exercise photo (desktop - left side) */}
           {exercisePhoto && (
-            <div className="flex-shrink-0 w-48 h-32 bg-slate-100 rounded-lg overflow-hidden">
+            <div className="flex-shrink-0 w-48 h-32 rounded-lg overflow-hidden">
               <img
                 src={exercisePhoto}
                 alt={`${exercise.name} demonstration`}
-                className="w-full h-full object-contain p-2"
+                className="w-full h-full object-cover"
               />
             </div>
           )}

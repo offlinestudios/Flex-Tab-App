@@ -1250,8 +1250,17 @@
 - [x] Push fix to GitHub
 
 ## Fix Image Container Structure (2026-02-18)
-- [ ] Add padding/margin around gray container to create white space
-- [ ] Add rounded-lg back to gray container
-- [ ] Remove blue/purple outer container
-- [ ] Match mockup: single gray rounded rectangle with white space around it
+- [x] Add padding/margin around gray container to create white space (mx-4 mb-4 wrapper)
+- [x] Add rounded-2xl back to gray container for prominent corners
+- [x] Remove blue/purple outer container (wrapper creates separation)
+- [x] Match mockup: single gray rounded rectangle with white space around it
+- [x] Push fix to GitHub
+
+## Image IS Container Fix (2026-02-18)
+- [ ] Remove bg-slate-100 from mobile and desktop image containers
+- [ ] Remove padding (p-6 mobile, p-2 desktop) from images
+- [ ] Change object-contain to object-cover to fill container
+- [ ] Keep rounded corners (rounded-2xl mobile, rounded-lg desktop)
+- [ ] Result: Image itself has rounded edges, no background container visible
 - [ ] Push fix to GitHub
+- [ ] Create final checkpoint
