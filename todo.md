@@ -1322,3 +1322,12 @@
 - [x] Map exercise names to categories from PRESET_EXERCISES
 - [ ] Push to GitHub for Railway deployment
 - [ ] Create checkpoint after fixes
+
+## Fix Share Dialog UX Issues (2026-02-18)
+- [x] Dialog takes full screen width - added sm:max-w-md for proper centering
+- [x] "Share Workout" title centered with text-center
+- [x] X button positioned absolute in top-right corner (w-6 h-6)
+- [x] Removed "Copy Text" button - only Share and Download remain
+- [x] Implemented "Download as Image" using html2canvas with 2x scale
+- [ ] Push to GitHub for Railway deployment
+- [ ] Create checkpoint after fixes

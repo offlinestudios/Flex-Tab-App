@@ -1,8 +1,10 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Share2, Copy, Download, Calendar, X, Dumbbell, Link } from "lucide-react";
+import { Share2, Download, Calendar, X, Dumbbell, Link } from "lucide-react";
 import { toast } from "sonner";
 import { PRESET_EXERCISES } from "@/lib/exercises";
+import html2canvas from "html2canvas";
+import { useRef } from "react";
 
 interface SetLog {
   id: string;
@@ -23,6 +25,8 @@ interface ShareWorkoutDialogProps {
 }
 
 export function ShareWorkoutDialog({ open, onOpenChange, exercises, date }: ShareWorkoutDialogProps) {
+  const shareCardRef = useRef<HTMLDivElement>(null);
+  
   // Calculate stats
   const totalSets = exercises.reduce((sum, e) => sum + e.sets, 0);
   const totalReps = exercises.reduce((sum, e) => sum + (e.sets * e.reps), 0);
@@ -108,36 +112,65 @@ ${exerciseList}
   };
 
   // Handle download as image
-  const handleDownload = () => {
-    toast.info("Download feature coming soon!");
+  const handleDownload = async () => {
+    if (!shareCardRef.current) return;
+    
+    try {
+      const canvas = await html2canvas(shareCardRef.current, {
+        backgroundColor: '#ffffff',
+        scale: 2, // Higher quality
+        logging: false,
+      });
+      
+      // Convert canvas to blob
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          toast.error("Failed to generate image");
+          return;
+        }
+        
+        // Create download link
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `flextab-workout-${formattedDate.replace(/\s/g, '-')}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        toast.success("Workout image downloaded!");
+      }, 'image/png');
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error("Failed to download image");
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[90vh] p-0 gap-0 bg-slate-100 overflow-hidden flex flex-col">
+      <DialogContent className="sm:max-w-md max-h-[90vh] p-0 gap-0 bg-slate-100 overflow-hidden flex flex-col">
         {/* Header */}
-        <DialogHeader className="p-6 pb-4 bg-slate-100 flex-shrink-0">
-          <div className="flex items-start justify-between">
-            <div>
-              <DialogTitle className="text-2xl font-bold text-slate-900">
-                Share Workout
-              </DialogTitle>
-              <p className="text-sm text-slate-600 mt-1">
-                Share your workout progress with friends
-              </p>
-            </div>
-            <button
-              onClick={() => onOpenChange(false)}
-              className="text-slate-400 hover:text-slate-600 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
+        <DialogHeader className="p-6 pb-4 bg-slate-100 flex-shrink-0 relative">
+          <button
+            onClick={() => onOpenChange(false)}
+            className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <div className="text-center pr-8">
+            <DialogTitle className="text-2xl font-bold text-slate-900">
+              Share Workout
+            </DialogTitle>
+            <p className="text-sm text-slate-600 mt-1">
+              Share your workout progress with friends
+            </p>
           </div>
         </DialogHeader>
 
         {/* Content Card - Scrollable */}
         <div className="flex-1 overflow-y-auto px-4">
-          <div className="mb-4 bg-white rounded-2xl shadow-sm p-6">
+          <div ref={shareCardRef} className="mb-4 bg-white rounded-2xl shadow-sm p-6">
           {/* Card Header with Logo and Date */}
           <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-200">
             <div className="flex items-center gap-2">
@@ -217,14 +250,6 @@ ${exerciseList}
           >
             <Share2 className="w-4 h-4 mr-2" />
             Share via...
-          </Button>
-          <Button
-            onClick={handleCopy}
-            variant="outline"
-            className="w-full rounded-xl h-12 border-2 border-slate-900 text-slate-900 hover:bg-slate-50"
-          >
-            <Copy className="w-4 h-4 mr-2" />
-            Copy Text
           </Button>
           <Button
             onClick={handleDownload}
