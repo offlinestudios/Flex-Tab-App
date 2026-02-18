@@ -51,7 +51,7 @@ export function ExerciseCardNew({ exercise, onLogSet, onRemove }: ExerciseCardPr
       {/* Mobile: Full-screen card layout */}
       <div className="md:hidden flex flex-col min-h-[600px]">
         {/* Header with title and category badge */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-200">
+        <div className="flex items-center justify-between p-4">
           <h3 className="text-xl font-bold text-slate-900">{exercise.name}</h3>
           <span className="px-3 py-1 bg-slate-800 text-white text-xs font-medium rounded-full">
             {exercise.category}

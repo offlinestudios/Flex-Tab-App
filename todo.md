@@ -1266,7 +1266,12 @@
 - [x] Create final checkpoint (version: 4d887e06)
 
 ## Fix Image Aspect Ratio (2026-02-18)
-- [ ] Change aspect-video to aspect-square in mobile layout (images are 1024x1024 square)
-- [ ] Verify desktop layout doesn't need aspect ratio changes (fixed width/height)
-- [ ] Push fix to GitHub
+- [x] Change aspect-video to aspect-square in mobile layout (images are 1024x1024 square)
+- [x] Verify desktop layout doesn't need aspect ratio changes (fixed width/height - w-48 h-32)
+- [x] Push fix to GitHub
 - [ ] Test on mobile to verify square images display correctly
+
+## Remove Border Above Image (2026-02-18)
+- [ ] Find source of light blue border line above exercise image
+- [ ] Remove border-b from header section
+- [ ] Push fix to GitHub
