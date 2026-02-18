@@ -102,7 +102,13 @@ export default function Home() {
   const [shareWorkoutData, setShareWorkoutData] = useState<{ exercises: SetLog[]; date: string } | null>(null);
   
   // Cardio stopwatch state (persisted across tab switches)
-  const [cardioTimers, setCardioTimers] = useState<Record<string, { seconds: number; isRunning: boolean; isStopped: boolean }>>({});
+  // Changed to timestamp-based to work when phone is locked/backgrounded
+  const [cardioTimers, setCardioTimers] = useState<Record<string, { 
+    startTimestamp: number | null; // When timer was started (Date.now())
+    pausedElapsed: number; // Seconds elapsed before pause
+    isRunning: boolean; 
+    isStopped: boolean 
+  }>>({});
   
   // Swipe gesture tracking
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -373,10 +379,10 @@ export default function Home() {
     }
   };
 
-  const handleTimerUpdate = (exerciseId: string, seconds: number, isRunning: boolean, isStopped: boolean) => {
+  const handleTimerUpdate = (exerciseId: string, startTimestamp: number | null, pausedElapsed: number, isRunning: boolean, isStopped: boolean) => {
     setCardioTimers(prev => ({
       ...prev,
-      [exerciseId]: { seconds, isRunning, isStopped }
+      [exerciseId]: { startTimestamp, pausedElapsed, isRunning, isStopped }
     }));
   };
 
@@ -642,7 +648,8 @@ export default function Home() {
                             onRemove={(exerciseId) => {
                               setSelectedExercises(selectedExercises.filter((e) => e.id !== exerciseId));
                             }}
-                            timerSeconds={cardioTimers[exercise.id]?.seconds}
+                            startTimestamp={cardioTimers[exercise.id]?.startTimestamp}
+                            pausedElapsed={cardioTimers[exercise.id]?.pausedElapsed}
                             isTimerRunning={cardioTimers[exercise.id]?.isRunning}
                             isTimerStopped={cardioTimers[exercise.id]?.isStopped}
                             onTimerUpdate={handleTimerUpdate}

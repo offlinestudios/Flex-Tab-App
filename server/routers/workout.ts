@@ -25,6 +25,12 @@ export const workoutRouter = router({
         reps: z.number().int().positive(),
         weight: z.number().int().nonnegative(),
         time: z.string(), // Format: "HH:MM:SS AM/PM"
+        // Cardio-specific fields (optional)
+        category: z.string().optional(),
+        duration: z.number().int().nonnegative().optional(), // minutes
+        distance: z.number().nonnegative().optional(),
+        distanceUnit: z.enum(['miles', 'km']).optional(),
+        calories: z.number().int().nonnegative().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -39,6 +45,11 @@ export const workoutRouter = router({
         reps: input.reps,
         weight: input.weight,
         time: input.time,
+        category: input.category,
+        duration: input.duration,
+        distance: input.distance !== undefined ? input.distance.toString() : undefined,
+        distanceUnit: input.distanceUnit,
+        calories: input.calories,
       });
       return { success: true };
     }),

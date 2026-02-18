@@ -1458,3 +1458,23 @@
   - [ ] Check that logged cardio workouts save to database
   - [ ] Ensure History tab displays cardio with duration/distance/calories
   - [ ] Test that cardio appears immediately after logging
+
+## Cardio Logging Bug Fix (2026-02-18)
+- [x] Debug cardio session logging failure
+  - [x] Check server logs for error details
+  - [x] Verify database schema has cardio fields (duration, distance, distanceUnit, calories)
+  - [x] Check tRPC logSet mutation accepts cardio parameters
+  - [x] Verify database migration was applied successfully
+  - [x] Fix distance type conversion (decimal in DB, number in TypeScript)
+  - [x] Update getSetLogsByUser to include cardio fields in query
+  - [ ] Test cardio logging after fix
+
+## Background Timer Feature (2026-02-18)
+- [x] Implement background timer that works when phone is locked
+  - [x] Change from interval-based to timestamp-based timer calculation
+  - [x] Store start timestamp instead of elapsed seconds
+  - [x] Calculate elapsed time: currentTime - startTimestamp
+  - [x] Timer continues running when phone screen locks
+  - [x] Timer continues running when browser tab goes to background
+  - [x] Update every 100ms when running for smooth display
+  - [ ] Optional: Add Wake Lock API to prevent screen sleep during workout
