@@ -1272,6 +1272,23 @@
 - [ ] Test on mobile to verify square images display correctly
 
 ## Remove Border Above Image (2026-02-18)
-- [ ] Find source of light blue border line above exercise image
-- [ ] Remove border-b from header section
-- [ ] Push fix to GitHub
+- [x] Find source of light blue border line above exercise image (border-b border-slate-200)
+- [x] Remove border-b from header section
+- [x] Push fix to GitHub
+
+## Workout Share Feature (2026-02-18)
+- [ ] Implement graphical workout share dialog based on approved mockup
+  - [ ] Create ShareWorkoutDialog component matching mockup design
+  - [ ] Add FlexTab logo to share card header (left side)
+  - [ ] Add calendar icon next to date (right side)
+  - [ ] Display visual stat blocks (12 SETS, 128 REPS, 8,180 VOLUME LBS)
+  - [ ] Show exercises with combined sets format (2×15 @ 0 lbs)
+  - [ ] Add gray category badges (Core, Chest, Arms)
+  - [ ] Add thin gray underlines between exercise rows
+  - [ ] Implement "Share via..." native share API functionality
+  - [ ] Implement "Copy Text" functionality
+  - [ ] Implement "Download as Image" functionality
+  - [ ] Add share button to Today's Workout section
+  - [ ] Test on mobile and desktop
+  - [ ] Push to GitHub
+  - [ ] Create checkpoint after implementation

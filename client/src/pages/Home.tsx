@@ -1,5 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from "react";
-import { Menu, Plus, Trash2, Edit2, X, Dumbbell, Target, Weight, Activity, TrendingUp, Calendar } from "lucide-react";
+import { Menu, Plus, Trash2, Edit2, X, Dumbbell, Target, Weight, Activity, TrendingUp, Calendar, Share2 } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
@@ -26,6 +26,7 @@ import { Loader2 } from "lucide-react";
 import { PRESET_EXERCISES as EXPANDED_EXERCISES, EXERCISE_CATEGORIES } from "@/lib/exercises";
 import { ExerciseSidebar } from "@/components/ExerciseSidebar";
 import { ShareWorkout } from "@/components/ShareWorkout";
+import { ShareWorkoutDialog } from "@/components/ShareWorkoutDialog";
 import { UserMenu } from "@/components/UserMenu";
 import { ExerciseCardNew } from "@/components/ExerciseCardNew";
 import { CalendarModal } from "@/components/CalendarModal";
@@ -91,6 +92,8 @@ export default function Home() {
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [shareWorkoutData, setShareWorkoutData] = useState<{ exercises: SetLog[]; date: string } | null>(null);
   
   // Swipe gesture tracking
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -624,6 +627,18 @@ export default function Home() {
                           <Card className="data-card animate-slide-up">
                             <div className="flex justify-between items-center mb-4">
                               <h3 className="text-lg font-semibold text-slate-900">Today's Workout</h3>
+                              <Button
+                                onClick={() => {
+                                  setShareWorkoutData({ exercises: todaySession.exercises, date: today });
+                                  setShowShareDialog(true);
+                                }}
+                                variant="outline"
+                                size="sm"
+                                className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                              >
+                                <Share2 className="w-4 h-4 mr-2" />
+                                Share
+                              </Button>
                             </div>
                             <div className="grid grid-cols-3 gap-3 mb-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
                               <div className="flex flex-col items-center text-center">
@@ -1011,6 +1026,16 @@ export default function Home() {
         selectedDate={selectedDate}
         onDateSelect={setSelectedDate}
       />
+
+      {/* Share Workout Dialog */}
+      {shareWorkoutData && (
+        <ShareWorkoutDialog
+          open={showShareDialog}
+          onOpenChange={setShowShareDialog}
+          exercises={shareWorkoutData.exercises}
+          date={shareWorkoutData.date}
+        />
+      )}
     </div>
   );
 }
