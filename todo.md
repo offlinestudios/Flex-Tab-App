@@ -1515,5 +1515,5 @@
 - [x] Restore userWeightLbs prop for calorie calculation
 - [x] Update Home.tsx to pass all required props to CardioExerciseCard
 - [x] Test cardio logging with timer and distance
-- [ ] Push changes to GitHub
+- [x] Push changes to GitHub
 - [ ] Create checkpoint
