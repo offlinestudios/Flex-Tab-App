@@ -1291,3 +1291,11 @@
   - [x] Add share button to Today's Workout section
   - [ ] Test on mobile and desktop (ready for user testing)
   - [ ] Create checkpoint after implementation
+
+## Replace Old ShareWorkout Component (2026-02-18)
+- [x] User is seeing old ShareWorkout component (with emojis and bullet list)
+- [x] Find all usages of old ShareWorkout component (History tab)
+- [x] Replace with new ShareWorkoutDialog component
+- [x] Remove old ShareWorkout import from Home.tsx
+- [ ] Test share functionality in all locations
+- [ ] Create checkpoint after fix

@@ -25,7 +25,7 @@ import { formatDateFull } from "@/lib/dateUtils";
 import { Loader2 } from "lucide-react";
 import { PRESET_EXERCISES as EXPANDED_EXERCISES, EXERCISE_CATEGORIES } from "@/lib/exercises";
 import { ExerciseSidebar } from "@/components/ExerciseSidebar";
-import { ShareWorkout } from "@/components/ShareWorkout";
+
 import { ShareWorkoutDialog } from "@/components/ShareWorkoutDialog";
 import { UserMenu } from "@/components/UserMenu";
 import { ExerciseCardNew } from "@/components/ExerciseCardNew";
@@ -737,15 +737,18 @@ export default function Home() {
                           <h3 className="text-lg font-bold text-slate-900">
                             {formatDateFull(session.date)}
                           </h3>
-                          <ShareWorkout
-                            workoutData={{
-                              date: formatDateFull(session.date),
-                              exercises: session.exercises,
-                              totalSets: stats.totalSets,
-                              totalReps: stats.totalReps,
-                              totalVolume: stats.totalVolume,
+                          <Button
+                            onClick={() => {
+                              setShareWorkoutData({ exercises: session.exercises, date: session.date });
+                              setShowShareDialog(true);
                             }}
-                          />
+                            variant="outline"
+                            size="sm"
+                            className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                          >
+                            <Share2 className="w-4 h-4 mr-2" />
+                            Share
+                          </Button>
                         </div>
                         <div className="overflow-x-auto">
                           <table className="w-full text-xs md:text-sm">
