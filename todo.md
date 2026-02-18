@@ -1299,3 +1299,9 @@
 - [x] Remove old ShareWorkout import from Home.tsx
 - [ ] Test share functionality in all locations
 - [ ] Create checkpoint after fix
+
+## Delete Old ShareWorkout File (2026-02-18)
+- [x] Found old ShareWorkout.tsx file still in codebase
+- [x] Deleted client/src/components/ShareWorkout.tsx completely
+- [ ] Create checkpoint to deploy deletion
+- [ ] User to verify new share dialog appears after deployment
