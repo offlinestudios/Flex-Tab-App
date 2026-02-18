@@ -46,6 +46,7 @@ interface SetLog {
   reps: number;
   weight: number;
   time: string;
+  category?: string; // Exercise category (Core, Chest, Arms, etc.)
 }
 
 interface WorkoutSession {
@@ -363,7 +364,8 @@ export default function Home() {
     exercise: string,
     sets: number,
     reps: number,
-    weight: number
+    weight: number,
+    category?: string
   ) => {
     const today = new Date().toLocaleDateString("en-US", {
       year: "numeric",
@@ -385,6 +387,7 @@ export default function Home() {
       reps,
       weight,
       time,
+      category: category || 'General',
     });
   };
 

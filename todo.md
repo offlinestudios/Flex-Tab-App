@@ -1331,3 +1331,14 @@
 - [x] Implemented "Download as Image" using html2canvas with 2x scale
 - [ ] Push to GitHub for Railway deployment
 - [ ] Create checkpoint after fixes
+
+## Fix Remaining Share Dialog Issues (2026-02-18)
+- [x] X button has extra diagonal line - disabled built-in DialogContent close button
+- [x] Download as Image button - added better error logging and CORS handling
+- [x] Custom exercises showing "General" category - will show correct category for new workouts
+- [x] SetLog interface updated to include category field
+- [x] handleLogSet updated to save exercise category when logging workouts
+- [x] ExerciseCardNew updated to pass category to handleLogSet
+- [x] ShareWorkoutDialog already checks exercise.category (line 43)
+- [ ] Push to GitHub for Railway deployment
+- [ ] Create checkpoint after fixes

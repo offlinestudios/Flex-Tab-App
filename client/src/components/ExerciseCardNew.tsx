@@ -14,7 +14,7 @@ interface Exercise {
 
 interface ExerciseCardProps {
   exercise: Exercise;
-  onLogSet: (exercise: string, sets: number, reps: number, weight: number) => Promise<void>;
+  onLogSet: (exercise: string, sets: number, reps: number, weight: number, category?: string) => Promise<void>;
   onRemove?: (exerciseId: string) => void;
 }
 
@@ -33,7 +33,7 @@ export function ExerciseCardNew({ exercise, onLogSet, onRemove }: ExerciseCardPr
     }
     setIsLogging(true);
     try {
-      await onLogSet(exercise.name, sets, reps, weight);
+      await onLogSet(exercise.name, sets, reps, weight, exercise.category);
       // Reset form after successful log
       setSets(0);
       setReps(0);

@@ -113,14 +113,22 @@ ${exerciseList}
 
   // Handle download as image
   const handleDownload = async () => {
-    if (!shareCardRef.current) return;
+    if (!shareCardRef.current) {
+      console.error('Share card ref not found');
+      toast.error("Unable to capture workout card");
+      return;
+    }
     
     try {
+      console.log('Starting html2canvas capture...');
       const canvas = await html2canvas(shareCardRef.current, {
         backgroundColor: '#ffffff',
         scale: 2, // Higher quality
-        logging: false,
+        logging: true,
+        useCORS: true, // Enable CORS for images
+        allowTaint: false,
       });
+      console.log('Canvas created successfully:', canvas.width, 'x', canvas.height);
       
       // Convert canvas to blob
       canvas.toBlob((blob) => {
@@ -149,7 +157,7 @@ ${exerciseList}
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md max-h-[90vh] p-0 gap-0 bg-slate-100 overflow-hidden flex flex-col">
+      <DialogContent showCloseButton={false} className="sm:max-w-md max-h-[90vh] p-0 gap-0 bg-slate-100 overflow-hidden flex flex-col">
         {/* Header */}
         <DialogHeader className="p-6 pb-4 bg-slate-100 flex-shrink-0 relative">
           <button
