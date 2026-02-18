@@ -1342,3 +1342,10 @@
 - [x] ShareWorkoutDialog already checks exercise.category (line 43)
 - [ ] Push to GitHub for Railway deployment
 - [ ] Create checkpoint after fixes
+
+## Add Cardio Category (2026-02-18)
+- [x] Add "Cardio" to EXERCISE_CATEGORIES array
+- [x] Add preset cardio exercises (Running, Cycling, Swimming, Jump Rope, Rowing Machine, Elliptical, Stair Climber, HIIT, Burpees, Mountain Climbers, Box Jumps, Battle Ropes)
+- [ ] Test cardio exercises in workout builder sidebar
+- [ ] Push to GitHub for Railway deployment
+- [ ] Create checkpoint after implementation

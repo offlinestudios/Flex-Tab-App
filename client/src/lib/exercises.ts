@@ -100,9 +100,22 @@ export const PRESET_EXERCISES: Exercise[] = [
   { id: "77", name: "Pallof Press", category: "Core" },
   { id: "78", name: "Russian Twists", category: "Core" },
   { id: "79", name: "Back Extensions", category: "Core" },
+  // CARDIO
+  { id: "80", name: "Running", category: "Cardio" },
+  { id: "81", name: "Cycling", category: "Cardio" },
+  { id: "82", name: "Swimming", category: "Cardio" },
+  { id: "83", name: "Jump Rope", category: "Cardio" },
+  { id: "84", name: "Rowing Machine", category: "Cardio" },
+  { id: "85", name: "Elliptical", category: "Cardio" },
+  { id: "86", name: "Stair Climber", category: "Cardio" },
+  { id: "87", name: "HIIT Training", category: "Cardio" },
+  { id: "88", name: "Burpees", category: "Cardio" },
+  { id: "89", name: "Mountain Climbers", category: "Cardio" },
+  { id: "90", name: "Box Jumps", category: "Cardio" },
+  { id: "91", name: "Battle Ropes", category: "Cardio" },
 ];
 
-export const EXERCISE_CATEGORIES = ["Chest", "Back", "Arms", "Shoulders", "Legs", "Core"];
+export const EXERCISE_CATEGORIES = ["Chest", "Back", "Arms", "Shoulders", "Legs", "Core", "Cardio"];
 
 export const EXERCISE_SUBCATEGORIES: Record<string, string[]> = {
   "Chest": ["Pressing", "Flies & Isolation"],
