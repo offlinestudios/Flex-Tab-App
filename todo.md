@@ -1205,7 +1205,14 @@
 - [x] Create exercisePhotos.ts mapping file with CDN URLs
 - [x] Update ExerciseCardNew component to use new mapping file path
 - [x] Remove X button from mobile exercise card header (keep only "Remove Exercise" link at bottom)
-- [ ] Push changes to GitHub
-- [ ] Deploy to Railway
+- [x] Push changes to GitHub
+- [ ] Deploy to Railway (auto-deploys from GitHub)
 - [ ] Test on mobile to verify line-art illustrations and X button removal
-- [ ] Create checkpoint after implementation
+- [x] Create checkpoint after implementation (version: c42ed45e)
+
+## Exercise Card UI Fixes (2026-02-18)
+- [ ] Round corners of exercise illustration images to match app design
+- [ ] Move category badge below exercise name (vertical stack instead of horizontal)
+- [ ] Push changes to GitHub for Railway deployment
+- [ ] Verify fixes on mobile after deployment
+- [ ] Create checkpoint after UI fixes

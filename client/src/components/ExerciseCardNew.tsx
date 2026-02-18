@@ -51,9 +51,9 @@ export function ExerciseCardNew({ exercise, onLogSet, onRemove }: ExerciseCardPr
       {/* Mobile: Full-screen card layout */}
       <div className="md:hidden flex flex-col min-h-[600px]">
         {/* Header with title and category badge */}
-        <div className="flex items-center gap-3 p-4 border-b border-slate-200">
+        <div className="flex flex-col gap-2 p-4 border-b border-slate-200">
           <h3 className="text-xl font-bold text-slate-900">{exercise.name}</h3>
-          <span className="px-3 py-1 bg-slate-800 text-white text-xs font-medium rounded-full">
+          <span className="px-3 py-1 bg-slate-800 text-white text-xs font-medium rounded-full w-fit">
             {exercise.category}
           </span>
         </div>
@@ -64,7 +64,7 @@ export function ExerciseCardNew({ exercise, onLogSet, onRemove }: ExerciseCardPr
             <img
               src={exercisePhoto}
               alt={`${exercise.name} demonstration`}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover rounded-lg"
             />
           </div>
         )}
@@ -177,9 +177,9 @@ export function ExerciseCardNew({ exercise, onLogSet, onRemove }: ExerciseCardPr
 
           {/* Controls (desktop - right side) */}
           <div className="flex-1">
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex flex-col gap-2 mb-4">
               <h3 className="text-lg font-bold text-slate-900">{exercise.name}</h3>
-              <span className="px-2 py-1 bg-slate-800 text-white text-xs font-medium rounded-full">
+              <span className="px-2 py-1 bg-slate-800 text-white text-xs font-medium rounded-full w-fit">
                 {exercise.category}
               </span>
             </div>
