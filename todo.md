@@ -1379,3 +1379,35 @@
 - [ ] Test timer functionality
 - [ ] Push to GitHub for Railway deployment
 - [ ] Create checkpoint after improvements
+
+## Cardio Card Visual Consistency & GPS Tracking (2026-02-18)
+- [x] Redesign CardioExerciseCard to match weight exercise visual layout
+  - [x] Add exercise illustration photo at top (like Bench Press card)
+  - [x] Move stopwatch timer below photo
+  - [x] Move Start/Pause/Reset buttons below timer
+  - [x] Keep "Log Cardio Session" button at bottom in brand black
+  - [x] Keep "Remove Exercise" button in red below that
+- [x] Generate/add exercise illustrations for all 12 cardio activities
+  - [x] Running illustration
+  - [x] Cycling illustration
+  - [x] Swimming illustration
+  - [x] Jump Rope illustration
+  - [x] Rowing Machine illustration
+  - [x] Elliptical illustration
+  - [x] Stair Climber illustration
+  - [x] HIIT Training illustration
+  - [x] Burpees illustration
+  - [x] Mountain Climbers illustration
+  - [x] Box Jumps illustration
+  - [x] Battle Ropes illustration
+- [ ] Implement GPS-based automatic tracking for outdoor cardio
+  - [ ] Add indoor/outdoor mode selection
+  - [ ] Use browser Geolocation API for GPS tracking
+  - [ ] Auto-calculate distance from GPS coordinates
+  - [ ] Auto-calculate pace (min/mile or min/km)
+  - [ ] Estimate calories based on activity type, duration, distance, user weight
+  - [ ] For indoor: timer only, optional manual distance entry
+- [ ] Test cardio card visual consistency
+- [ ] Test GPS tracking on mobile device
+- [ ] Push to GitHub for Railway deployment
+- [ ] Create checkpoint after implementation
