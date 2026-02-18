@@ -1361,3 +1361,21 @@
 - [ ] Test cardio logging and display in Today's Workout and History
 - [ ] Push to GitHub for Railway deployment
 - [ ] Create checkpoint after implementation
+
+## Debug Cardio Exercise Rendering (2026-02-18)
+- [ ] User reports Running exercise still shows Sets/Reps/Weight instead of Duration/Distance
+- [ ] Check if Railway deployed commit 5eca8bc successfully
+- [ ] Verify CardioExerciseCard component is being imported and used correctly
+- [ ] Check if exercise.category is being set to 'Cardio' properly
+- [ ] Test locally to confirm CardioExerciseCard renders correctly
+- [ ] Fix and redeploy if needed
+
+## Improve CardioExerciseCard UI (2026-02-18)
+- [x] Add exercise-specific icons (Bike for Cycling, PersonStanding for Running, Waves for Swimming, Zap for HIIT)
+- [x] Update button color from gray to brand black (slate-900)
+- [x] Add built-in timer/stopwatch with Start/Pause/Reset/Apply buttons
+- [x] Fix visual alignment and spacing to match weight exercise cards
+- [x] "Remove Exercise" button already exists in red
+- [ ] Test timer functionality
+- [ ] Push to GitHub for Railway deployment
+- [ ] Create checkpoint after improvements
