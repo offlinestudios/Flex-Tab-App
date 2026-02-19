@@ -1558,5 +1558,5 @@
 - [x] Added logging for setLogsData, isLoading, error, isAuthenticated
 - [x] Added logging for useMemo transformation (input length, output sessions)
 - [ ] User to check browser console on deployed site for debug logs
-- [ ] Push debugging changes to GitHub
+- [x] Push debugging changes to GitHub (commit 4f5d92e)
 - [ ] Create checkpoint
