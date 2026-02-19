@@ -1551,3 +1551,12 @@
 - [x] Test History tab to verify data is now showing
 - [x] Push fix to GitHub
 - [ ] Create checkpoint
+
+## History Not Showing Despite Successful Deployment (2026-02-19)
+- [x] Check database to verify workout logs exist (confirmed: 10 rows in database)
+- [x] Add console logging to Home.tsx to debug tRPC query results
+- [x] Added logging for setLogsData, isLoading, error, isAuthenticated
+- [x] Added logging for useMemo transformation (input length, output sessions)
+- [ ] User to check browser console on deployed site for debug logs
+- [ ] Push debugging changes to GitHub
+- [ ] Create checkpoint

@@ -108,7 +108,7 @@ export default function Home() {
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
   
   // Fetch workout logs from database
-  const { data: setLogsData = [] } = trpc.workout.getSetLogs.useQuery(undefined, {
+  const { data: setLogsData = [], isLoading: setLogsLoading, error: setLogsError } = trpc.workout.getSetLogs.useQuery(undefined, {
     enabled: isAuthenticated,
     refetchOnWindowFocus: false,
   });
@@ -119,8 +119,17 @@ export default function Home() {
     refetchOnWindowFocus: false,
   });
   
+  // Debug logging
+  useEffect(() => {
+    console.log('[DEBUG] setLogsData:', setLogsData);
+    console.log('[DEBUG] setLogsLoading:', setLogsLoading);
+    console.log('[DEBUG] setLogsError:', setLogsError);
+    console.log('[DEBUG] isAuthenticated:', isAuthenticated);
+  }, [setLogsData, setLogsLoading, setLogsError, isAuthenticated]);
+  
   // Transform flat set logs into grouped workout sessions
   const workoutSessions: WorkoutSession[] = useMemo(() => {
+    console.log('[DEBUG] useMemo running, setLogsData length:', setLogsData.length);
     const sessionMap = new Map<string, SetLog[]>();
     
     setLogsData.forEach((log: any) => {
@@ -151,10 +160,12 @@ export default function Home() {
       });
     });
     
-    return Array.from(sessionMap.entries()).map(([date, exercises]) => ({
+    const sessions = Array.from(sessionMap.entries()).map(([date, exercises]) => ({
       date,
       exercises,
     }));
+    console.log('[DEBUG] Transformed workout sessions:', sessions);
+    return sessions;
   }, [setLogsData]);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
