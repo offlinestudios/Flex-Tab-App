@@ -1,0 +1,65 @@
+{
+  "query": "SELECT * FROM set_logs LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3BA4WAF6tt66vim.b57a597c2c0d --database CggWhQmGmDTYobNoV67ZAX --execute SELECT * FROM set_logs LIMIT 5;",
+  "rows": [
+    {
+      "id": "30001",
+      "sessionId": "1",
+      "userId": "1",
+      "exercise": "Chest Dips",
+      "sets": "1",
+      "reps": "8",
+      "weight": "70",
+      "time": "07:19:39 PM",
+      "createdAt": "2026-01-21 00:19:40"
+    },
+    {
+      "id": "30002",
+      "sessionId": "1",
+      "userId": "1",
+      "exercise": "Chest Dips",
+      "sets": "1",
+      "reps": "8",
+      "weight": "70",
+      "time": "07:24:05 PM",
+      "createdAt": "2026-01-21 00:24:05"
+    },
+    {
+      "id": "60001",
+      "sessionId": "1",
+      "userId": "1",
+      "exercise": "Chest Dips",
+      "sets": "1",
+      "reps": "7",
+      "weight": "45",
+      "time": "07:49:29 PM",
+      "createdAt": "2026-01-21 00:49:29"
+    },
+    {
+      "id": "60002",
+      "sessionId": "1",
+      "userId": "1",
+      "exercise": "Incline Dumbbell Press",
+      "sets": "1",
+      "reps": "10",
+      "weight": "100",
+      "time": "07:51:03 PM",
+      "createdAt": "2026-01-21 00:51:04"
+    },
+    {
+      "id": "60003",
+      "sessionId": "1",
+      "userId": "1",
+      "exercise": "Incline Dumbbell Press",
+      "sets": "1",
+      "reps": "7",
+      "weight": "100",
+      "time": "07:58:14 PM",
+      "createdAt": "2026-01-21 00:58:14"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsessionId\tuserId\texercise\tsets\treps\tweight\ttime\tcreatedAt\n30001\t1\t1\tChest Dips\t1\t8\t70\t07:19:39 PM\t2026-01-21 00:19:40\n30002\t1\t1\tChest Dips\t1\t8\t70\t07:24:05 PM\t2026-01-21 00:24:05\n60001\t1\t1\tChest Dips\t1\t7\t45\t07:49:29 PM\t2026-01-21 00:49:29\n60002\t1\t1\tIncline Dumbbell Press\t1\t10\t100\t07:51:03 PM\t2026-01-21 00:51:04\n60003\t1\t1\tIncline Dumbbell Press\t1\t7\t100\t07:58:14 PM\t2026-01-21 00:58:14\n",
+  "stderr": "",
+  "execution_time_ms": 58
+}

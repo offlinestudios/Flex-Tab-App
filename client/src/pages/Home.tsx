@@ -102,12 +102,60 @@ export default function Home() {
     Core: false,
   });
   const [showCustomDialog, setShowCustomDialog] = useState(false);
-  const [workoutSessions, setWorkoutSessions] = useState<WorkoutSession[]>([]);
   const [editingLog, setEditingLog] = useState<SetLog | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editFormData, setEditFormData] = useState<SetLog | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
-  const [measurements, setMeasurements] = useState<Measurement[]>([]);
+  
+  // Fetch workout logs from database
+  const { data: setLogsData = [] } = trpc.workout.getSetLogs.useQuery(undefined, {
+    enabled: isAuthenticated,
+    refetchOnWindowFocus: false,
+  });
+  
+  // Fetch measurements from database
+  const { data: measurements = [] } = trpc.workout.getMeasurements.useQuery(undefined, {
+    enabled: isAuthenticated,
+    refetchOnWindowFocus: false,
+  });
+  
+  // Transform flat set logs into grouped workout sessions
+  const workoutSessions: WorkoutSession[] = useMemo(() => {
+    const sessionMap = new Map<string, SetLog[]>();
+    
+    setLogsData.forEach((log: any) => {
+      // Extract date from the log (assuming it has a date field)
+      const date = log.date || new Date(log.createdAt).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "numeric",
+        day: "numeric",
+      });
+      
+      if (!sessionMap.has(date)) {
+        sessionMap.set(date, []);
+      }
+      
+      sessionMap.get(date)!.push({
+        id: log.id.toString(),
+        date: date,
+        exercise: log.exercise,
+        sets: log.sets,
+        reps: log.reps,
+        weight: log.weight,
+        time: log.time,
+        category: log.category,
+        duration: log.duration,
+        distance: log.distance ? parseFloat(log.distance) : undefined,
+        distanceUnit: log.distanceUnit,
+        calories: log.calories,
+      });
+    });
+    
+    return Array.from(sessionMap.entries()).map(([date, exercises]) => ({
+      date,
+      exercises,
+    }));
+  }, [setLogsData]);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [shareWorkoutData, setShareWorkoutData] = useState<{ exercises: SetLog[]; date: string } | null>(null);
