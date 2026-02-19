@@ -1523,5 +1523,5 @@
 - [x] Auto-stop timer when user clicks "Log Set" button
 - [x] Enable "Log Set" button as long as timer has started (timerSeconds > 0)
 - [x] Test cardio logging flow (start timer → log set → verify auto-stop)
-- [ ] Push changes to GitHub
+- [x] Push changes to GitHub
 - [ ] Create checkpoint
