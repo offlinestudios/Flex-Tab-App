@@ -1548,6 +1548,6 @@
 - [x] Added trpc.workout.getMeasurements.useQuery() to fetch measurements from database
 - [x] Transform flat set logs into grouped WorkoutSession[] format with useMemo
 - [x] Verified database has workout data (at least 5 rows in set_logs table)
-- [ ] Test History tab to verify data is now showing
-- [ ] Push fix to GitHub
+- [x] Test History tab to verify data is now showing
+- [x] Push fix to GitHub
 - [ ] Create checkpoint

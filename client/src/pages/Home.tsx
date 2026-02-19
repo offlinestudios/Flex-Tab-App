@@ -317,20 +317,6 @@ export default function Home() {
     },
   });
 
-  // Load set logs from API
-  const { data: setLogsData } = trpc.workout.getSetLogs.useQuery(undefined, {
-    enabled: isAuthenticated,
-    refetchOnWindowFocus: false,
-    refetchInterval: false,
-  });
-
-  // Load measurements from API
-  const { data: measurementsData } = trpc.workout.getMeasurements.useQuery(undefined, {
-    enabled: isAuthenticated,
-    refetchOnWindowFocus: false,
-    refetchInterval: false,
-  });
-
   // Sync custom exercises with API data
   useEffect(() => {
     if (customExercisesData) {
