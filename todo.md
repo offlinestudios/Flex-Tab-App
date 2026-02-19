@@ -1517,3 +1517,11 @@
 - [x] Test cardio logging with timer and distance
 - [x] Push changes to GitHub
 - [ ] Create checkpoint
+
+## Cardio Log Set Button Fix (2026-02-18)
+- [x] Remove disabled state requirement for isTimerStopped
+- [x] Auto-stop timer when user clicks "Log Set" button
+- [x] Enable "Log Set" button as long as timer has started (timerSeconds > 0)
+- [x] Test cardio logging flow (start timer → log set → verify auto-stop)
+- [ ] Push changes to GitHub
+- [ ] Create checkpoint

@@ -140,14 +140,24 @@ export function CardioExerciseCard({
   };
 
   const handleLogCardio = async () => {
-    if (!isTimerStopped || timerSeconds === 0) {
-      alert("Please stop the timer before logging your cardio session.");
+    if (timerSeconds === 0) {
+      alert("Please start the timer before logging your cardio session.");
       return;
+    }
+
+    // Auto-stop timer if it's running
+    if (isTimerRunning) {
+      handleStop();
     }
 
     setIsLogging(true);
     try {
-      const durationMinutes = Math.floor(timerSeconds / 60);
+      // Calculate final elapsed time
+      const finalElapsed = startTimestamp 
+        ? Math.floor((Date.now() - startTimestamp) / 1000) + pausedElapsed 
+        : pausedElapsed;
+      
+      const durationMinutes = Math.floor(finalElapsed / 60);
       const weightKg = userWeightLbs ? userWeightLbs * 0.453592 : 70;
       const calories = calculateCalories(exercise.name, durationMinutes, weightKg);
 
@@ -309,7 +319,7 @@ export function CardioExerciseCard({
         <div className="p-4 space-y-2">
           <Button
             onClick={handleLogCardio}
-            disabled={isLogging || !isTimerStopped}
+            disabled={isLogging || timerSeconds === 0}
             className="w-full bg-slate-800 hover:bg-slate-900 active:bg-black text-white font-medium py-6 text-lg transition-colors duration-75"
           >
             {isLogging ? "Logging..." : "Log Set"}
@@ -465,7 +475,7 @@ export function CardioExerciseCard({
           <div className="mt-6">
             <Button
               onClick={handleLogCardio}
-              disabled={isLogging || !isTimerStopped}
+              disabled={isLogging || timerSeconds === 0}
               className="w-full bg-slate-800 hover:bg-slate-900 active:bg-black text-white font-medium py-6 text-lg transition-colors duration-75"
             >
               {isLogging ? "Logging..." : "Log Set"}
