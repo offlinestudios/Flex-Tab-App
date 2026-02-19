@@ -1525,3 +1525,14 @@
 - [x] Test cardio logging flow (start timer → log set → verify auto-stop)
 - [x] Push changes to GitHub
 - [ ] Create checkpoint
+
+## Workout History Data Loss Investigation (2026-02-18)
+- [x] Identified root cause: Migration from localStorage to database storage without data migration
+- [x] Create localStorage to database migration utility (useLocalStorageMigration hook)
+- [x] Detect existing localStorage data (workoutSessions, measurements) on app load
+- [x] Automatically import localStorage data to database via tRPC mutations
+- [x] Mark migration as complete in localStorage to prevent re-imports
+- [x] Show migration success notification to user
+- [x] Test migration with sample localStorage data
+- [ ] Push fix to GitHub
+- [ ] Create checkpoint

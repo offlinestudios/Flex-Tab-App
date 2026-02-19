@@ -31,6 +31,7 @@ import { UserMenu } from "@/components/UserMenu";
 import { ExerciseCardNew } from "@/components/ExerciseCardNew";
 import { CardioExerciseCard } from "@/components/CardioExerciseCard";
 import { CalendarModal } from "@/components/CalendarModal";
+import { useLocalStorageMigration } from "@/hooks/useLocalStorageMigration";
 
 interface Exercise {
   id: string;
@@ -75,6 +76,16 @@ export default function Home() {
   // The userAuth hooks provides authentication state
   // To implement login/logout functionality, simply call logout() or redirect to getLoginUrl()
   let { user, loading, error, isAuthenticated, logout } = useAuth();
+
+  // Migrate localStorage data to database
+  const { migrationStatus, migratedCount } = useLocalStorageMigration();
+
+  // Show migration success notification
+  useEffect(() => {
+    if (migrationStatus === 'success' && (migratedCount.workouts > 0 || migratedCount.measurements > 0)) {
+      alert(`Data migration complete! Restored ${migratedCount.workouts} workout logs and ${migratedCount.measurements} measurements.`);
+    }
+  }, [migrationStatus, migratedCount]);
 
   // All hooks must be called before any conditional returns
   const [sidebarOpen, setSidebarOpen] = useState(true);
