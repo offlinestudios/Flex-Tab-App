@@ -1560,3 +1560,26 @@
 - [ ] User to check browser console on deployed site for debug logs
 - [x] Push debugging changes to GitHub (commit 4f5d92e)
 - [ ] Create checkpoint
+
+## Critical React useState Error on Sign-In (2026-02-19)
+- [x] User seeing: TypeError: Cannot read properties of null (reading 'useState')
+- [ ] Check Railway build logs for build errors
+- [ ] Verify package.json dependencies (React version conflicts)
+- [ ] Check vite.config.ts for build configuration issues
+- [ ] Test local build with `pnpm build` to reproduce error
+- [ ] Check if there are duplicate React imports
+- [ ] Verify all React hooks are imported from 'react' not 'react/cjs'
+- [ ] Fix build configuration
+- [ ] Test production build locally
+- [ ] Push fix to GitHub
+- [ ] Verify Railway deployment succeeds
+- [ ] Create checkpoint
+
+## Critical Authentication Fix (2026-02-20)
+- [x] Fix React useState error caused by Supabase authentication in Railway deployment
+- [x] Update package.json build script to use server/_core/index.ts (Manus OAuth) instead of server/railway-index.ts (Supabase)
+- [x] Install missing @clerk/express dependency
+- [x] Restore Manus OAuth context.ts file (removed Supabase code)
+- [x] Test authentication flow after fix
+- [x] Run vitest tests (16/17 passed - only R2 SSL issue unrelated to auth)
+- [ ] Create checkpoint after fix
