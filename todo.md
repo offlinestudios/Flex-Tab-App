@@ -1582,4 +1582,25 @@
 - [x] Restore Manus OAuth context.ts file (removed Supabase code)
 - [x] Test authentication flow after fix
 - [x] Run vitest tests (16/17 passed - only R2 SSL issue unrelated to auth)
-- [ ] Create checkpoint after fix
+- [x] Create checkpoint after fix (version: 25b44cff)
+
+## Railway Deployment (2026-02-20)
+- [x] Verify latest commit is pushed to GitHub repository (offlinestudios/Flex-Tab-App)
+- [x] Pushed commits 5bb7f86 and 25b44cf to GitHub
+- [ ] Wait for Railway to auto-deploy or manually trigger deployment
+- [ ] Verify Railway deployment succeeds with Manus OAuth
+- [ ] Test production site after deployment
+
+## Railway Deployment Errors (2026-02-20)
+- [ ] Fix TypeError: The "paths[0]" argument must be of type string. Received undefined (at dist/index.js:873)
+- [ ] Configure OAUTH_SERVER_URL environment variable in Railway
+- [ ] Configure all required Manus OAuth environment variables in Railway
+- [ ] Test deployment after fixes
+
+## Restore Supabase Authentication for Railway (2026-02-20)
+- [ ] Revert package.json to use server/railway-index.ts for production builds
+- [ ] Fix Node.js 18 compatibility in server/railway-index.ts (import.meta.dirname issue)
+- [ ] Verify railway-context.ts and railway-routers.ts are correct
+- [ ] Add missing server-side Supabase environment variables (SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+- [ ] Push changes to GitHub
+- [ ] Test Railway deployment with Supabase
