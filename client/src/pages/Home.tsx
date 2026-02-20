@@ -369,22 +369,6 @@ export default function Home() {
     }
   }, [setLogsData]);
 
-  // Sync measurements with API data
-  useEffect(() => {
-    if (measurementsData) {
-      const measurements = measurementsData.map(m => ({
-        id: m.id.toString(),
-        date: m.date,
-        weight: m.weight,
-        chest: m.chest,
-        waist: m.waist,
-        arms: m.arms,
-        thighs: m.thighs,
-      }));
-      setMeasurements(measurements);
-    }
-  }, [measurementsData]);
-
   // Get latest measurement for calorie calculations
   const latestMeasurement = measurements.length > 0 
     ? measurements.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]
