@@ -1598,9 +1598,36 @@
 - [ ] Test deployment after fixes
 
 ## Restore Supabase Authentication for Railway (2026-02-20)
-- [ ] Revert package.json to use server/railway-index.ts for production builds
-- [ ] Fix Node.js 18 compatibility in server/railway-index.ts (import.meta.dirname issue)
-- [ ] Verify railway-context.ts and railway-routers.ts are correct
-- [ ] Add missing server-side Supabase environment variables (SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
-- [ ] Push changes to GitHub
-- [ ] Test Railway deployment with Supabase
+- [x] Revert package.json to use server/railway-index.ts for production builds
+- [x] Fix Node.js 18 compatibility in server/_core/vite.ts (import.meta.dirname issue)
+- [x] Verify railway-context.ts and railway-routers.ts are correct
+- [x] Railway has VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY (will use anon key as fallback)
+- [x] Push changes to GitHub (commit 005547e)
+- [ ] Wait for Railway to deploy and test
+
+## Fix Railway Start Command (2026-02-20)
+- [x] Update railway.json to change start command from index.js to railway-index.js
+- [x] Push changes to GitHub (commit 8890be1)
+- [ ] Verify Railway deployment succeeds
+
+## Fix Missing useMemo Import (2026-02-20)
+- [x] Add useMemo to React imports in client/src/pages/Home.tsx
+- [x] Decided not to add tsc --noEmit to build (would break Railway due to unrelated server/_core errors)
+- [x] Push changes to GitHub (commit 49b4272)
+- [ ] Verify Railway deployment succeeds
+
+## Fix useState Error (2026-02-20)
+- [x] Search for components with missing React hook imports (all look correct)
+- [x] Identified root cause: Node.js 18 incompatible with @supabase/supabase-js
+- [x] Created .nvmrc file to upgrade Railway to Node.js 20
+- [x] Push .nvmrc to GitHub (commit be33427)
+- [ ] Verify Railway deployment succeeds with Node.js 20
+
+## Investigate React Bundling Issue (2026-02-20)
+- [x] Check if React is properly imported in client/src/main.tsx (missing import React)
+- [x] Verify Vite configuration for React plugin (looks correct)
+- [x] Check if React is being externalized in build (React is in bundle)
+- [x] Test local production build to reproduce error (build succeeds locally)
+- [ ] Add comprehensive logging to debug Railway file serving
+- [ ] Verify build output structure on Railway
+- [ ] Deploy and test fix
