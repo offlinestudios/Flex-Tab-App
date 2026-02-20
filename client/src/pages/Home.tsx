@@ -341,34 +341,6 @@ export default function Home() {
     }
   }, [customExercisesData]);
 
-  // Sync set logs with API data
-  useEffect(() => {
-    if (setLogsData) {
-      // Group sets by date
-      const sessionsByDate: Record<string, SetLog[]> = {};
-      setLogsData.forEach(log => {
-        const date = log.date || "Unknown";
-        if (!sessionsByDate[date]) {
-          sessionsByDate[date] = [];
-        }
-        sessionsByDate[date].push({
-          id: log.id.toString(),
-          date,
-          exercise: log.exercise,
-          sets: log.sets,
-          reps: log.reps,
-          weight: log.weight,
-          time: log.time,
-        });
-      });
-      const sessions = Object.entries(sessionsByDate).map(([date, exercises]) => ({
-        date,
-        exercises,
-      }));
-      setWorkoutSessions(sessions);
-    }
-  }, [setLogsData]);
-
   // Get latest measurement for calorie calculations
   const latestMeasurement = measurements.length > 0 
     ? measurements.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]
@@ -761,15 +733,7 @@ export default function Home() {
                                   <div className="flex items-center gap-3">
                                     <p className="text-sm text-slate-500">{set.time}</p>
                                     <button
-                                      onClick={() => {
-                                        const updated = workoutSessions.map(s => 
-                                          s.date === today 
-                                            ? { ...s, exercises: s.exercises.filter(ex => ex.id !== set.id) }
-                                            : s
-                                        ).filter(s => s.exercises.length > 0);
-                                        setWorkoutSessions(updated);
-                                        localStorage.setItem('workoutSessions', JSON.stringify(updated));
-                                      }}
+                                      onClick={() => handleDeleteLog(set.id, today)}
                                       className="text-slate-400 hover:text-red-500 transition-colors"
                                       title="Delete set"
                                     >
