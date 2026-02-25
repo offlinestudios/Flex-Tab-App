@@ -182,6 +182,7 @@ export default function Home() {
     try { return JSON.parse(localStorage.getItem('flextab_routines') || '[]'); } catch { return []; }
   });
   const [exerciseLibFilter, setExerciseLibFilter] = useState('all');
+  const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   
   // Cardio stopwatch state (persisted across tab switches)
   // Changed to timestamp-based to work when phone is locked/backgrounded
@@ -715,30 +716,61 @@ export default function Home() {
               </div>
             )}
 
-            {/* Exercise Cards */}
-            {selectedExercises.map((exercise) => (
-              exercise.category === 'Cardio' ? (
-                <CardioExerciseCard
-                  key={exercise.id}
-                  exercise={exercise}
-                  onLogSet={handleLogSet}
-                  onRemove={(exerciseId) => setSelectedExercises(selectedExercises.filter((e) => e.id !== exerciseId))}
-                  startTimestamp={cardioTimers[exercise.id]?.startTimestamp}
-                  pausedElapsed={cardioTimers[exercise.id]?.pausedElapsed}
-                  isTimerRunning={cardioTimers[exercise.id]?.isRunning}
-                  isTimerStopped={cardioTimers[exercise.id]?.isStopped}
-                  onTimerUpdate={handleTimerUpdate}
-                  userWeightLbs={latestMeasurement?.weight ? latestMeasurement.weight : undefined}
-                />
-              ) : (
+            {/* Exercise Cards — single-card flip navigation like prototype */}
+            {selectedExercises.length > 0 && (() => {
+              const safeIdx = Math.min(currentExerciseIndex, selectedExercises.length - 1);
+              const exercise = selectedExercises[safeIdx];
+              const exHistory = exProgressMap[exercise.name] || [];
+              const lastEntry = exHistory.length > 0 ? exHistory[exHistory.length - 1] : null;
+              const bestEntry = exHistory.length > 0 ? exHistory.reduce((best, e) => e.weight > best.weight ? e : best, exHistory[0]) : null;
+              const totalVol = exHistory.reduce((s, e) => s + e.vol, 0);
+
+              if (exercise.category === 'Cardio') {
+                return (
+                  <CardioExerciseCard
+                    key={exercise.id}
+                    exercise={exercise}
+                    onLogSet={handleLogSet}
+                    onRemove={(exerciseId) => {
+                      const updated = selectedExercises.filter((e) => e.id !== exerciseId);
+                      setSelectedExercises(updated);
+                      setCurrentExerciseIndex(Math.min(safeIdx, updated.length - 1));
+                    }}
+                    startTimestamp={cardioTimers[exercise.id]?.startTimestamp}
+                    pausedElapsed={cardioTimers[exercise.id]?.pausedElapsed}
+                    isTimerRunning={cardioTimers[exercise.id]?.isRunning}
+                    isTimerStopped={cardioTimers[exercise.id]?.isStopped}
+                    onTimerUpdate={handleTimerUpdate}
+                    userWeightLbs={latestMeasurement?.weight ? latestMeasurement.weight : undefined}
+                  />
+                );
+              }
+              return (
                 <ExerciseCardNew
                   key={exercise.id}
                   exercise={exercise}
                   onLogSet={handleLogSet}
-                  onRemove={(exerciseId) => setSelectedExercises(selectedExercises.filter((e) => e.id !== exerciseId))}
+                  onRemove={(exerciseId) => {
+                    const updated = selectedExercises.filter((e) => e.id !== exerciseId);
+                    setSelectedExercises(updated);
+                    setCurrentExerciseIndex(Math.min(safeIdx, updated.length - 1));
+                  }}
+                  totalExercises={selectedExercises.length}
+                  currentIndex={safeIdx}
+                  onNext={selectedExercises.length > 1 ? () => {
+                    if (safeIdx < selectedExercises.length - 1) {
+                      setCurrentExerciseIndex(safeIdx + 1);
+                    } else {
+                      setShowExerciseBrowser(true);
+                    }
+                  } : undefined}
+                  lastWeight={lastEntry?.weight ?? 0}
+                  lastReps={lastEntry?.reps ?? 0}
+                  bestWeight={bestEntry?.weight ?? 0}
+                  totalVolume={totalVol}
                 />
-              )
-            ))}
+              );
+            })()}
 
             {/* Today's logged sets summary */}
             {(() => {
