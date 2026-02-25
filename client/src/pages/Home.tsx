@@ -78,6 +78,10 @@ export default function Home() {
   // To implement login/logout functionality, simply call logout() or redirect to getLoginUrl()
   let { user, loading, error, isAuthenticated, logout } = useAuth();
 
+  // Must be called before any early returns (Rules of Hooks)
+  const search = useSearch();
+  const activeTab = new URLSearchParams(search).get('tab') || 'log';
+
   // Migrate localStorage data to database
   const { migrationStatus, migratedCount } = useLocalStorageMigration();
 
@@ -524,9 +528,6 @@ export default function Home() {
 
     return { totalReps, totalSets, totalVolume, uniqueExercises };
   };
-
-  const search = useSearch();
-  const activeTab = new URLSearchParams(search).get('tab') || 'log';
 
   return (
     <DashboardLayout>
