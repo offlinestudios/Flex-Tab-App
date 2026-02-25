@@ -5,8 +5,8 @@ import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
+import DashboardLayout from "@/components/DashboardLayout";
 import {
   Dialog,
   DialogContent,
@@ -15,6 +15,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { useSearch } from "wouter";
 
 // Lazy load heavy components for better performance
 const WorkoutCalendar = lazy(() => import("@/components/WorkoutCalendar").then(m => ({ default: m.WorkoutCalendar })));
@@ -524,106 +525,26 @@ export default function Home() {
     return { totalReps, totalSets, totalVolume, uniqueExercises };
   };
 
+  const search = useSearch();
+  const activeTab = new URLSearchParams(search).get('tab') || 'log';
+
   return (
-    <div className="min-h-screen overflow-x-hidden" style={{background: 'linear-gradient(to bottom right, #F7F5F2, #F3F1EE)'}}>
-      {/* Header with Hamburger and Title Side by Side */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm" style={{borderBottom: '1px solid #E6E4E1'}}>
-        <div className="flex items-center gap-4 px-4 py-4 md:px-6">
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-          >
-            <Menu className="w-6 h-6 text-slate-700" />
-          </button>
-          <div className="flex items-center gap-3">
-            <img src="/flextab-logo.png?v=2" alt="FlexTab" className="h-8 w-auto" />
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight" style={{fontFamily: 'Satoshi, sans-serif'}}>
-                flextab
-              </h1>
-            </div>
-          </div>
-        </div>
-      </header>
+    <DashboardLayout>
+      <div className="px-4 py-6 max-w-2xl mx-auto space-y-4">
+        <h1 className="text-2xl font-bold text-foreground">
+          {activeTab === 'log' && 'Log'}
+          {activeTab === 'measurements' && 'Measurements'}
+          {activeTab === 'history' && 'History'}
+          {activeTab === 'trends' && 'Trends'}
+          {activeTab === 'routines' && 'Routines'}
+          {activeTab === 'exercises' && 'Exercises'}
+          {activeTab === 'community' && 'Community'}
+          {activeTab === 'profile' && 'Profile'}
+        </h1>
 
-      <div className="flex">
-        {/* Sidebar */}
-        <aside
-          className={`fixed top-0 w-80 bg-white border-r border-slate-200 transition-transform duration-300 z-30 ${
-            sidebarOpen ? "translate-x-0" : "-translate-x-full"
-          }`}
-          style={{ 
-            height: '100dvh', /* Use dvh for proper mobile viewport height */
-            paddingTop: 'max(73px, env(safe-area-inset-top))' /* Account for notch */
-          }}
-          onTouchStart={onTouchStart}
-          onTouchMove={onTouchMove}
-          onTouchEnd={onTouchEnd}
-        >
-          <div className="relative h-full">
-            {/* Fixed header */}
-            <div className="px-6 py-4 border-b border-slate-200">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-slate-900">
-                  Workout Builder
-                </h2>
-                {/* Calendar button - only visible on mobile */}
-                <button
-                  onClick={() => setShowCalendarModal(true)}
-                  className="lg:hidden p-2 hover:bg-slate-100 rounded-lg transition-colors"
-                  title="View Calendar"
-                >
-                  <Calendar size={20} className="text-slate-700" />
-                </button>
-              </div>
-            </div>
-            {/* Scrollable content with padding at bottom for user menu */}
-            <div className="overflow-y-auto pb-20" style={{ height: 'calc(100% - 73px - 73px)' }}>
-              <div className="p-4">
-                <ExerciseSidebar
-                  groupedExercises={groupedExercises}
-                  customExercises={customExercises}
-                  selectedExercises={selectedExercises}
-                  expandedCategories={expandedCategories}
-                  onToggleCategory={toggleCategory}
-                  onSelectExercise={handleSelectExercise}
-                  onAddCustom={() => setShowCustomDialog(true)}
-                />
-              </div>
-            </div>
-            {/* User Menu - absolutely positioned at bottom */}
-            <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-slate-200 bg-slate-50">
-              <UserMenu />
-            </div>
-          </div>
-        </aside>
-
-        {/* Main Content */}
-        <main className={`flex-1 p-4 md:p-8 transition-all duration-300 ${
-          sidebarOpen ? "ml-80" : "ml-0"
-        }`} style={{ paddingTop: '89px' /* 73px header + 16px spacing */ }}>
-          <div className="max-w-6xl mx-auto">
-            {/* Tabs */}
-            <Tabs defaultValue="active" className="w-full">
-              <TabsList className="flex w-full mb-8 bg-slate-200 overflow-x-auto md:grid md:grid-cols-4">
-                <TabsTrigger value="active" className="data-[state=active]:bg-white">
-                  Active
-                </TabsTrigger>
-                <TabsTrigger value="measurements" className="data-[state=active]:bg-white">
-                  Measurements
-                </TabsTrigger>
-                <TabsTrigger value="history" className="data-[state=active]:bg-white">
-                  History
-                </TabsTrigger>
-                <TabsTrigger value="progress" className="data-[state=active]:bg-white">
-                  Progress
-                </TabsTrigger>
-              </TabsList>
-
-              {/* Active Tab */}
-              <TabsContent value="active" className="space-y-6">
-                <div className="flex flex-col lg:grid lg:grid-cols-3 gap-6">
-                  <div className="lg:col-span-2 space-y-4">
+        {/* Log Tab */}
+        {activeTab === 'log' && (
+          <div className="space-y-4">
                     {/* Exercise Cards - shown first on mobile, first on desktop */}
                     {selectedExercises.length === 0 ? (
                       <Card className="card-premium animate-fade-in">
@@ -748,7 +669,6 @@ export default function Home() {
                       }
                       return null;
                     })()}
-                  </div>
                   {/* Calendar - hidden on mobile, shown on desktop */}
                   <div className="hidden lg:block lg:col-span-1">
                     <Suspense fallback={
@@ -763,22 +683,23 @@ export default function Home() {
                       />
                     </Suspense>
                   </div>
-                </div>
-              </TabsContent>
+          </div>
+        )}
 
-              {/* Measurements Tab */}
-              <TabsContent value="measurements">
+        {/* Measurements Tab */}
+        {activeTab === 'measurements' && (
                 <Suspense fallback={
                   <div className="flex items-center justify-center py-12">
                     <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
                   </div>
                 }>
-                  <BodyMeasurements />
-                </Suspense>
-              </TabsContent>
+          <BodyMeasurements />
+        </Suspense>
+        )}
 
-              {/* History Tab */}
-              <TabsContent value="history" className="space-y-6">
+        {/* History Tab */}
+        {activeTab === 'history' && (
+          <div className="space-y-4">
                 {sortedSessions.length === 0 ? (
                   <Card className="card-premium p-12 text-center animate-fade-in">
                     <p className="text-slate-600 text-lg">No workout history yet</p>
@@ -916,30 +837,65 @@ export default function Home() {
                     );
                   })
                 )}
-              </TabsContent>
-
-              {/* Progress Tab */}
-              <TabsContent value="progress" className="space-y-6">
-                <Suspense fallback={
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
-                  </div>
-                }>
-                  <div className="space-y-6">
-                    <WorkoutStatistics
-                      workoutSessions={workoutSessions}
-                      selectedDate={selectedDate}
-                    />
-                    <ProgressCharts
-                      setLogs={workoutSessions.flatMap(s => s.exercises)}
-                      measurements={measurements}
-                    />
-                  </div>
-                </Suspense>
-              </TabsContent>
-            </Tabs>
           </div>
-        </main>
+        )}
+
+        {/* Trends Tab */}
+        {activeTab === 'trends' && (
+          <div className="space-y-4">
+            <Suspense fallback={
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+              </div>
+            }>
+              <WorkoutStatistics
+                workoutSessions={workoutSessions}
+                selectedDate={selectedDate}
+              />
+              <ProgressCharts
+                setLogs={workoutSessions.flatMap(s => s.exercises)}
+                measurements={measurements}
+              />
+            </Suspense>
+          </div>
+        )}
+
+        {/* Routines Tab */}
+        {activeTab === 'routines' && (
+          <div className="space-y-4">
+            <p className="text-muted-foreground">Routines coming soon.</p>
+          </div>
+        )}
+
+        {/* Exercises Tab */}
+        {activeTab === 'exercises' && (
+          <div className="space-y-4">
+            <ExerciseSidebar
+              groupedExercises={groupedExercises}
+              customExercises={customExercises}
+              selectedExercises={selectedExercises}
+              expandedCategories={expandedCategories}
+              onToggleCategory={toggleCategory}
+              onSelectExercise={handleSelectExercise}
+              onAddCustom={() => setShowCustomDialog(true)}
+            />
+          </div>
+        )}
+
+        {/* Community Tab */}
+        {activeTab === 'community' && (
+          <div className="space-y-4">
+            <p className="text-muted-foreground">Community coming soon.</p>
+          </div>
+        )}
+
+        {/* Profile Tab */}
+        {activeTab === 'profile' && (
+          <div className="space-y-4">
+            <p className="text-muted-foreground">Profile coming soon.</p>
+          </div>
+        )}
+
       </div>
 
       {/* Add Custom Exercise Dialog */}
@@ -1071,15 +1027,7 @@ export default function Home() {
         </DialogContent>
       </Dialog>
 
-      {/* Overlay for mobile sidebar */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 md:hidden z-20"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Calendar Modal - for mobile */}
+      {/* Calendar Modal */}
       <CalendarModal
         open={showCalendarModal}
         onOpenChange={setShowCalendarModal}
@@ -1097,7 +1045,7 @@ export default function Home() {
           date={shareWorkoutData.date}
         />
       )}
-    </div>
+    </DashboardLayout>
   );
 }
 
