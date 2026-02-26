@@ -41,9 +41,9 @@ export function ExerciseCardNew({
   bestWeight = 0,
   totalVolume = 0,
 }: ExerciseCardNewProps) {
-  const [sets, setSets] = useState(3);
-  const [reps, setReps] = useState(lastReps > 0 ? lastReps : 8);
-  const [weight, setWeight] = useState(lastWeight > 0 ? lastWeight : 45);
+  const [sets, setSets] = useState(1);
+  const [reps, setReps] = useState(1);
+  const [weight, setWeight] = useState(0);
   const [isLogging, setIsLogging] = useState(false);
   const [justLogged, setJustLogged] = useState(false);
 
@@ -228,17 +228,15 @@ export function ExerciseCardNew({
               Remove Exercise
             </button>
           ) : <span />}
-          {onNext && (
-            <button
-              onClick={onNext}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: 'var(--foreground)', fontSize: 14, fontWeight: 600, cursor: 'pointer', padding: '6px 0' }}
-            >
-              Next Exercise
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <polyline points="9 18 15 12 9 6"/>
-              </svg>
-            </button>
-          )}
+          <button
+            onClick={onNext}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: 'var(--foreground)', fontSize: 14, fontWeight: 600, cursor: 'pointer', padding: '6px 0' }}
+          >
+            Next Exercise
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </button>
         </div>
       </div>
     </div>

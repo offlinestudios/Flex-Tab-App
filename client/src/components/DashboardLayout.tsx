@@ -209,7 +209,15 @@ function AppShell({ children, timerSlot }: { children: React.ReactNode; timerSlo
       >
         {/* Sidebar logo strip */}
         <div style={{ padding: '20px 20px 16px', flexShrink: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {/* FlexTab symbol: dumbbell icon in a rounded square */}
+            <div style={{ width: 34, height: 34, borderRadius: 10, background: 'var(--foreground)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--background)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6.5 6.5h11"/><path d="M6.5 17.5h11"/>
+                <path d="M3 9.5h2v5H3z"/><path d="M19 9.5h2v5h-2z"/>
+                <path d="M5 12h14"/>
+              </svg>
+            </div>
             <span style={{ fontSize: 18, fontWeight: 800, color: 'var(--foreground)', letterSpacing: '-0.4px' }}>FlexTab</span>
           </div>
         </div>
