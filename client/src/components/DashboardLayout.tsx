@@ -210,10 +210,8 @@ function AppShell({ children, timerSlot }: { children: React.ReactNode; timerSlo
         {/* Sidebar logo strip */}
         <div style={{ padding: '20px 20px 16px', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            {/* FlexTab symbol logo */}
-            <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--foreground)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
-              <img src="/flextab-icon.png" alt="FlexTab" style={{ width: 26, height: 26, objectFit: 'contain', filter: 'invert(1) brightness(10)' }} />
-            </div>
+            {/* FlexTab symbol logo - icon image has its own dark rounded square built in */}
+            <img src="/flextab-icon.png" alt="FlexTab" style={{ width: 44, height: 44, objectFit: 'contain', flexShrink: 0 }} />
             <span style={{ fontSize: 18, fontWeight: 800, color: 'var(--foreground)', letterSpacing: '-0.4px' }}>FlexTab</span>
           </div>
         </div>
