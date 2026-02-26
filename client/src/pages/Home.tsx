@@ -376,6 +376,13 @@ export default function Home() {
     }
   }, [loading, isAuthenticated]);
 
+  // Start workout timer when first exercise is added (must be before early returns)
+  useEffect(() => {
+    if (selectedExercises.length > 0 && !workoutTimerActive) {
+      setWorkoutTimerActive(true);
+    }
+  }, [selectedExercises.length, workoutTimerActive]);
+
   // Show loading state while checking authentication
   if (loading) {
     return (
@@ -611,13 +618,6 @@ export default function Home() {
     : EXERCISE_LIB_DATA.filter(e => e.muscle === exerciseLibFilter);
 
   const todayLabel = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-
-  // Start workout timer when first exercise is added
-  useEffect(() => {
-    if (selectedExercises.length > 0 && !workoutTimerActive) {
-      setWorkoutTimerActive(true);
-    }
-  }, [selectedExercises.length]);
 
   const timerTotalSets = allSetLogs
     .filter(e => e.date === new Date().toLocaleDateString())
