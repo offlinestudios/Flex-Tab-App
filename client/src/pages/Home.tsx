@@ -35,6 +35,10 @@ import { CalendarModal } from "@/components/CalendarModal";
 import { useLocalStorageMigration } from "@/hooks/useLocalStorageMigration";
 import { ExerciseBrowser } from "@/components/ExerciseBrowser";
 import { RoutineBuilder } from "@/components/RoutineBuilder";
+import { WorkoutTimer } from "@/components/WorkoutTimer";
+import { ProfileTab } from "@/components/ProfileTab";
+import { CommunityTab } from "@/components/CommunityTab";
+import { SettingsTab } from "@/components/SettingsTab";
 
 interface Exercise {
   id: string;
@@ -183,6 +187,7 @@ export default function Home() {
   });
   const [exerciseLibFilter, setExerciseLibFilter] = useState('all');
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
+  const [workoutTimerActive, setWorkoutTimerActive] = useState(false);
   
   // Cardio stopwatch state (persisted across tab switches)
   // Changed to timestamp-based to work when phone is locked/backgrounded
@@ -607,8 +612,34 @@ export default function Home() {
 
   const todayLabel = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
+  // Start workout timer when first exercise is added
+  useEffect(() => {
+    if (selectedExercises.length > 0 && !workoutTimerActive) {
+      setWorkoutTimerActive(true);
+    }
+  }, [selectedExercises.length]);
+
+  const timerTotalSets = allSetLogs
+    .filter(e => e.date === new Date().toLocaleDateString())
+    .reduce((s, e) => s + e.sets, 0);
+  const timerTotalVolume = allSetLogs
+    .filter(e => e.date === new Date().toLocaleDateString())
+    .reduce((s, e) => s + e.sets * e.reps * e.weight, 0);
+
   return (
-    <DashboardLayout>
+    <DashboardLayout timerSlot={
+      <WorkoutTimer
+        isActive={workoutTimerActive}
+        exerciseCount={selectedExercises.length}
+        totalSets={timerTotalSets}
+        totalVolume={timerTotalVolume}
+        onEnd={() => {
+          setWorkoutTimerActive(false);
+          setSelectedExercises([]);
+          setCurrentExerciseIndex(0);
+        }}
+      />
+    }>
       {/* Exercise Browser overlay */}
       <ExerciseBrowser
         open={showExerciseBrowser}
@@ -643,6 +674,8 @@ export default function Home() {
               : activeTab === 'routines' ? 'Routines'
               : activeTab === 'exercises' ? 'Exercises'
               : activeTab === 'community' ? 'Community'
+              : activeTab === 'profile' ? 'Profile'
+              : activeTab === 'settings' ? 'Settings'
               : 'Profile'}
           </h2>
           {activeTab === 'log' && (
@@ -1161,28 +1194,22 @@ export default function Home() {
 
         {/* ══ COMMUNITY TAB ══ */}
         {activeTab === 'community' && (
-          <div style={{ background:'var(--card)', borderRadius:20, border:'1px solid var(--border)', padding:'48px 24px', textAlign:'center' }}>
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5" strokeLinecap="round" style={{ marginBottom:12 }}>
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-              <circle cx="9" cy="7" r="4"/>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-            </svg>
-            <p style={{ fontSize:15, fontWeight:700, color:'var(--foreground)', margin:'0 0 6px' }}>Community</p>
-            <p style={{ fontSize:13, color:'#9ca3af', margin:0 }}>Coming soon — share workouts and connect with others.</p>
-          </div>
+          <CommunityTab user={user} workoutSessions={workoutSessions} />
         )}
 
         {/* ══ PROFILE TAB ══ */}
         {activeTab === 'profile' && (
-          <div style={{ background:'var(--card)', borderRadius:20, border:'1px solid var(--border)', padding:'48px 24px', textAlign:'center' }}>
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5" strokeLinecap="round" style={{ marginBottom:12 }}>
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-              <circle cx="12" cy="7" r="4"/>
-            </svg>
-            <p style={{ fontSize:15, fontWeight:700, color:'var(--foreground)', margin:'0 0 6px' }}>Profile</p>
-            <p style={{ fontSize:13, color:'#9ca3af', margin:0 }}>Coming soon — view your stats and training tier.</p>
-          </div>
+          <ProfileTab
+            user={user}
+            workoutSessions={workoutSessions}
+            measurements={measurements}
+            prMap={prMap}
+          />
+        )}
+
+        {/* ══ SETTINGS TAB ══ */}
+        {activeTab === 'settings' && (
+          <SettingsTab user={user} onLogout={logout} />
         )}
 
       </div>
