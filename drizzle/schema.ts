@@ -94,3 +94,56 @@ export type Measurement = typeof measurements.$inferSelect;
 export type InsertMeasurement = typeof measurements.$inferInsert;
 export type CustomExercise = typeof customExercises.$inferSelect;
 export type InsertCustomExercise = typeof customExercises.$inferInsert;
+
+/**
+ * Community posts table - user-created posts shared to the community feed
+ */
+export const posts = pgTable("posts", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  userId: integer("userId").notNull(),
+  caption: text("caption"),
+  // Optional link to a workout session for attaching workout log data
+  workoutSessionId: integer("workoutSessionId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+/**
+ * Post media table - photos and videos attached to a post (stored in R2)
+ */
+export const postMedia = pgTable("post_media", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  postId: integer("postId").notNull(),
+  userId: integer("userId").notNull(),
+  r2Key: text("r2Key").notNull(),           // e.g. "posts/42/media/abc123.mp4"
+  mediaType: varchar("mediaType", { length: 10 }).notNull(), // "photo" | "video"
+  mimeType: varchar("mimeType", { length: 64 }).notNull(),   // e.g. "video/mp4"
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+/**
+ * Post likes table - one row per user-post like (unique constraint prevents double-likes)
+ */
+export const postLikes = pgTable("post_likes", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  postId: integer("postId").notNull(),
+  userId: integer("userId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+/**
+ * Post comments table
+ */
+export const postComments = pgTable("post_comments", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  postId: integer("postId").notNull(),
+  userId: integer("userId").notNull(),
+  body: text("body").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Post = typeof posts.$inferSelect;
+export type InsertPost = typeof posts.$inferInsert;
+export type PostMedia = typeof postMedia.$inferSelect;
+export type PostLike = typeof postLikes.$inferSelect;
+export type PostComment = typeof postComments.$inferSelect;

@@ -1,174 +1,280 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { trpc } from "@/lib/trpc";
 
 /* ─────────────────────────────────────────────────────────────────
    Types
 ───────────────────────────────────────────────────────────────── */
-interface Exercise {
-  name: string;
-  sets: number;
-  reps: number;
-  weight: number | null; // null = bodyweight
+interface MediaItem {
+  id: number;
+  r2Key: string;
+  mediaType: string;
+  mimeType: string;
+  url: string;
 }
 
-interface CommentPreview {
-  authorInitials: string;
+interface WorkoutSummary {
+  exercises: string[];
+  totalSets: number;
+  totalReps: number;
+  totalVolume: number;
+}
+
+interface FeedPost {
+  id: number;
+  userId: number;
   authorName: string;
-  text: string;
+  authorHandle: string;
+  caption: string | null;
+  createdAt: string;
+  likeCount: number;
+  commentCount: number;
+  likedByMe: boolean;
+  media: MediaItem[];
+  workout: WorkoutSummary | null;
 }
 
-interface Post {
-  id: string;
-  author: string;
-  handle: string;
-  initials: string;
-  time: string;
-  caption: string;
-  exercises?: Exercise[];
-  mediaUrl?: string;
-  likes: number;
-  comments: number;
-  liked: boolean;
-  commentPreviews?: CommentPreview[];
+interface Comment {
+  id: number;
+  postId: number;
+  userId: number;
+  body: string;
+  createdAt: string;
+  authorName: string;
+  authorHandle: string;
 }
 
 /* ─────────────────────────────────────────────────────────────────
-   Sample data
+   Sample posts shown when the real feed is empty (display reference)
 ───────────────────────────────────────────────────────────────── */
-const SAMPLE_POSTS: Post[] = [
+const SAMPLE_POSTS: FeedPost[] = [
   {
-    id: '1',
-    author: 'Marcus Reid',
-    handle: '@marcusreid',
-    initials: 'MR',
-    time: '2h ago',
-    caption: 'Hit a new deadlift PR today. Consistency is everything.',
-    exercises: [
-      { name: 'Deadlift', sets: 4, reps: 3, weight: 315 },
-      { name: 'Romanian Deadlift', sets: 3, reps: 8, weight: 185 },
-      { name: 'Leg Press', sets: 3, reps: 10, weight: 360 },
-    ],
-    likes: 47,
-    comments: 2,
-    liked: false,
-    commentPreviews: [
-      { authorInitials: 'SK', authorName: 'Sarah K.', text: 'Absolute beast mode!' },
-      { authorInitials: 'JD', authorName: 'JD', text: 'Congrats on the PR!' },
-    ],
+    id: -1,
+    userId: -1,
+    authorName: "Marcus Reid",
+    authorHandle: "@marcusreid",
+    caption: "Hit a new deadlift PR today. Consistency is everything.",
+    createdAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
+    likeCount: 47,
+    commentCount: 2,
+    likedByMe: false,
+    media: [],
+    workout: {
+      exercises: ["Deadlift", "Romanian Deadlift", "Leg Press"],
+      totalSets: 10,
+      totalReps: 84,
+      totalVolume: 14200,
+    },
   },
   {
-    id: '2',
-    author: 'Sofia Lim',
-    handle: '@sofialim',
-    initials: 'SL',
-    time: '4h ago',
-    caption: '225 lbs bench press — finally hit it after 3 months of grinding.',
-    exercises: [
-      { name: 'Bench Press', sets: 5, reps: 5, weight: 225 },
-      { name: 'Incline DB Press', sets: 4, reps: 8, weight: 70 },
-      { name: 'Cable Fly', sets: 3, reps: 12, weight: 40 },
-    ],
-    likes: 24,
-    comments: 3,
-    liked: false,
-    commentPreviews: [
-      { authorInitials: 'AR', authorName: 'Alex R.', text: 'Incredible progress!' },
-    ],
+    id: -2,
+    userId: -2,
+    authorName: "Sofia Lim",
+    authorHandle: "@sofialim",
+    caption: "225 lbs bench press — finally hit it after 3 months of grinding.",
+    createdAt: new Date(Date.now() - 4 * 3600 * 1000).toISOString(),
+    likeCount: 24,
+    commentCount: 3,
+    likedByMe: false,
+    media: [],
+    workout: {
+      exercises: ["Bench Press", "Incline DB Press", "Cable Fly"],
+      totalSets: 12,
+      totalReps: 96,
+      totalVolume: 11200,
+    },
   },
   {
-    id: '3',
-    author: 'Jordan Kim',
-    handle: '@jordankim',
-    initials: 'JK',
-    time: '5h ago',
-    caption: 'Leg day done. Squats feeling strong this week.',
-    exercises: [
-      { name: 'Squat', sets: 4, reps: 5, weight: 275 },
-      { name: 'Romanian Deadlift', sets: 3, reps: 8, weight: 185 },
-      { name: 'Leg Press', sets: 3, reps: 10, weight: 360 },
-    ],
-    likes: 18,
-    comments: 5,
-    liked: true,
-    commentPreviews: [
-      { authorInitials: 'MR', authorName: 'Marcus R.', text: 'Those squats are no joke 🔥' },
-    ],
+    id: -3,
+    userId: -3,
+    authorName: "Jordan Kim",
+    authorHandle: "@jordankim",
+    caption: "Leg day done. Squats feeling strong this week.",
+    createdAt: new Date(Date.now() - 5 * 3600 * 1000).toISOString(),
+    likeCount: 18,
+    commentCount: 5,
+    likedByMe: true,
+    media: [],
+    workout: {
+      exercises: ["Squat", "Romanian Deadlift", "Leg Press"],
+      totalSets: 10,
+      totalReps: 80,
+      totalVolume: 18200,
+    },
   },
 ];
 
 /* ─────────────────────────────────────────────────────────────────
    Helpers
 ───────────────────────────────────────────────────────────────── */
-function calcStats(exercises: Exercise[]) {
-  let totalSets = 0;
-  let totalReps = 0;
-  let totalVolume = 0;
-  for (const ex of exercises) {
-    totalSets += ex.sets;
-    totalReps += ex.sets * ex.reps;
-    if (ex.weight !== null) totalVolume += ex.sets * ex.reps * ex.weight;
-  }
-  const volumeDisplay = totalVolume >= 1000
-    ? `${(totalVolume / 1000).toFixed(1)}k lbs`
-    : `${totalVolume} lbs`;
-  return { totalSets, totalReps, volumeDisplay };
+function timeAgo(iso: string): string {
+  const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (diff < 60) return "just now";
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
+}
+
+function fmtVolume(v: number): string {
+  return v >= 1000 ? `${(v / 1000).toFixed(1)}k lbs` : `${v} lbs`;
+}
+
+function getInitials(name: string): string {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
 }
 
 /* ─────────────────────────────────────────────────────────────────
-   Workout log block (prototype style)
+   Avatar
 ───────────────────────────────────────────────────────────────── */
-function WorkoutLogBlock({ exercises }: { exercises: Exercise[] }) {
-  const { totalSets, totalReps, volumeDisplay } = calcStats(exercises);
-  const exerciseNames = exercises.map(e => e.name);
-
+function Avatar({ name, size = 40 }: { name: string; size?: number }) {
   return (
-    <div style={{
-      margin: '0 16px 12px',
-      background: 'var(--secondary)',
-      borderRadius: 14,
-      padding: '12px 14px',
-      border: '1px solid var(--border)',
-    }}>
-      {/* Header row: icon + label */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-        <div style={{
-          width: 32, height: 32, borderRadius: 9,
-          background: 'var(--foreground)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          flexShrink: 0,
-        }}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--background)" strokeWidth="2.5" strokeLinecap="round">
-            <rect x="3" y="3" width="7" height="7" rx="1"/>
-            <rect x="3" y="14" width="7" height="7" rx="1"/>
-            <line x1="14" y1="4" x2="21" y2="4"/>
-            <line x1="14" y1="9" x2="21" y2="9"/>
-            <line x1="14" y1="15" x2="21" y2="15"/>
-            <line x1="14" y1="20" x2="21" y2="20"/>
+    <div
+      style={{
+        width: size,
+        height: size,
+        borderRadius: "50%",
+        background: "var(--foreground)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexShrink: 0,
+      }}
+    >
+      <span
+        style={{
+          fontSize: size * 0.34,
+          fontWeight: 700,
+          color: "var(--background)",
+          letterSpacing: "-0.02em",
+        }}
+      >
+        {getInitials(name)}
+      </span>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Workout log block
+───────────────────────────────────────────────────────────────── */
+function WorkoutLogBlock({ workout }: { workout: WorkoutSummary }) {
+  return (
+    <div
+      style={{
+        margin: "0 16px 12px",
+        background: "var(--secondary)",
+        borderRadius: 14,
+        padding: "12px 14px",
+        border: "1px solid var(--border)",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          marginBottom: 8,
+        }}
+      >
+        <div
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: 9,
+            background: "var(--foreground)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="var(--background)"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+          >
+            <rect x="3" y="3" width="7" height="7" rx="1" />
+            <rect x="3" y="14" width="7" height="7" rx="1" />
+            <line x1="14" y1="4" x2="21" y2="4" />
+            <line x1="14" y1="9" x2="21" y2="9" />
+            <line x1="14" y1="15" x2="21" y2="15" />
+            <line x1="14" y1="20" x2="21" y2="20" />
           </svg>
         </div>
-        <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)' }}>Workout Log</span>
+        <span
+          style={{
+            fontSize: 14,
+            fontWeight: 700,
+            color: "var(--foreground)",
+          }}
+        >
+          Workout Log
+        </span>
       </div>
 
-      {/* Exercise name chips */}
-      <p style={{ fontSize: 13, color: '#6b7280', fontWeight: 500, margin: '0 0 10px', lineHeight: 1.4 }}>
-        {exerciseNames.join(' · ')}
+      <p
+        style={{
+          fontSize: 13,
+          color: "#6b7280",
+          fontWeight: 500,
+          margin: "0 0 10px",
+          lineHeight: 1.4,
+        }}
+      >
+        {workout.exercises.slice(0, 4).join(" · ")}
+        {workout.exercises.length > 4 ? " · …" : ""}
       </p>
 
-      {/* Stat tiles */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gap: 6,
+        }}
+      >
         {[
-          { value: String(totalSets), label: 'Sets' },
-          { value: String(totalReps), label: 'Reps' },
-          { value: volumeDisplay, label: 'Volume' },
-        ].map(stat => (
-          <div key={stat.label} style={{
-            background: 'var(--card)',
-            borderRadius: 10,
-            padding: '8px 6px',
-            textAlign: 'center',
-            border: '1px solid var(--border)',
-          }}>
-            <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--foreground)', lineHeight: 1.1 }}>{stat.value}</div>
-            <div style={{ fontSize: 11, fontWeight: 500, color: '#9ca3af', marginTop: 2 }}>{stat.label}</div>
+          { value: String(workout.totalSets), label: "Sets" },
+          { value: String(workout.totalReps), label: "Reps" },
+          { value: fmtVolume(workout.totalVolume), label: "Volume" },
+        ].map((stat) => (
+          <div
+            key={stat.label}
+            style={{
+              background: "var(--card)",
+              borderRadius: 10,
+              padding: "8px 6px",
+              textAlign: "center",
+              border: "1px solid var(--border)",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 17,
+                fontWeight: 800,
+                color: "var(--foreground)",
+                lineHeight: 1.1,
+              }}
+            >
+              {stat.value}
+            </div>
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 500,
+                color: "#9ca3af",
+                marginTop: 2,
+              }}
+            >
+              {stat.label}
+            </div>
           </div>
         ))}
       </div>
@@ -177,349 +283,1016 @@ function WorkoutLogBlock({ exercises }: { exercises: Exercise[] }) {
 }
 
 /* ─────────────────────────────────────────────────────────────────
-   Post card
+   Comments sheet
 ───────────────────────────────────────────────────────────────── */
-interface PostCardProps {
-  post: Post;
-  currentUserInitials: string;
-  onToggleLike: (id: string) => void;
-}
+function CommentsSheet({
+  post,
+  currentUser,
+  onClose,
+}: {
+  post: FeedPost;
+  currentUser: any;
+  onClose: () => void;
+}) {
+  const [draft, setDraft] = useState("");
+  const utils = trpc.useUtils();
+  const isReal = post.id > 0;
 
-function PostCard({ post, currentUserInitials, onToggleLike }: PostCardProps) {
-  const [commentText, setCommentText] = useState('');
+  const { data: comments = [], isLoading } = trpc.community.getComments.useQuery(
+    { postId: post.id, limit: 50, offset: 0 },
+    { enabled: isReal }
+  );
+
+  const addComment = trpc.community.addComment.useMutation({
+    onSuccess: () => {
+      utils.community.getComments.invalidate({ postId: post.id });
+      utils.community.getFeed.invalidate();
+      setDraft("");
+    },
+  });
+
+  const submit = () => {
+    const body = draft.trim();
+    if (!body || !isReal) return;
+    addComment.mutate({ postId: post.id, body });
+  };
+
+  const displayComments: Comment[] = isReal
+    ? (comments as Comment[])
+    : [
+        {
+          id: 1,
+          postId: post.id,
+          userId: -10,
+          body: "Absolute beast mode!",
+          createdAt: new Date(Date.now() - 3600 * 1000).toISOString(),
+          authorName: "Sarah K.",
+          authorHandle: "@sarahk",
+        },
+        {
+          id: 2,
+          postId: post.id,
+          userId: -11,
+          body: "Congrats on the PR!",
+          createdAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
+          authorName: "JD",
+          authorHandle: "@jd",
+        },
+      ];
 
   return (
-    <div style={{
-      background: 'var(--card)',
-      borderRadius: 20,
-      border: '1.5px solid var(--border)',
-      overflow: 'hidden',
-    }}>
-      {/* ── Post header ── */}
-      <div style={{ padding: '14px 16px 10px', display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{
-          width: 42, height: 42, borderRadius: '50%',
-          background: 'var(--foreground)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-        }}>
-          <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--background)' }}>{post.initials}</span>
-        </div>
-        <div style={{ flex: 1 }}>
-          <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)', margin: '0 0 1px' }}>{post.author}</p>
-          <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>{post.handle} · {post.time}</p>
-        </div>
-        <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', padding: 4 }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>
-          </svg>
-        </button>
-      </div>
-
-      {/* ── Caption ── */}
-      {post.caption && (
-        <div style={{ padding: '0 16px 12px' }}>
-          <p style={{ fontSize: 14, color: 'var(--foreground)', margin: 0, lineHeight: 1.55 }}>{post.caption}</p>
-        </div>
-      )}
-
-      {/* ── Workout log block ── */}
-      {post.exercises && post.exercises.length > 0 && (
-        <WorkoutLogBlock exercises={post.exercises} />
-      )}
-
-      {/* ── Media ── */}
-      {post.mediaUrl && (
-        <div style={{ margin: '0 16px 12px', borderRadius: 14, overflow: 'hidden', aspectRatio: '1', background: 'var(--secondary)' }}>
-          <img src={post.mediaUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-        </div>
-      )}
-
-      {/* ── Comment previews ── */}
-      {post.commentPreviews && post.commentPreviews.length > 0 && (
-        <div style={{ padding: '0 16px 10px' }}>
-          {post.commentPreviews.map((c, i) => (
-            <p key={i} style={{ fontSize: 13, color: 'var(--foreground)', margin: '0 0 2px', lineHeight: 1.45 }}>
-              <span style={{ fontWeight: 700 }}>{c.authorName}</span>{' '}
-              <span style={{ color: '#6b7280' }}>{c.text}</span>
-            </p>
-          ))}
-        </div>
-      )}
-
-      {/* ── Action bar ── */}
-      <div style={{
-        padding: '10px 16px 12px',
-        borderTop: '1px solid var(--border)',
-        display: 'flex', alignItems: 'center', gap: 8,
-      }}>
-        {/* Like pill */}
-        <button
-          onClick={() => onToggleLike(post.id)}
+    <>
+      <div
+        onClick={onClose}
+        style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(0,0,0,0.45)",
+          zIndex: 200,
+          backdropFilter: "blur(2px)",
+        }}
+      />
+      <div
+        style={{
+          position: "fixed",
+          bottom: 0,
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: "100%",
+          maxWidth: 480,
+          maxHeight: "75vh",
+          background: "var(--card)",
+          borderRadius: "20px 20px 0 0",
+          zIndex: 201,
+          boxShadow: "0 -4px 32px rgba(0,0,0,0.18)",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <div
           style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            padding: '7px 14px', borderRadius: 50,
-            border: '1.5px solid var(--border)',
-            background: 'var(--card)',
-            cursor: 'pointer',
-            color: post.liked ? '#ef4444' : '#9ca3af',
-            fontSize: 13, fontWeight: 600,
-            transition: 'border-color 0.15s',
-          }}
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill={post.liked ? '#ef4444' : 'none'} stroke={post.liked ? '#ef4444' : 'currentColor'} strokeWidth="2" strokeLinecap="round">
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-          </svg>
-          {post.likes}
-        </button>
-
-        {/* Comment pill */}
-        <button
-          style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            padding: '7px 14px', borderRadius: 50,
-            border: '1.5px solid var(--border)',
-            background: 'var(--card)',
-            cursor: 'pointer',
-            color: '#9ca3af',
-            fontSize: 13, fontWeight: 600,
-          }}
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-          </svg>
-          {post.comments}
-        </button>
-
-        {/* Share pill — pushed right */}
-        <button
-          style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            padding: '7px 14px', borderRadius: 50,
-            border: '1.5px solid var(--border)',
-            background: 'var(--card)',
-            cursor: 'pointer',
-            color: '#9ca3af',
-            fontSize: 13, fontWeight: 600,
-            marginLeft: 'auto',
-          }}
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
-            <polyline points="16 6 12 2 8 6"/>
-            <line x1="12" y1="2" x2="12" y2="15"/>
-          </svg>
-          Share
-        </button>
-      </div>
-
-      {/* ── Comment input row ── */}
-      <div style={{
-        padding: '0 16px 14px',
-        display: 'flex', alignItems: 'center', gap: 10,
-      }}>
-        <div style={{
-          width: 32, height: 32, borderRadius: '50%',
-          background: 'var(--foreground)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-        }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--background)' }}>{currentUserInitials}</span>
-        </div>
-        <input
-          type="text"
-          placeholder="Add a comment…"
-          value={commentText}
-          onChange={e => setCommentText(e.target.value)}
-          style={{
-            flex: 1, background: 'var(--secondary)',
-            border: 'none', borderRadius: 50,
-            padding: '8px 14px', fontSize: 13,
-            color: 'var(--foreground)', outline: 'none',
-            fontFamily: 'inherit',
+            width: 36,
+            height: 4,
+            borderRadius: 2,
+            background: "var(--border)",
+            margin: "14px auto 0",
+            flexShrink: 0,
           }}
         />
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "14px 20px 12px",
+            borderBottom: "1px solid var(--border)",
+            flexShrink: 0,
+          }}
+        >
+          <h3
+            style={{
+              fontSize: 16,
+              fontWeight: 800,
+              color: "var(--foreground)",
+              margin: 0,
+            }}
+          >
+            Comments
+          </h3>
+          <button
+            onClick={onClose}
+            style={{
+              background: "var(--secondary)",
+              border: "none",
+              borderRadius: "50%",
+              width: 28,
+              height: 28,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              color: "#6b7280",
+              fontSize: 18,
+            }}
+          >
+            ×
+          </button>
+        </div>
+
+        <div style={{ flex: 1, overflowY: "auto", padding: "12px 20px" }}>
+          {isLoading && (
+            <p
+              style={{
+                color: "#9ca3af",
+                fontSize: 13,
+                textAlign: "center",
+              }}
+            >
+              Loading…
+            </p>
+          )}
+          {!isLoading && displayComments.length === 0 && (
+            <p
+              style={{
+                color: "#9ca3af",
+                fontSize: 13,
+                textAlign: "center",
+                marginTop: 24,
+              }}
+            >
+              No comments yet. Be the first!
+            </p>
+          )}
+          {displayComments.map((c) => (
+            <div
+              key={c.id}
+              style={{ display: "flex", gap: 10, marginBottom: 14 }}
+            >
+              <Avatar name={c.authorName} size={32} />
+              <div>
+                <p
+                  style={{
+                    fontSize: 13,
+                    color: "var(--foreground)",
+                    margin: "0 0 2px",
+                  }}
+                >
+                  <strong>{c.authorName}</strong>{" "}
+                  <span style={{ color: "#9ca3af", fontWeight: 400 }}>
+                    {c.authorHandle}
+                  </span>
+                </p>
+                <p
+                  style={{
+                    fontSize: 14,
+                    color: "var(--foreground)",
+                    margin: "0 0 2px",
+                  }}
+                >
+                  {c.body}
+                </p>
+                <p style={{ fontSize: 11, color: "#9ca3af", margin: 0 }}>
+                  {timeAgo(c.createdAt)}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            gap: 10,
+            padding: "12px 20px",
+            borderTop: "1px solid var(--border)",
+            paddingBottom: "calc(12px + env(safe-area-inset-bottom))",
+            flexShrink: 0,
+          }}
+        >
+          <Avatar name={currentUser?.name ?? "Me"} size={32} />
+          <input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && submit()}
+            placeholder={
+              isReal ? "Add a comment…" : "Sign in to comment"
+            }
+            disabled={!isReal}
+            style={{
+              flex: 1,
+              background: "var(--secondary)",
+              border: "1.5px solid var(--border)",
+              borderRadius: 20,
+              padding: "8px 14px",
+              fontSize: 14,
+              color: "var(--foreground)",
+              outline: "none",
+              fontFamily: "inherit",
+            }}
+          />
+          {isReal && (
+            <button
+              onClick={submit}
+              disabled={!draft.trim() || addComment.isPending}
+              style={{
+                background: "var(--foreground)",
+                color: "var(--background)",
+                border: "none",
+                borderRadius: 20,
+                padding: "8px 16px",
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: "pointer",
+                opacity: !draft.trim() ? 0.4 : 1,
+              }}
+            >
+              Post
+            </button>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
 /* ─────────────────────────────────────────────────────────────────
-   Main component
+   New post composer (bottom sheet)
 ───────────────────────────────────────────────────────────────── */
-interface CommunityTabProps {
-  user: any;
-  workoutSessions: Array<{ date: string; exercises: Array<{ exercise: string; sets: number; reps: number; weight: number }> }>;
-}
+function NewPostComposer({
+  currentUser,
+  onClose,
+}: {
+  currentUser: any;
+  onClose: () => void;
+}) {
+  const [caption, setCaption] = useState("");
+  const [mediaFiles, setMediaFiles] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const utils = trpc.useUtils();
 
-export function CommunityTab({ user, workoutSessions }: CommunityTabProps) {
-  const [posts, setPosts] = useState<Post[]>(SAMPLE_POSTS);
-  const [showComposer, setShowComposer] = useState(false);
-  const [composerType, setComposerType] = useState<'log' | 'media'>('log');
-  const [caption, setCaption] = useState('');
-  const [includeLog, setIncludeLog] = useState(true);
-  const [mediaPreview, setMediaPreview] = useState<string | null>(null);
+  const getUploadUrl = trpc.community.getUploadUrl.useMutation();
+  const createPost = trpc.community.createPost.useMutation({
+    onSuccess: () => {
+      utils.community.getFeed.invalidate();
+      onClose();
+    },
+    onError: (e) => setError(e.message),
+  });
 
-  const initials = user?.name
-    ? user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
-    : 'FT';
-
-  const todaySession = (() => {
-    const today = new Date().toLocaleDateString();
-    return workoutSessions.find(s => s.date === today);
-  })();
-
-  const todayExercises: Exercise[] = todaySession
-    ? todaySession.exercises.slice(0, 5).map(e => ({
-        name: e.exercise,
-        sets: e.sets,
-        reps: e.reps,
-        weight: e.weight || null,
-      }))
-    : [];
-
-  const handleToggleLike = (id: string) => {
-    setPosts(prev => prev.map(p =>
-      p.id === id ? { ...p, liked: !p.liked, likes: p.liked ? p.likes - 1 : p.likes + 1 } : p
-    ));
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []).slice(0, 4);
+    setMediaFiles(files);
+    setPreviews(files.map((f) => URL.createObjectURL(f)));
   };
 
-  const handleSubmitPost = () => {
-    if (!caption.trim() && !mediaPreview) return;
-    const newPost: Post = {
-      id: Date.now().toString(),
-      author: user?.name || 'You',
-      handle: `@${(user?.name || 'you').toLowerCase().replace(/\s+/g, '')}`,
-      initials,
-      time: 'Just now',
-      caption,
-      exercises: includeLog && composerType === 'log' && todayExercises.length > 0 ? todayExercises : undefined,
-      mediaUrl: composerType === 'media' ? mediaPreview || undefined : undefined,
-      likes: 0,
-      comments: 0,
-      liked: false,
-    };
-    setPosts(prev => [newPost, ...prev]);
-    setCaption('');
-    setMediaPreview(null);
-    setShowComposer(false);
+  const removeFile = (i: number) => {
+    setMediaFiles((prev) => prev.filter((_, idx) => idx !== i));
+    setPreviews((prev) => prev.filter((_, idx) => idx !== i));
   };
 
-  const handleMediaFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) setMediaPreview(URL.createObjectURL(file));
+  const handleSubmit = async () => {
+    if (!caption.trim() && mediaFiles.length === 0) return;
+    setUploading(true);
+    setError(null);
+
+    try {
+      const mediaItems: {
+        key: string;
+        mediaType: "photo" | "video";
+        mimeType: string;
+      }[] = [];
+
+      for (const file of mediaFiles) {
+        const mediaType: "photo" | "video" = file.type.startsWith("video/")
+          ? "video"
+          : "photo";
+        const { uploadUrl, key } = await getUploadUrl.mutateAsync({
+          mimeType: file.type,
+          mediaType,
+        });
+        const res = await fetch(uploadUrl, {
+          method: "PUT",
+          body: file,
+          headers: { "Content-Type": file.type },
+        });
+        if (!res.ok) throw new Error("Media upload failed");
+        mediaItems.push({ key, mediaType, mimeType: file.type });
+      }
+
+      await createPost.mutateAsync({
+        caption: caption.trim() || undefined,
+        mediaItems,
+      });
+    } catch (e: any) {
+      setError(e.message ?? "Something went wrong");
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
-    <div className="space-y-3">
-
-      {/* ── Post composer trigger ── */}
-      {!showComposer && (
+    <>
+      <div
+        onClick={onClose}
+        style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(0,0,0,0.45)",
+          zIndex: 200,
+          backdropFilter: "blur(2px)",
+        }}
+      />
+      <div
+        style={{
+          position: "fixed",
+          bottom: 0,
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: "100%",
+          maxWidth: 480,
+          background: "var(--card)",
+          borderRadius: "20px 20px 0 0",
+          zIndex: 201,
+          boxShadow: "0 -4px 32px rgba(0,0,0,0.18)",
+          paddingBottom: "calc(16px + env(safe-area-inset-bottom))",
+        }}
+      >
         <div
-          onClick={() => setShowComposer(true)}
           style={{
-            display: 'flex', alignItems: 'center', gap: 12,
-            background: 'var(--card)', border: '1.5px solid var(--border)',
-            borderRadius: 16, padding: '12px 16px', cursor: 'pointer',
+            width: 36,
+            height: 4,
+            borderRadius: 2,
+            background: "var(--border)",
+            margin: "14px auto 0",
+          }}
+        />
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "14px 20px 12px",
+            borderBottom: "1px solid var(--border)",
           }}
         >
-          <div style={{
-            width: 36, height: 36, borderRadius: '50%',
-            background: 'var(--foreground)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-          }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--background)' }}>{initials}</span>
-          </div>
-          <span style={{ fontSize: 14, color: '#9ca3af', fontWeight: 500 }}>Share your workout…</span>
+          <h3
+            style={{
+              fontSize: 16,
+              fontWeight: 800,
+              color: "var(--foreground)",
+              margin: 0,
+            }}
+          >
+            New Post
+          </h3>
+          <button
+            onClick={onClose}
+            style={{
+              background: "var(--secondary)",
+              border: "none",
+              borderRadius: "50%",
+              width: 28,
+              height: 28,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              color: "#6b7280",
+              fontSize: 18,
+            }}
+          >
+            ×
+          </button>
         </div>
-      )}
 
-      {/* ── Post composer ── */}
-      {showComposer && (
-        <div style={{ background: 'var(--card)', borderRadius: 20, border: '1.5px solid var(--border)', padding: '16px' }}>
-          {/* Type selector */}
-          <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-            {(['log', 'media'] as const).map(type => (
-              <button
-                key={type}
-                onClick={() => setComposerType(type)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px',
-                  borderRadius: 10, border: '1.5px solid var(--border)', fontSize: 13, fontWeight: 600,
-                  cursor: 'pointer',
-                  background: composerType === type ? 'var(--secondary)' : 'var(--card)',
-                  color: composerType === type ? 'var(--foreground)' : '#9ca3af',
-                }}
-              >
-                {type === 'log' ? (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><line x1="14" y1="4" x2="21" y2="4"/><line x1="14" y1="9" x2="21" y2="9"/><line x1="14" y1="15" x2="21" y2="15"/><line x1="14" y1="20" x2="21" y2="20"/></svg>
-                ) : (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                )}
-                {type === 'log' ? 'Workout Log' : 'Photo / Video'}
-              </button>
-            ))}
+        <div style={{ padding: "16px 20px" }}>
+          <div style={{ display: "flex", gap: 12, marginBottom: 14 }}>
+            <Avatar name={currentUser?.name ?? "Me"} size={40} />
+            <textarea
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
+              placeholder="Share your workout, progress, or motivation…"
+              rows={3}
+              style={{
+                flex: 1,
+                background: "var(--secondary)",
+                border: "1.5px solid var(--border)",
+                borderRadius: 12,
+                padding: "10px 14px",
+                fontSize: 14,
+                color: "var(--foreground)",
+                resize: "none",
+                outline: "none",
+                fontFamily: "inherit",
+              }}
+            />
           </div>
 
-          <textarea
-            placeholder={composerType === 'log' ? 'Share your workout… (optional)' : 'Describe your set, PR, or clip…'}
-            rows={2}
-            value={caption}
-            onChange={e => setCaption(e.target.value)}
-            style={{ width: '100%', background: 'var(--secondary)', border: 'none', borderRadius: 14, padding: '12px 14px', fontSize: 14, color: 'var(--foreground)', resize: 'none', outline: 'none', fontFamily: 'inherit', marginBottom: 10, boxSizing: 'border-box' }}
-          />
-
-          {composerType === 'log' && (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--secondary)', borderRadius: 12, padding: '10px 14px', marginBottom: 10 }}>
-              <div>
-                <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)', margin: '0 0 1px' }}>Include today's workout log</p>
-                <p style={{ fontSize: 11, color: '#9ca3af', margin: 0 }}>
-                  {todayExercises.length > 0 ? todayExercises[0].name : 'No workout logged today'}
-                </p>
-              </div>
-              <div
-                onClick={() => setIncludeLog(!includeLog)}
-                style={{ width: 38, height: 22, borderRadius: 11, background: includeLog ? 'var(--foreground)' : '#e2e4e7', cursor: 'pointer', position: 'relative', transition: 'background .2s', flexShrink: 0 }}
-              >
-                <div style={{ width: 16, height: 16, borderRadius: '50%', background: 'white', position: 'absolute', top: 3, left: includeLog ? 19 : 3, transition: 'left .2s', boxShadow: '0 1px 3px rgba(0,0,0,.2)' }} />
-              </div>
+          {previews.length > 0 && (
+            <div
+              style={{
+                display: "flex",
+                gap: 8,
+                marginBottom: 14,
+                flexWrap: "wrap",
+              }}
+            >
+              {previews.map((src, i) => (
+                <div key={i} style={{ position: "relative" }}>
+                  {mediaFiles[i]?.type.startsWith("video/") ? (
+                    <video
+                      src={src}
+                      style={{
+                        width: 80,
+                        height: 80,
+                        objectFit: "cover",
+                        borderRadius: 10,
+                        border: "1.5px solid var(--border)",
+                      }}
+                    />
+                  ) : (
+                    <img
+                      src={src}
+                      alt=""
+                      style={{
+                        width: 80,
+                        height: 80,
+                        objectFit: "cover",
+                        borderRadius: 10,
+                        border: "1.5px solid var(--border)",
+                      }}
+                    />
+                  )}
+                  <button
+                    onClick={() => removeFile(i)}
+                    style={{
+                      position: "absolute",
+                      top: -6,
+                      right: -6,
+                      width: 20,
+                      height: 20,
+                      borderRadius: "50%",
+                      background: "#ef4444",
+                      color: "#fff",
+                      border: "none",
+                      cursor: "pointer",
+                      fontSize: 12,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
             </div>
           )}
 
-          {composerType === 'media' && (
-            <>
-              <label htmlFor="composer-file" style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--secondary)', borderRadius: 14, padding: '12px 14px', cursor: 'pointer', marginBottom: 10 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                </div>
-                <div>
-                  <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)', margin: 0 }}>Add photo or video</p>
-                  <p style={{ fontSize: 11, color: '#9ca3af', margin: 0 }}>Tap to choose from your library</p>
-                </div>
-              </label>
-              <input id="composer-file" type="file" accept="image/*,video/*" style={{ display: 'none' }} onChange={handleMediaFile} />
-              {mediaPreview && (
-                <div style={{ borderRadius: 14, overflow: 'hidden', marginBottom: 10, aspectRatio: '1', background: 'var(--secondary)' }}>
-                  <img src={mediaPreview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                </div>
-              )}
-            </>
+          {error && (
+            <p
+              style={{
+                color: "#ef4444",
+                fontSize: 13,
+                margin: "0 0 10px",
+              }}
+            >
+              {error}
+            </p>
           )}
 
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={() => setShowComposer(false)} style={{ flex: 1, padding: 11, background: 'var(--card)', border: '1.5px solid var(--border)', borderRadius: 14, fontSize: 14, fontWeight: 600, color: '#6b7280', cursor: 'pointer' }}>Cancel</button>
-            <button onClick={handleSubmitPost} style={{ flex: 2, padding: 11, background: 'var(--foreground)', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 700, color: 'var(--background)', cursor: 'pointer' }}>Post</button>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <button
+              onClick={() => fileRef.current?.click()}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                background: "var(--secondary)",
+                border: "1.5px solid var(--border)",
+                borderRadius: 20,
+                padding: "7px 14px",
+                fontSize: 13,
+                fontWeight: 600,
+                color: "#6b7280",
+                cursor: "pointer",
+              }}
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              >
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <polyline points="21 15 16 10 5 21" />
+              </svg>
+              Photo / Video
+            </button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*,video/*"
+              multiple
+              style={{ display: "none" }}
+              onChange={handleFileChange}
+            />
+            <button
+              onClick={handleSubmit}
+              disabled={
+                uploading || (!caption.trim() && mediaFiles.length === 0)
+              }
+              style={{
+                background: "var(--foreground)",
+                color: "var(--background)",
+                border: "none",
+                borderRadius: 20,
+                padding: "9px 22px",
+                fontSize: 14,
+                fontWeight: 700,
+                cursor: "pointer",
+                opacity:
+                  uploading || (!caption.trim() && mediaFiles.length === 0)
+                    ? 0.4
+                    : 1,
+              }}
+            >
+              {uploading ? "Posting…" : "Post"}
+            </button>
           </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Post card
+───────────────────────────────────────────────────────────────── */
+function PostCard({
+  post,
+  currentUser,
+}: {
+  post: FeedPost;
+  currentUser: any;
+}) {
+  const [showComments, setShowComments] = useState(false);
+  const [liked, setLiked] = useState(post.likedByMe);
+  const [likeCount, setLikeCount] = useState(post.likeCount);
+  const isReal = post.id > 0;
+  const utils = trpc.useUtils();
+
+  const likeMutation = trpc.community.likePost.useMutation({
+    onSuccess: () => utils.community.getFeed.invalidate(),
+  });
+  const unlikeMutation = trpc.community.unlikePost.useMutation({
+    onSuccess: () => utils.community.getFeed.invalidate(),
+  });
+
+  const toggleLike = () => {
+    if (!isReal) return; // sample posts: optimistic only
+    if (liked) {
+      setLiked(false);
+      setLikeCount((c) => c - 1);
+      unlikeMutation.mutate({ postId: post.id });
+    } else {
+      setLiked(true);
+      setLikeCount((c) => c + 1);
+      likeMutation.mutate({ postId: post.id });
+    }
+  };
+
+  return (
+    <>
+      <div
+        style={{
+          background: "var(--card)",
+          borderRadius: 20,
+          border: "1.5px solid var(--border)",
+          overflow: "hidden",
+          marginBottom: 12,
+        }}
+      >
+        {/* Header */}
+        <div
+          style={{
+            padding: "14px 16px 10px",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+          }}
+        >
+          <Avatar name={post.authorName} size={42} />
+          <div style={{ flex: 1 }}>
+            <p
+              style={{
+                fontSize: 14,
+                fontWeight: 700,
+                color: "var(--foreground)",
+                margin: "0 0 1px",
+              }}
+            >
+              {post.authorName}
+            </p>
+            <p style={{ fontSize: 12, color: "#9ca3af", margin: 0 }}>
+              {post.authorHandle} · {timeAgo(post.createdAt)}
+            </p>
+          </div>
+          <button
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: "#9ca3af",
+              padding: 4,
+            }}
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+            >
+              <circle cx="12" cy="5" r="1.5" />
+              <circle cx="12" cy="12" r="1.5" />
+              <circle cx="12" cy="19" r="1.5" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Caption */}
+        {post.caption && (
+          <div style={{ padding: "0 16px 12px" }}>
+            <p
+              style={{
+                fontSize: 14,
+                color: "var(--foreground)",
+                margin: 0,
+                lineHeight: 1.55,
+              }}
+            >
+              {post.caption}
+            </p>
+          </div>
+        )}
+
+        {/* Workout log block */}
+        {post.workout && <WorkoutLogBlock workout={post.workout} />}
+
+        {/* Media */}
+        {post.media.length > 0 && (
+          <div
+            style={{
+              margin: "0 16px 12px",
+              borderRadius: 14,
+              overflow: "hidden",
+              border: "1px solid var(--border)",
+            }}
+          >
+            {post.media[0].mediaType === "video" ? (
+              <video
+                src={post.media[0].url}
+                controls
+                playsInline
+                style={{
+                  width: "100%",
+                  maxHeight: 320,
+                  objectFit: "cover",
+                }}
+              />
+            ) : (
+              <img
+                src={post.media[0].url}
+                alt=""
+                style={{
+                  width: "100%",
+                  maxHeight: 320,
+                  objectFit: "cover",
+                }}
+              />
+            )}
+          </div>
+        )}
+
+        {/* Action bar */}
+        <div
+          style={{
+            padding: "10px 16px 12px",
+            borderTop: "1px solid var(--border)",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          <button
+            onClick={toggleLike}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "7px 14px",
+              borderRadius: 50,
+              border: `1.5px solid ${liked ? "#fca5a5" : "var(--border)"}`,
+              background: liked ? "#fee2e2" : "var(--card)",
+              cursor: "pointer",
+              color: liked ? "#ef4444" : "#9ca3af",
+              fontSize: 13,
+              fontWeight: 600,
+            }}
+          >
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill={liked ? "#ef4444" : "none"}
+              stroke={liked ? "#ef4444" : "currentColor"}
+              strokeWidth="2"
+              strokeLinecap="round"
+            >
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
+            {likeCount}
+          </button>
+
+          <button
+            onClick={() => setShowComments(true)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "7px 14px",
+              borderRadius: 50,
+              border: "1.5px solid var(--border)",
+              background: "var(--card)",
+              cursor: "pointer",
+              color: "#9ca3af",
+              fontSize: 13,
+              fontWeight: 600,
+            }}
+          >
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            >
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            {post.commentCount}
+          </button>
+
+          <button
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "7px 14px",
+              borderRadius: 50,
+              border: "1.5px solid var(--border)",
+              background: "var(--card)",
+              cursor: "pointer",
+              color: "#9ca3af",
+              fontSize: 13,
+              fontWeight: 600,
+              marginLeft: "auto",
+            }}
+          >
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            >
+              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+              <polyline points="16 6 12 2 8 6" />
+              <line x1="12" y1="2" x2="12" y2="15" />
+            </svg>
+            Share
+          </button>
+        </div>
+
+        {/* Comment input row */}
+        <div
+          style={{
+            padding: "0 16px 14px",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+          }}
+        >
+          <Avatar name={currentUser?.name ?? "Me"} size={32} />
+          <input
+            type="text"
+            placeholder="Add a comment…"
+            onClick={() => setShowComments(true)}
+            readOnly
+            style={{
+              flex: 1,
+              background: "var(--secondary)",
+              border: "none",
+              borderRadius: 50,
+              padding: "8px 14px",
+              fontSize: 13,
+              color: "var(--foreground)",
+              outline: "none",
+              fontFamily: "inherit",
+              cursor: "pointer",
+            }}
+          />
+        </div>
+      </div>
+
+      {showComments && (
+        <CommentsSheet
+          post={post}
+          currentUser={currentUser}
+          onClose={() => setShowComments(false)}
+        />
+      )}
+    </>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Main CommunityTab
+───────────────────────────────────────────────────────────────── */
+interface CommunityTabProps {
+  user: any;
+  workoutSessions?: any[];
+}
+
+export function CommunityTab({ user }: CommunityTabProps) {
+  const [showComposer, setShowComposer] = useState(false);
+
+  const {
+    data,
+    isLoading,
+    error,
+    refetch,
+  } = trpc.community.getFeed.useQuery(
+    { limit: 20, offset: 0 },
+    { refetchOnWindowFocus: true, staleTime: 30_000 }
+  );
+
+  // Use real posts if available, fall back to sample posts for display
+  const feedPosts: FeedPost[] =
+    data && data.posts.length > 0 ? (data.posts as FeedPost[]) : SAMPLE_POSTS;
+
+  const showingSamples = !data || data.posts.length === 0;
+
+  return (
+    <div className="space-y-3">
+      {/* Compose trigger */}
+      <div
+        onClick={() => setShowComposer(true)}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          background: "var(--card)",
+          border: "1.5px solid var(--border)",
+          borderRadius: 16,
+          padding: "12px 16px",
+          cursor: "pointer",
+        }}
+      >
+        <Avatar name={user?.name ?? "Me"} size={36} />
+        <span style={{ fontSize: 14, color: "#9ca3af", fontWeight: 500, flex: 1 }}>
+          Share your workout…
+        </span>
+        <button
+          style={{
+            background: "var(--foreground)",
+            color: "var(--background)",
+            border: "none",
+            borderRadius: 16,
+            padding: "6px 14px",
+            fontSize: 13,
+            fontWeight: 700,
+            cursor: "pointer",
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowComposer(true);
+          }}
+        >
+          Post
+        </button>
+      </div>
+
+      {/* Loading */}
+      {isLoading && (
+        <div style={{ textAlign: "center", padding: "32px 0" }}>
+          <p style={{ color: "#9ca3af", fontSize: 14 }}>Loading feed…</p>
         </div>
       )}
 
-      {/* ── Feed ── */}
-      {posts.map(post => (
-        <PostCard
-          key={post.id}
-          post={post}
-          currentUserInitials={initials}
-          onToggleLike={handleToggleLike}
-        />
+      {/* Error */}
+      {error && (
+        <div
+          style={{
+            background: "#fee2e2",
+            borderRadius: 14,
+            padding: "14px 16px",
+          }}
+        >
+          <p style={{ color: "#ef4444", fontSize: 13, margin: 0 }}>
+            Could not load feed.{" "}
+            <button
+              onClick={() => refetch()}
+              style={{
+                background: "none",
+                border: "none",
+                color: "#ef4444",
+                fontWeight: 700,
+                cursor: "pointer",
+                textDecoration: "underline",
+                padding: 0,
+                fontSize: 13,
+              }}
+            >
+              Retry
+            </button>
+          </p>
+        </div>
+      )}
+
+      {/* Sample posts notice */}
+      {!isLoading && showingSamples && (
+        <div
+          style={{
+            background: "var(--secondary)",
+            borderRadius: 12,
+            padding: "10px 14px",
+            border: "1px solid var(--border)",
+          }}
+        >
+          <p
+            style={{
+              fontSize: 12,
+              color: "#9ca3af",
+              margin: 0,
+              textAlign: "center",
+            }}
+          >
+            Sample posts shown for reference — be the first to post!
+          </p>
+        </div>
+      )}
+
+      {/* Feed */}
+      {feedPosts.map((post) => (
+        <PostCard key={post.id} post={post} currentUser={user} />
       ))}
+
+      {/* Composer */}
+      {showComposer && (
+        <NewPostComposer
+          currentUser={user}
+          onClose={() => setShowComposer(false)}
+        />
+      )}
     </div>
   );
 }
+
+export default CommunityTab;
