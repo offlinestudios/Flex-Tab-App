@@ -324,6 +324,7 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
   const [showEditModal, setShowEditModal] = useState(false);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [showShareSheet, setShowShareSheet] = useState(false);
+  const [showTierDetails, setShowTierDetails] = useState(false);
 
   // Editable profile fields
   const [profileName, setProfileName] = useState<string>(user?.name || 'FlexTab User');
@@ -352,8 +353,8 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
   // Training tier
   const getTrainingTier = () => {
     const days = workoutSessions.length;
-    if (days === 0) return { tier: 'Beginner', level: 1, progress: 0, next: 5, color: '#9ca3af' };
-    if (days < 5) return { tier: 'Beginner', level: 1, progress: days / 5, next: 5 - days, color: '#9ca3af' };
+    if (days === 0) return { tier: 'Novice', level: 1, progress: 0, next: 5, color: '#9ca3af' };
+    if (days < 5) return { tier: 'Novice', level: 1, progress: days / 5, next: 5 - days, color: '#9ca3af' };
     if (days < 20) return { tier: 'Intermediate', level: 2, progress: (days - 5) / 15, next: 20 - days, color: '#3b82f6' };
     if (days < 50) return { tier: 'Advanced', level: 3, progress: (days - 20) / 30, next: 50 - days, color: '#8b5cf6' };
     if (days < 100) return { tier: 'Elite', level: 4, progress: (days - 50) / 50, next: 100 - days, color: '#f59e0b' };
@@ -552,6 +553,12 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
               {tier.next > 0 && (
                 <p style={{ fontSize: 12, color: '#9ca3af', margin: '6px 0 0' }}>{tier.next} more workout{tier.next !== 1 ? 's' : ''} to reach next tier</p>
               )}
+              <button
+                onClick={() => setShowTierDetails(true)}
+                style={{ marginTop: 10, width: '100%', padding: '9px 0', background: 'var(--secondary)', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#6b7280', cursor: 'pointer' }}
+              >
+                View tier details
+              </button>
             </div>
 
             {/* Recent Workouts */}
@@ -645,6 +652,55 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
       )}
       {showSettingsMenu && <SettingsMenu onClose={() => setShowSettingsMenu(false)} />}
       {showShareSheet && <ShareSheet profileName={profileName} onClose={() => setShowShareSheet(false)} />}
+      {showTierDetails && (
+        <>
+          <div onClick={() => setShowTierDetails(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 200, backdropFilter: 'blur(2px)' }} />
+          <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 480, background: 'var(--card)', borderRadius: '20px 20px 0 0', padding: '20px 20px calc(24px + env(safe-area-inset-bottom))', zIndex: 201, boxShadow: '0 -4px 32px rgba(0,0,0,0.15)' }}>
+            <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border)', margin: '0 auto 18px' }} />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <h3 style={{ fontSize: 17, fontWeight: 800, color: 'var(--foreground)', margin: 0 }}>Training Tiers</h3>
+              <button onClick={() => setShowTierDetails(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', fontSize: 22, lineHeight: 1, padding: 4 }}>×</button>
+            </div>
+            {([
+              { name: 'Novice',       level: 1, color: '#9ca3af', min: 0,   max: 4,   desc: 'Complete 5 workouts to advance' },
+              { name: 'Intermediate', level: 2, color: '#3b82f6', min: 5,   max: 19,  desc: 'Complete 20 workouts to advance' },
+              { name: 'Advanced',     level: 3, color: '#8b5cf6', min: 20,  max: 49,  desc: 'Complete 50 workouts to advance' },
+              { name: 'Elite',        level: 4, color: '#f59e0b', min: 50,  max: 99,  desc: 'Complete 100 workouts to advance' },
+              { name: 'Legend',       level: 5, color: '#ef4444', min: 100, max: null, desc: 'Maximum tier — you\'ve reached the top!' },
+            ] as { name: string; level: number; color: string; min: number; max: number | null; desc: string }[]).map((t, i, arr) => {
+              const days = workoutSessions.length;
+              const isCurrentTier = tier.level === t.level;
+              const isCompleted = tier.level > t.level;
+              return (
+                <div key={t.name} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 0', borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                  {/* Level badge */}
+                  <div style={{ width: 44, height: 44, borderRadius: '50%', background: (isCurrentTier || isCompleted) ? t.color + '20' : 'var(--secondary)', border: `2px solid ${(isCurrentTier || isCompleted) ? t.color : 'var(--border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    {isCompleted
+                      ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={t.color} strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      : <span style={{ fontSize: 14, fontWeight: 800, color: (isCurrentTier || isCompleted) ? t.color : '#9ca3af' }}>L{t.level}</span>
+                    }
+                  </div>
+                  {/* Info */}
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
+                      <p style={{ fontSize: 15, fontWeight: 700, color: isCurrentTier ? 'var(--foreground)' : isCompleted ? t.color : '#9ca3af', margin: 0 }}>{t.name}</p>
+                      {isCurrentTier && <span style={{ fontSize: 10, fontWeight: 700, background: t.color + '20', color: t.color, padding: '2px 7px', borderRadius: 20 }}>CURRENT</span>}
+                    </div>
+                    <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>
+                      {isCompleted ? `Completed · ${t.min}–${t.max} workouts` : isCurrentTier ? `${days} / ${t.max !== null ? t.max + 1 : '∞'} workouts · ${t.desc}` : t.desc}
+                    </p>
+                    {isCurrentTier && (
+                      <div style={{ marginTop: 6, background: 'var(--secondary)', borderRadius: 6, height: 5, overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${Math.round(tier.progress * 100)}%`, background: t.color, borderRadius: 6, transition: 'width 0.5s ease' }} />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
     </>
   );
 }
