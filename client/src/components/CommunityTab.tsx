@@ -540,9 +540,11 @@ function CommentsSheet({
 ───────────────────────────────────────────────────────────────── */
 function NewPostComposer({
   currentUser,
+  workoutSessions = [],
   onClose,
 }: {
   currentUser: any;
+  workoutSessions?: any[];
   onClose: () => void;
 }) {
   const [caption, setCaption] = useState("");
@@ -550,8 +552,15 @@ function NewPostComposer({
   const [previews, setPreviews] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [attachedSession, setAttachedSession] = useState<any | null>(null);
+  const [showSessionPicker, setShowSessionPicker] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const utils = trpc.useUtils();
+
+  // Sort sessions newest first
+  const sortedSessions = [...workoutSessions].sort((a, b) =>
+    new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
 
   const getUploadUrl = trpc.community.getUploadUrl.useMutation();
   const createPost = trpc.community.createPost.useMutation({
@@ -605,6 +614,12 @@ function NewPostComposer({
       await createPost.mutateAsync({
         caption: caption.trim() || undefined,
         mediaItems,
+        workoutSessionData: attachedSession
+          ? {
+              date: attachedSession.date,
+              exercises: attachedSession.exercises,
+            }
+          : undefined,
       });
     } catch (e: any) {
       setError(e.message ?? "Something went wrong");
@@ -711,6 +726,151 @@ function NewPostComposer({
             />
           </div>
 
+          {/* Attached workout log preview */}
+          {attachedSession && (
+            <div
+              style={{
+                background: "var(--secondary)",
+                border: "1.5px solid var(--border)",
+                borderRadius: 14,
+                padding: "12px 14px",
+                marginBottom: 14,
+                position: "relative",
+              }}
+            >
+              <button
+                onClick={() => setAttachedSession(null)}
+                style={{
+                  position: "absolute",
+                  top: 8,
+                  right: 8,
+                  background: "#ef4444",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "50%",
+                  width: 20,
+                  height: 20,
+                  fontSize: 12,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                ×
+              </button>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                <div
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: 8,
+                    background: "var(--foreground)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                    <line x1="8" y1="12" x2="16" y2="12" />
+                    <line x1="8" y1="8" x2="16" y2="8" />
+                    <line x1="8" y1="16" x2="12" y2="16" />
+                  </svg>
+                </div>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "var(--foreground)" }}>Workout Log</span>
+                <span style={{ fontSize: 12, color: "#9ca3af", marginLeft: "auto", paddingRight: 24 }}>{attachedSession.date}</span>
+              </div>
+              <p style={{ fontSize: 12, color: "#6b7280", margin: "0 0 8px" }}>
+                {attachedSession.exercises.map((e: any) => e.exercise).filter((v: string, i: number, a: string[]) => a.indexOf(v) === i).join(" · ")}
+              </p>
+              <div style={{ display: "flex", gap: 8 }}>
+                {[
+                  { label: "Sets", value: attachedSession.exercises.reduce((s: number, e: any) => s + (e.sets || 1), 0) },
+                  { label: "Reps", value: attachedSession.exercises.reduce((s: number, e: any) => s + (e.reps || 0) * (e.sets || 1), 0) },
+                  { label: "Volume", value: (() => { const v = attachedSession.exercises.reduce((s: number, e: any) => s + (e.weight || 0) * (e.reps || 0) * (e.sets || 1), 0); return v >= 1000 ? (v / 1000).toFixed(1) + "k lbs" : v + " lbs"; })() },
+                ].map((stat) => (
+                  <div
+                    key={stat.label}
+                    style={{
+                      flex: 1,
+                      background: "var(--card)",
+                      borderRadius: 10,
+                      padding: "8px 6px",
+                      textAlign: "center",
+                      border: "1px solid var(--border)",
+                    }}
+                  >
+                    <p style={{ fontSize: 15, fontWeight: 800, color: "var(--foreground)", margin: 0 }}>{stat.value}</p>
+                    <p style={{ fontSize: 11, color: "#9ca3af", margin: 0 }}>{stat.label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Session picker sheet */}
+          {showSessionPicker && (
+            <div
+              style={{
+                position: "fixed",
+                inset: 0,
+                background: "rgba(0,0,0,0.5)",
+                zIndex: 300,
+                display: "flex",
+                alignItems: "flex-end",
+                justifyContent: "center",
+              }}
+              onClick={() => setShowSessionPicker(false)}
+            >
+              <div
+                style={{
+                  background: "var(--card)",
+                  borderRadius: "20px 20px 0 0",
+                  width: "100%",
+                  maxWidth: 480,
+                  maxHeight: "60vh",
+                  overflowY: "auto",
+                  padding: "20px 20px calc(20px + env(safe-area-inset-bottom))",
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div style={{ width: 36, height: 4, borderRadius: 2, background: "var(--border)", margin: "0 auto 16px" }} />
+                <h3 style={{ fontSize: 16, fontWeight: 800, color: "var(--foreground)", margin: "0 0 14px" }}>Select Workout</h3>
+                {sortedSessions.length === 0 ? (
+                  <p style={{ fontSize: 13, color: "#9ca3af", textAlign: "center", padding: "24px 0" }}>No workouts logged yet.</p>
+                ) : (
+                  sortedSessions.map((session: any, i: number) => {
+                    const exercises = session.exercises ?? [];
+                    const uniqueNames = exercises.map((e: any) => e.exercise).filter((v: string, idx: number, a: string[]) => a.indexOf(v) === idx);
+                    const totalSets = exercises.reduce((s: number, e: any) => s + (e.sets || 1), 0);
+                    const totalVol = exercises.reduce((s: number, e: any) => s + (e.weight || 0) * (e.reps || 0) * (e.sets || 1), 0);
+                    return (
+                      <div
+                        key={i}
+                        onClick={() => { setAttachedSession(session); setShowSessionPicker(false); }}
+                        style={{
+                          padding: "12px 14px",
+                          borderRadius: 14,
+                          border: "1.5px solid var(--border)",
+                          marginBottom: 10,
+                          cursor: "pointer",
+                          background: attachedSession?.date === session.date ? "var(--secondary)" : "var(--card)",
+                        }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: "var(--foreground)" }}>{session.date}</span>
+                          <span style={{ fontSize: 12, color: "#9ca3af" }}>{totalSets} sets · {totalVol >= 1000 ? (totalVol / 1000).toFixed(1) + "k" : totalVol} lbs</span>
+                        </div>
+                        <p style={{ fontSize: 12, color: "#6b7280", margin: 0 }}>{uniqueNames.slice(0, 4).join(" · ")}{uniqueNames.length > 4 ? " +" + (uniqueNames.length - 4) + " more" : ""}</p>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          )}
+
           {previews.length > 0 && (
             <div
               style={{
@@ -791,37 +951,63 @@ function NewPostComposer({
               justifyContent: "space-between",
             }}
           >
-            <button
-              onClick={() => fileRef.current?.click()}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                background: "var(--secondary)",
-                border: "1.5px solid var(--border)",
-                borderRadius: 20,
-                padding: "7px 14px",
-                fontSize: 13,
-                fontWeight: 600,
-                color: "#6b7280",
-                cursor: "pointer",
-              }}
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                onClick={() => fileRef.current?.click()}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  background: "var(--secondary)",
+                  border: "1.5px solid var(--border)",
+                  borderRadius: 20,
+                  padding: "7px 14px",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: "#6b7280",
+                  cursor: "pointer",
+                }}
               >
-                <rect x="3" y="3" width="18" height="18" rx="2" />
-                <circle cx="8.5" cy="8.5" r="1.5" />
-                <polyline points="21 15 16 10 5 21" />
-              </svg>
-              Photo / Video
-            </button>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                >
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <circle cx="8.5" cy="8.5" r="1.5" />
+                  <polyline points="21 15 16 10 5 21" />
+                </svg>
+                Photo / Video
+              </button>
+              <button
+                onClick={() => setShowSessionPicker(true)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  background: attachedSession ? "var(--foreground)" : "var(--secondary)",
+                  border: "1.5px solid var(--border)",
+                  borderRadius: 20,
+                  padding: "7px 14px",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: attachedSession ? "var(--background)" : "#6b7280",
+                  cursor: "pointer",
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <line x1="8" y1="8" x2="16" y2="8" />
+                  <line x1="8" y1="12" x2="16" y2="12" />
+                  <line x1="8" y1="16" x2="12" y2="16" />
+                </svg>
+                {attachedSession ? "Log Added ✓" : "Workout Log"}
+              </button>
+            </div>
             <input
               ref={fileRef}
               type="file"
@@ -833,7 +1019,7 @@ function NewPostComposer({
             <button
               onClick={handleSubmit}
               disabled={
-                uploading || (!caption.trim() && mediaFiles.length === 0)
+                uploading || (!caption.trim() && mediaFiles.length === 0 && !attachedSession)
               }
               style={{
                 background: "var(--foreground)",
@@ -845,7 +1031,7 @@ function NewPostComposer({
                 fontWeight: 700,
                 cursor: "pointer",
                 opacity:
-                  uploading || (!caption.trim() && mediaFiles.length === 0)
+                  uploading || (!caption.trim() && mediaFiles.length === 0 && !attachedSession)
                     ? 0.4
                     : 1,
               }}
@@ -1160,7 +1346,7 @@ interface CommunityTabProps {
   workoutSessions?: any[];
 }
 
-export function CommunityTab({ user }: CommunityTabProps) {
+export function CommunityTab({ user, workoutSessions = [] }: CommunityTabProps) {
   const [showComposer, setShowComposer] = useState(false);
 
   const {
@@ -1288,6 +1474,7 @@ export function CommunityTab({ user }: CommunityTabProps) {
       {showComposer && (
         <NewPostComposer
           currentUser={user}
+          workoutSessions={workoutSessions}
           onClose={() => setShowComposer(false)}
         />
       )}
