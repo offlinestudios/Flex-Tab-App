@@ -12,7 +12,6 @@ export const PRESET_EXERCISES: Exercise[] = [
   { id: "3", name: "Decline Bench Press", category: "Chest" },
   { id: "4", name: "Dumbbell Press", category: "Chest" },
   { id: "5", name: "Guillotine Press", category: "Chest" },
-  { id: "6", name: "Landmine Press", category: "Chest" },
   // CHEST - Flies & Isolation
   { id: "7", name: "Dumbbell Fly", category: "Chest" },
   { id: "8", name: "Machine Fly", category: "Chest" },
@@ -35,7 +34,6 @@ export const PRESET_EXERCISES: Exercise[] = [
   { id: "23", name: "Single-Arm Cable Row", category: "Back" },
   { id: "24", name: "Meadows Row", category: "Back" },
   // BACK - Rear Chain
-  { id: "25", name: "Face Pulls", category: "Back" },
   { id: "26", name: "Reverse Fly", category: "Back" },
   { id: "27", name: "Rack Pulls", category: "Back" },
   // BICEPS
