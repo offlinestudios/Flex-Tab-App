@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, lazy, Suspense } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Menu, Plus, Trash2, Edit2, X, Dumbbell, Target, Weight, Activity, TrendingUp, Calendar, Share2 } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
@@ -17,11 +17,10 @@ import {
 import { Label } from "@/components/ui/label";
 import { useSearch } from "wouter";
 
-// Lazy load heavy components for better performance
-const WorkoutCalendar = lazy(() => import("@/components/WorkoutCalendar").then(m => ({ default: m.WorkoutCalendar })));
-const WorkoutStatistics = lazy(() => import("@/components/WorkoutStatistics").then(m => ({ default: m.WorkoutStatistics })));
-const BodyMeasurements = lazy(() => import("@/components/BodyMeasurements").then(m => ({ default: m.BodyMeasurements })));
-const ProgressCharts = lazy(() => import("@/components/ProgressCharts"));
+import { WorkoutCalendar } from "@/components/WorkoutCalendar";
+import { WorkoutStatistics } from "@/components/WorkoutStatistics";
+import { BodyMeasurements } from "@/components/BodyMeasurements";
+import ProgressCharts from "@/components/ProgressCharts";
 import { formatDateFull } from "@/lib/dateUtils";
 import { Loader2 } from "lucide-react";
 import { PRESET_EXERCISES as EXPANDED_EXERCISES, EXERCISE_CATEGORIES } from "@/lib/exercises";
@@ -917,9 +916,7 @@ export default function Home() {
 
         {/* ══ MEASUREMENTS TAB ══ */}
         {activeTab === 'measurements' && (
-          <Suspense fallback={<div className="flex items-center justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-slate-400" /></div>}>
-            <BodyMeasurements />
-          </Suspense>
+          <BodyMeasurements />
         )}
 
         {/* ══ HISTORY TAB ══ */}
