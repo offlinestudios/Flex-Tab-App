@@ -218,3 +218,15 @@ export async function getCustomExercisesByUser(userId: number) {
   if (!db) return [];
   return await db.select().from(customExercises).where(eq(customExercises.userId, userId));
 }
+
+export async function updateCustomExercise(id: number, userId: number, data: { name?: string; category?: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return await db.update(customExercises).set(data).where(and(eq(customExercises.id, id), eq(customExercises.userId, userId)));
+}
+
+export async function deleteCustomExercise(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return await db.delete(customExercises).where(and(eq(customExercises.id, id), eq(customExercises.userId, userId)));
+}

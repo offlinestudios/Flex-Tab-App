@@ -113,6 +113,7 @@ export default function Home() {
     Core: false,
   });
   const [showCustomDialog, setShowCustomDialog] = useState(false);
+  const [editingCustomExercise, setEditingCustomExercise] = useState<{ id: number; name: string; category: string } | null>(null);
   const [editingLog, setEditingLog] = useState<SetLog | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editFormData, setEditFormData] = useState<SetLog | null>(null);
@@ -249,6 +250,14 @@ export default function Home() {
     },
   });
   
+  const updateCustomExerciseMutation = trpc.workout.updateCustomExercise.useMutation({
+    onSettled: () => { utils.workout.getCustomExercises.invalidate(); },
+  });
+
+  const deleteCustomExerciseMutation = trpc.workout.deleteCustomExercise.useMutation({
+    onSettled: () => { utils.workout.getCustomExercises.invalidate(); },
+  });
+
   const logSetMutation = trpc.workout.logSet.useMutation({
     onMutate: async (newSet) => {
       // Cancel outgoing refetches
@@ -1226,19 +1235,50 @@ export default function Home() {
               {filteredExLib.map(ex => (
                 <div key={ex.name} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', background: ex.isCustom ? 'color-mix(in srgb, var(--card) 95%, #059669)' : 'var(--card)', borderRadius:16, border: ex.isCustom ? '1.5px solid #bbf7d0' : '1.5px solid var(--border)', padding:'14px 16px' }}>
                   <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-                    <div style={{ width:40, height:40, borderRadius:12, background:'var(--secondary)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                        <path d="M6.5 6.5h11"/><path d="M6.5 17.5h11"/>
-                        <path d="M3 9.5h2v5H3z"/><path d="M19 9.5h2v5h-2z"/>
-                        <path d="M5 12h14"/>
-                      </svg>
+                    <div style={{ width:40, height:40, borderRadius:12, background: ex.muscle === 'cardio' ? '#fef2f2' : 'var(--secondary)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                      {ex.muscle === 'cardio' ? (
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                        </svg>
+                      ) : (
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                          <path d="M6.5 6.5h11"/><path d="M6.5 17.5h11"/>
+                          <path d="M3 9.5h2v5H3z"/><path d="M19 9.5h2v5h-2z"/>
+                          <path d="M5 12h14"/>
+                        </svg>
+                      )}
                     </div>
                     <div>
                       <p style={{ fontSize:14, fontWeight:700, color:'var(--foreground)', margin:'0 0 2px' }}>{ex.name}</p>
                       <p style={{ fontSize:12, color:'#9ca3af', margin:0, textTransform:'capitalize' }}>{ex.muscle}{ex.isCustom ? ' · Custom' : ''}</p>
                     </div>
                   </div>
-                  <span style={{ fontSize:11, fontWeight:600, color:'#6b7280', background:'var(--secondary)', padding:'4px 10px', borderRadius:20 }}>{ex.type}</span>
+                  {ex.isCustom ? (
+                    <div style={{ display:'flex', gap:6, alignItems:'center' }}>
+                      <button
+                        onClick={() => {
+                          const raw = allExercises.find(e => e.name === ex.name && e.isCustom);
+                          if (raw) setEditingCustomExercise({ id: parseInt(raw.id), name: raw.name, category: raw.category });
+                        }}
+                        style={{ width:32, height:32, borderRadius:8, border:'none', background:'var(--secondary)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}
+                        title="Edit"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      </button>
+                      <button
+                        onClick={() => {
+                          const raw = allExercises.find(e => e.name === ex.name && e.isCustom);
+                          if (raw && confirm(`Delete "${raw.name}"?`)) deleteCustomExerciseMutation.mutate({ id: parseInt(raw.id) });
+                        }}
+                        style={{ width:32, height:32, borderRadius:8, border:'none', background:'#fef2f2', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}
+                        title="Delete"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                      </button>
+                    </div>
+                  ) : (
+                    <span style={{ fontSize:11, fontWeight:600, color:'#6b7280', background:'var(--secondary)', padding:'4px 10px', borderRadius:20 }}>{ex.type}</span>
+                  )}
                 </div>
               ))}
               {/* Create custom exercise button */}
@@ -1315,6 +1355,50 @@ export default function Home() {
         </DialogContent>
       </Dialog>
 
+      {/* Edit Custom Exercise Dialog */}
+      <Dialog open={!!editingCustomExercise} onOpenChange={(open) => { if (!open) setEditingCustomExercise(null); }}>
+        <DialogContent className="bg-white border-slate-200">
+          <DialogHeader>
+            <DialogTitle className="text-slate-900">Edit Custom Exercise</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label className="text-slate-700">Exercise Name</Label>
+              <Input
+                placeholder="e.g., Cable Flyes"
+                value={editingCustomExercise?.name ?? ''}
+                onChange={(e) => setEditingCustomExercise(prev => prev ? { ...prev, name: e.target.value } : null)}
+                className="mt-2 border-slate-300"
+              />
+            </div>
+            <div>
+              <Label className="text-slate-700">Category</Label>
+              <select
+                value={editingCustomExercise?.category ?? ''}
+                onChange={(e) => setEditingCustomExercise(prev => prev ? { ...prev, category: e.target.value } : null)}
+                style={{ width:'100%', marginTop:8, padding:'9px 12px', borderRadius:8, border:'1px solid #cbd5e1', fontSize:14, color: editingCustomExercise?.category ? '#0f172a' : '#94a3b8', background:'white', outline:'none', cursor:'pointer' }}
+              >
+                <option value="" disabled>Select a category…</option>
+                {['Chest','Back','Arms','Shoulders','Legs','Core','Cardio'].map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingCustomExercise(null)} className="border-slate-300">Cancel</Button>
+            <Button
+              onClick={async () => {
+                if (editingCustomExercise?.name.trim() && editingCustomExercise?.category) {
+                  await updateCustomExerciseMutation.mutateAsync({ id: editingCustomExercise.id, name: editingCustomExercise.name, category: editingCustomExercise.category });
+                  setEditingCustomExercise(null);
+                }
+              }}
+              className="bg-slate-800 hover:bg-slate-900"
+            >Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {/* History Exercise Edit Bottom Sheet */}
       {historyEditSheet && historyEditForm && (() => {
         const fields: Array<{ key: 'sets' | 'reps' | 'weight'; label: string; unit: string }> = [

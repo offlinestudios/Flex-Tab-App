@@ -11,6 +11,8 @@ import {
   updateMeasurement,
   createCustomExercise,
   getCustomExercisesByUser,
+  updateCustomExercise,
+  deleteCustomExercise,
   findOrCreateSession,
 } from "../db";
 
@@ -169,4 +171,25 @@ export const workoutRouter = router({
   getCustomExercises: protectedProcedure.query(async ({ ctx }) => {
     return await getCustomExercisesByUser(ctx.user.id);
   }),
+
+  updateCustomExercise: protectedProcedure
+    .input(
+      z.object({
+        id: z.number().int().positive(),
+        name: z.string().min(1).optional(),
+        category: z.string().min(1).optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      await updateCustomExercise(id, ctx.user.id, data);
+      return { success: true };
+    }),
+
+  deleteCustomExercise: protectedProcedure
+    .input(z.object({ id: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      await deleteCustomExercise(input.id, ctx.user.id);
+      return { success: true };
+    }),
 });

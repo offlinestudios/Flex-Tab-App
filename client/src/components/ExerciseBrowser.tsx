@@ -35,6 +35,12 @@ const PART_ICON = (
   </svg>
 );
 
+const CARDIO_ICON = (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+  </svg>
+);
+
 export function ExerciseBrowser({ open, onClose, onSelectExercise, selectedExercises, allExercises, onCreateCustom }: ExerciseBrowserProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
@@ -144,8 +150,8 @@ export function ExerciseBrowser({ open, onClose, onSelectExercise, selectedExerc
               <div key={part}>
                 {/* Category header */}
                 <div style={{ padding: "12px 16px 6px", display: "flex", alignItems: "center", gap: 8 }}>
-                  <div style={{ width: 28, height: 28, background: "#f5f6f8", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", color: "#1a2332" }}>
-                    {PART_ICON}
+                  <div style={{ width: 28, height: 28, background: part === 'cardio' ? '#fef2f2' : "#f5f6f8", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", color: "#1a2332" }}>
+                    {part === 'cardio' ? CARDIO_ICON : PART_ICON}
                   </div>
                   <span style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.07em" }}>
                     {PART_LABELS[part] || part}
@@ -162,8 +168,8 @@ export function ExerciseBrowser({ open, onClose, onSelectExercise, selectedExerc
                       onMouseEnter={(e) => (e.currentTarget.style.background = "#f9fafb")}
                       onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                     >
-                      <div style={{ width: 36, height: 36, borderRadius: 10, background: ex.isCustom ? "#f0fdf4" : "#f5f6f8", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: ex.isCustom ? "#059669" : "#1a2332" }}>
-                        {PART_ICON}
+                      <div style={{ width: 36, height: 36, borderRadius: 10, background: ex.category.toLowerCase() === 'cardio' ? '#fef2f2' : ex.isCustom ? "#f0fdf4" : "#f5f6f8", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: ex.isCustom ? "#059669" : "#1a2332" }}>
+                        {ex.category.toLowerCase() === 'cardio' ? CARDIO_ICON : PART_ICON}
                       </div>
                       <div style={{ flex: 1 }}>
                         <p style={{ fontWeight: 600, fontSize: 14, color: "#1a2332", margin: "0 0 2px" }}>{ex.name}</p>
