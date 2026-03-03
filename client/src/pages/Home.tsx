@@ -24,6 +24,9 @@ import ProgressCharts from "@/components/ProgressCharts";
 import { formatDateFull } from "@/lib/dateUtils";
 import { Loader2 } from "lucide-react";
 import { PRESET_EXERCISES as EXPANDED_EXERCISES, EXERCISE_CATEGORIES } from "@/lib/exercises";
+import { getExerciseDetail } from "@/lib/exerciseDetails";
+import type { ExerciseDetail } from "@/lib/exerciseDetails";
+import { ExerciseDetailSheet } from "@/components/ExerciseDetailSheet";
 import { ExerciseSidebar } from "@/components/ExerciseSidebar";
 
 import { ShareWorkoutDialog } from "@/components/ShareWorkoutDialog";
@@ -191,6 +194,7 @@ export default function Home() {
     try { return JSON.parse(localStorage.getItem('flextab_routines') || '[]'); } catch { return []; }
   });
   const [exerciseLibFilter, setExerciseLibFilter] = useState('all');
+  const [selectedExerciseDetail, setSelectedExerciseDetail] = useState<ExerciseDetail | null>(null);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [workoutTimerActive, setWorkoutTimerActive] = useState(false);
   
@@ -1230,55 +1234,75 @@ export default function Home() {
             </div>
             {/* Exercise list */}
             <div className="space-y-2">
-              {filteredExLib.map(ex => (
-                <div key={ex.name} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', background:'var(--card)', borderRadius:16, border:'1.5px solid var(--border)', padding:'14px 16px' }}>
-                  <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-                    <div style={{ width:40, height:40, borderRadius:12, background:'var(--secondary)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                      {ex.muscle === 'cardio' ? (
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-                        </svg>
-                      ) : (
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                          <path d="M6.5 6.5h11"/><path d="M6.5 17.5h11"/>
-                          <path d="M3 9.5h2v5H3z"/><path d="M19 9.5h2v5h-2z"/>
-                          <path d="M5 12h14"/>
-                        </svg>
-                      )}
+              {filteredExLib.map(ex => {
+                const detail = !ex.isCustom ? getExerciseDetail(ex.name) : undefined;
+                return (
+                  <div
+                    key={ex.name}
+                    onClick={() => { if (detail) setSelectedExerciseDetail(detail); }}
+                    style={{ display:'flex', alignItems:'center', justifyContent:'space-between', background:'var(--card)', borderRadius:16, border:'1.5px solid var(--border)', padding:'14px 16px', cursor: detail ? 'pointer' : 'default' }}
+                  >
+                    <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+                      {/* Exercise thumbnail: show image if available, else icon */}
+                      <div style={{ width:40, height:40, borderRadius:12, background:'var(--secondary)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, overflow:'hidden' }}>
+                        {detail?.image ? (
+                          <img
+                            src={detail.image}
+                            alt={ex.name}
+                            style={{ width:'100%', height:'100%', objectFit:'cover' }}
+                            onError={e => { (e.currentTarget as HTMLImageElement).style.display='none'; }}
+                          />
+                        ) : ex.muscle === 'cardio' ? (
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                          </svg>
+                        ) : (
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                            <path d="M6.5 6.5h11"/><path d="M6.5 17.5h11"/>
+                            <path d="M3 9.5h2v5H3z"/><path d="M19 9.5h2v5h-2z"/>
+                            <path d="M5 12h14"/>
+                          </svg>
+                        )}
+                      </div>
+                      <div>
+                        <p style={{ fontSize:14, fontWeight:700, color:'var(--foreground)', margin:'0 0 2px' }}>{ex.name}</p>
+                        <p style={{ fontSize:12, color:'#9ca3af', margin:0, textTransform:'capitalize' }}>{ex.muscle}{ex.isCustom ? ' · Custom' : ''}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p style={{ fontSize:14, fontWeight:700, color:'var(--foreground)', margin:'0 0 2px' }}>{ex.name}</p>
-                      <p style={{ fontSize:12, color:'#9ca3af', margin:0, textTransform:'capitalize' }}>{ex.muscle}{ex.isCustom ? ' · Custom' : ''}</p>
-                    </div>
+                    {ex.isCustom ? (
+                      <div style={{ display:'flex', gap:6, alignItems:'center' }} onClick={e => e.stopPropagation()}>
+                        <button
+                          onClick={() => {
+                            const raw = allExercises.find(e => e.name === ex.name && e.isCustom);
+                            if (raw) setEditingCustomExercise({ id: parseInt(raw.id), name: raw.name, category: raw.category });
+                          }}
+                          style={{ width:32, height:32, borderRadius:8, border:'none', background:'var(--secondary)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}
+                          title="Edit"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        </button>
+                        <button
+                          onClick={() => {
+                            const raw = allExercises.find(e => e.name === ex.name && e.isCustom);
+                            if (raw && confirm(`Delete "${raw.name}"?`)) deleteCustomExerciseMutation.mutate({ id: parseInt(raw.id) });
+                          }}
+                          style={{ width:32, height:32, borderRadius:8, border:'none', background:'#fef2f2', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}
+                          title="Delete"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                        </button>
+                      </div>
+                    ) : detail ? (
+                      <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                        <span style={{ fontSize:11, fontWeight:600, color:'#6b7280', background:'var(--secondary)', padding:'4px 10px', borderRadius:20 }}>{ex.type}</span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                      </div>
+                    ) : (
+                      <span style={{ fontSize:11, fontWeight:600, color:'#6b7280', background:'var(--secondary)', padding:'4px 10px', borderRadius:20 }}>{ex.type}</span>
+                    )}
                   </div>
-                  {ex.isCustom ? (
-                    <div style={{ display:'flex', gap:6, alignItems:'center' }}>
-                      <button
-                        onClick={() => {
-                          const raw = allExercises.find(e => e.name === ex.name && e.isCustom);
-                          if (raw) setEditingCustomExercise({ id: parseInt(raw.id), name: raw.name, category: raw.category });
-                        }}
-                        style={{ width:32, height:32, borderRadius:8, border:'none', background:'var(--secondary)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}
-                        title="Edit"
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                      </button>
-                      <button
-                        onClick={() => {
-                          const raw = allExercises.find(e => e.name === ex.name && e.isCustom);
-                          if (raw && confirm(`Delete "${raw.name}"?`)) deleteCustomExerciseMutation.mutate({ id: parseInt(raw.id) });
-                        }}
-                        style={{ width:32, height:32, borderRadius:8, border:'none', background:'#fef2f2', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}
-                        title="Delete"
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-                      </button>
-                    </div>
-                  ) : (
-                    <span style={{ fontSize:11, fontWeight:600, color:'#6b7280', background:'var(--secondary)', padding:'4px 10px', borderRadius:20 }}>{ex.type}</span>
-                  )}
-                </div>
-              ))}
+                );
+              })}
               {/* Create custom exercise button */}
               <button
                 onClick={() => setShowCustomDialog(true)}
@@ -1569,6 +1593,14 @@ export default function Home() {
           onOpenChange={setShowShareDialog}
           exercises={shareWorkoutData.exercises}
           date={shareWorkoutData.date}
+        />
+      )}
+
+      {/* Exercise Detail Bottom Sheet */}
+      {selectedExerciseDetail && (
+        <ExerciseDetailSheet
+          detail={selectedExerciseDetail}
+          onClose={() => setSelectedExerciseDetail(null)}
         />
       )}
     </DashboardLayout>
