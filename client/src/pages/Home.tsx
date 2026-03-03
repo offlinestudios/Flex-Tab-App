@@ -419,6 +419,7 @@ export default function Home() {
         name: customExerciseName,
         category: customExerciseCategory,
       });
+      setExerciseLibFilter(customExerciseCategory.toLowerCase());
       setCustomExerciseName("");
       setCustomExerciseCategory("");
       setShowCustomDialog(false);
@@ -1230,11 +1231,11 @@ export default function Home() {
             {/* Exercise list */}
             <div className="space-y-2">
               {filteredExLib.map(ex => (
-                <div key={ex.name} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', background: ex.isCustom ? 'color-mix(in srgb, var(--card) 95%, #059669)' : 'var(--card)', borderRadius:16, border: ex.isCustom ? '1.5px solid #bbf7d0' : '1.5px solid var(--border)', padding:'14px 16px' }}>
+                <div key={ex.name} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', background:'var(--card)', borderRadius:16, border:'1.5px solid var(--border)', padding:'14px 16px' }}>
                   <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-                    <div style={{ width:40, height:40, borderRadius:12, background: ex.muscle === 'cardio' ? '#fef2f2' : 'var(--secondary)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                    <div style={{ width:40, height:40, borderRadius:12, background:'var(--secondary)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                       {ex.muscle === 'cardio' ? (
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
                         </svg>
                       ) : (
@@ -1281,12 +1282,12 @@ export default function Home() {
               {/* Create custom exercise button */}
               <button
                 onClick={() => setShowCustomDialog(true)}
-                style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, width:'100%', padding:'13px 16px', borderRadius:16, border:'1.5px dashed var(--border)', background:'transparent', fontSize:14, fontWeight:600, color:'#6b7280', cursor:'pointer', transition:'all 0.15s', marginTop:4 }}
-                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--foreground)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--foreground)'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLButtonElement).style.color = '#6b7280'; }}
+                style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, width:'100%', padding:'14px 16px', borderRadius:16, border:'none', background:'var(--foreground)', color:'var(--background)', fontSize:14, fontWeight:700, cursor:'pointer', transition:'opacity 0.15s', marginTop:4 }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.85'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '1'; }}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Create custom exercise
+                Add Custom Exercise
               </button>
             </div>
           </div>
@@ -1313,30 +1314,51 @@ export default function Home() {
 
       </div>
 
-      {/* Add Custom Exercise Dialog */}
-      <Dialog open={showCustomDialog} onOpenChange={setShowCustomDialog}>
-        <DialogContent className="bg-white border-slate-200">
-          <DialogHeader>
-            <DialogTitle className="text-slate-900">Add Custom Exercise</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <Label htmlFor="exercise-name" className="text-slate-700">Exercise Name</Label>
-              <Input
-                id="exercise-name"
+      {/* Add Custom Exercise Bottom Sheet */}
+      {showCustomDialog && (
+        <>
+          <div
+            onClick={() => setShowCustomDialog(false)}
+            style={{ position:'fixed', inset:0, zIndex:40, background:'rgba(0,0,0,0.35)' }}
+          />
+          <div style={{
+            position:'fixed', left:0, right:0, bottom:0,
+            background:'var(--card)',
+            borderTop:'1px solid var(--border)',
+            borderRadius:'20px 20px 0 0',
+            padding:'10px 16px calc(env(safe-area-inset-bottom,0px) + 20px)',
+            zIndex:50,
+            boxShadow:'0 -8px 32px rgba(0,0,0,0.14)',
+            maxWidth:480, margin:'0 auto',
+          }}>
+            {/* Drag handle */}
+            <div style={{ width:36, height:4, borderRadius:2, background:'var(--border)', margin:'0 auto 16px' }} />
+            {/* Title */}
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
+              <span style={{ fontSize:17, fontWeight:700, color:'var(--foreground)' }}>Add Custom Exercise</span>
+              <button onClick={() => setShowCustomDialog(false)} style={{ background:'none', border:'none', cursor:'pointer', color:'#9ca3af', padding:4 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            {/* Name field */}
+            <div style={{ marginBottom:14 }}>
+              <label style={{ fontSize:12, fontWeight:700, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.07em', display:'block', marginBottom:6 }}>Exercise Name</label>
+              <input
+                type="text"
                 placeholder="e.g., Cable Flyes"
                 value={customExerciseName}
                 onChange={(e) => setCustomExerciseName(e.target.value)}
-                className="mt-2 border-slate-300"
+                style={{ width:'100%', padding:'11px 14px', borderRadius:12, border:'1.5px solid var(--border)', fontSize:15, color:'var(--foreground)', background:'var(--background)', outline:'none', boxSizing:'border-box' }}
+                autoFocus
               />
             </div>
-            <div>
-              <Label htmlFor="exercise-category" className="text-slate-700">Category</Label>
+            {/* Category field */}
+            <div style={{ marginBottom:24 }}>
+              <label style={{ fontSize:12, fontWeight:700, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.07em', display:'block', marginBottom:6 }}>Category</label>
               <select
-                id="exercise-category"
                 value={customExerciseCategory}
                 onChange={(e) => setCustomExerciseCategory(e.target.value)}
-                style={{ width:'100%', marginTop:8, padding:'9px 12px', borderRadius:8, border:'1px solid #cbd5e1', fontSize:14, color: customExerciseCategory ? '#0f172a' : '#94a3b8', background:'white', outline:'none', cursor:'pointer' }}
+                style={{ width:'100%', padding:'11px 14px', borderRadius:12, border:'1.5px solid var(--border)', fontSize:15, color: customExerciseCategory ? 'var(--foreground)' : '#9ca3af', background:'var(--background)', outline:'none', cursor:'pointer', boxSizing:'border-box' }}
               >
                 <option value="" disabled>Select a category…</option>
                 {['Chest','Back','Arms','Shoulders','Legs','Core','Cardio'].map(c => (
@@ -1344,36 +1366,64 @@ export default function Home() {
                 ))}
               </select>
             </div>
+            {/* Add button */}
+            <button
+              onClick={handleAddCustomExercise}
+              style={{ width:'100%', padding:14, background:'var(--foreground)', color:'var(--background)', border:'none', borderRadius:14, fontSize:15, fontWeight:700, cursor:'pointer', fontFamily:'inherit', marginBottom:10 }}
+            >Add Exercise</button>
+            {/* Cancel button */}
+            <button
+              onClick={() => setShowCustomDialog(false)}
+              style={{ width:'100%', padding:14, background:'transparent', color:'var(--foreground)', border:'1.5px solid var(--border)', borderRadius:14, fontSize:15, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}
+            >Cancel</button>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCustomDialog(false)} className="border-slate-300">Cancel</Button>
-            <Button onClick={handleAddCustomExercise} className="bg-slate-800 hover:bg-slate-900">Add Exercise</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </>
+      )}
 
-      {/* Edit Custom Exercise Dialog */}
-      <Dialog open={!!editingCustomExercise} onOpenChange={(open) => { if (!open) setEditingCustomExercise(null); }}>
-        <DialogContent className="bg-white border-slate-200">
-          <DialogHeader>
-            <DialogTitle className="text-slate-900">Edit Custom Exercise</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <Label className="text-slate-700">Exercise Name</Label>
-              <Input
+      {/* Edit Custom Exercise Bottom Sheet */}
+      {editingCustomExercise && (
+        <>
+          <div
+            onClick={() => setEditingCustomExercise(null)}
+            style={{ position:'fixed', inset:0, zIndex:40, background:'rgba(0,0,0,0.35)' }}
+          />
+          <div style={{
+            position:'fixed', left:0, right:0, bottom:0,
+            background:'var(--card)',
+            borderTop:'1px solid var(--border)',
+            borderRadius:'20px 20px 0 0',
+            padding:'10px 16px calc(env(safe-area-inset-bottom,0px) + 20px)',
+            zIndex:50,
+            boxShadow:'0 -8px 32px rgba(0,0,0,0.14)',
+            maxWidth:480, margin:'0 auto',
+          }}>
+            {/* Drag handle */}
+            <div style={{ width:36, height:4, borderRadius:2, background:'var(--border)', margin:'0 auto 16px' }} />
+            {/* Title */}
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
+              <span style={{ fontSize:17, fontWeight:700, color:'var(--foreground)' }}>Edit Custom Exercise</span>
+              <button onClick={() => setEditingCustomExercise(null)} style={{ background:'none', border:'none', cursor:'pointer', color:'#9ca3af', padding:4 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            {/* Name field */}
+            <div style={{ marginBottom:14 }}>
+              <label style={{ fontSize:12, fontWeight:700, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.07em', display:'block', marginBottom:6 }}>Exercise Name</label>
+              <input
+                type="text"
                 placeholder="e.g., Cable Flyes"
-                value={editingCustomExercise?.name ?? ''}
+                value={editingCustomExercise.name}
                 onChange={(e) => setEditingCustomExercise(prev => prev ? { ...prev, name: e.target.value } : null)}
-                className="mt-2 border-slate-300"
+                style={{ width:'100%', padding:'11px 14px', borderRadius:12, border:'1.5px solid var(--border)', fontSize:15, color:'var(--foreground)', background:'var(--background)', outline:'none', boxSizing:'border-box' }}
               />
             </div>
-            <div>
-              <Label className="text-slate-700">Category</Label>
+            {/* Category field */}
+            <div style={{ marginBottom:24 }}>
+              <label style={{ fontSize:12, fontWeight:700, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.07em', display:'block', marginBottom:6 }}>Category</label>
               <select
-                value={editingCustomExercise?.category ?? ''}
+                value={editingCustomExercise.category}
                 onChange={(e) => setEditingCustomExercise(prev => prev ? { ...prev, category: e.target.value } : null)}
-                style={{ width:'100%', marginTop:8, padding:'9px 12px', borderRadius:8, border:'1px solid #cbd5e1', fontSize:14, color: editingCustomExercise?.category ? '#0f172a' : '#94a3b8', background:'white', outline:'none', cursor:'pointer' }}
+                style={{ width:'100%', padding:'11px 14px', borderRadius:12, border:'1.5px solid var(--border)', fontSize:15, color:'var(--foreground)', background:'var(--background)', outline:'none', cursor:'pointer', boxSizing:'border-box' }}
               >
                 <option value="" disabled>Select a category…</option>
                 {['Chest','Back','Arms','Shoulders','Legs','Core','Cardio'].map(c => (
@@ -1381,21 +1431,24 @@ export default function Home() {
                 ))}
               </select>
             </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingCustomExercise(null)} className="border-slate-300">Cancel</Button>
-            <Button
+            {/* Save button */}
+            <button
               onClick={async () => {
-                if (editingCustomExercise?.name.trim() && editingCustomExercise?.category) {
+                if (editingCustomExercise.name.trim() && editingCustomExercise.category) {
                   await updateCustomExerciseMutation.mutateAsync({ id: editingCustomExercise.id, name: editingCustomExercise.name, category: editingCustomExercise.category });
                   setEditingCustomExercise(null);
                 }
               }}
-              className="bg-slate-800 hover:bg-slate-900"
-            >Save Changes</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              style={{ width:'100%', padding:14, background:'var(--foreground)', color:'var(--background)', border:'none', borderRadius:14, fontSize:15, fontWeight:700, cursor:'pointer', fontFamily:'inherit', marginBottom:10 }}
+            >Save Changes</button>
+            {/* Cancel button */}
+            <button
+              onClick={() => setEditingCustomExercise(null)}
+              style={{ width:'100%', padding:14, background:'transparent', color:'var(--foreground)', border:'1.5px solid var(--border)', borderRadius:14, fontSize:15, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}
+            >Cancel</button>
+          </div>
+        </>
+      )}
       {/* History Exercise Edit Bottom Sheet */}
       {historyEditSheet && historyEditForm && (() => {
         const fields: Array<{ key: 'sets' | 'reps' | 'weight'; label: string; unit: string }> = [

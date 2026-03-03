@@ -36,7 +36,7 @@ const PART_ICON = (
 );
 
 const CARDIO_ICON = (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
   </svg>
 );
@@ -150,7 +150,7 @@ export function ExerciseBrowser({ open, onClose, onSelectExercise, selectedExerc
               <div key={part}>
                 {/* Category header */}
                 <div style={{ padding: "12px 16px 6px", display: "flex", alignItems: "center", gap: 8 }}>
-                  <div style={{ width: 28, height: 28, background: part === 'cardio' ? '#fef2f2' : "#f5f6f8", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", color: "#1a2332" }}>
+                  <div style={{ width: 28, height: 28, background: "#f5f6f8", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", color: "#1a2332" }}>
                     {part === 'cardio' ? CARDIO_ICON : PART_ICON}
                   </div>
                   <span style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.07em" }}>
@@ -168,7 +168,7 @@ export function ExerciseBrowser({ open, onClose, onSelectExercise, selectedExerc
                       onMouseEnter={(e) => (e.currentTarget.style.background = "#f9fafb")}
                       onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                     >
-                      <div style={{ width: 36, height: 36, borderRadius: 10, background: ex.category.toLowerCase() === 'cardio' ? '#fef2f2' : ex.isCustom ? "#f0fdf4" : "#f5f6f8", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: ex.isCustom ? "#059669" : "#1a2332" }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 10, background: "#f5f6f8", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "#1a2332" }}>
                         {ex.category.toLowerCase() === 'cardio' ? CARDIO_ICON : PART_ICON}
                       </div>
                       <div style={{ flex: 1 }}>
@@ -201,12 +201,12 @@ export function ExerciseBrowser({ open, onClose, onSelectExercise, selectedExerc
               style={{
                 display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                 width: "100%", padding: "13px 16px", borderRadius: 14,
-                border: "1.5px dashed #d1d5db", background: "transparent",
-                fontSize: 14, fontWeight: 600, color: "#6b7280", cursor: "pointer",
-                transition: "all 0.15s",
+                border: "none", background: "#1a2332",
+                fontSize: 14, fontWeight: 700, color: "#ffffff", cursor: "pointer",
+                transition: "opacity 0.15s",
               }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#1a2332"; (e.currentTarget as HTMLButtonElement).style.color = "#1a2332"; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#d1d5db"; (e.currentTarget as HTMLButtonElement).style.color = "#6b7280"; }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = "0.85"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = "1"; }}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                 <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
