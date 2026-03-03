@@ -10,9 +10,207 @@ interface ProfileTabProps {
   prMap?: Record<string, { weight: number; reps: number; date: string }>;
 }
 
+/* ─────────────────────────────────────────────────────────────────
+   Edit Profile Modal
+───────────────────────────────────────────────────────────────── */
+interface EditProfileModalProps {
+  name: string;
+  bio: string;
+  goal: string;
+  onSave: (name: string, bio: string, goal: string) => void;
+  onClose: () => void;
+}
+
+function EditProfileModal({ name, bio, goal, onSave, onClose }: EditProfileModalProps) {
+  const [draftName, setDraftName] = useState(name);
+  const [draftBio, setDraftBio] = useState(bio);
+  const [draftGoal, setDraftGoal] = useState(goal);
+
+  const goals = ['Build Muscle', 'Lose Fat', 'Improve Endurance', 'Increase Strength', 'General Fitness'];
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
+          zIndex: 200, backdropFilter: 'blur(2px)',
+        }}
+      />
+      {/* Sheet */}
+      <div style={{
+        position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
+        width: '100%', maxWidth: 480,
+        background: 'var(--card)', borderRadius: '20px 20px 0 0',
+        padding: '20px 20px calc(20px + env(safe-area-inset-bottom))',
+        zIndex: 201, boxShadow: '0 -4px 32px rgba(0,0,0,0.15)',
+      }}>
+        {/* Handle */}
+        <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border)', margin: '0 auto 18px' }} />
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+          <h3 style={{ fontSize: 17, fontWeight: 800, color: 'var(--foreground)', margin: 0 }}>Edit Profile</h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', fontSize: 22, lineHeight: 1, padding: 4 }}>×</button>
+        </div>
+
+        {/* Name */}
+        <div style={{ marginBottom: 14 }}>
+          <label style={{ fontSize: 12, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 6 }}>Display Name</label>
+          <input
+            type="text"
+            value={draftName}
+            onChange={e => setDraftName(e.target.value)}
+            placeholder="Your name"
+            style={{
+              width: '100%', background: 'var(--secondary)', border: '1.5px solid var(--border)',
+              borderRadius: 12, padding: '11px 14px', fontSize: 14, color: 'var(--foreground)',
+              outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box',
+            }}
+          />
+        </div>
+
+        {/* Bio */}
+        <div style={{ marginBottom: 14 }}>
+          <label style={{ fontSize: 12, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 6 }}>Bio</label>
+          <textarea
+            value={draftBio}
+            onChange={e => setDraftBio(e.target.value)}
+            placeholder="Tell the community about yourself…"
+            rows={3}
+            style={{
+              width: '100%', background: 'var(--secondary)', border: '1.5px solid var(--border)',
+              borderRadius: 12, padding: '11px 14px', fontSize: 14, color: 'var(--foreground)',
+              outline: 'none', fontFamily: 'inherit', resize: 'none', boxSizing: 'border-box',
+            }}
+          />
+        </div>
+
+        {/* Fitness Goal */}
+        <div style={{ marginBottom: 20 }}>
+          <label style={{ fontSize: 12, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 8 }}>Fitness Goal</label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {goals.map(g => (
+              <button
+                key={g}
+                onClick={() => setDraftGoal(g)}
+                style={{
+                  padding: '7px 14px', borderRadius: 50,
+                  border: `1.5px solid ${draftGoal === g ? 'var(--foreground)' : 'var(--border)'}`,
+                  background: draftGoal === g ? 'var(--foreground)' : 'var(--card)',
+                  color: draftGoal === g ? 'var(--background)' : '#6b7280',
+                  fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                }}
+              >
+                {g}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button
+            onClick={onClose}
+            style={{ flex: 1, padding: 12, background: 'var(--secondary)', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 600, color: '#6b7280', cursor: 'pointer' }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => { onSave(draftName.trim() || name, draftBio.trim(), draftGoal); onClose(); }}
+            style={{ flex: 2, padding: 12, background: 'var(--foreground)', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 700, color: 'var(--background)', cursor: 'pointer' }}
+          >
+            Save Changes
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Settings Menu (replaces three-dot)
+───────────────────────────────────────────────────────────────── */
+interface SettingsMenuProps {
+  onClose: () => void;
+}
+
+function SettingsMenu({ onClose }: SettingsMenuProps) {
+  const items = [
+    { label: 'Notification Preferences', icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> },
+    { label: 'Units & Preferences', icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M4.93 19.07l1.41-1.41M19.07 19.07l-1.41-1.41M12 2v2M12 20v2M2 12h2M20 12h2"/></svg> },
+    { label: 'Privacy Settings', icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> },
+    { label: 'Help & Support', icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> },
+  ];
+
+  return (
+    <>
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 200, backdropFilter: 'blur(2px)' }} />
+      <div style={{
+        position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
+        width: '100%', maxWidth: 480,
+        background: 'var(--card)', borderRadius: '20px 20px 0 0',
+        padding: '20px 0 calc(20px + env(safe-area-inset-bottom))',
+        zIndex: 201, boxShadow: '0 -4px 32px rgba(0,0,0,0.15)',
+      }}>
+        <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border)', margin: '0 auto 16px' }} />
+        <p style={{ fontSize: 13, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '0 20px', margin: '0 0 8px' }}>Settings</p>
+        {items.map((item, i) => (
+          <button
+            key={i}
+            onClick={onClose}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', gap: 14,
+              padding: '14px 20px', background: 'none', border: 'none',
+              borderTop: i === 0 ? '1px solid var(--border)' : 'none',
+              borderBottom: '1px solid var(--border)',
+              cursor: 'pointer', color: 'var(--foreground)', fontSize: 14, fontWeight: 600,
+              textAlign: 'left',
+            }}
+          >
+            <span style={{ color: '#6b7280' }}>{item.icon}</span>
+            {item.label}
+            <svg style={{ marginLeft: 'auto', color: '#9ca3af' }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        ))}
+      </div>
+    </>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Share toast
+───────────────────────────────────────────────────────────────── */
+function ShareToast({ onClose }: { onClose: () => void }) {
+  return (
+    <div style={{
+      position: 'fixed', bottom: 90, left: '50%', transform: 'translateX(-50%)',
+      background: 'var(--foreground)', color: 'var(--background)',
+      padding: '10px 20px', borderRadius: 50,
+      fontSize: 13, fontWeight: 600,
+      zIndex: 300, whiteSpace: 'nowrap',
+      boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+      animation: 'fadeInUp 0.2s ease',
+    }}>
+      Profile link copied to clipboard ✓
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Main component
+───────────────────────────────────────────────────────────────── */
 export function ProfileTab({ user, workoutSessions, measurements, prMap: externalPrMap }: ProfileTabProps) {
   const [activePanel, setActivePanel] = useState<ProfilePanel>('posts');
   const [mediaItems, setMediaItems] = useState<string[]>([]);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showSettingsMenu, setShowSettingsMenu] = useState(false);
+  const [showShareToast, setShowShareToast] = useState(false);
+
+  // Editable profile fields
+  const [profileName, setProfileName] = useState<string>(user?.name || 'FlexTab User');
+  const [profileBio, setProfileBio] = useState<string>('Passionate about strength training and building healthy habits. Logging every rep. 💪');
+  const [profileGoal, setProfileGoal] = useState<string>('Build Muscle');
 
   const allSetLogs = workoutSessions.flatMap(s => s.exercises);
   const totalSets = allSetLogs.reduce((s, e) => s + e.sets, 0);
@@ -33,7 +231,7 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
     }
   }));
 
-  // Training tier calculation
+  // Training tier
   const getTrainingTier = () => {
     const days = workoutSessions.length;
     if (days === 0) return { tier: 'Beginner', level: 1, progress: 0, next: 5, color: '#9ca3af' };
@@ -45,9 +243,8 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
   };
   const tier = getTrainingTier();
 
-  const initials = user?.name
-    ? user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
-    : 'FT';
+  const initials = profileName
+    .split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
 
   const monthVolume = (() => {
     const now = new Date();
@@ -70,219 +267,273 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
     });
   };
 
+  const handleShare = () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      navigator.share({ title: `${profileName} on FlexTab`, url }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(url).catch(() => {});
+      setShowShareToast(true);
+      setTimeout(() => setShowShareToast(false), 2500);
+    }
+  };
+
   const recentSessions = [...workoutSessions]
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 5);
 
+  const handle = `@${profileName.toLowerCase().replace(/\s+/g, '')}`;
+
   return (
-    <div className="space-y-3">
-      {/* Profile info card */}
-      <div style={{ background: 'var(--card)', borderRadius: 20, border: '1.5px solid var(--border)', overflow: 'hidden' }}>
-        <div style={{ padding: '18px 18px 14px' }}>
-          {/* Row 1: Avatar + stats */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
-            <div style={{ position: 'relative', flexShrink: 0 }}>
-              <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'var(--foreground)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 12px rgba(0,0,0,0.15)' }}>
-                <span style={{ fontSize: 26, fontWeight: 800, color: 'var(--background)' }}>{initials}</span>
-              </div>
-              <label htmlFor="profile-media-upload" style={{ position: 'absolute', bottom: 2, right: 2, width: 24, height: 24, borderRadius: '50%', background: '#9ca3af', border: '2.5px solid var(--card)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              </label>
-              <input id="profile-media-upload" type="file" accept="image/*,video/*" multiple style={{ display: 'none' }} onChange={handleMediaUpload} />
-            </div>
-            {/* Stats */}
-            <div style={{ flex: 1, display: 'flex', justifyContent: 'space-around' }}>
-              <div style={{ textAlign: 'center' }}>
-                <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', margin: '0 0 2px' }}>{workoutSessions.length}</p>
-                <p style={{ fontSize: 12, color: '#6b7280', margin: 0, fontWeight: 500 }}>Workouts</p>
-              </div>
-              <div style={{ textAlign: 'center', cursor: 'pointer' }}>
-                <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', margin: '0 0 2px' }}>248</p>
-                <p style={{ fontSize: 12, color: '#6b7280', margin: 0, fontWeight: 500 }}>Followers</p>
-              </div>
-              <div style={{ textAlign: 'center', cursor: 'pointer' }}>
-                <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', margin: '0 0 2px' }}>183</p>
-                <p style={{ fontSize: 12, color: '#6b7280', margin: 0, fontWeight: 500 }}>Following</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Row 2: Name + bio */}
-          <div style={{ marginBottom: 12 }}>
-            <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--foreground)', margin: '0 0 2px' }}>{user?.name || 'FlexTab User'}</h3>
-            <p style={{ fontSize: 13, color: '#6b7280', margin: '0 0 3px' }}>@{(user?.name || 'user').toLowerCase().replace(/\s+/g, '')}</p>
-            <p style={{ fontSize: 12, color: '#9ca3af', fontWeight: 500, margin: '0 0 8px' }}>{tier.tier} Lifter</p>
-            <p style={{ fontSize: 13, color: 'var(--muted-foreground)', lineHeight: 1.5, margin: 0 }}>Passionate about strength training and building healthy habits. Logging every rep. 💪</p>
-          </div>
-
-          {/* Row 3: Activity row */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--secondary)', borderRadius: 12, padding: '11px 14px', marginBottom: 10, cursor: 'pointer' }}>
-            <div>
-              <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)', margin: '0 0 2px' }}>Your Activity</p>
-              <p style={{ fontSize: 12, color: '#6b7280', margin: 0 }}>{monthVolume} lifted this month</p>
-            </div>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
-          </div>
-
-          {/* Row 4: Action buttons */}
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button className="profile-action-btn" style={{ flex: 1, padding: '8px 0', background: 'var(--card)', border: '1.5px solid var(--border)', borderRadius: 10, fontSize: 13, fontWeight: 600, color: 'var(--foreground)', cursor: 'pointer' }}>Edit Profile</button>
-            <button className="profile-action-btn" style={{ flex: 1, padding: '8px 0', background: 'var(--card)', border: '1.5px solid var(--border)', borderRadius: 10, fontSize: 13, fontWeight: 600, color: 'var(--foreground)', cursor: 'pointer' }}>Share Profile</button>
-            <button className="profile-action-btn" style={{ width: 38, height: 36, background: 'var(--card)', border: '1.5px solid var(--border)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Content tab bar */}
-        <div style={{ display: 'flex', borderTop: '1px solid var(--border)' }}>
-          {([
-            { id: 'posts', icon: <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg> },
-            { id: 'logs', icon: <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6.5 6.5h11"/><path d="M6.5 17.5h11"/><path d="M3 9.5h2v5H3z"/><path d="M19 9.5h2v5h-2z"/><path d="M5 12h14"/></svg> },
-            { id: 'prs', icon: <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2"/><path d="M18 9h2a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-2"/><path d="M6 2h12v10a6 6 0 0 1-12 0V2z"/><path d="M9 21h6"/><path d="M12 17v4"/></svg> },
-          ] as { id: ProfilePanel; icon: React.ReactNode }[]).map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActivePanel(tab.id)}
-              style={{
-                flex: 1, padding: '12px 0', background: 'none', border: 'none',
-                borderBottom: activePanel === tab.id ? '2.5px solid var(--foreground)' : '2.5px solid transparent',
-                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: activePanel === tab.id ? 'var(--foreground)' : '#9ca3af',
-              }}
-            >
-              {tab.icon}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* POSTS panel */}
-      {activePanel === 'posts' && (
+    <>
+      <div className="space-y-3">
+        {/* ── Profile info card ── */}
         <div style={{ background: 'var(--card)', borderRadius: 20, border: '1.5px solid var(--border)', overflow: 'hidden' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2 }}>
-            <label htmlFor="profile-media-upload-grid" style={{ aspectRatio: '1', background: 'var(--secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, cursor: 'pointer' }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              <span style={{ fontSize: 10, color: '#9ca3af', fontWeight: 600 }}>Add</span>
-            </label>
-            <input id="profile-media-upload-grid" type="file" accept="image/*,video/*" multiple style={{ display: 'none' }} onChange={handleMediaUpload} />
-            {mediaItems.map((url, i) => (
-              <div key={i} style={{ aspectRatio: '1', overflow: 'hidden' }}>
-                <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              </div>
-            ))}
-          </div>
-          {mediaItems.length === 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', gap: 10 }}>
-              <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-              </div>
-              <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>No posts yet</p>
-              <p style={{ fontSize: 12, color: '#9ca3af', margin: 0, textAlign: 'center' }}>Upload a photo or video to share your workouts</p>
-            </div>
-          )}
-        </div>
-      )}
+          <div style={{ padding: '18px 18px 14px' }}>
 
-      {/* LOGS panel */}
-      {activePanel === 'logs' && (
-        <div className="space-y-3">
-          {/* Training Tier card */}
-          <div style={{ background: 'var(--card)', borderRadius: 20, border: '1.5px solid var(--border)', padding: '16px 18px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-              <div>
-                <p style={{ fontSize: 12, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>Training Tier</p>
-                <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', margin: 0 }}>{tier.tier}</p>
+            {/* Row 1: Avatar + real stats */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
+              <div style={{ position: 'relative', flexShrink: 0 }}>
+                <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'var(--foreground)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 12px rgba(0,0,0,0.15)' }}>
+                  <span style={{ fontSize: 26, fontWeight: 800, color: 'var(--background)' }}>{initials}</span>
+                </div>
+                <label htmlFor="profile-media-upload" style={{ position: 'absolute', bottom: 2, right: 2, width: 24, height: 24, borderRadius: '50%', background: '#9ca3af', border: '2.5px solid var(--card)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </label>
+                <input id="profile-media-upload" type="file" accept="image/*,video/*" multiple style={{ display: 'none' }} onChange={handleMediaUpload} />
               </div>
-              <div style={{ width: 48, height: 48, borderRadius: '50%', background: tier.color + '20', border: `2px solid ${tier.color}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ fontSize: 18, fontWeight: 800, color: tier.color }}>L{tier.level}</span>
-              </div>
-            </div>
-            <div style={{ background: 'var(--secondary)', borderRadius: 8, height: 8, overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${Math.round(tier.progress * 100)}%`, background: tier.color, borderRadius: 8, transition: 'width 0.5s ease' }} />
-            </div>
-            {tier.next > 0 && (
-              <p style={{ fontSize: 12, color: '#9ca3af', margin: '6px 0 0' }}>{tier.next} more workout{tier.next !== 1 ? 's' : ''} to reach next tier</p>
-            )}
-          </div>
 
-          {/* Recent Workouts */}
-          <div style={{ background: 'var(--card)', borderRadius: 20, border: '1.5px solid var(--border)', overflow: 'hidden' }}>
-            <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>Recent Workouts</h3>
-              <span style={{ fontSize: 12, color: '#6b7280', fontWeight: 500, cursor: 'pointer' }}>See all</span>
+              {/* Real stats only — no fake followers/following */}
+              <div style={{ flex: 1, display: 'flex', justifyContent: 'space-around' }}>
+                <div style={{ textAlign: 'center' }}>
+                  <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', margin: '0 0 2px' }}>{workoutSessions.length}</p>
+                  <p style={{ fontSize: 12, color: '#6b7280', margin: 0, fontWeight: 500 }}>Workouts</p>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', margin: '0 0 2px' }}>{fmtVol(totalVolume)}</p>
+                  <p style={{ fontSize: 12, color: '#6b7280', margin: 0, fontWeight: 500 }}>lbs Lifted</p>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', margin: '0 0 2px' }}>{Object.keys(prMap).length}</p>
+                  <p style={{ fontSize: 12, color: '#6b7280', margin: 0, fontWeight: 500 }}>PRs</p>
+                </div>
+              </div>
             </div>
-            <div style={{ padding: '14px 18px' }}>
-              {recentSessions.length === 0 ? (
-                <p style={{ fontSize: 13, color: '#9ca3af', textAlign: 'center', padding: '8px 0' }}>No recent workouts</p>
-              ) : (
-                recentSessions.map((session, i) => {
-                  const exCount = new Set(session.exercises.map(e => e.exercise)).size;
-                  const vol = session.exercises.reduce((s, e) => s + e.sets * e.reps * e.weight, 0);
-                  return (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, paddingBottom: i < recentSessions.length - 1 ? 12 : 0, marginBottom: i < recentSessions.length - 1 ? 12 : 0, borderBottom: i < recentSessions.length - 1 ? '1px solid var(--border)' : 'none' }}>
-                      <div className="workout-icon-wrap" style={{ width: 38, height: 38, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round"><path d="M6.5 6.5h11"/><path d="M6.5 17.5h11"/><path d="M3 9.5h2v5H3z"/><path d="M19 9.5h2v5h-2z"/><path d="M5 12h14"/></svg>
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)', margin: '0 0 2px' }}>{formatDateFull(session.date)}</p>
-                        <p style={{ fontSize: 11, color: '#9ca3af', margin: 0 }}>{exCount} exercise{exCount !== 1 ? 's' : ''} · {fmtVol(vol)} lbs</p>
-                      </div>
-                    </div>
-                  );
-                })
+
+            {/* Row 2: Name + bio */}
+            <div style={{ marginBottom: 12 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--foreground)', margin: '0 0 2px' }}>{profileName}</h3>
+              <p style={{ fontSize: 13, color: '#6b7280', margin: '0 0 3px' }}>{handle}</p>
+              <p style={{ fontSize: 12, color: '#9ca3af', fontWeight: 500, margin: '0 0 8px' }}>{tier.tier} Lifter · {profileGoal}</p>
+              {profileBio && (
+                <p style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.5, margin: 0 }}>{profileBio}</p>
               )}
             </div>
+
+            {/* Row 3: Activity row */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--secondary)', borderRadius: 12, padding: '11px 14px', marginBottom: 10, cursor: 'pointer' }}>
+              <div>
+                <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)', margin: '0 0 2px' }}>Your Activity</p>
+                <p style={{ fontSize: 12, color: '#6b7280', margin: 0 }}>{monthVolume} lifted this month</p>
+              </div>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+
+            {/* Row 4: Action buttons */}
+            <div style={{ display: 'flex', gap: 8 }}>
+              {/* Edit Profile — opens modal */}
+              <button
+                onClick={() => setShowEditModal(true)}
+                style={{ flex: 1, padding: '8px 0', background: 'var(--card)', border: '1.5px solid var(--border)', borderRadius: 10, fontSize: 13, fontWeight: 600, color: 'var(--foreground)', cursor: 'pointer' }}
+              >
+                Edit Profile
+              </button>
+
+              {/* Share Profile — native share or clipboard */}
+              <button
+                onClick={handleShare}
+                style={{ flex: 1, padding: '8px 0', background: 'var(--card)', border: '1.5px solid var(--border)', borderRadius: 10, fontSize: 13, fontWeight: 600, color: 'var(--foreground)', cursor: 'pointer' }}
+              >
+                Share Profile
+              </button>
+
+              {/* Settings — replaces the meaningless three-dot */}
+              <button
+                onClick={() => setShowSettingsMenu(true)}
+                title="Settings"
+                style={{ width: 38, height: 36, background: 'var(--card)', border: '1.5px solid var(--border)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <circle cx="12" cy="12" r="3"/>
+                  <path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M4.93 19.07l1.41-1.41M19.07 19.07l-1.41-1.41M12 2v2M12 20v2M2 12h2M20 12h2"/>
+                </svg>
+              </button>
+            </div>
           </div>
 
-          {/* Lifetime Stats */}
+          {/* Content tab bar */}
+          <div style={{ display: 'flex', borderTop: '1px solid var(--border)' }}>
+            {([
+              { id: 'posts', icon: <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg> },
+              { id: 'logs', icon: <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6.5 6.5h11"/><path d="M6.5 17.5h11"/><path d="M3 9.5h2v5H3z"/><path d="M19 9.5h2v5h-2z"/><path d="M5 12h14"/></svg> },
+              { id: 'prs', icon: <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2"/><path d="M18 9h2a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-2"/><path d="M6 2h12v10a6 6 0 0 1-12 0V2z"/><path d="M9 21h6"/><path d="M12 17v4"/></svg> },
+            ] as { id: ProfilePanel; icon: React.ReactNode }[]).map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActivePanel(tab.id)}
+                style={{
+                  flex: 1, padding: '12px 0', background: 'none', border: 'none',
+                  borderBottom: activePanel === tab.id ? '2.5px solid var(--foreground)' : '2.5px solid transparent',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: activePanel === tab.id ? 'var(--foreground)' : '#9ca3af',
+                }}
+              >
+                {tab.icon}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ── POSTS panel ── */}
+        {activePanel === 'posts' && (
           <div style={{ background: 'var(--card)', borderRadius: 20, border: '1.5px solid var(--border)', overflow: 'hidden' }}>
-            <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)' }}>
-              <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>Lifetime Stats</h3>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
-              {([
-                ['Total Sets', totalSets, 'border-right:1px solid var(--border);border-bottom:1px solid var(--border)'],
-                ['Total Reps', totalReps, 'border-bottom:1px solid var(--border)'],
-                ['Workouts', workoutSessions.length, 'border-right:1px solid var(--border)'],
-                ['Fitness Goal', 'Build Muscle', ''],
-              ] as [string, string | number, string][]).map(([label, val]) => (
-                <div key={label} style={{ padding: '14px 18px' }}>
-                  <p style={{ fontSize: 11, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>{label}</p>
-                  <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', margin: 0 }}>{val}</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2 }}>
+              <label htmlFor="profile-media-upload-grid" style={{ aspectRatio: '1', background: 'var(--secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, cursor: 'pointer' }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <span style={{ fontSize: 10, color: '#9ca3af', fontWeight: 600 }}>Add</span>
+              </label>
+              <input id="profile-media-upload-grid" type="file" accept="image/*,video/*" multiple style={{ display: 'none' }} onChange={handleMediaUpload} />
+              {mediaItems.map((url, i) => (
+                <div key={i} style={{ aspectRatio: '1', overflow: 'hidden' }}>
+                  <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
               ))}
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* PRs panel */}
-      {activePanel === 'prs' && (
-        <div style={{ background: 'var(--card)', borderRadius: 20, border: '1.5px solid var(--border)', overflow: 'hidden' }}>
-          <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)' }}>
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>Personal Records</h3>
-          </div>
-          {Object.keys(prMap).length === 0 ? (
-            <p style={{ padding: '20px 18px', fontSize: 13, color: '#9ca3af', textAlign: 'center' }}>Log some sets to see your PRs here.</p>
-          ) : (
-            Object.entries(prMap).map(([name, pr], i, arr) => (
-              <div key={name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 38, height: 38, borderRadius: 10, background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2"/><path d="M18 9h2a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-2"/><path d="M6 2h12v10a6 6 0 0 1-12 0V2z"/><path d="M9 21h6"/><path d="M12 17v4"/></svg>
-                  </div>
-                  <div>
-                    <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)', margin: '0 0 2px' }}>{name}</p>
-                    <p style={{ fontSize: 11, color: '#9ca3af', margin: 0 }}>Last updated: {pr.date || '—'}</p>
-                  </div>
+            {mediaItems.length === 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', gap: 10 }}>
+                <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                 </div>
-                <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--foreground)', margin: 0 }}>{pr.weight > 0 ? `${pr.weight} lbs` : '—'}</p>
+                <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>No posts yet</p>
+                <p style={{ fontSize: 12, color: '#9ca3af', margin: 0, textAlign: 'center' }}>Upload a photo or video to share your workouts</p>
               </div>
-            ))
-          )}
-        </div>
+            )}
+          </div>
+        )}
+
+        {/* ── LOGS panel ── */}
+        {activePanel === 'logs' && (
+          <div className="space-y-3">
+            {/* Training Tier card */}
+            <div style={{ background: 'var(--card)', borderRadius: 20, border: '1.5px solid var(--border)', padding: '16px 18px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <div>
+                  <p style={{ fontSize: 12, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>Training Tier</p>
+                  <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', margin: 0 }}>{tier.tier}</p>
+                </div>
+                <div style={{ width: 48, height: 48, borderRadius: '50%', background: tier.color + '20', border: `2px solid ${tier.color}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ fontSize: 18, fontWeight: 800, color: tier.color }}>L{tier.level}</span>
+                </div>
+              </div>
+              <div style={{ background: 'var(--secondary)', borderRadius: 8, height: 8, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${Math.round(tier.progress * 100)}%`, background: tier.color, borderRadius: 8, transition: 'width 0.5s ease' }} />
+              </div>
+              {tier.next > 0 && (
+                <p style={{ fontSize: 12, color: '#9ca3af', margin: '6px 0 0' }}>{tier.next} more workout{tier.next !== 1 ? 's' : ''} to reach next tier</p>
+              )}
+            </div>
+
+            {/* Recent Workouts */}
+            <div style={{ background: 'var(--card)', borderRadius: 20, border: '1.5px solid var(--border)', overflow: 'hidden' }}>
+              <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>Recent Workouts</h3>
+                <span style={{ fontSize: 12, color: '#6b7280', fontWeight: 500, cursor: 'pointer' }}>See all</span>
+              </div>
+              <div style={{ padding: '14px 18px' }}>
+                {recentSessions.length === 0 ? (
+                  <p style={{ fontSize: 13, color: '#9ca3af', textAlign: 'center', padding: '8px 0' }}>No recent workouts</p>
+                ) : (
+                  recentSessions.map((session, i) => {
+                    const exCount = new Set(session.exercises.map(e => e.exercise)).size;
+                    const vol = session.exercises.reduce((s, e) => s + e.sets * e.reps * e.weight, 0);
+                    return (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, paddingBottom: i < recentSessions.length - 1 ? 12 : 0, marginBottom: i < recentSessions.length - 1 ? 12 : 0, borderBottom: i < recentSessions.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                        <div style={{ width: 38, height: 38, borderRadius: 10, background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round"><path d="M6.5 6.5h11"/><path d="M6.5 17.5h11"/><path d="M3 9.5h2v5H3z"/><path d="M19 9.5h2v5h-2z"/><path d="M5 12h14"/></svg>
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)', margin: '0 0 2px' }}>{formatDateFull(session.date)}</p>
+                          <p style={{ fontSize: 11, color: '#9ca3af', margin: 0 }}>{exCount} exercise{exCount !== 1 ? 's' : ''} · {fmtVol(vol)} lbs</p>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            {/* Lifetime Stats */}
+            <div style={{ background: 'var(--card)', borderRadius: 20, border: '1.5px solid var(--border)', overflow: 'hidden' }}>
+              <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)' }}>
+                <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>Lifetime Stats</h3>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+                {([
+                  ['Total Sets', totalSets, 'border-right:1px solid var(--border);border-bottom:1px solid var(--border)'],
+                  ['Total Reps', totalReps, 'border-bottom:1px solid var(--border)'],
+                  ['Workouts', workoutSessions.length, 'border-right:1px solid var(--border)'],
+                  ['Fitness Goal', profileGoal, ''],
+                ] as [string, string | number, string][]).map(([label, val]) => (
+                  <div key={label} style={{ padding: '14px 18px' }}>
+                    <p style={{ fontSize: 11, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>{label}</p>
+                    <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', margin: 0 }}>{val}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── PRs panel ── */}
+        {activePanel === 'prs' && (
+          <div style={{ background: 'var(--card)', borderRadius: 20, border: '1.5px solid var(--border)', overflow: 'hidden' }}>
+            <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)' }}>
+              <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>Personal Records</h3>
+            </div>
+            {Object.keys(prMap).length === 0 ? (
+              <p style={{ padding: '20px 18px', fontSize: 13, color: '#9ca3af', textAlign: 'center' }}>Log some sets to see your PRs here.</p>
+            ) : (
+              Object.entries(prMap).map(([name, pr], i, arr) => (
+                <div key={name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ width: 38, height: 38, borderRadius: 10, background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2"/><path d="M18 9h2a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-2"/><path d="M6 2h12v10a6 6 0 0 1-12 0V2z"/><path d="M9 21h6"/><path d="M12 17v4"/></svg>
+                    </div>
+                    <div>
+                      <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)', margin: '0 0 2px' }}>{name}</p>
+                      <p style={{ fontSize: 11, color: '#9ca3af', margin: 0 }}>Last updated: {pr.date || '—'}</p>
+                    </div>
+                  </div>
+                  <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--foreground)', margin: 0 }}>{pr.weight > 0 ? `${pr.weight} lbs` : '—'}</p>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ── Overlays ── */}
+      {showEditModal && (
+        <EditProfileModal
+          name={profileName}
+          bio={profileBio}
+          goal={profileGoal}
+          onSave={(n, b, g) => { setProfileName(n); setProfileBio(b); setProfileGoal(g); }}
+          onClose={() => setShowEditModal(false)}
+        />
       )}
-    </div>
+      {showSettingsMenu && <SettingsMenu onClose={() => setShowSettingsMenu(false)} />}
+      {showShareToast && <ShareToast onClose={() => setShowShareToast(false)} />}
+    </>
   );
 }
