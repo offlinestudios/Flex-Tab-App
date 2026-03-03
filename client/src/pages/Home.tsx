@@ -1243,16 +1243,9 @@ export default function Home() {
                     style={{ display:'flex', alignItems:'center', justifyContent:'space-between', background:'var(--card)', borderRadius:16, border:'1.5px solid var(--border)', padding:'14px 16px', cursor: detail ? 'pointer' : 'default' }}
                   >
                     <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-                      {/* Exercise thumbnail: show image if available, else icon */}
-                      <div style={{ width:40, height:40, borderRadius:12, background:'var(--secondary)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, overflow:'hidden' }}>
-                        {detail?.image ? (
-                          <img
-                            src={detail.image}
-                            alt={ex.name}
-                            style={{ width:'100%', height:'100%', objectFit:'cover' }}
-                            onError={e => { (e.currentTarget as HTMLImageElement).style.display='none'; }}
-                          />
-                        ) : ex.muscle === 'cardio' ? (
+                      {/* Exercise icon */}
+                      <div style={{ width:40, height:40, borderRadius:12, background:'var(--secondary)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                        {ex.muscle === 'cardio' ? (
                           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
                           </svg>

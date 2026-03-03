@@ -88,14 +88,16 @@ export function ExerciseDetailSheet({ detail, onClose }: ExerciseDetailSheetProp
                 width: "100%",
                 borderRadius: 16,
                 overflow: "hidden",
-                background: "#ffffff",
+                background: "#f4f4f6",
                 marginTop: 16,
                 marginBottom: 16,
-                aspectRatio: "1 / 1",
+                aspectRatio: "4 / 3",
                 maxHeight: 260,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                padding: 16,
+                boxSizing: "border-box",
               }}
             >
               <img
@@ -104,8 +106,9 @@ export function ExerciseDetailSheet({ detail, onClose }: ExerciseDetailSheetProp
                 style={{
                   width: "100%",
                   height: "100%",
-                  objectFit: "cover",
+                  objectFit: "contain",
                   display: "block",
+                  borderRadius: 8,
                 }}
                 onError={(e) => {
                   (e.currentTarget as HTMLImageElement).style.display = "none";
