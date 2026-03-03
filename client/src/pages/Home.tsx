@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, lazy, Suspense } from "react";
+import React, { useState, useEffect, useMemo, lazy, Suspense } from "react";
 import { Menu, Plus, Trash2, Edit2, X, Dumbbell, Target, Weight, Activity, TrendingUp, Calendar, Share2 } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
@@ -116,6 +116,11 @@ export default function Home() {
   const [editingLog, setEditingLog] = useState<SetLog | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editFormData, setEditFormData] = useState<SetLog | null>(null);
+  // History bottom-sheet edit state
+  const [historyEditSheet, setHistoryEditSheet] = useState<SetLog | null>(null);
+  const [historyEditForm, setHistoryEditForm] = useState<{ sets: number; reps: number; weight: number } | null>(null);
+  const [historyEditField, setHistoryEditField] = useState<'sets' | 'reps' | 'weight' | null>(null);
+  const [historyNumpadBuf, setHistoryNumpadBuf] = useState<string>('');
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
   
   // Fetch workout logs from database
@@ -495,6 +500,61 @@ export default function Home() {
     setShowEditDialog(false);
     setEditingLog(null);
     setEditFormData(null);
+  };
+
+  /* ── History bottom-sheet helpers ── */
+  const openHistoryEditSheet = (log: SetLog) => {
+    setHistoryEditSheet(log);
+    setHistoryEditForm({ sets: log.sets, reps: log.reps, weight: log.weight });
+    setHistoryEditField(null);
+    setHistoryNumpadBuf('');
+  };
+  const closeHistoryEditSheet = () => {
+    setHistoryEditSheet(null);
+    setHistoryEditForm(null);
+    setHistoryEditField(null);
+    setHistoryNumpadBuf('');
+  };
+  const openHistoryNumpad = (field: 'sets' | 'reps' | 'weight') => {
+    setHistoryEditField(field);
+    setHistoryNumpadBuf(String(historyEditForm?.[field] ?? ''));
+  };
+  const handleHistoryNumpadKey = (k: string) => {
+    setHistoryNumpadBuf(prev => {
+      if (k === 'del') return prev.slice(0, -1);
+      if (prev === '0' && k !== '.') return k;
+      return prev + k;
+    });
+  };
+  const commitHistoryNumpad = () => {
+    if (!historyEditField || !historyEditForm) return;
+    const val = parseFloat(historyNumpadBuf) || 0;
+    setHistoryEditForm(prev => prev ? { ...prev, [historyEditField]: val } : prev);
+    setHistoryEditField(null);
+    setHistoryNumpadBuf('');
+  };
+  const handleHistorySave = async () => {
+    if (!historyEditSheet || !historyEditForm) return;
+    try {
+      await updateSetLogMutation.mutateAsync({
+        id: parseInt(historyEditSheet.id),
+        sets: historyEditForm.sets,
+        reps: historyEditForm.reps,
+        weight: historyEditForm.weight,
+      });
+      closeHistoryEditSheet();
+    } catch (e) {
+      console.error('Failed to update set:', e);
+    }
+  };
+  const handleHistoryDelete = async () => {
+    if (!historyEditSheet) return;
+    try {
+      await deleteSetLogMutation.mutateAsync({ id: parseInt(historyEditSheet.id) });
+      closeHistoryEditSheet();
+    } catch (e) {
+      console.error('Failed to delete set:', e);
+    }
   };
 
   const toggleCategory = (category: string) => {
@@ -922,23 +982,18 @@ export default function Home() {
                           <div key={exName} style={{ paddingBottom:14, marginBottom:14, borderBottom:'1px solid var(--border)' }}>
                             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:3 }}>
                               <p style={{ fontWeight:700, fontSize:14, color:'var(--foreground)', margin:0 }}>{exName}</p>
-                              <div style={{ display:'flex', gap:6 }}>
-                                {sets[0] && (
-                                  <button onClick={() => handleEditLog(sets[0])} style={{ background:'none', border:'none', cursor:'pointer', color:'#9ca3af', padding:0 }} title="Edit">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                                    </svg>
-                                  </button>
-                                )}
-                                {sets.map(s => (
-                                  <button key={s.id} onClick={() => handleDeleteLog(s.id, session.date)} style={{ background:'none', border:'none', cursor:'pointer', color:'#9ca3af', padding:0 }} title="Delete">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                                      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                                    </svg>
-                                  </button>
-                                ))}
-                              </div>
+                              {sets[0] && (
+                                <button
+                                  onClick={() => openHistoryEditSheet(sets[0])}
+                                  style={{ background:'none', border:'none', cursor:'pointer', color:'#9ca3af', padding:'2px 4px' }}
+                                  title="Edit"
+                                >
+                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                  </svg>
+                                </button>
+                              )}
                             </div>
                             <div style={{ display:'flex', alignItems:'flex-end', justifyContent:'space-between', marginTop:8 }}>
                               <div style={{ display:'flex', alignItems:'flex-end', gap:3 }}>
@@ -1268,34 +1323,109 @@ export default function Home() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Log Dialog */}
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="bg-white border-slate-200">
-          <DialogHeader>
-            <DialogTitle className="text-slate-900">Edit Set Log</DialogTitle>
-          </DialogHeader>
-          {editFormData && (
-            <div className="space-y-4 py-4">
-              <div>
-                <Label htmlFor="edit-sets" className="text-slate-700">Sets</Label>
-                <Input id="edit-sets" type="number" value={editFormData.sets} onChange={(e) => setEditFormData({ ...editFormData, sets: parseInt(e.target.value) || 0 })} className="mt-2 border-slate-300" />
+      {/* History Exercise Edit Bottom Sheet */}
+      {historyEditSheet && historyEditForm && (() => {
+        const fields: Array<{ key: 'sets' | 'reps' | 'weight'; label: string; unit: string }> = [
+          { key: 'sets', label: 'Sets', unit: '' },
+          { key: 'reps', label: 'Reps', unit: '' },
+          { key: 'weight', label: 'Weight', unit: 'lbs' },
+        ];
+        const numpadDigits = [1,2,3,4,5,6,7,8,9];
+        const keyStyle: React.CSSProperties = {
+          height: 54, borderRadius: 14, border: 'none',
+          background: 'var(--muted)', fontSize: 22, fontWeight: 700,
+          color: 'var(--foreground)', cursor: 'pointer', fontFamily: 'inherit',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          WebkitTapHighlightColor: 'transparent',
+        };
+        const liveVal = historyEditField ? (historyNumpadBuf || '0') : null;
+        return (
+          <>
+            {/* Backdrop */}
+            <div
+              onPointerDown={e => { e.preventDefault(); historyEditField ? commitHistoryNumpad() : closeHistoryEditSheet(); }}
+              style={{ position:'fixed', inset:0, zIndex:40, background:'rgba(0,0,0,0.35)' }}
+            />
+            {/* Sheet */}
+            <div style={{
+              position:'fixed', left:0, right:0, bottom:0,
+              background:'var(--card)',
+              borderTop:'1px solid var(--border)',
+              borderRadius:'20px 20px 0 0',
+              padding:'10px 16px calc(env(safe-area-inset-bottom,0px) + 16px)',
+              zIndex:50,
+              boxShadow:'0 -8px 32px rgba(0,0,0,0.14)',
+              maxWidth:480, margin:'0 auto',
+            }}>
+              {/* Drag handle */}
+              <div style={{ width:36, height:4, borderRadius:2, background:'var(--border)', margin:'0 auto 16px' }} />
+              {/* Title */}
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
+                <span style={{ fontSize:15, fontWeight:700, color:'var(--foreground)' }}>{historyEditSheet.exercise}</span>
+                <button onPointerDown={e => { e.preventDefault(); closeHistoryEditSheet(); }} style={{ background:'none', border:'none', cursor:'pointer', color:'#9ca3af', padding:4 }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
               </div>
-              <div>
-                <Label htmlFor="edit-reps" className="text-slate-700">Reps</Label>
-                <Input id="edit-reps" type="number" value={editFormData.reps} onChange={(e) => setEditFormData({ ...editFormData, reps: parseInt(e.target.value) || 0 })} className="mt-2 border-slate-300" />
+              {/* Value tiles */}
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10, marginBottom:16 }}>
+                {fields.map(f => {
+                  const isActive = historyEditField === f.key;
+                  const displayVal = isActive ? (liveVal ?? '') : String(historyEditForm[f.key]);
+                  return (
+                    <div
+                      key={f.key}
+                      onPointerDown={e => { e.preventDefault(); openHistoryNumpad(f.key); }}
+                      style={{
+                        background: isActive ? 'var(--muted)' : 'var(--secondary)',
+                        border: `2px solid ${isActive ? 'var(--foreground)' : 'var(--border)'}`,
+                        borderRadius:14, padding:'12px 8px', textAlign:'center', cursor:'pointer',
+                        boxShadow: isActive ? '0 0 0 4px rgba(26,35,50,0.1)' : 'none',
+                        transition:'border-color 0.15s, box-shadow 0.15s',
+                      }}
+                    >
+                      <div style={{ fontSize:10, fontWeight:700, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.07em', marginBottom:4 }}>{f.label}</div>
+                      <div style={{ fontSize:28, fontWeight:800, color:'var(--foreground)', lineHeight:1, letterSpacing:-1 }}>{displayVal}</div>
+                      {f.unit && <div style={{ fontSize:11, fontWeight:600, color:'#9ca3af', marginTop:2 }}>{f.unit}</div>}
+                    </div>
+                  );
+                })}
               </div>
-              <div>
-                <Label htmlFor="edit-weight" className="text-slate-700">Weight (lbs)</Label>
-                <Input id="edit-weight" type="number" value={editFormData.weight} onChange={(e) => setEditFormData({ ...editFormData, weight: parseInt(e.target.value) || 0 })} className="mt-2 border-slate-300" />
-              </div>
+              {/* Numpad (shown when a field is active) */}
+              {historyEditField && (
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:7, marginBottom:14 }}>
+                  {numpadDigits.map(n => (
+                    <button key={n} style={keyStyle} onPointerDown={e => { e.preventDefault(); handleHistoryNumpadKey(String(n)); }}>{n}</button>
+                  ))}
+                  {/* bottom row */}
+                  <div style={{ ...keyStyle, background:'transparent', pointerEvents:'none' }} />
+                  <button style={keyStyle} onPointerDown={e => { e.preventDefault(); handleHistoryNumpadKey('0'); }}>0</button>
+                  <button style={{ ...keyStyle, color:'var(--muted-foreground)', fontSize:15 }} onPointerDown={e => { e.preventDefault(); handleHistoryNumpadKey('del'); }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg>
+                  </button>
+                  <button
+                    style={{ ...keyStyle, background:'var(--foreground)', color:'var(--background)', fontSize:14, fontWeight:700, gridColumn:'span 3', height:50, borderRadius:14 }}
+                    onPointerDown={e => { e.preventDefault(); commitHistoryNumpad(); }}
+                  >Done ✓</button>
+                </div>
+              )}
+              {/* Save button */}
+              {!historyEditField && (
+                <button
+                  onPointerDown={e => { e.preventDefault(); handleHistorySave(); }}
+                  style={{ width:'100%', padding:13, background:'var(--foreground)', color:'var(--background)', border:'none', borderRadius:14, fontSize:15, fontWeight:700, cursor:'pointer', fontFamily:'inherit', marginBottom:10 }}
+                >Save Changes</button>
+              )}
+              {/* Delete button */}
+              {!historyEditField && (
+                <button
+                  onPointerDown={e => { e.preventDefault(); handleHistoryDelete(); }}
+                  style={{ width:'100%', padding:13, background:'transparent', color:'#ef4444', border:'1.5px solid #ef4444', borderRadius:14, fontSize:15, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}
+                >Delete Exercise Log</button>
+              )}
             </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEditDialog(false)} className="border-slate-300">Cancel</Button>
-            <Button onClick={handleSaveEditLog} className="bg-slate-800 hover:bg-slate-900">Save Changes</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </>
+        );
+      })()}
 
       {/* Calendar Modal */}
       <CalendarModal
