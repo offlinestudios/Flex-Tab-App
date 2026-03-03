@@ -141,13 +141,17 @@ function AppShell({ children, timerSlot }: { children: React.ReactNode; timerSlo
     ? user.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
     : "FT";
 
-  const isActive = (path: string) => {
-    if (path === "/dashboard" && !location.includes("?tab=")) return true;
-    return location === path || location.startsWith(path);
-  };
-
   const search = useSearch();
   const currentTab = new URLSearchParams(search).get('tab') || 'log';
+
+  const isActive = (path: string) => {
+    const pathTab = new URLSearchParams(path.split('?')[1] || '').get('tab');
+    if (!pathTab) {
+      // "Log" item — active only when the current tab is 'log' (no specific tab)
+      return currentTab === 'log';
+    }
+    return currentTab === pathTab;
+  };
   const isBottomNavActive = (path: string) => {
     const pathTab = new URLSearchParams(path.split('?')[1] || '').get('tab');
     if (!pathTab) {
