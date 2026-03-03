@@ -2,7 +2,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import { useEffect, useRef, useState } from "react";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import { DashboardLayoutSkeleton } from "./DashboardLayoutSkeleton";
 import { Button } from "./ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -146,12 +146,15 @@ function AppShell({ children, timerSlot }: { children: React.ReactNode; timerSlo
     return location === path || location.startsWith(path);
   };
 
+  const search = useSearch();
+  const currentTab = new URLSearchParams(search).get('tab') || 'log';
   const isBottomNavActive = (path: string) => {
-    if (path === "/dashboard") {
-      const tab = new URLSearchParams(location.split('?')[1] || '').get('tab');
-      return !tab || tab === 'log' || tab === 'measurements' || tab === 'history' || tab === 'trends' || tab === 'routines' || tab === 'exercises';
+    const pathTab = new URLSearchParams(path.split('?')[1] || '').get('tab');
+    if (!pathTab) {
+      // Log tab — active only when not on community or profile
+      return currentTab !== 'community' && currentTab !== 'profile';
     }
-    return location === path || location.startsWith(path);
+    return currentTab === pathTab;
   };
 
   return (
