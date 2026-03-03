@@ -664,8 +664,8 @@ export default function Home() {
       />
       <div className="px-4 py-5 max-w-2xl mx-auto">
 
-        {/* ── Date / Page header ── */}
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
+        {/* ── Date / Page header ── (hidden on measurements tab — component owns its own header) */}
+        <div style={{ display: activeTab === 'measurements' ? 'none' : 'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
           <h2 style={{ fontSize:20, fontWeight:800, color:'var(--foreground)', margin:0 }}>
             {activeTab === 'log' ? todayLabel
               : activeTab === 'measurements' ? 'Measurements'
