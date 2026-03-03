@@ -179,21 +179,139 @@ function SettingsMenu({ onClose }: SettingsMenuProps) {
 }
 
 /* ─────────────────────────────────────────────────────────────────
-   Share toast
+   Share Sheet
 ───────────────────────────────────────────────────────────────── */
-function ShareToast({ onClose }: { onClose: () => void }) {
+interface ShareSheetProps {
+  profileName: string;
+  onClose: () => void;
+}
+
+function ShareSheet({ profileName, onClose }: ShareSheetProps) {
+  const [copied, setCopied] = useState(false);
+  const profileUrl = window.location.href;
+
+  const copyLink = () => {
+    navigator.clipboard.writeText(profileUrl).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const shareOptions = [
+    {
+      label: 'Copy Link',
+      sublabel: copied ? 'Copied!' : profileUrl.length > 40 ? profileUrl.slice(0, 40) + '…' : profileUrl,
+      icon: copied
+        ? <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+        : <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>,
+      action: copyLink,
+      accent: copied ? '#22c55e' : undefined,
+    },
+    {
+      label: 'Share via Messages',
+      sublabel: 'Send to a contact',
+      icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
+      action: () => { window.open(`sms:?body=Check out ${profileName} on FlexTab: ${profileUrl}`); onClose(); },
+    },
+    {
+      label: 'Share via Email',
+      sublabel: 'Open in mail app',
+      icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>,
+      action: () => { window.open(`mailto:?subject=${encodeURIComponent(profileName + ' on FlexTab')}&body=${encodeURIComponent('Check out my FlexTab profile: ' + profileUrl)}`); onClose(); },
+    },
+    {
+      label: 'Share to Instagram',
+      sublabel: 'Copy link then open app',
+      icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>,
+      action: () => { copyLink(); },
+    },
+    {
+      label: 'More Options',
+      sublabel: 'Use device share menu',
+      icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>,
+      action: () => {
+        if (navigator.share) {
+          navigator.share({ title: `${profileName} on FlexTab`, url: profileUrl }).catch(() => {});
+        }
+        onClose();
+      },
+    },
+  ];
+
   return (
-    <div style={{
-      position: 'fixed', bottom: 90, left: '50%', transform: 'translateX(-50%)',
-      background: 'var(--foreground)', color: 'var(--background)',
-      padding: '10px 20px', borderRadius: 50,
-      fontSize: 13, fontWeight: 600,
-      zIndex: 300, whiteSpace: 'nowrap',
-      boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
-      animation: 'fadeInUp 0.2s ease',
-    }}>
-      Profile link copied to clipboard ✓
-    </div>
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 200, backdropFilter: 'blur(2px)' }}
+      />
+      {/* Sheet */}
+      <div style={{
+        position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
+        width: '100%', maxWidth: 480,
+        background: 'var(--card)', borderRadius: '20px 20px 0 0',
+        paddingBottom: 'calc(16px + env(safe-area-inset-bottom))',
+        zIndex: 201, boxShadow: '0 -4px 32px rgba(0,0,0,0.18)',
+      }}>
+        {/* Handle */}
+        <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border)', margin: '14px auto 0' }} />
+
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px 12px' }}>
+          <div>
+            <h3 style={{ fontSize: 17, fontWeight: 800, color: 'var(--foreground)', margin: '0 0 2px' }}>Share Profile</h3>
+            <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>{profileName} on FlexTab</p>
+          </div>
+          <button
+            onClick={onClose}
+            style={{ background: 'var(--secondary)', border: 'none', borderRadius: '50%', width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#6b7280', fontSize: 18, lineHeight: 1 }}
+          >×</button>
+        </div>
+
+        {/* Profile preview pill */}
+        <div style={{ margin: '0 20px 16px', background: 'var(--secondary)', borderRadius: 14, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--foreground)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--background)' }}>
+              {profileName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+            </span>
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)', margin: '0 0 1px' }}>{profileName}</p>
+            <p style={{ fontSize: 12, color: '#9ca3af', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{profileUrl}</p>
+          </div>
+        </div>
+
+        {/* Share options */}
+        <div style={{ borderTop: '1px solid var(--border)' }}>
+          {shareOptions.map((opt, i) => (
+            <button
+              key={i}
+              onClick={opt.action}
+              style={{
+                width: '100%', display: 'flex', alignItems: 'center', gap: 14,
+                padding: '13px 20px',
+                background: 'none', border: 'none',
+                borderBottom: i < shareOptions.length - 1 ? '1px solid var(--border)' : 'none',
+                cursor: 'pointer', textAlign: 'left',
+              }}
+            >
+              <div style={{
+                width: 40, height: 40, borderRadius: 12,
+                background: opt.accent ? opt.accent + '18' : 'var(--secondary)',
+                border: `1.5px solid ${opt.accent ? opt.accent + '40' : 'var(--border)'}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                color: opt.accent ?? '#6b7280',
+              }}>
+                {opt.icon}
+              </div>
+              <div>
+                <p style={{ fontSize: 14, fontWeight: 600, color: opt.accent ?? 'var(--foreground)', margin: '0 0 1px' }}>{opt.label}</p>
+                <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>{opt.sublabel}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -205,7 +323,7 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
   const [mediaItems, setMediaItems] = useState<string[]>([]);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
-  const [showShareToast, setShowShareToast] = useState(false);
+  const [showShareSheet, setShowShareSheet] = useState(false);
 
   // Editable profile fields
   const [profileName, setProfileName] = useState<string>(user?.name || 'FlexTab User');
@@ -268,14 +386,7 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
   };
 
   const handleShare = () => {
-    const url = window.location.href;
-    if (navigator.share) {
-      navigator.share({ title: `${profileName} on FlexTab`, url }).catch(() => {});
-    } else {
-      navigator.clipboard.writeText(url).catch(() => {});
-      setShowShareToast(true);
-      setTimeout(() => setShowShareToast(false), 2500);
-    }
+    setShowShareSheet(true);
   };
 
   const recentSessions = [...workoutSessions]
@@ -533,7 +644,7 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
         />
       )}
       {showSettingsMenu && <SettingsMenu onClose={() => setShowSettingsMenu(false)} />}
-      {showShareToast && <ShareToast onClose={() => setShowShareToast(false)} />}
+      {showShareSheet && <ShareSheet profileName={profileName} onClose={() => setShowShareSheet(false)} />}
     </>
   );
 }
