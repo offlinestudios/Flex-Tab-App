@@ -688,6 +688,7 @@ export default function Home() {
         }}
         selectedExercises={selectedExercises}
         allExercises={allExercises}
+        onCreateCustom={() => setShowCustomDialog(true)}
       />
       {/* Routine Builder overlay */}
       <RoutineBuilder
@@ -1223,7 +1224,7 @@ export default function Home() {
             {/* Exercise list */}
             <div className="space-y-2">
               {filteredExLib.map(ex => (
-                <div key={ex.name} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', background:'var(--card)', borderRadius:16, border:'1.5px solid var(--border)', padding:'14px 16px' }}>
+                <div key={ex.name} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', background: ex.isCustom ? 'color-mix(in srgb, var(--card) 95%, #059669)' : 'var(--card)', borderRadius:16, border: ex.isCustom ? '1.5px solid #bbf7d0' : '1.5px solid var(--border)', padding:'14px 16px' }}>
                   <div style={{ display:'flex', alignItems:'center', gap:12 }}>
                     <div style={{ width:40, height:40, borderRadius:12, background:'var(--secondary)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -1240,10 +1241,19 @@ export default function Home() {
                   <span style={{ fontSize:11, fontWeight:600, color:'#6b7280', background:'var(--secondary)', padding:'4px 10px', borderRadius:20 }}>{ex.type}</span>
                 </div>
               ))}
+              {/* Create custom exercise button */}
+              <button
+                onClick={() => setShowCustomDialog(true)}
+                style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, width:'100%', padding:'13px 16px', borderRadius:16, border:'1.5px dashed var(--border)', background:'transparent', fontSize:14, fontWeight:600, color:'#6b7280', cursor:'pointer', transition:'all 0.15s', marginTop:4 }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--foreground)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--foreground)'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLButtonElement).style.color = '#6b7280'; }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Create custom exercise
+              </button>
             </div>
           </div>
         )}
-
         {/* ══ COMMUNITY TAB ══ */}
         {activeTab === 'community' && (
           <CommunityTab user={user} workoutSessions={workoutSessions} />
@@ -1285,13 +1295,17 @@ export default function Home() {
             </div>
             <div>
               <Label htmlFor="exercise-category" className="text-slate-700">Category</Label>
-              <Input
+              <select
                 id="exercise-category"
-                placeholder="e.g., Chest"
                 value={customExerciseCategory}
                 onChange={(e) => setCustomExerciseCategory(e.target.value)}
-                className="mt-2 border-slate-300"
-              />
+                style={{ width:'100%', marginTop:8, padding:'9px 12px', borderRadius:8, border:'1px solid #cbd5e1', fontSize:14, color: customExerciseCategory ? '#0f172a' : '#94a3b8', background:'white', outline:'none', cursor:'pointer' }}
+              >
+                <option value="" disabled>Select a category…</option>
+                {['Chest','Back','Arms','Shoulders','Legs','Core','Cardio'].map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
             </div>
           </div>
           <DialogFooter>

@@ -14,6 +14,7 @@ interface ExerciseBrowserProps {
   onSelectExercise: (exercise: Exercise) => void;
   selectedExercises: Exercise[];
   allExercises: Exercise[];
+  onCreateCustom?: () => void;
 }
 
 const PART_LABELS: Record<string, string> = {
@@ -34,7 +35,7 @@ const PART_ICON = (
   </svg>
 );
 
-export function ExerciseBrowser({ open, onClose, onSelectExercise, selectedExercises, allExercises }: ExerciseBrowserProps) {
+export function ExerciseBrowser({ open, onClose, onSelectExercise, selectedExercises, allExercises, onCreateCustom }: ExerciseBrowserProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
 
@@ -161,12 +162,15 @@ export function ExerciseBrowser({ open, onClose, onSelectExercise, selectedExerc
                       onMouseEnter={(e) => (e.currentTarget.style.background = "#f9fafb")}
                       onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                     >
-                      <div style={{ width: 36, height: 36, borderRadius: 10, background: "#f5f6f8", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "#1a2332" }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 10, background: ex.isCustom ? "#f0fdf4" : "#f5f6f8", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: ex.isCustom ? "#059669" : "#1a2332" }}>
                         {PART_ICON}
                       </div>
                       <div style={{ flex: 1 }}>
                         <p style={{ fontWeight: 600, fontSize: 14, color: "#1a2332", margin: "0 0 2px" }}>{ex.name}</p>
-                        <p style={{ fontSize: 12, color: "#9ca3af", margin: 0 }}>{PART_LABELS[ex.category.toLowerCase()] || ex.category}</p>
+                        <p style={{ fontSize: 12, color: "#9ca3af", margin: 0 }}>
+                          {PART_LABELS[ex.category.toLowerCase()] || ex.category}
+                          {ex.isCustom ? " · Custom" : ""}
+                        </p>
                       </div>
                       {isAdded ? (
                         <span style={{ fontSize: 11, fontWeight: 700, color: "#059669", background: "#f0fdf4", padding: "3px 10px", borderRadius: 20 }}>Added</span>
@@ -182,6 +186,29 @@ export function ExerciseBrowser({ open, onClose, onSelectExercise, selectedExerc
             ))
           )}
         </div>
+
+        {/* Create custom exercise button */}
+        {onCreateCustom && (
+          <div style={{ padding: "12px 16px", borderTop: "1px solid #f0f1f3", flexShrink: 0 }}>
+            <button
+              onClick={() => { onClose(); onCreateCustom(); }}
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                width: "100%", padding: "13px 16px", borderRadius: 14,
+                border: "1.5px dashed #d1d5db", background: "transparent",
+                fontSize: 14, fontWeight: 600, color: "#6b7280", cursor: "pointer",
+                transition: "all 0.15s",
+              }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#1a2332"; (e.currentTarget as HTMLButtonElement).style.color = "#1a2332"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#d1d5db"; (e.currentTarget as HTMLButtonElement).style.color = "#6b7280"; }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              Create custom exercise
+            </button>
+          </div>
+        )}
       </div>
     </>
   );
