@@ -88,7 +88,7 @@ export function ExerciseDetailSheet({ detail, onClose }: ExerciseDetailSheetProp
                 width: "100%",
                 borderRadius: 16,
                 overflow: "hidden",
-                background: "#e8e8e8",
+                background: "#ffffff",
                 marginTop: 16,
                 marginBottom: 16,
                 aspectRatio: "1 / 1",
