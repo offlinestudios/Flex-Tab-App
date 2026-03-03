@@ -639,35 +639,13 @@ export default function Home() {
     exProgressMap[e.exercise].push({ date: e.date, vol: e.sets * e.reps * e.weight, weight: e.weight, reps: e.reps });
   });
 
-  const EXERCISE_LIB_DATA = [
-    {name:'Bench Press',muscle:'chest',equipment:'Barbell',type:'Strength'},
-    {name:'Incline Dumbbell Press',muscle:'chest',equipment:'Dumbbell',type:'Strength'},
-    {name:'Cable Fly',muscle:'chest',equipment:'Cable',type:'Strength'},
-    {name:'Push-Up',muscle:'chest',equipment:'Bodyweight',type:'Strength'},
-    {name:'Pull-Up',muscle:'back',equipment:'Bodyweight',type:'Strength'},
-    {name:'Barbell Row',muscle:'back',equipment:'Barbell',type:'Strength'},
-    {name:'Lat Pulldown',muscle:'back',equipment:'Cable',type:'Strength'},
-    {name:'Seated Cable Row',muscle:'back',equipment:'Cable',type:'Strength'},
-    {name:'Squat',muscle:'legs',equipment:'Barbell',type:'Strength'},
-    {name:'Romanian Deadlift',muscle:'legs',equipment:'Barbell',type:'Strength'},
-    {name:'Leg Press',muscle:'legs',equipment:'Machine',type:'Strength'},
-    {name:'Leg Curl',muscle:'legs',equipment:'Machine',type:'Strength'},
-    {name:'Deadlift',muscle:'back',equipment:'Barbell',type:'Strength'},
-    {name:'Bicep Curl',muscle:'arms',equipment:'Dumbbell',type:'Strength'},
-    {name:'Tricep Pushdown',muscle:'arms',equipment:'Cable',type:'Strength'},
-    {name:'Hammer Curl',muscle:'arms',equipment:'Dumbbell',type:'Strength'},
-    {name:'Skull Crusher',muscle:'arms',equipment:'Barbell',type:'Strength'},
-    {name:'Overhead Press',muscle:'shoulders',equipment:'Barbell',type:'Strength'},
-    {name:'Lateral Raise',muscle:'shoulders',equipment:'Dumbbell',type:'Strength'},
-    {name:'Front Raise',muscle:'shoulders',equipment:'Dumbbell',type:'Strength'},
-    {name:'Face Pull',muscle:'shoulders',equipment:'Cable',type:'Strength'},
-    {name:'Plank',muscle:'core',equipment:'Bodyweight',type:'Strength'},
-    {name:'Crunch',muscle:'core',equipment:'Bodyweight',type:'Strength'},
-    {name:'Russian Twist',muscle:'core',equipment:'Bodyweight',type:'Strength'},
-    {name:'Treadmill',muscle:'cardio',equipment:'Machine',type:'Cardio'},
-    {name:'Cycling',muscle:'cardio',equipment:'Machine',type:'Cardio'},
-    {name:'Jump Rope',muscle:'cardio',equipment:'Bodyweight',type:'Cardio'},
-  ];
+  // Derive the exercise library from the same allExercises list used by the Log and Routine Builder
+  const EXERCISE_LIB_DATA = allExercises.map(ex => ({
+    name: ex.name,
+    muscle: ex.category.toLowerCase(),
+    equipment: ex.isCustom ? 'Custom' : '',
+    type: ex.category === 'Cardio' ? 'Cardio' : 'Strength',
+  }));
   const PART_LABELS_LOCAL: Record<string, string> = {
     chest:'Chest', back:'Back', legs:'Legs', arms:'Arms',
     shoulders:'Shoulders', core:'Core', cardio:'Cardio',
