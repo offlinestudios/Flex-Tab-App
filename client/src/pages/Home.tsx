@@ -643,7 +643,7 @@ export default function Home() {
   const EXERCISE_LIB_DATA = allExercises.map(ex => ({
     name: ex.name,
     muscle: ex.category.toLowerCase(),
-    equipment: ex.isCustom ? 'Custom' : '',
+    isCustom: ex.isCustom ?? false,
     type: ex.category === 'Cardio' ? 'Cardio' : 'Strength',
   }));
   const PART_LABELS_LOCAL: Record<string, string> = {
@@ -1234,7 +1234,7 @@ export default function Home() {
                     </div>
                     <div>
                       <p style={{ fontSize:14, fontWeight:700, color:'var(--foreground)', margin:'0 0 2px' }}>{ex.name}</p>
-                      <p style={{ fontSize:12, color:'#9ca3af', margin:0, textTransform:'capitalize' }}>{ex.muscle} · {ex.equipment}</p>
+                      <p style={{ fontSize:12, color:'#9ca3af', margin:0, textTransform:'capitalize' }}>{ex.muscle}{ex.isCustom ? ' · Custom' : ''}</p>
                     </div>
                   </div>
                   <span style={{ fontSize:11, fontWeight:600, color:'#6b7280', background:'var(--secondary)', padding:'4px 10px', borderRadius:20 }}>{ex.type}</span>
