@@ -303,19 +303,19 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
                 <input id="profile-media-upload" type="file" accept="image/*,video/*" multiple style={{ display: 'none' }} onChange={handleMediaUpload} />
               </div>
 
-              {/* Real stats only — no fake followers/following */}
+              {/* Workouts (real) + Followers / Following (0 until social graph exists) */}
               <div style={{ flex: 1, display: 'flex', justifyContent: 'space-around' }}>
                 <div style={{ textAlign: 'center' }}>
                   <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', margin: '0 0 2px' }}>{workoutSessions.length}</p>
                   <p style={{ fontSize: 12, color: '#6b7280', margin: 0, fontWeight: 500 }}>Workouts</p>
                 </div>
                 <div style={{ textAlign: 'center' }}>
-                  <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', margin: '0 0 2px' }}>{fmtVol(totalVolume)}</p>
-                  <p style={{ fontSize: 12, color: '#6b7280', margin: 0, fontWeight: 500 }}>lbs Lifted</p>
+                  <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', margin: '0 0 2px' }}>0</p>
+                  <p style={{ fontSize: 12, color: '#6b7280', margin: 0, fontWeight: 500 }}>Followers</p>
                 </div>
                 <div style={{ textAlign: 'center' }}>
-                  <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', margin: '0 0 2px' }}>{Object.keys(prMap).length}</p>
-                  <p style={{ fontSize: 12, color: '#6b7280', margin: 0, fontWeight: 500 }}>PRs</p>
+                  <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', margin: '0 0 2px' }}>0</p>
+                  <p style={{ fontSize: 12, color: '#6b7280', margin: 0, fontWeight: 500 }}>Following</p>
                 </div>
               </div>
             </div>
