@@ -40,8 +40,8 @@ interface NumpadProps {
 function Numpad({ metric, inputBuf, onKey, onDone }: NumpadProps) {
   const digits = [1, 2, 3, 4, 5, 6, 7, 8, 9];
   const keyStyle: React.CSSProperties = {
-    height: 50, borderRadius: 12, border: "none",
-    background: "var(--muted)", fontSize: 20, fontWeight: 700,
+    height: 54, borderRadius: 14, border: "none",
+    background: "var(--muted)", fontSize: 22, fontWeight: 700,
     color: "var(--foreground)", cursor: "pointer", fontFamily: "inherit",
     display: "flex", alignItems: "center", justifyContent: "center",
     transition: "background 0.1s",
@@ -49,14 +49,27 @@ function Numpad({ metric, inputBuf, onKey, onDone }: NumpadProps) {
   };
 
   return (
-    <div style={{
-      position: "absolute", left: 0, right: 0, bottom: 0,
-      background: "var(--card)", borderTop: "1px solid var(--border)",
-      borderRadius: "0 0 20px 20px",
-      padding: "14px 16px 16px",
-      zIndex: 20,
-      boxShadow: "0 -4px 20px rgba(0,0,0,0.06)",
-    }}>
+    <>
+      {/* Backdrop */}
+      <div
+        onPointerDown={e => { e.preventDefault(); onDone(); }}
+        style={{
+          position: "fixed", inset: 0, zIndex: 40,
+          background: "rgba(0,0,0,0.25)",
+        }}
+      />
+      {/* Sheet */}
+      <div style={{
+        position: "fixed", left: 0, right: 0, bottom: 0,
+        background: "var(--card)",
+        borderTop: "1px solid var(--border)",
+        borderRadius: "20px 20px 0 0",
+        padding: "10px 16px calc(env(safe-area-inset-bottom, 0px) + 16px)",
+        zIndex: 50,
+        boxShadow: "0 -8px 32px rgba(0,0,0,0.12)",
+        maxWidth: 480,
+        margin: "0 auto",
+      }}>
       {/* Drag handle */}
       <div style={{ width: 36, height: 4, borderRadius: 2, background: "var(--border)", margin: "0 auto 14px" }} />
 
@@ -98,13 +111,14 @@ function Numpad({ metric, inputBuf, onKey, onDone }: NumpadProps) {
 
         {/* Done button spans full width */}
         <button
-          style={{ ...keyStyle, background: "var(--foreground)", color: "var(--background)", fontSize: 14, fontWeight: 700, gridColumn: "span 3", height: 46, borderRadius: 12 }}
+          style={{ ...keyStyle, background: "var(--foreground)", color: "var(--background)", fontSize: 14, fontWeight: 700, gridColumn: "span 3", height: 50, borderRadius: 14 }}
           onPointerDown={e => { e.preventDefault(); onDone(); }}
         >
           Done ✓
         </button>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 
@@ -494,7 +508,7 @@ export function BodyMeasurements() {
         <div style={{
           background: "var(--card)", borderRadius: 20,
           border: "1px solid var(--border)", padding: "20px 18px 18px",
-          position: "relative", overflow: "hidden",
+          position: "relative",
         }}>
 
           {/* Arrow nav + dots */}
@@ -619,16 +633,17 @@ export function BodyMeasurements() {
             {saving ? "Saving…" : saved ? "✓ Saved!" : "Save Measurements"}
           </button>
 
-          {/* Numpad overlay — inside the card */}
-          {numpadOpen && (
-            <Numpad
-              metric={metric}
-              inputBuf={inputBuf}
-              onKey={handleKey}
-              onDone={handleDone}
-            />
-          )}
         </div>
+
+        {/* Numpad — fixed bottom sheet, rendered at root level outside the card */}
+        {numpadOpen && (
+          <Numpad
+            metric={metric}
+            inputBuf={inputBuf}
+            onKey={handleKey}
+            onDone={handleDone}
+          />
+        )}
 
         {/* ── Summary panel ── */}
         <div style={{ background: "var(--card)", borderRadius: 20, border: "1px solid var(--border)", overflow: "hidden" }}>
