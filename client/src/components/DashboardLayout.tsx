@@ -12,32 +12,32 @@ const sidebarItems = [
   {
     label: "Log",
     path: "/dashboard",
-    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><line x1="14" y1="4" x2="21" y2="4"/><line x1="14" y1="9" x2="21" y2="9"/><line x1="14" y1="15" x2="21" y2="15"/><line x1="14" y1="20" x2="21" y2="20"/></svg>,
+    icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><line x1="14" y1="4" x2="21" y2="4"/><line x1="14" y1="9" x2="21" y2="9"/><line x1="14" y1="15" x2="21" y2="15"/><line x1="14" y1="20" x2="21" y2="20"/></svg>,
   },
   {
     label: "Measurements",
     path: "/dashboard?tab=measurements",
-    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 12h4l3-9 4 18 3-9h4"/></svg>,
+    icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 12h4l3-9 4 18 3-9h4"/></svg>,
   },
   {
     label: "History",
     path: "/dashboard?tab=history",
-    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+    icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
   },
   {
     label: "Trends",
     path: "/dashboard?tab=trends",
-    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>,
+    icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>,
   },
   {
     label: "Routines",
     path: "/dashboard?tab=routines",
-    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>,
+    icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>,
   },
   {
     label: "Exercises",
     path: "/dashboard?tab=exercises",
-    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6.5 6.5h11"/><path d="M6.5 17.5h11"/><path d="M3 9.5h2v5H3z"/><path d="M19 9.5h2v5h-2z"/><path d="M5 12h14"/></svg>,
+    icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6.5 6.5h11"/><path d="M6.5 17.5h11"/><path d="M3 9.5h2v5H3z"/><path d="M19 9.5h2v5h-2z"/><path d="M5 12h14"/></svg>,
   },
 ];
 
@@ -47,7 +47,7 @@ const bottomNavItems = [
     label: "Log",
     path: "/dashboard",
     icon: (active: boolean) => (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? "var(--foreground)" : "#9ca3af"} strokeWidth="2" strokeLinecap="round">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={active ? "var(--foreground)" : "#9ca3af"} strokeWidth="2" strokeLinecap="round">
         <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
         <line x1="14" y1="4" x2="21" y2="4"/><line x1="14" y1="9" x2="21" y2="9"/>
         <line x1="14" y1="15" x2="21" y2="15"/><line x1="14" y1="20" x2="21" y2="20"/>
@@ -58,7 +58,7 @@ const bottomNavItems = [
     label: "Community",
     path: "/dashboard?tab=community",
     icon: (active: boolean) => (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? "var(--foreground)" : "#9ca3af"} strokeWidth="2" strokeLinecap="round">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={active ? "var(--foreground)" : "#9ca3af"} strokeWidth="2" strokeLinecap="round">
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
         <circle cx="9" cy="7" r="4"/>
         <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
@@ -70,7 +70,7 @@ const bottomNavItems = [
     label: "Profile",
     path: "/dashboard?tab=profile",
     icon: (active: boolean) => (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? "var(--foreground)" : "#9ca3af"} strokeWidth="2" strokeLinecap="round">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={active ? "var(--foreground)" : "#9ca3af"} strokeWidth="2" strokeLinecap="round">
         <circle cx="12" cy="8" r="4"/>
         <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
       </svg>
@@ -173,9 +173,9 @@ function AppShell({ children, timerSlot }: { children: React.ReactNode; timerSlo
               style={{ width: 36, height: 36, borderRadius: 10, background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
               aria-label="Open menu"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
             </button>
-            <span style={{ fontSize: 18, fontWeight: 800, color: 'var(--foreground)', letterSpacing: '-0.5px' }}>FlexTab</span>
+            <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', letterSpacing: '-0.5px' }}>FlexTab</span>
           </div>
           {/* Right: timer slot + dark mode toggle */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -186,9 +186,9 @@ function AppShell({ children, timerSlot }: { children: React.ReactNode; timerSlo
               aria-label="Toggle theme"
             >
               {theme === "dark" ? (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
               ) : (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
               )}
             </button>
           </div>
@@ -218,14 +218,14 @@ function AppShell({ children, timerSlot }: { children: React.ReactNode; timerSlo
         <div style={{ padding: '20px 20px 16px', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {/* FlexTab symbol logo - switches between dark and white versions based on theme */}
-            <img src={theme === 'dark' ? '/flextab-icon-white.png' : '/flextab-icon.png'} alt="FlexTab" style={{ width: 22, height: 22, objectFit: 'contain', flexShrink: 0 }} />
-            <span style={{ fontSize: 18, fontWeight: 800, color: 'var(--foreground)', letterSpacing: '-0.4px' }}>FlexTab</span>
+            <img src={theme === 'dark' ? '/flextab-icon-white.png' : '/flextab-icon.png'} alt="FlexTab" style={{ width: 26, height: 26, objectFit: 'contain', flexShrink: 0 }} />
+            <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', letterSpacing: '-0.4px' }}>FlexTab</span>
           </div>
         </div>
 
         {/* Navigation */}
         <div style={{ padding: '0 8px 16px', flex: 1, overflowY: 'auto' }}>
-          <p style={{ fontSize: 11, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0 12px', marginBottom: 10 }}>Menu</p>
+          <p style={{ fontSize: 12, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0 12px', marginBottom: 10 }}>Menu</p>
           <div style={{ height: 1, background: 'var(--border)', margin: '0 4px 10px' }} />
           {sidebarItems.map((item) => {
             const active = isActive(item.path);
@@ -238,7 +238,7 @@ function AppShell({ children, timerSlot }: { children: React.ReactNode; timerSlo
                   padding: '10px 12px', borderRadius: 12, border: 'none', cursor: 'pointer',
                   background: active ? 'var(--secondary)' : 'transparent',
                   color: active ? 'var(--foreground)' : '#6b7280',
-                  fontSize: 14, fontWeight: active ? 700 : 500,
+                  fontSize: 16, fontWeight: active ? 700 : 500,
                   marginBottom: 2, transition: 'background .15s, color .15s',
                 }}
               >
@@ -294,7 +294,7 @@ function AppShell({ children, timerSlot }: { children: React.ReactNode; timerSlo
       </main>
 
       {/* ── Mobile bottom nav ── */}
-      <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40, background: 'var(--card)', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-around', height: 64 }}>
+      <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40, background: 'var(--card)', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-around', paddingBottom: 'env(safe-area-inset-bottom, 0px)', minHeight: 64 }}>
         {bottomNavItems.map((item) => {
           const active = isBottomNavActive(item.path);
           return (
@@ -304,7 +304,7 @@ function AppShell({ children, timerSlot }: { children: React.ReactNode; timerSlo
               style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '8px 16px', background: 'none', border: 'none', cursor: 'pointer' }}
             >
               {item.icon(active)}
-              <span style={{ fontSize: 12, fontWeight: active ? 700 : 500, color: active ? 'var(--foreground)' : '#9ca3af' }}>{item.label}</span>
+              <span style={{ fontSize: 13, fontWeight: active ? 700 : 500, color: active ? 'var(--foreground)' : '#9ca3af' }}>{item.label}</span>
             </button>
           );
         })}
