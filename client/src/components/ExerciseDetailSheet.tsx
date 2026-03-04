@@ -83,32 +83,30 @@ export function ExerciseDetailSheet({ detail, onClose }: ExerciseDetailSheetProp
         <div style={{ overflowY: "auto", flex: 1, padding: "0 16px calc(env(safe-area-inset-bottom,0px) + 24px)" }}>
           {/* Exercise illustration */}
           {detail.image && (
-            <div
-              style={{
-                width: "100%",
-                borderRadius: 16,
-                overflow: "hidden",
-                background: "#f4f4f6",
-                marginTop: 16,
-                marginBottom: 16,
-                height: 220,
-                position: "relative",
-              }}
-            >
-              <img
-                src={detail.image}
-                alt={detail.name}
+            <div style={{ display: "flex", justifyContent: "center", marginTop: 16, marginBottom: 16 }}>
+              <div
                 style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  objectPosition: "center center",
-                  display: "block",
+                  width: "75%",
+                  aspectRatio: "1 / 1",
+                  borderRadius: 16,
+                  overflow: "hidden",
+                  background: "#f4f4f6",
                 }}
-                onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).style.display = "none";
-                }}
-              />
+              >
+                <img
+                  src={detail.image}
+                  alt={detail.name}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "contain",
+                    display: "block",
+                  }}
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).style.display = "none";
+                  }}
+                />
+              </div>
             </div>
           )}
 
