@@ -51,8 +51,8 @@ export function ExerciseDetailSheet({ detail, onClose }: ExerciseDetailSheetProp
         ref={sheetRef}
         style={{
           position: "fixed",
-          left: 0,
-          right: 0,
+          left: "env(safe-area-inset-left, 0px)",
+          right: "env(safe-area-inset-right, 0px)",
           bottom: 0,
           zIndex: 51,
           background: "var(--card)",
@@ -279,7 +279,8 @@ export function ExerciseDetailSheet({ detail, onClose }: ExerciseDetailSheetProp
         {/* Close button */}
         <div
           style={{
-            padding: "12px 16px calc(env(safe-area-inset-bottom,0px) + 12px)",
+            padding: "12px 20px",
+            paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 16px)",
             flexShrink: 0,
             borderTop: "1px solid var(--border)",
           }}
