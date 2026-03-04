@@ -20,6 +20,10 @@ export default function SignInPage() {
         setIsLoading(false);
         setShowAuthUI(true);
       }
+    }).catch(() => {
+      // Supabase call failed (e.g. missing env vars) — show auth UI anyway
+      setIsLoading(false);
+      setShowAuthUI(true);
     });
 
     // Listen for auth changes (OAuth callback)
