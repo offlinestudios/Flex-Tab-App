@@ -86,7 +86,7 @@ export function ExerciseDetailSheet({ detail, onClose }: ExerciseDetailSheetProp
             <div style={{ display: "flex", justifyContent: "center", marginTop: 16, marginBottom: 16 }}>
               <div
                 style={{
-                  width: "75%",
+                  width: "90%",
                   aspectRatio: "1 / 1",
                   borderRadius: 16,
                   overflow: "hidden",
