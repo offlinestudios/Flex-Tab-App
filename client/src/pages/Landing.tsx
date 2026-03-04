@@ -220,7 +220,7 @@ export default function Landing() {
       {/* MOBILE: Scrolling Landing Page (hidden on desktop) */}
       <div className="block md:hidden">
         {/* Header */}
-        <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-[#E6E4E1]">
+        <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-[#E6E4E1]" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
           <div className="container mx-auto px-6 py-5 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <img src="/flextab-logo.png?v=2" alt="FlexTab" className="h-9 w-auto" />

@@ -280,7 +280,7 @@ export function ExerciseDetailSheet({ detail, onClose }: ExerciseDetailSheetProp
         <div
           style={{
             padding: "12px 20px",
-            paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 16px)",
+            paddingBottom: "calc(env(safe-area-inset-bottom, 20px) + 16px)",
             flexShrink: 0,
             borderTop: "1px solid var(--border)",
           }}

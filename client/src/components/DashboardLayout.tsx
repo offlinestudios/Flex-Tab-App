@@ -164,7 +164,7 @@ function AppShell({ children, timerSlot }: { children: React.ReactNode; timerSlo
   return (
     <div className="flex flex-col min-h-screen bg-background">
       {/* ── Top header ── */}
-      <header style={{ position: 'sticky', top: 0, zIndex: 40, background: 'var(--card)', borderBottom: '1px solid var(--border)' }}>
+      <header style={{ position: 'sticky', top: 0, zIndex: 40, background: 'var(--card)', borderBottom: '1px solid var(--border)', paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', maxWidth: 700, margin: '0 auto' }}>
           {/* Left: Hamburger + FlexTab wordmark */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -215,7 +215,7 @@ function AppShell({ children, timerSlot }: { children: React.ReactNode; timerSlo
         }}
       >
         {/* Sidebar logo strip */}
-        <div style={{ padding: '20px 20px 16px', flexShrink: 0 }}>
+        <div style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 20px)', paddingLeft: 20, paddingRight: 20, paddingBottom: 16, flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {/* FlexTab symbol logo - switches between dark and white versions based on theme */}
             <img src={theme === 'dark' ? '/flextab-icon-white.png' : '/flextab-icon.png'} alt="FlexTab" style={{ width: 26, height: 26, objectFit: 'contain', flexShrink: 0 }} />
@@ -289,12 +289,12 @@ function AppShell({ children, timerSlot }: { children: React.ReactNode; timerSlo
       </aside>
 
       {/* ── Page content ── */}
-      <main className="flex-1 overflow-y-auto pb-20">
+      <main className="flex-1 overflow-y-auto" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 80px)' }}>
         {children}
       </main>
 
       {/* ── Mobile bottom nav ── */}
-      <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40, background: 'var(--card)', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-around', paddingBottom: 'env(safe-area-inset-bottom, 0px)', minHeight: 64 }}>
+      <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40, background: 'var(--card)', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-around', paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 4px)', paddingLeft: 'env(safe-area-inset-left, 0px)', paddingRight: 'env(safe-area-inset-right, 0px)', minHeight: 64 }}>
         {bottomNavItems.map((item) => {
           const active = isBottomNavActive(item.path);
           return (
