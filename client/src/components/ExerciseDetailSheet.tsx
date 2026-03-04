@@ -91,22 +91,19 @@ export function ExerciseDetailSheet({ detail, onClose }: ExerciseDetailSheetProp
                 background: "#f4f4f6",
                 marginTop: 16,
                 marginBottom: 16,
-                height: 220,
-                position: "relative",
+                height: 280,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
               <img
                 src={detail.image}
                 alt={detail.name}
                 style={{
-                  position: "absolute",
-                  top: "50%",
-                  left: "50%",
-                  transform: "translate(-50%, -50%) scale(1.15)",
                   width: "100%",
                   height: "100%",
-                  objectFit: "cover",
-                  objectPosition: "center center",
+                  objectFit: "contain",
                   display: "block",
                 }}
                 onError={(e) => {
