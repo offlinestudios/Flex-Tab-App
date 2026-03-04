@@ -91,10 +91,8 @@ export function ExerciseDetailSheet({ detail, onClose }: ExerciseDetailSheetProp
                 background: "#f4f4f6",
                 marginTop: 16,
                 marginBottom: 16,
-                height: 280,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                height: 220,
+                position: "relative",
               }}
             >
               <img
@@ -103,7 +101,8 @@ export function ExerciseDetailSheet({ detail, onClose }: ExerciseDetailSheetProp
                 style={{
                   width: "100%",
                   height: "100%",
-                  objectFit: "contain",
+                  objectFit: "cover",
+                  objectPosition: "center center",
                   display: "block",
                 }}
                 onError={(e) => {
