@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Share2, Download, Calendar, X, Dumbbell, Link } from "lucide-react";
+import { Share2, Download, X, Link } from "lucide-react";
 import { toast } from "sonner";
 import { PRESET_EXERCISES } from "@/lib/exercises";
 import html2canvas from "html2canvas";
@@ -15,7 +15,6 @@ interface SetLog {
   weight: number;
   time: string;
   category?: string;
-  // Cardio-specific fields
   duration?: number;
   distance?: number;
   distanceUnit?: 'miles' | 'km';
@@ -26,26 +25,25 @@ interface ShareWorkoutDialogProps {
   onOpenChange: (open: boolean) => void;
   exercises: SetLog[];
   date: string;
+  duration?: string; // e.g. "00:36"
 }
 
-export function ShareWorkoutDialog({ open, onOpenChange, exercises, date }: ShareWorkoutDialogProps) {
+export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, duration }: ShareWorkoutDialogProps) {
   const shareCardRef = useRef<HTMLDivElement>(null);
-  
+
   // Calculate stats
   const totalSets = exercises.reduce((sum, e) => sum + e.sets, 0);
   const totalReps = exercises.reduce((sum, e) => sum + (e.sets * e.reps), 0);
   const totalVolume = exercises.reduce((sum, e) => sum + (e.sets * e.reps * e.weight), 0);
 
-  // Group exercises by name and combine sets
+  // Group exercises by name
   const groupedExercises = exercises.reduce((acc, exercise) => {
     const existing = acc.find(e => e.exercise === exercise.exercise);
     if (existing) {
       existing.totalSets += exercise.sets;
     } else {
-      // Find category from PRESET_EXERCISES by matching exercise name
       const presetExercise = PRESET_EXERCISES.find(e => e.name === exercise.exercise);
       const category = presetExercise?.category || exercise.category || 'General';
-      
       acc.push({
         exercise: exercise.exercise,
         totalSets: exercise.sets,
@@ -54,223 +52,225 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date }: Shar
         category,
         duration: exercise.duration,
         distance: exercise.distance,
-        distanceUnit: exercise.distanceUnit
+        distanceUnit: exercise.distanceUnit,
       });
     }
     return acc;
-  }, [] as Array<{ exercise: string; totalSets: number; reps: number; weight: number; category: string; duration?: number; distance?: number; distanceUnit?: 'miles' | 'km' }>);
+  }, [] as Array<{
+    exercise: string; totalSets: number; reps: number; weight: number;
+    category: string; duration?: number; distance?: number; distanceUnit?: 'miles' | 'km';
+  }>);
 
-  // Format date
-  const formattedDate = new Date(date).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
+  // Format date — parse as local date to avoid UTC offset issues
+  const [year, month, day] = date.includes('-')
+    ? date.split('-').map(Number)
+    : [new Date().getFullYear(), new Date().getMonth() + 1, new Date().getDate()];
+  const localDate = date.includes('-')
+    ? new Date(year, month - 1, day)
+    : new Date(date);
+  const formattedDate = localDate.toLocaleDateString('en-US', {
+    weekday: 'long', month: 'short', day: 'numeric', year: 'numeric',
+  });
+  const shortDate = localDate.toLocaleDateString('en-US', {
+    month: 'short', day: 'numeric', year: 'numeric',
   });
 
-  // Generate text for sharing/copying
+  // Volume display — abbreviate if >= 10,000 to avoid overflow
+  const volumeDisplay = totalVolume >= 10000
+    ? `${(totalVolume / 1000).toFixed(1)}k`
+    : totalVolume.toLocaleString();
+  const volumeFontSize = totalVolume >= 100000 ? '18px' : totalVolume >= 10000 ? '22px' : '28px';
+
   const generateShareText = () => {
     const exerciseList = groupedExercises
       .map(e => `• ${e.exercise}: ${e.totalSets}×${e.reps} @ ${e.weight} lbs`)
       .join('\n');
-
-    return `💪 FlexTab Workout - ${formattedDate}
-
-📊 Summary:
-• ${totalSets} sets
-• ${totalReps} reps
-• ${totalVolume.toLocaleString()} lbs total volume
-
-🏋️ Exercises:
-${exerciseList}
-
-🔗 Track your workouts at https://www.flextab.app`;
+    return `💪 FlexTab Workout — ${shortDate}\n\n📊 ${totalSets} sets · ${totalReps} reps · ${totalVolume.toLocaleString()} lbs\n\n🏋️ Exercises:\n${exerciseList}\n\n🔗 https://www.flextab.app`;
   };
 
-  // Handle share via native share API
   const handleShare = async () => {
-    const text = generateShareText();
-    
     if (navigator.share) {
       try {
-        await navigator.share({
-          title: `FlexTab Workout - ${formattedDate}`,
-          text: text,
-        });
+        await navigator.share({ title: `FlexTab Workout — ${shortDate}`, text: generateShareText() });
         toast.success("Shared successfully!");
       } catch (error: any) {
-        if (error.name !== 'AbortError') {
-          toast.error("Failed to share");
-        }
+        if (error.name !== 'AbortError') toast.error("Failed to share");
       }
     } else {
-      toast.error("Sharing not supported on this device");
+      try {
+        await navigator.clipboard.writeText(generateShareText());
+        toast.success("Copied to clipboard!");
+      } catch {
+        toast.error("Sharing not supported on this device");
+      }
     }
   };
 
-  // Handle copy to clipboard
-  const handleCopy = async () => {
-    const text = generateShareText();
-    try {
-      await navigator.clipboard.writeText(text);
-      toast.success("Copied to clipboard!");
-    } catch (error) {
-      toast.error("Failed to copy");
-    }
-  };
-
-  // Handle download as image
   const handleDownload = async () => {
-    if (!shareCardRef.current) {
-      console.error('Share card ref not found');
-      toast.error("Unable to capture workout card");
-      return;
-    }
-    
+    if (!shareCardRef.current) { toast.error("Unable to capture workout card"); return; }
     try {
-      console.log('Starting html2canvas capture...');
       const canvas = await html2canvas(shareCardRef.current, {
-        backgroundColor: '#ffffff',
-        scale: 2, // Higher quality
-        logging: true,
-        useCORS: true, // Enable CORS for images
-        allowTaint: false,
+        backgroundColor: '#ffffff', scale: 2, useCORS: true, allowTaint: false,
       });
-      console.log('Canvas created successfully:', canvas.width, 'x', canvas.height);
-      
-      // Convert canvas to blob
       canvas.toBlob((blob) => {
-        if (!blob) {
-          toast.error("Failed to generate image");
-          return;
-        }
-        
-        // Create download link
+        if (!blob) { toast.error("Failed to generate image"); return; }
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `flextab-workout-${formattedDate.replace(/\s/g, '-')}.png`;
+        link.download = `flextab-workout-${shortDate.replace(/\s/g, '-')}.png`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-        
         toast.success("Workout image downloaded!");
       }, 'image/png');
-    } catch (error) {
-      console.error('Download error:', error);
+    } catch {
       toast.error("Failed to download image");
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="sm:max-w-md max-h-[90vh] p-0 gap-0 bg-slate-100 overflow-hidden flex flex-col">
-        {/* Header */}
-        <DialogHeader className="p-6 pb-4 bg-slate-100 flex-shrink-0 relative">
+      <DialogContent
+        showCloseButton={false}
+        className="sm:max-w-md max-h-[90vh] p-0 gap-0 overflow-hidden flex flex-col"
+        style={{ background: 'var(--background)', borderRadius: 24 }}
+      >
+        {/* Modal header */}
+        <DialogHeader className="flex-shrink-0 relative px-6 pt-5 pb-3" style={{ background: 'var(--background)' }}>
           <button
             onClick={() => onOpenChange(false)}
-            className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors"
+            className="absolute top-4 right-4 transition-colors"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', padding: 4 }}
           >
-            <X className="w-6 h-6" />
+            <X className="w-5 h-5" />
           </button>
           <div className="text-center pr-8">
-            <DialogTitle className="text-2xl font-bold text-slate-900">
+            <DialogTitle className="text-xl font-bold" style={{ color: 'var(--foreground)' }}>
               Share Workout
             </DialogTitle>
-            <p className="text-sm text-slate-600 mt-1">
+            <p className="text-sm mt-0.5" style={{ color: '#9ca3af' }}>
               Share your workout progress with friends
             </p>
           </div>
         </DialogHeader>
 
-        {/* Content Card - Scrollable */}
-        <div className="flex-1 overflow-y-auto px-4">
-          <div ref={shareCardRef} className="mb-4 bg-white rounded-2xl shadow-sm p-6">
-          {/* Card Header with Logo and Date */}
-          <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-200">
-            <div className="flex items-center gap-2">
-              <img
-                src="/flextab-logo.png"
-                alt="FlexTab Logo"
-                className="w-8 h-8 rounded-lg object-cover"
-              />
-              <div>
-                <h3 className="font-semibold text-slate-900">FlexTab Workout</h3>
-                <p className="text-xs text-slate-500">{formattedDate}</p>
+        {/* Scrollable card area */}
+        <div className="flex-1 overflow-y-auto px-4 pb-2">
+          {/* ── Share card (captured by html2canvas) ── */}
+          <div
+            ref={shareCardRef}
+            style={{
+              background: '#ffffff',
+              borderRadius: 20,
+              padding: '20px 20px 16px',
+              boxShadow: '0 2px 16px rgba(0,0,0,0.08)',
+              marginBottom: 4,
+            }}
+          >
+            {/* Card header: logo + date */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <img
+                  src="/flextab-icon.png"
+                  alt="FlexTab"
+                  style={{ width: 32, height: 32, borderRadius: 8, objectFit: 'cover' }}
+                />
+                <div>
+                  <p style={{ fontSize: 15, fontWeight: 800, color: '#0f172a', margin: 0, lineHeight: 1.2 }}>FlexTab</p>
+                  <p style={{ fontSize: 12, color: '#94a3b8', margin: 0, lineHeight: 1.3 }}>{formattedDate}</p>
+                </div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <p style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Workout</p>
               </div>
             </div>
-            <Calendar className="w-5 h-5 text-slate-400" />
-          </div>
 
-          {/* Stats Blocks */}
-          <div className="grid grid-cols-3 gap-3 mb-6">
-            <div className="bg-slate-100 rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-slate-900">{totalSets}</div>
-              <div className="text-xs text-slate-600 uppercase tracking-wide">Sets</div>
-            </div>
-            <div className="bg-slate-100 rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-slate-900">{totalReps}</div>
-              <div className="text-xs text-slate-600 uppercase tracking-wide">Reps</div>
-            </div>
-            <div className="bg-slate-100 rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-slate-900">{totalVolume.toLocaleString()}</div>
-              <div className="text-xs text-slate-600 uppercase tracking-wide">Volume (LBS)</div>
-            </div>
-          </div>
-
-          {/* Exercises Section */}
-          <div>
-            <h4 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
-              <Dumbbell className="w-5 h-5 text-slate-700" />
-              Exercises:
-            </h4>
-            <div className="space-y-0">
-              {groupedExercises.map((exercise, index) => (
+            {/* Stat tiles — 3 equal columns */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16 }}>
+              {[
+                { value: String(totalSets), label: 'SETS', fontSize: '32px' },
+                { value: String(totalReps), label: 'REPS', fontSize: totalReps >= 1000 ? '24px' : '32px' },
+                { value: volumeDisplay, label: 'LBS', fontSize: volumeFontSize },
+              ].map(({ value, label, fontSize }) => (
                 <div
-                  key={index}
-                  className={`flex items-center justify-between py-3 ${
-                    index !== groupedExercises.length - 1 ? 'border-b border-slate-200' : ''
-                  }`}
+                  key={label}
+                  style={{
+                    background: '#f8fafc',
+                    borderRadius: 14,
+                    padding: '14px 8px 10px',
+                    textAlign: 'center',
+                    minWidth: 0,
+                  }}
                 >
-                  <div className="flex items-center gap-2 flex-1">
-                    <span className="text-sm font-medium text-slate-900">
-                      {exercise.exercise}:
-                    </span>
-                    <span className="text-sm text-slate-600">
-                      {exercise.category === 'Cardio' ? (
-                        // Cardio format: duration + distance
-                        <>
-                          {exercise.duration ? `${exercise.duration} min` : ''}
-                          {exercise.distance && exercise.distanceUnit ? ` • ${exercise.distance} ${exercise.distanceUnit}` : ''}
-                        </>
-                      ) : (
-                        // Regular format: sets × reps @ weight
-                        `${exercise.totalSets}×${exercise.reps} @ ${exercise.weight} lbs`
-                      )}
-                    </span>
-                  </div>
-                  <span className="text-xs px-2 py-1 bg-slate-200 text-slate-700 rounded-full">
-                    {exercise.category}
-                  </span>
+                  <p style={{ fontSize, fontWeight: 800, color: '#0f172a', margin: 0, lineHeight: 1, wordBreak: 'break-all' }}>{value}</p>
+                  <p style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', margin: '5px 0 0', textTransform: 'uppercase', letterSpacing: '0.07em' }}>{label}</p>
                 </div>
               ))}
             </div>
-          </div>
 
-          {/* Footer Link */}
-          <div className="mt-6 pt-4 border-t border-slate-200 flex items-center justify-center gap-2 text-xs text-slate-500">
-            <Link className="w-4 h-4" />
-            <span>Track your workouts at https://www.flextab.app</span>
+            {/* Divider */}
+            <div style={{ height: 1, background: '#f1f5f9', marginBottom: 14 }} />
+
+            {/* Exercises section */}
+            <p style={{ fontSize: 13, fontWeight: 800, color: '#0f172a', margin: '0 0 10px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              Exercises
+            </p>
+            <div>
+              {groupedExercises.map((exercise, index) => (
+                <div
+                  key={index}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    padding: '9px 0',
+                    borderBottom: index < groupedExercises.length - 1 ? '1px solid #f1f5f9' : 'none',
+                  }}
+                >
+                  {/* Numbered badge */}
+                  <div style={{
+                    width: 26, height: 26, borderRadius: '50%',
+                    background: '#0f172a', color: '#fff',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 11, fontWeight: 800, flexShrink: 0,
+                  }}>
+                    {index + 1}
+                  </div>
+                  {/* Exercise name */}
+                  <p style={{ flex: 1, fontSize: 13, fontWeight: 700, color: '#0f172a', margin: 0, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {exercise.exercise}
+                  </p>
+                  {/* Sets × reps pill */}
+                  <div style={{
+                    background: '#f1f5f9', borderRadius: 50,
+                    padding: '4px 10px', flexShrink: 0,
+                  }}>
+                    <p style={{ fontSize: 11, fontWeight: 700, color: '#475569', margin: 0, whiteSpace: 'nowrap' }}>
+                      {exercise.category === 'Cardio'
+                        ? [exercise.duration ? `${exercise.duration} min` : '', exercise.distance ? `${exercise.distance} ${exercise.distanceUnit}` : ''].filter(Boolean).join(' · ')
+                        : `${exercise.totalSets}×${exercise.reps} · ${exercise.weight} lbs`
+                      }
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Footer */}
+            <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+              <Link style={{ width: 12, height: 12, color: '#cbd5e1' }} />
+              <p style={{ fontSize: 11, color: '#cbd5e1', margin: 0 }}>flextab.app</p>
+            </div>
           </div>
         </div>
 
-        </div>
-
-        {/* Action Buttons */}
-        <div className="px-4 pb-4 space-y-3 flex-shrink-0 bg-slate-100">
+        {/* Action buttons */}
+        <div style={{ padding: '8px 16px calc(16px + env(safe-area-inset-bottom))', background: 'var(--background)', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
           <Button
             onClick={handleShare}
-            className="w-full bg-slate-900 hover:bg-black text-white rounded-xl h-12"
+            className="w-full rounded-2xl h-12 text-sm font-bold"
+            style={{ background: '#0f172a', color: '#fff', border: 'none' }}
           >
             <Share2 className="w-4 h-4 mr-2" />
             Share via...
@@ -278,7 +278,8 @@ ${exerciseList}
           <Button
             onClick={handleDownload}
             variant="outline"
-            className="w-full rounded-xl h-12 border-2 border-slate-900 text-slate-900 hover:bg-slate-50"
+            className="w-full rounded-2xl h-12 text-sm font-bold"
+            style={{ border: '1.5px solid #0f172a', color: '#0f172a', background: 'transparent' }}
           >
             <Download className="w-4 h-4 mr-2" />
             Download as Image
