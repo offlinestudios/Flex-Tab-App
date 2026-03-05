@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { formatDateFull } from "@/lib/dateUtils";
 
@@ -138,6 +138,98 @@ interface HistoryEntry {
 interface HistoryScreenProps {
   entries: HistoryEntry[];
   onBack: () => void;
+  onDelete: (id: number) => void;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   SwipeableRow — swipe left to reveal delete button
+───────────────────────────────────────────────────────────────── */
+function SwipeableRow({ children, onDelete }: { children: React.ReactNode; onDelete: () => void }) {
+  const [offset, setOffset] = useState(0);
+  const [swiping, setSwiping] = useState(false);
+  const startX = useRef(0);
+  const startY = useRef(0);
+  const isDragging = useRef(false);
+  const isScrolling = useRef<boolean | null>(null);
+  const DELETE_WIDTH = 80;
+  const THRESHOLD = 40;
+
+  function onTouchStart(e: React.TouchEvent) {
+    startX.current = e.touches[0].clientX;
+    startY.current = e.touches[0].clientY;
+    isDragging.current = false;
+    isScrolling.current = null;
+  }
+
+  function onTouchMove(e: React.TouchEvent) {
+    const dx = e.touches[0].clientX - startX.current;
+    const dy = e.touches[0].clientY - startY.current;
+
+    // Determine axis on first significant move
+    if (isScrolling.current === null && (Math.abs(dx) > 4 || Math.abs(dy) > 4)) {
+      isScrolling.current = Math.abs(dy) > Math.abs(dx);
+    }
+    if (isScrolling.current) return; // vertical scroll — don't interfere
+
+    // Only allow leftward swipe
+    if (dx > 0 && offset === 0) return;
+    isDragging.current = true;
+    const raw = offset + dx - (isDragging.current ? 0 : 0);
+    const clamped = Math.max(-DELETE_WIDTH, Math.min(0, raw));
+    setOffset(clamped);
+    setSwiping(true);
+    startX.current = e.touches[0].clientX;
+  }
+
+  function onTouchEnd() {
+    if (isScrolling.current) { isScrolling.current = null; return; }
+    isScrolling.current = null;
+    setSwiping(false);
+    if (offset < -THRESHOLD) {
+      setOffset(-DELETE_WIDTH); // snap open
+    } else {
+      setOffset(0); // snap closed
+    }
+  }
+
+  function close() { setOffset(0); }
+
+  return (
+    <div style={{ position: 'relative', overflow: 'hidden' }}>
+      {/* Delete button behind the row */}
+      <div
+        style={{
+          position: 'absolute', top: 0, right: 0, bottom: 0, width: DELETE_WIDTH,
+          background: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer',
+        }}
+        onClick={() => { close(); onDelete(); }}
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
+          <polyline points="3 6 5 6 21 6" />
+          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+          <path d="M10 11v6" /><path d="M14 11v6" />
+          <path d="M9 6V4h6v2" />
+        </svg>
+        <span style={{ color: 'white', fontSize: 11, fontWeight: 700, marginLeft: 4 }}>Delete</span>
+      </div>
+      {/* Row content — slides left */}
+      <div
+        style={{
+          transform: `translateX(${offset}px)`,
+          transition: swiping ? 'none' : 'transform 0.25s cubic-bezier(0.16,1,0.3,1)',
+          background: 'var(--background)',
+          position: 'relative', zIndex: 1,
+        }}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        onClick={offset !== 0 ? close : undefined}
+      >
+        {children}
+      </div>
+    </div>
+  );
 }
 
 const HISTORY_FILTERS = [
@@ -159,7 +251,7 @@ const METRIC_META: Record<string, { label: string; unit: string }> = {
   thighs: { label: "Thighs",   unit: "in"  },
 };
 
-function HistoryScreen({ entries, onBack }: HistoryScreenProps) {
+function HistoryScreen({ entries, onBack, onDelete }: HistoryScreenProps) {
   const [filter, setFilter] = useState("all");
 
   const sorted = [...entries].sort(
@@ -244,46 +336,48 @@ function HistoryScreen({ entries, onBack }: HistoryScreenProps) {
           });
 
           return (
-            <div key={h.id} style={{ display: "flex", alignItems: "flex-start", padding: "12px 0", gap: 12, borderBottom: idx < sorted.length - 1 ? "1px solid var(--border)" : "none" }}>
-              {/* Timeline dot + line */}
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0, width: 14 }}>
-                <div style={{
-                  width: 10, height: 10, borderRadius: "50%",
-                  background: isToday ? "#059669" : "var(--foreground)",
-                  border: "2px solid var(--background)",
-                  boxShadow: isToday ? "0 0 0 2px rgba(5,150,105,0.25)" : "0 0 0 2px var(--border)",
-                  marginTop: 3, flexShrink: 0,
-                }} />
-                {idx < sorted.length - 1 && (
-                  <div style={{ flex: 1, width: 2, background: "var(--border)", marginTop: 4, minHeight: 20 }} />
-                )}
-              </div>
-
-              {/* Body */}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: "var(--foreground)" }}>{formatDateFull(h.date)}</span>
-                  {isToday && (
-                    <span style={{ fontSize: 9, fontWeight: 800, background: "var(--foreground)", color: "var(--background)", padding: "2px 6px", borderRadius: 4, letterSpacing: "0.05em" }}>
-                      TODAY
-                    </span>
+            <SwipeableRow key={h.id} onDelete={() => onDelete(h.id)}>
+              <div style={{ display: "flex", alignItems: "flex-start", padding: "12px 0", gap: 12, borderBottom: idx < sorted.length - 1 ? "1px solid var(--border)" : "none" }}>
+                {/* Timeline dot + line */}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0, width: 14 }}>
+                  <div style={{
+                    width: 10, height: 10, borderRadius: "50%",
+                    background: isToday ? "#059669" : "var(--foreground)",
+                    border: "2px solid var(--background)",
+                    boxShadow: isToday ? "0 0 0 2px rgba(5,150,105,0.25)" : "0 0 0 2px var(--border)",
+                    marginTop: 3, flexShrink: 0,
+                  }} />
+                  {idx < sorted.length - 1 && (
+                    <div style={{ flex: 1, width: 2, background: "var(--border)", marginTop: 4, minHeight: 20 }} />
                   )}
                 </div>
-                {metricItems.length > 0 && (
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px 10px" }}>
-                    {metricItems}
-                  </div>
-                )}
-              </div>
 
-              {/* Weight + delta */}
-              <div style={{ textAlign: "right", flexShrink: 0 }}>
-                <div style={{ fontSize: 20, fontWeight: 800, color: "var(--foreground)" }}>
-                  {fmt(h.weight)} <span style={{ fontSize: 11, fontWeight: 500, color: "#9ca3af" }}>lbs</span>
+                {/* Body */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: "var(--foreground)" }}>{formatDateFull(h.date)}</span>
+                    {isToday && (
+                      <span style={{ fontSize: 9, fontWeight: 800, background: "var(--foreground)", color: "var(--background)", padding: "2px 6px", borderRadius: 4, letterSpacing: "0.05em" }}>
+                        TODAY
+                      </span>
+                    )}
+                  </div>
+                  {metricItems.length > 0 && (
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px 10px" }}>
+                      {metricItems}
+                    </div>
+                  )}
                 </div>
-                <div style={{ fontSize: 11, fontWeight: 700, marginTop: 2, color: dColor }}>{dText}</div>
+
+                {/* Weight + delta */}
+                <div style={{ textAlign: "right", flexShrink: 0 }}>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: "var(--foreground)" }}>
+                    {fmt(h.weight)} <span style={{ fontSize: 11, fontWeight: 500, color: "#9ca3af" }}>lbs</span>
+                  </div>
+                  <div style={{ fontSize: 11, fontWeight: 700, marginTop: 2, color: dColor }}>{dText}</div>
+                </div>
               </div>
-            </div>
+            </SwipeableRow>
           );
         })}
       </div>
@@ -326,6 +420,12 @@ export function BodyMeasurements() {
   const addMutation = trpc.workout.addMeasurement.useMutation({
     onSettled: () => utils.workout.getMeasurements.invalidate(),
   });
+  const deleteMutation = trpc.workout.deleteMeasurement.useMutation({
+    onSettled: () => utils.workout.getMeasurements.invalidate(),
+  });
+  function handleDeleteMeasurement(id: number) {
+    deleteMutation.mutate({ id });
+  }
 
   const metric = METRICS[activeIdx];
 
@@ -468,7 +568,7 @@ export function BodyMeasurements() {
         transition: "transform 0.35s cubic-bezier(0.16,1,0.3,1), opacity 0.25s",
         pointerEvents: showHistory ? "auto" : "none",
       }}>
-        <HistoryScreen entries={sorted} onBack={() => setShowHistory(false)} />
+        <HistoryScreen entries={sorted} onBack={() => setShowHistory(false)} onDelete={handleDeleteMeasurement} />
       </div>
 
       {/* ══════════════════════════════════════════════════════════
