@@ -672,24 +672,36 @@ export default function Home() {
 
   const todayLabel = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
+  const todayDateKey = new Date().toLocaleDateString("en-US", { year: "numeric", month: "numeric", day: "numeric" });
   const timerTotalSets = allSetLogs
-    .filter(e => e.date === new Date().toLocaleDateString())
+    .filter(e => e.date === todayDateKey)
     .reduce((s, e) => s + e.sets, 0);
   const timerTotalVolume = allSetLogs
-    .filter(e => e.date === new Date().toLocaleDateString())
+    .filter(e => e.date === todayDateKey)
     .reduce((s, e) => s + e.sets * e.reps * e.weight, 0);
+  const timerExerciseCount = new Set(
+    allSetLogs.filter(e => e.date === todayDateKey).map(e => e.exercise)
+  ).size;
 
   return (
     <DashboardLayout timerSlot={
       <WorkoutTimer
         isActive={workoutTimerActive}
-        exerciseCount={selectedExercises.length}
+        exerciseCount={timerExerciseCount || selectedExercises.length}
         totalSets={timerTotalSets}
         totalVolume={timerTotalVolume}
         onEnd={() => {
           setWorkoutTimerActive(false);
           setSelectedExercises([]);
           setCurrentExerciseIndex(0);
+        }}
+        onFinishAndShare={() => {
+          // Open the share dialog with today's session data
+          const todaySession = workoutSessions.find(s => s.date === todayDateKey);
+          if (todaySession && todaySession.exercises.length > 0) {
+            setShareWorkoutData({ exercises: todaySession.exercises, date: todayDateKey });
+            setShowShareDialog(true);
+          }
         }}
       />
     }>

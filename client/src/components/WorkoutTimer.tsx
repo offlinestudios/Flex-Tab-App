@@ -6,9 +6,11 @@ interface WorkoutTimerProps {
   totalSets: number;
   totalVolume: number;
   onEnd: () => void;
+  /** Called when the user taps "Finish Workout" — triggers the share screen */
+  onFinishAndShare?: () => void;
 }
 
-export function WorkoutTimer({ isActive, exerciseCount, totalSets, totalVolume, onEnd }: WorkoutTimerProps) {
+export function WorkoutTimer({ isActive, exerciseCount, totalSets, totalVolume, onEnd, onFinishAndShare }: WorkoutTimerProps) {
   const [seconds, setSeconds] = useState(0);
   const [paused, setPaused] = useState(false);
   const [showEndModal, setShowEndModal] = useState(false);
@@ -108,10 +110,14 @@ export function WorkoutTimer({ isActive, exerciseCount, totalSets, totalVolume, 
         <>
           <div onClick={() => setShowEndModal(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 100 }} />
           <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", background: "var(--card)", borderRadius: 24, width: "calc(100% - 48px)", maxWidth: 380, padding: "28px 24px 24px", zIndex: 101, animation: "slideIn .3s ease" }}>
-            {/* Header */}
+            {/* Header — FlexTab logo instead of barbell */}
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
-              <div style={{ width: 40, height: 40, borderRadius: "50%", background: "var(--secondary)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6.5 6.5h11"/><path d="M6.5 17.5h11"/><path d="M3 9.5h2v5H3z"/><path d="M19 9.5h2v5h-2z"/><path d="M5 12h14"/></svg>
+              <div style={{ width: 40, height: 40, borderRadius: "50%", background: "var(--secondary)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
+                <img
+                  src="/flextab-icon.png"
+                  alt="FlexTab"
+                  style={{ width: 26, height: 26, objectFit: "contain" }}
+                />
               </div>
               <div>
                 <h3 style={{ fontSize: 17, fontWeight: 800, color: "var(--foreground)", margin: "0 0 2px" }}>Workout Complete!</h3>
@@ -134,7 +140,14 @@ export function WorkoutTimer({ isActive, exerciseCount, totalSets, totalVolume, 
             </div>
             {/* Actions */}
             <button
-              onClick={() => { setShowEndModal(false); onEnd(); }}
+              onClick={() => {
+                setShowEndModal(false);
+                onEnd();
+                // Open the share screen after a short delay so the modal closes first
+                if (onFinishAndShare) {
+                  setTimeout(() => onFinishAndShare(), 200);
+                }
+              }}
               style={{ width: "100%", background: "var(--foreground)", color: "var(--background)", border: "none", borderRadius: 16, padding: 15, fontSize: 15, fontWeight: 700, cursor: "pointer", marginBottom: 10 }}
             >
               Finish Workout
