@@ -783,7 +783,7 @@ export default function Home() {
                 <div style={{ display:'flex', gap:10, justifyContent:'center', flexWrap:'wrap' }}>
                   <button
                     onClick={() => setShowExerciseBrowser(true)}
-                    style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'12px 20px', background: theme === 'dark' ? '#3b82f6' : 'var(--foreground)', border: theme === 'dark' ? '1.5px solid #3b82f6' : '1.5px solid var(--foreground)', borderRadius:16, fontSize:14, fontWeight:600, color: theme === 'dark' ? '#ffffff' : 'var(--background)', cursor:'pointer' }}
+                    style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'12px 20px', background:'transparent', border:'1.5px solid var(--border)', borderRadius:16, fontSize:14, fontWeight:600, color:'var(--foreground)', cursor:'pointer' }}
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                       <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
