@@ -1,5 +1,6 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { formatDateFull } from "@/lib/dateUtils";
+import { useTheme } from "@/contexts/ThemeContext";
 
 type ProfilePanel = 'posts' | 'logs' | 'prs';
 
@@ -129,18 +130,323 @@ function EditProfileModal({ name, bio, goal, onSave, onClose }: EditProfileModal
 }
 
 /* ─────────────────────────────────────────────────────────────────
-   Settings Menu (replaces three-dot)
+   Settings Menu — with functional sub-panels
 ───────────────────────────────────────────────────────────────── */
+type SettingsPanel = 'notifications' | 'units' | 'privacy' | 'help' | null;
+
 interface SettingsMenuProps {
   onClose: () => void;
 }
 
+/* Shared sheet wrapper */
+function SettingsSheet({ title, onBack, children }: { title: string; onBack: () => void; children: React.ReactNode }) {
+  return (
+    <>
+      <div onClick={onBack} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 200, backdropFilter: 'blur(2px)' }} />
+      <div style={{
+        position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
+        width: '100%', maxWidth: 480,
+        background: 'var(--card)', borderRadius: '20px 20px 0 0',
+        padding: '10px 20px calc(24px + env(safe-area-inset-bottom))',
+        zIndex: 201, boxShadow: '0 -4px 32px rgba(0,0,0,0.15)',
+        maxHeight: '85vh', overflowY: 'auto',
+      }}>
+        <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border)', margin: '0 auto 16px' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+          <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280', padding: '4px 0', display: 'flex', alignItems: 'center' }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <h3 style={{ fontSize: 17, fontWeight: 800, color: 'var(--foreground)', margin: 0 }}>{title}</h3>
+        </div>
+        {children}
+      </div>
+    </>
+  );
+}
+
+/* Toggle row helper */
+function ToggleRow({ label, sublabel, checked, onChange }: { label: string; sublabel?: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 0', borderBottom: '1px solid var(--border)' }}>
+      <div>
+        <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--foreground)', margin: 0 }}>{label}</p>
+        {sublabel && <p style={{ fontSize: 12, color: '#9ca3af', margin: '2px 0 0' }}>{sublabel}</p>}
+      </div>
+      <div
+        onClick={() => onChange(!checked)}
+        style={{
+          width: 44, height: 26, borderRadius: 13,
+          background: checked ? 'var(--foreground)' : 'var(--border)',
+          position: 'relative', cursor: 'pointer', flexShrink: 0,
+          transition: 'background 0.2s',
+        }}
+      >
+        <div style={{
+          position: 'absolute', top: 3, left: checked ? 21 : 3,
+          width: 20, height: 20, borderRadius: '50%',
+          background: checked ? 'var(--background)' : '#fff',
+          transition: 'left 0.2s',
+          boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
+        }} />
+      </div>
+    </div>
+  );
+}
+
+/* Notification Preferences panel */
+function NotificationPanel({ onBack }: { onBack: () => void }) {
+  const [workoutReminders, setWorkoutReminders] = useState(() => localStorage.getItem('notif_workout') !== 'false');
+  const [communityActivity, setCommunityActivity] = useState(() => localStorage.getItem('notif_community') !== 'false');
+  const [weeklySummary, setWeeklySummary] = useState(() => localStorage.getItem('notif_weekly') !== 'false');
+  const [prAlerts, setPrAlerts] = useState(() => localStorage.getItem('notif_pr') !== 'false');
+
+  const save = () => {
+    localStorage.setItem('notif_workout', String(workoutReminders));
+    localStorage.setItem('notif_community', String(communityActivity));
+    localStorage.setItem('notif_weekly', String(weeklySummary));
+    localStorage.setItem('notif_pr', String(prAlerts));
+    onBack();
+  };
+
+  return (
+    <SettingsSheet title="Notification Preferences" onBack={onBack}>
+      <p style={{ fontSize: 12, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>Activity</p>
+      <ToggleRow label="Workout Reminders" sublabel="Daily nudges to stay on track" checked={workoutReminders} onChange={setWorkoutReminders} />
+      <ToggleRow label="Community Activity" sublabel="Likes, comments and new followers" checked={communityActivity} onChange={setCommunityActivity} />
+      <ToggleRow label="PR Alerts" sublabel="Celebrate when you hit a new record" checked={prAlerts} onChange={setPrAlerts} />
+      <ToggleRow label="Weekly Summary" sublabel="Your week in review every Sunday" checked={weeklySummary} onChange={setWeeklySummary} />
+      <button
+        onClick={save}
+        style={{ width: '100%', marginTop: 20, padding: 13, background: 'var(--foreground)', color: 'var(--background)', border: 'none', borderRadius: 14, fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
+      >Save Preferences</button>
+    </SettingsSheet>
+  );
+}
+
+/* Units & Preferences panel */
+function UnitsPanel({ onBack }: { onBack: () => void }) {
+  const { theme, setTheme } = useTheme();
+  const [weightUnit, setWeightUnit] = useState(() => localStorage.getItem('weightUnit') || 'lbs');
+  const [appearance, setAppearance] = useState<'light' | 'dark' | 'system'>(
+    theme === 'dark' ? 'dark' : 'light'
+  );
+  const fitnessGoals = ['Build Muscle', 'Lose Fat', 'Improve Endurance', 'Increase Strength', 'General Fitness', 'Athletic Performance'];
+  const [fitnessGoal, setFitnessGoal] = useState(() => localStorage.getItem('fitnessGoal') || 'Build Muscle');
+
+  const save = () => {
+    localStorage.setItem('weightUnit', weightUnit);
+    localStorage.setItem('fitnessGoal', fitnessGoal);
+    if (appearance === 'dark') setTheme('dark');
+    else if (appearance === 'light') setTheme('light');
+    else {
+      if (window.matchMedia('(prefers-color-scheme: dark)').matches) setTheme('dark');
+      else setTheme('light');
+    }
+    onBack();
+  };
+
+  const optBtn = (label: string, val: string, current: string, setter: (v: any) => void) => (
+    <button
+      key={val}
+      onClick={() => setter(val)}
+      style={{
+        flex: 1, padding: '10px 0', borderRadius: 12,
+        border: `1.5px solid ${current === val ? 'var(--foreground)' : 'var(--border)'}`,
+        background: current === val ? 'var(--foreground)' : 'var(--secondary)',
+        color: current === val ? 'var(--background)' : '#6b7280',
+        fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+      }}
+    >{label}</button>
+  );
+
+  return (
+    <SettingsSheet title="Units & Preferences" onBack={onBack}>
+      <p style={{ fontSize: 12, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 8px' }}>Weight Unit</p>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+        {optBtn('Pounds (lbs)', 'lbs', weightUnit, setWeightUnit)}
+        {optBtn('Kilograms (kg)', 'kg', weightUnit, setWeightUnit)}
+      </div>
+
+      <p style={{ fontSize: 12, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 8px' }}>Appearance</p>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+        {optBtn('Light', 'light', appearance, setAppearance)}
+        {optBtn('Dark', 'dark', appearance, setAppearance)}
+        {optBtn('System', 'system', appearance, setAppearance)}
+      </div>
+
+      <p style={{ fontSize: 12, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 8px' }}>Fitness Goal</p>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
+        {fitnessGoals.map(g => (
+          <button
+            key={g}
+            onClick={() => setFitnessGoal(g)}
+            style={{
+              padding: '8px 14px', borderRadius: 50,
+              border: `1.5px solid ${fitnessGoal === g ? 'var(--foreground)' : 'var(--border)'}`,
+              background: fitnessGoal === g ? 'var(--foreground)' : 'var(--secondary)',
+              color: fitnessGoal === g ? 'var(--background)' : '#6b7280',
+              fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+            }}
+          >{g}</button>
+        ))}
+      </div>
+
+      <button
+        onClick={save}
+        style={{ width: '100%', padding: 13, background: 'var(--foreground)', color: 'var(--background)', border: 'none', borderRadius: 14, fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
+      >Save Preferences</button>
+    </SettingsSheet>
+  );
+}
+
+/* Privacy Settings panel */
+function PrivacyPanel({ onBack }: { onBack: () => void }) {
+  const [visibility, setVisibility] = useState(() => localStorage.getItem('profileVisibility') || 'Public');
+  const [allowFollow, setAllowFollow] = useState(() => localStorage.getItem('allowFollow') !== 'false');
+  const [showActivity, setShowActivity] = useState(() => localStorage.getItem('showActivity') !== 'false');
+  const [showStats, setShowStats] = useState(() => localStorage.getItem('showStats') !== 'false');
+
+  const save = () => {
+    localStorage.setItem('profileVisibility', visibility);
+    localStorage.setItem('allowFollow', String(allowFollow));
+    localStorage.setItem('showActivity', String(showActivity));
+    localStorage.setItem('showStats', String(showStats));
+    onBack();
+  };
+
+  const visOptions = ['Public', 'Followers Only', 'Private'];
+
+  return (
+    <SettingsSheet title="Privacy Settings" onBack={onBack}>
+      <p style={{ fontSize: 12, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 8px' }}>Profile Visibility</p>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+        {visOptions.map(v => (
+          <button
+            key={v}
+            onClick={() => setVisibility(v)}
+            style={{
+              flex: 1, padding: '10px 4px', borderRadius: 12,
+              border: `1.5px solid ${visibility === v ? 'var(--foreground)' : 'var(--border)'}`,
+              background: visibility === v ? 'var(--foreground)' : 'var(--secondary)',
+              color: visibility === v ? 'var(--background)' : '#6b7280',
+              fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+            }}
+          >{v}</button>
+        ))}
+      </div>
+
+      <p style={{ fontSize: 12, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>Activity</p>
+      <ToggleRow label="Allow Others to Follow" sublabel="People can follow your profile" checked={allowFollow} onChange={setAllowFollow} />
+      <ToggleRow label="Show Activity Status" sublabel="Let followers see when you're active" checked={showActivity} onChange={setShowActivity} />
+      <ToggleRow label="Show Workout Stats" sublabel="Display your stats on your public profile" checked={showStats} onChange={setShowStats} />
+
+      <button
+        onClick={save}
+        style={{ width: '100%', marginTop: 20, padding: 13, background: 'var(--foreground)', color: 'var(--background)', border: 'none', borderRadius: 14, fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
+      >Save Settings</button>
+    </SettingsSheet>
+  );
+}
+
+/* Help & Support panel */
+function HelpPanel({ onBack }: { onBack: () => void }) {
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  const faqs = [
+    { q: 'How do I log a workout?', a: 'Tap the Log tab, search for an exercise or tap "Start Exercise", then use the Sets/Reps/Weight controls to log each set. Tap "Log Set" to save.' },
+    { q: 'How do I edit a logged set?', a: 'On the Log tab, tap the edit icon (pencil) next to any exercise in the history. A sheet will appear showing all your sets for that exercise — tap any cell to edit it.' },
+    { q: 'How do I delete a measurement?', a: 'Go to Profile → Measurements. Swipe left on any measurement row to reveal the Delete button.' },
+    { q: 'How do I change my weight unit?', a: 'Go to Profile → Settings → Units & Preferences and choose between Pounds (lbs) and Kilograms (kg).' },
+    { q: 'How do I share a workout?', a: 'After finishing a workout, a share sheet will appear automatically. You can post to the community or share via WhatsApp, iMessage, and more.' },
+    { q: 'How do I switch to dark mode?', a: 'Tap the moon/sun icon in the top-right corner of any screen, or go to Profile → Settings → Units & Preferences → Appearance.' },
+  ];
+
+  return (
+    <SettingsSheet title="Help & Support" onBack={onBack}>
+      <p style={{ fontSize: 12, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 8px' }}>Frequently Asked Questions</p>
+      {faqs.map((faq, i) => (
+        <div key={i} style={{ borderBottom: '1px solid var(--border)' }}>
+          <button
+            onClick={() => setOpenFaq(openFaq === i ? null : i)}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '14px 0', background: 'none', border: 'none', cursor: 'pointer',
+              color: 'var(--foreground)', fontSize: 14, fontWeight: 600, textAlign: 'left', fontFamily: 'inherit',
+            }}
+          >
+            {faq.q}
+            <svg
+              style={{ flexShrink: 0, marginLeft: 8, transition: 'transform 0.2s', transform: openFaq === i ? 'rotate(180deg)' : 'none' }}
+              width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
+            ><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          {openFaq === i && (
+            <p style={{ fontSize: 13, color: '#6b7280', margin: '0 0 14px', lineHeight: 1.6 }}>{faq.a}</p>
+          )}
+        </div>
+      ))}
+
+      <p style={{ fontSize: 12, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '20px 0 8px' }}>Contact</p>
+      <button
+        onClick={() => window.open('mailto:support@flextab.app?subject=FlexTab Support', '_blank')}
+        style={{
+          width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+          padding: '14px 0', background: 'none', border: 'none', borderBottom: '1px solid var(--border)',
+          cursor: 'pointer', color: 'var(--foreground)', fontSize: 14, fontWeight: 600, fontFamily: 'inherit',
+        }}
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        Email Support
+        <svg style={{ marginLeft: 'auto', color: '#9ca3af' }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+      <button
+        onClick={() => window.open('https://flextab.app/feedback', '_blank')}
+        style={{
+          width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+          padding: '14px 0', background: 'none', border: 'none', borderBottom: '1px solid var(--border)',
+          cursor: 'pointer', color: 'var(--foreground)', fontSize: 14, fontWeight: 600, fontFamily: 'inherit',
+        }}
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Send Feedback
+        <svg style={{ marginLeft: 'auto', color: '#9ca3af' }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+
+      <p style={{ fontSize: 12, color: '#9ca3af', textAlign: 'center', marginTop: 20 }}>FlexTab v1.0.0</p>
+    </SettingsSheet>
+  );
+}
+
+/* Main Settings Menu */
 function SettingsMenu({ onClose }: SettingsMenuProps) {
-  const items = [
-    { label: 'Notification Preferences', icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> },
-    { label: 'Units & Preferences', icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M4.93 19.07l1.41-1.41M19.07 19.07l-1.41-1.41M12 2v2M12 20v2M2 12h2M20 12h2"/></svg> },
-    { label: 'Privacy Settings', icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> },
-    { label: 'Help & Support', icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> },
+  const [activePanel, setActivePanel] = useState<SettingsPanel>(null);
+
+  if (activePanel === 'notifications') return <NotificationPanel onBack={() => setActivePanel(null)} />;
+  if (activePanel === 'units') return <UnitsPanel onBack={() => setActivePanel(null)} />;
+  if (activePanel === 'privacy') return <PrivacyPanel onBack={() => setActivePanel(null)} />;
+  if (activePanel === 'help') return <HelpPanel onBack={() => setActivePanel(null)} />;
+
+  const items: Array<{ label: string; panel: SettingsPanel; icon: React.ReactNode }> = [
+    {
+      label: 'Notification Preferences',
+      panel: 'notifications',
+      icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>,
+    },
+    {
+      label: 'Units & Preferences',
+      panel: 'units',
+      icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M4.93 19.07l1.41-1.41M19.07 19.07l-1.41-1.41M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>,
+    },
+    {
+      label: 'Privacy Settings',
+      panel: 'privacy',
+      icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>,
+    },
+    {
+      label: 'Help & Support',
+      panel: 'help',
+      icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
+    },
   ];
 
   return (
@@ -158,7 +464,7 @@ function SettingsMenu({ onClose }: SettingsMenuProps) {
         {items.map((item, i) => (
           <button
             key={i}
-            onClick={onClose}
+            onClick={() => setActivePanel(item.panel)}
             style={{
               width: '100%', display: 'flex', alignItems: 'center', gap: 14,
               padding: '14px 20px', background: 'none', border: 'none',
