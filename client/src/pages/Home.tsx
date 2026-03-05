@@ -844,13 +844,15 @@ export default function Home() {
                   }}
                   totalExercises={selectedExercises.length}
                   currentIndex={safeIdx}
-                  onNext={selectedExercises.length > 1 ? () => {
+                  onNext={() => {
                     if (safeIdx < selectedExercises.length - 1) {
+                      // Navigate to the next already-added exercise
                       setCurrentExerciseIndex(safeIdx + 1);
                     } else {
+                      // On the last exercise — open browser to add a new one
                       setShowExerciseBrowser(true);
                     }
-                  } : undefined}
+                  }}
                   lastWeight={lastEntry?.weight ?? 0}
                   lastReps={lastEntry?.reps ?? 0}
                   bestWeight={bestEntry?.weight ?? 0}
