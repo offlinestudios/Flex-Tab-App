@@ -121,10 +121,10 @@ export default function Home() {
   const [editingLog, setEditingLog] = useState<SetLog | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editFormData, setEditFormData] = useState<SetLog | null>(null);
-  // History bottom-sheet edit state
-  const [historyEditSheet, setHistoryEditSheet] = useState<SetLog | null>(null);
-  const [historyEditForm, setHistoryEditForm] = useState<{ sets: number; reps: number; weight: number } | null>(null);
-  const [historyEditField, setHistoryEditField] = useState<'sets' | 'reps' | 'weight' | null>(null);
+  // History bottom-sheet edit state (multi-set)
+  const [historyEditSheet, setHistoryEditSheet] = useState<{ exercise: string; sets: SetLog[] } | null>(null);
+  const [historyEditForms, setHistoryEditForms] = useState<Array<{ id: string; reps: number; weight: number }>>([]);
+  const [historyEditCell, setHistoryEditCell] = useState<{ rowIdx: number; field: 'reps' | 'weight' } | null>(null);
   const [historyNumpadBuf, setHistoryNumpadBuf] = useState<string>('');
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
   
@@ -517,22 +517,30 @@ export default function Home() {
     setEditFormData(null);
   };
 
-  /* ── History bottom-sheet helpers ── */
-  const openHistoryEditSheet = (log: SetLog) => {
-    setHistoryEditSheet(log);
-    setHistoryEditForm({ sets: log.sets, reps: log.reps, weight: log.weight });
-    setHistoryEditField(null);
+  /* ── History bottom-sheet helpers (multi-set) ── */
+  const openHistoryEditSheet = (sets: SetLog[]) => {
+    if (sets.length === 0) return;
+    setHistoryEditSheet({ exercise: sets[0].exercise, sets });
+    // Each DB row has sets=N, reps, weight — expand into N individual rows
+    const rows: Array<{ id: string; reps: number; weight: number }> = [];
+    sets.forEach(log => {
+      for (let i = 0; i < log.sets; i++) {
+        rows.push({ id: log.id, reps: log.reps, weight: log.weight });
+      }
+    });
+    setHistoryEditForms(rows);
+    setHistoryEditCell(null);
     setHistoryNumpadBuf('');
   };
   const closeHistoryEditSheet = () => {
     setHistoryEditSheet(null);
-    setHistoryEditForm(null);
-    setHistoryEditField(null);
+    setHistoryEditForms([]);
+    setHistoryEditCell(null);
     setHistoryNumpadBuf('');
   };
-  const openHistoryNumpad = (field: 'sets' | 'reps' | 'weight') => {
-    setHistoryEditField(field);
-    setHistoryNumpadBuf(String(historyEditForm?.[field] ?? ''));
+  const openHistoryNumpad = (rowIdx: number, field: 'reps' | 'weight') => {
+    setHistoryEditCell({ rowIdx, field });
+    setHistoryNumpadBuf(String(historyEditForms[rowIdx]?.[field] ?? ''));
   };
   const handleHistoryNumpadKey = (k: string) => {
     setHistoryNumpadBuf(prev => {
@@ -542,33 +550,72 @@ export default function Home() {
     });
   };
   const commitHistoryNumpad = () => {
-    if (!historyEditField || !historyEditForm) return;
+    if (!historyEditCell) return;
     const val = parseFloat(historyNumpadBuf) || 0;
-    setHistoryEditForm(prev => prev ? { ...prev, [historyEditField]: val } : prev);
-    setHistoryEditField(null);
+    const { rowIdx, field } = historyEditCell;
+    setHistoryEditForms(prev => prev.map((r, i) => i === rowIdx ? { ...r, [field]: val } : r));
+    setHistoryEditCell(null);
     setHistoryNumpadBuf('');
   };
   const handleHistorySave = async () => {
-    if (!historyEditSheet || !historyEditForm) return;
+    if (!historyEditSheet) return;
     try {
-      await updateSetLogMutation.mutateAsync({
-        id: parseInt(historyEditSheet.id),
-        sets: historyEditForm.sets,
-        reps: historyEditForm.reps,
-        weight: historyEditForm.weight,
+      // Group edited rows back by original DB id
+      // For each original SetLog, count how many rows reference it and update reps/weight
+      // (we use the last row's values for that id since all rows from the same log share reps/weight)
+      const byId = new Map<string, { reps: number; weight: number; count: number }>();
+      historyEditForms.forEach(r => {
+        const existing = byId.get(r.id);
+        if (existing) {
+          existing.count++;
+          existing.reps = r.reps;
+          existing.weight = r.weight;
+        } else {
+          byId.set(r.id, { reps: r.reps, weight: r.weight, count: 1 });
+        }
       });
+      await Promise.all(
+        Array.from(byId.entries()).map(([id, { reps, weight, count }]) =>
+          updateSetLogMutation.mutateAsync({ id: parseInt(id), sets: count, reps, weight })
+        )
+      );
       closeHistoryEditSheet();
     } catch (e) {
-      console.error('Failed to update set:', e);
+      console.error('Failed to update sets:', e);
+    }
+  };
+  const handleHistoryDeleteRow = async (rowIdx: number) => {
+    if (!historyEditSheet) return;
+    const row = historyEditForms[rowIdx];
+    // If this id has multiple rows, just remove from local state; save will update the count
+    const sameIdCount = historyEditForms.filter(r => r.id === row.id).length;
+    if (sameIdCount > 1) {
+      setHistoryEditForms(prev => prev.filter((_, i) => i !== rowIdx));
+    } else {
+      // Last row for this id — delete the DB record
+      try {
+        await deleteSetLogMutation.mutateAsync({ id: parseInt(row.id) });
+        const newForms = historyEditForms.filter((_, i) => i !== rowIdx);
+        if (newForms.length === 0) {
+          closeHistoryEditSheet();
+        } else {
+          setHistoryEditForms(newForms);
+        }
+      } catch (e) {
+        console.error('Failed to delete set:', e);
+      }
     }
   };
   const handleHistoryDelete = async () => {
     if (!historyEditSheet) return;
     try {
-      await deleteSetLogMutation.mutateAsync({ id: parseInt(historyEditSheet.id) });
+      // Delete all DB records for this exercise group
+      await Promise.all(
+        historyEditSheet.sets.map(s => deleteSetLogMutation.mutateAsync({ id: parseInt(s.id) }))
+      );
       closeHistoryEditSheet();
     } catch (e) {
-      console.error('Failed to delete set:', e);
+      console.error('Failed to delete exercise log:', e);
     }
   };
 
@@ -988,9 +1035,9 @@ export default function Home() {
                           <div key={exName} style={{ paddingBottom:14, marginBottom:14, borderBottom:'1px solid var(--border)' }}>
                             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:3 }}>
                               <p style={{ fontWeight:700, fontSize:14, color:'var(--foreground)', margin:0 }}>{exName}</p>
-                              {sets[0] && (
+                              {sets.length > 0 && (
                                 <button
-                                  onClick={() => openHistoryEditSheet(sets[0])}
+                                  onClick={() => openHistoryEditSheet(sets)}
                                   style={{ background:'none', border:'none', cursor:'pointer', color:'#9ca3af', padding:'2px 4px' }}
                                   title="Edit"
                                 >
@@ -1483,12 +1530,7 @@ export default function Home() {
         </>
       )}
       {/* History Exercise Edit Bottom Sheet */}
-      {historyEditSheet && historyEditForm && (() => {
-        const fields: Array<{ key: 'sets' | 'reps' | 'weight'; label: string; unit: string }> = [
-          { key: 'sets', label: 'Sets', unit: '' },
-          { key: 'reps', label: 'Reps', unit: '' },
-          { key: 'weight', label: 'Weight', unit: 'lbs' },
-        ];
+      {historyEditSheet && historyEditForms.length > 0 && (() => {
         const numpadDigits = [1,2,3,4,5,6,7,8,9];
         const keyStyle: React.CSSProperties = {
           height: 54, borderRadius: 14, border: 'none',
@@ -1497,12 +1539,12 @@ export default function Home() {
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           WebkitTapHighlightColor: 'transparent',
         };
-        const liveVal = historyEditField ? (historyNumpadBuf || '0') : null;
+        const activeCell = historyEditCell;
         return (
           <>
             {/* Backdrop */}
             <div
-              onPointerDown={e => { e.preventDefault(); historyEditField ? commitHistoryNumpad() : closeHistoryEditSheet(); }}
+              onPointerDown={e => { e.preventDefault(); activeCell ? commitHistoryNumpad() : closeHistoryEditSheet(); }}
               style={{ position:'fixed', inset:0, zIndex:40, background:'rgba(0,0,0,0.35)' }}
             />
             {/* Sheet */}
@@ -1515,6 +1557,7 @@ export default function Home() {
               zIndex:50,
               boxShadow:'0 -8px 32px rgba(0,0,0,0.14)',
               maxWidth:480, margin:'0 auto',
+              maxHeight:'80vh', overflowY:'auto',
             }}>
               {/* Drag handle */}
               <div style={{ width:36, height:4, borderRadius:2, background:'var(--border)', margin:'0 auto 16px' }} />
@@ -1525,37 +1568,66 @@ export default function Home() {
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
               </div>
-              {/* Value tiles */}
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10, marginBottom:16 }}>
-                {fields.map(f => {
-                  const isActive = historyEditField === f.key;
-                  const displayVal = isActive ? (liveVal ?? '') : String(historyEditForm[f.key]);
-                  return (
+              {/* Column headers */}
+              <div style={{ display:'grid', gridTemplateColumns:'32px 1fr 1fr 32px', gap:8, marginBottom:8, paddingBottom:6, borderBottom:'1px solid var(--border)' }}>
+                <div style={{ fontSize:10, fontWeight:700, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.07em', textAlign:'center' }}>#</div>
+                <div style={{ fontSize:10, fontWeight:700, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.07em', textAlign:'center' }}>Reps</div>
+                <div style={{ fontSize:10, fontWeight:700, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.07em', textAlign:'center' }}>Weight (lbs)</div>
+                <div />
+              </div>
+              {/* Per-set rows */}
+              {historyEditForms.map((row, rowIdx) => {
+                const repsActive = activeCell?.rowIdx === rowIdx && activeCell?.field === 'reps';
+                const weightActive = activeCell?.rowIdx === rowIdx && activeCell?.field === 'weight';
+                return (
+                  <div key={rowIdx} style={{ display:'grid', gridTemplateColumns:'32px 1fr 1fr 32px', gap:8, marginBottom:8, alignItems:'center' }}>
+                    {/* Set number badge */}
+                    <div style={{ width:28, height:28, borderRadius:'50%', background:'var(--secondary)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, fontWeight:700, color:'var(--foreground)' }}>{rowIdx + 1}</div>
+                    {/* Reps cell */}
                     <div
-                      key={f.key}
-                      onPointerDown={e => { e.preventDefault(); openHistoryNumpad(f.key); }}
+                      onPointerDown={e => { e.preventDefault(); openHistoryNumpad(rowIdx, 'reps'); }}
                       style={{
-                        background: isActive ? 'var(--muted)' : 'var(--secondary)',
-                        border: `2px solid ${isActive ? 'var(--foreground)' : 'var(--border)'}`,
-                        borderRadius:14, padding:'12px 8px', textAlign:'center', cursor:'pointer',
-                        boxShadow: isActive ? '0 0 0 4px rgba(26,35,50,0.1)' : 'none',
-                        transition:'border-color 0.15s, box-shadow 0.15s',
+                        background: repsActive ? 'var(--muted)' : 'var(--secondary)',
+                        border: `2px solid ${repsActive ? 'var(--foreground)' : 'var(--border)'}`,
+                        borderRadius:12, padding:'10px 8px', textAlign:'center', cursor:'pointer',
+                        transition:'border-color 0.15s',
                       }}
                     >
-                      <div style={{ fontSize:10, fontWeight:700, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.07em', marginBottom:4 }}>{f.label}</div>
-                      <div style={{ fontSize:28, fontWeight:800, color:'var(--foreground)', lineHeight:1, letterSpacing:-1 }}>{displayVal}</div>
-                      {f.unit && <div style={{ fontSize:11, fontWeight:600, color:'#9ca3af', marginTop:2 }}>{f.unit}</div>}
+                      <div style={{ fontSize:22, fontWeight:800, color:'var(--foreground)', lineHeight:1 }}>
+                        {repsActive ? (historyNumpadBuf || '0') : row.reps}
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
-              {/* Numpad (shown when a field is active) */}
-              {historyEditField && (
-                <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:7, marginBottom:14 }}>
+                    {/* Weight cell */}
+                    <div
+                      onPointerDown={e => { e.preventDefault(); openHistoryNumpad(rowIdx, 'weight'); }}
+                      style={{
+                        background: weightActive ? 'var(--muted)' : 'var(--secondary)',
+                        border: `2px solid ${weightActive ? 'var(--foreground)' : 'var(--border)'}`,
+                        borderRadius:12, padding:'10px 8px', textAlign:'center', cursor:'pointer',
+                        transition:'border-color 0.15s',
+                      }}
+                    >
+                      <div style={{ fontSize:22, fontWeight:800, color:'var(--foreground)', lineHeight:1 }}>
+                        {weightActive ? (historyNumpadBuf || '0') : row.weight}
+                      </div>
+                    </div>
+                    {/* Delete row button */}
+                    <button
+                      onPointerDown={e => { e.preventDefault(); handleHistoryDeleteRow(rowIdx); }}
+                      style={{ background:'none', border:'none', cursor:'pointer', color:'#ef4444', padding:4, display:'flex', alignItems:'center', justifyContent:'center' }}
+                      title="Remove set"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                    </button>
+                  </div>
+                );
+              })}
+              {/* Numpad (shown when a cell is active) */}
+              {activeCell && (
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:7, marginTop:12, marginBottom:14 }}>
                   {numpadDigits.map(n => (
                     <button key={n} style={keyStyle} onPointerDown={e => { e.preventDefault(); handleHistoryNumpadKey(String(n)); }}>{n}</button>
                   ))}
-                  {/* bottom row */}
                   <div style={{ ...keyStyle, background:'transparent', pointerEvents:'none' }} />
                   <button style={keyStyle} onPointerDown={e => { e.preventDefault(); handleHistoryNumpadKey('0'); }}>0</button>
                   <button style={{ ...keyStyle, color:'var(--muted-foreground)', fontSize:15 }} onPointerDown={e => { e.preventDefault(); handleHistoryNumpadKey('del'); }}>
@@ -1568,14 +1640,14 @@ export default function Home() {
                 </div>
               )}
               {/* Save button */}
-              {!historyEditField && (
+              {!activeCell && (
                 <button
                   onPointerDown={e => { e.preventDefault(); handleHistorySave(); }}
-                  style={{ width:'100%', padding:13, background:'var(--foreground)', color:'var(--background)', border:'none', borderRadius:14, fontSize:15, fontWeight:700, cursor:'pointer', fontFamily:'inherit', marginBottom:10 }}
+                  style={{ width:'100%', padding:13, background:'var(--foreground)', color:'var(--background)', border:'none', borderRadius:14, fontSize:15, fontWeight:700, cursor:'pointer', fontFamily:'inherit', marginBottom:10, marginTop:12 }}
                 >Save Changes</button>
               )}
-              {/* Delete button */}
-              {!historyEditField && (
+              {/* Delete all button */}
+              {!activeCell && (
                 <button
                   onPointerDown={e => { e.preventDefault(); handleHistoryDelete(); }}
                   style={{ width:'100%', padding:13, background:'transparent', color:'#ef4444', border:'1.5px solid #ef4444', borderRadius:14, fontSize:15, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}
