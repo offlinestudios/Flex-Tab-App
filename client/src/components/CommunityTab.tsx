@@ -24,7 +24,6 @@ interface FeedPost {
   userId: number;
   authorName: string;
   authorHandle: string;
-  authorAvatarUrl?: string | null;
   caption: string | null;
   createdAt: string;
   likeCount: number;
@@ -42,7 +41,6 @@ interface Comment {
   createdAt: string;
   authorName: string;
   authorHandle: string;
-  authorAvatarUrl?: string | null;
 }
 
 /* ─────────────────────────────────────────────────────────────────
@@ -132,7 +130,7 @@ function getInitials(name: string): string {
 /* ─────────────────────────────────────────────────────────────────
    Avatar
 ───────────────────────────────────────────────────────────────── */
-function Avatar({ name, avatarUrl, size = 40 }: { name: string; avatarUrl?: string | null; size?: number }) {
+function Avatar({ name, size = 40 }: { name: string; size?: number }) {
   return (
     <div
       style={{
@@ -144,23 +142,18 @@ function Avatar({ name, avatarUrl, size = 40 }: { name: string; avatarUrl?: stri
         alignItems: "center",
         justifyContent: "center",
         flexShrink: 0,
-        overflow: "hidden",
       }}
     >
-      {avatarUrl ? (
-        <img src={avatarUrl} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-      ) : (
-        <span
-          style={{
-            fontSize: size * 0.34,
-            fontWeight: 700,
-            color: "var(--background)",
-            letterSpacing: "-0.02em",
-          }}
-        >
-          {getInitials(name)}
-        </span>
-      )}
+      <span
+        style={{
+          fontSize: size * 0.34,
+          fontWeight: 700,
+          color: "var(--background)",
+          letterSpacing: "-0.02em",
+        }}
+      >
+        {getInitials(name)}
+      </span>
     </div>
   );
 }
@@ -295,12 +288,10 @@ function WorkoutLogBlock({ workout }: { workout: WorkoutSummary }) {
 function CommentsSheet({
   post,
   currentUser,
-  currentUserAvatarUrl,
   onClose,
 }: {
   post: FeedPost;
   currentUser: any;
-  currentUserAvatarUrl?: string | null;
   onClose: () => void;
 }) {
   const [draft, setDraft] = useState("");
@@ -457,7 +448,7 @@ function CommentsSheet({
               key={c.id}
               style={{ display: "flex", gap: 10, marginBottom: 14 }}
             >
-              <Avatar name={c.authorName} avatarUrl={(c as any).authorAvatarUrl} size={32} />
+              <Avatar name={c.authorName} size={32} />
               <div>
                 <p
                   style={{
@@ -498,7 +489,7 @@ function CommentsSheet({
             flexShrink: 0,
           }}
         >
-          <Avatar name={currentUser?.name ?? "Me"} avatarUrl={currentUserAvatarUrl} size={32} />
+          <Avatar name={currentUser?.name ?? "Me"} size={32} />
           <input
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
@@ -549,12 +540,10 @@ function CommentsSheet({
 ───────────────────────────────────────────────────────────────── */
 function NewPostComposer({
   currentUser,
-  currentUserAvatarUrl,
   workoutSessions = [],
   onClose,
 }: {
   currentUser: any;
-  currentUserAvatarUrl?: string | null;
   workoutSessions?: any[];
   onClose: () => void;
 }) {
@@ -716,7 +705,7 @@ function NewPostComposer({
 
         <div style={{ padding: "16px 20px" }}>
           <div style={{ display: "flex", gap: 12, marginBottom: 14 }}>
-            <Avatar name={currentUser?.name ?? "Me"} avatarUrl={currentUserAvatarUrl} size={40} />
+            <Avatar name={currentUser?.name ?? "Me"} size={40} />
             <textarea
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
@@ -1062,11 +1051,9 @@ function NewPostComposer({
 function PostCard({
   post,
   currentUser,
-  currentUserAvatarUrl,
 }: {
   post: FeedPost;
   currentUser: any;
-  currentUserAvatarUrl?: string | null;
 }) {
   const [showComments, setShowComments] = useState(false);
   const [liked, setLiked] = useState(post.likedByMe);
@@ -1114,7 +1101,7 @@ function PostCard({
             gap: 10,
           }}
         >
-          <Avatar name={post.authorName} avatarUrl={post.authorAvatarUrl} size={42} />
+          <Avatar name={post.authorName} size={42} />
           <div style={{ flex: 1 }}>
             <p
               style={{
@@ -1318,7 +1305,7 @@ function PostCard({
             gap: 10,
           }}
         >
-          <Avatar name={currentUser?.name ?? "Me"} avatarUrl={currentUserAvatarUrl} size={32} />
+          <Avatar name={currentUser?.name ?? "Me"} size={32} />
           <input
             type="text"
             placeholder="Add a comment…"
@@ -1344,7 +1331,6 @@ function PostCard({
         <CommentsSheet
           post={post}
           currentUser={currentUser}
-          currentUserAvatarUrl={currentUserAvatarUrl}
           onClose={() => setShowComments(false)}
         />
       )}
@@ -1362,14 +1348,6 @@ interface CommunityTabProps {
 
 export function CommunityTab({ user, workoutSessions = [] }: CommunityTabProps) {
   const [showComposer, setShowComposer] = useState(false);
-
-  // Load current user's avatar — retry:false + throwOnError:false so errors never trigger global redirect
-  const { data: myProfile } = trpc.user.getProfile.useQuery(undefined, {
-    staleTime: 60_000,
-    retry: false,
-    throwOnError: false,
-  } as any);
-  const myAvatarUrl = (myProfile as any)?.avatarUrl ?? null;
 
   const {
     data,
@@ -1403,7 +1381,7 @@ export function CommunityTab({ user, workoutSessions = [] }: CommunityTabProps) 
           cursor: "pointer",
         }}
       >
-        <Avatar name={user?.name ?? "Me"} avatarUrl={myAvatarUrl} size={36} />
+        <Avatar name={user?.name ?? "Me"} size={36} />
         <span style={{ fontSize: 14, color: "#9ca3af", fontWeight: 500, flex: 1 }}>
           Share your workout…
         </span>
@@ -1489,14 +1467,13 @@ export function CommunityTab({ user, workoutSessions = [] }: CommunityTabProps) 
 
       {/* Feed */}
       {feedPosts.map((post) => (
-        <PostCard key={post.id} post={post} currentUser={user} currentUserAvatarUrl={myAvatarUrl} />
+        <PostCard key={post.id} post={post} currentUser={user} />
       ))}
 
       {/* Composer */}
       {showComposer && (
         <NewPostComposer
           currentUser={user}
-          currentUserAvatarUrl={myAvatarUrl}
           workoutSessions={workoutSessions}
           onClose={() => setShowComposer(false)}
         />
