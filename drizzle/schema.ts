@@ -24,6 +24,7 @@ export const users = pgTable("users", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
+  avatarUrl: text("avatarUrl"),
 });
 
 export type User = typeof users.$inferSelect;
