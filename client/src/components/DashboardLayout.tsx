@@ -215,11 +215,21 @@ function AppShell({ children, timerSlot }: { children: React.ReactNode; timerSlo
         }}
       >
         {/* Sidebar logo strip */}
-        <div style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 20px)', paddingLeft: 20, paddingRight: 20, paddingBottom: 16, flexShrink: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            {/* FlexTab symbol logo - switches between dark and white versions based on theme */}
-            <img src={theme === 'dark' ? '/flextab-icon-white.png' : '/flextab-icon.png'} alt="FlexTab" style={{ width: 26, height: 26, objectFit: 'contain', flexShrink: 0 }} />
-            <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', letterSpacing: '-0.4px' }}>FlexTab</span>
+        <div style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 20px)', paddingLeft: 20, paddingRight: 16, paddingBottom: 16, flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              {/* FlexTab symbol logo - switches between dark and white versions based on theme */}
+              <img src={theme === 'dark' ? '/flextab-icon-white.png' : '/flextab-icon.png'} alt="FlexTab" style={{ width: 26, height: 26, objectFit: 'contain', flexShrink: 0 }} />
+              <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', letterSpacing: '-0.4px' }}>FlexTab</span>
+            </div>
+            {/* Close button */}
+            <button
+              onClick={() => setSidebarOpen(false)}
+              aria-label="Close menu"
+              style={{ width: 32, height: 32, borderRadius: 10, background: 'var(--secondary)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted-foreground)', flexShrink: 0 }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
           </div>
         </div>
 
@@ -249,8 +259,8 @@ function AppShell({ children, timerSlot }: { children: React.ReactNode; timerSlo
           })}
         </div>
 
-        {/* Account footer */}
-        <div id="sidebar-account-footer" style={{ borderTop: '1px solid var(--border)', padding: 12, flexShrink: 0 }}>
+        {/* Account footer — height matches bottom nav bar */}
+        <div id="sidebar-account-footer" style={{ borderTop: '1px solid var(--border)', padding: '0 12px', paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 4px)', minHeight: 64, display: 'flex', flexDirection: 'column', justifyContent: 'center', flexShrink: 0 }}>
           <div
             id="sidebar-profile-toggle"
             onClick={() => setAccountMenuOpen(!accountMenuOpen)}
@@ -294,14 +304,14 @@ function AppShell({ children, timerSlot }: { children: React.ReactNode; timerSlo
       </main>
 
       {/* ── Mobile bottom nav ── */}
-      <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40, background: 'var(--card)', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-around', paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 4px)', paddingLeft: 'env(safe-area-inset-left, 0px)', paddingRight: 'env(safe-area-inset-right, 0px)', minHeight: 64 }}>
+      <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40, background: 'var(--card)', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'stretch', justifyContent: 'space-around', paddingLeft: 'env(safe-area-inset-left, 0px)', paddingRight: 'env(safe-area-inset-right, 0px)', minHeight: 64 }}>
         {bottomNavItems.map((item) => {
           const active = isBottomNavActive(item.path);
           return (
             <button
               key={item.path}
               onClick={() => setLocation(item.path)}
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '8px 16px', background: 'none', border: 'none', cursor: 'pointer' }}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, flex: 1, paddingTop: 8, paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 4px)', background: 'none', border: 'none', cursor: 'pointer' }}
             >
               {item.icon(active)}
               <span style={{ fontSize: 13, fontWeight: active ? 700 : 500, color: active ? 'var(--foreground)' : '#9ca3af' }}>{item.label}</span>
