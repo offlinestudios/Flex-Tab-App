@@ -292,7 +292,7 @@ function HistoryScreen({ entries, onBack, onDelete }: HistoryScreenProps) {
               border: `1.5px solid ${filter === f.key ? "var(--foreground)" : "var(--border)"}`,
               background: filter === f.key ? "var(--foreground)" : "var(--card)",
               color: filter === f.key ? "var(--background)" : "var(--muted-foreground)",
-              fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+              fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
               transition: "all 0.15s",
             }}
           >
@@ -355,7 +355,7 @@ function HistoryScreen({ entries, onBack, onDelete }: HistoryScreenProps) {
                 {/* Body */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: "var(--foreground)" }}>{formatDateFull(h.date)}</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: "var(--foreground)" }}>{formatDateFull(h.date)}</span>
                     {isToday && (
                       <span style={{ fontSize: 9, fontWeight: 800, background: "var(--foreground)", color: "var(--background)", padding: "2px 6px", borderRadius: 4, letterSpacing: "0.05em" }}>
                         TODAY
@@ -371,7 +371,7 @@ function HistoryScreen({ entries, onBack, onDelete }: HistoryScreenProps) {
 
                 {/* Weight + delta */}
                 <div style={{ textAlign: "right", flexShrink: 0 }}>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: "var(--foreground)" }}>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: "var(--foreground)" }}>
                     {fmt(h.weight)} <span style={{ fontSize: 11, fontWeight: 500, color: "#9ca3af" }}>lbs</span>
                   </div>
                   <div style={{ fontSize: 11, fontWeight: 700, marginTop: 2, color: dColor }}>{dText}</div>
@@ -583,16 +583,16 @@ export function BodyMeasurements() {
 
         {/* Page title row */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <h2 style={{ fontSize: 22, fontWeight: 800, color: "var(--foreground)", letterSpacing: -0.5, margin: 0 }}>
+          <h2 style={{ fontSize: 24, fontWeight: 800, color: "var(--foreground)", letterSpacing: -0.5, margin: 0 }}>
             Measurements
           </h2>
           <button
             onClick={() => setShowHistory(true)}
             style={{
               display: "inline-flex", alignItems: "center", gap: 5,
-              padding: "7px 13px", borderRadius: 10,
+              padding: "8px 14px", borderRadius: 10,
               border: "1.5px solid var(--border)", background: "var(--card)",
-              color: "var(--foreground)", fontSize: 12, fontWeight: 700,
+              color: "var(--foreground)", fontSize: 13, fontWeight: 600,
               fontFamily: "inherit", cursor: "pointer",
               transition: "background 0.15s",
             }}
@@ -660,7 +660,7 @@ export function BodyMeasurements() {
           </div>
 
           {/* Metric label */}
-          <div style={{ textAlign: "center", fontSize: 11, fontWeight: 800, color: "var(--muted-foreground)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>
+          <div style={{ textAlign: "center", fontSize: 12, fontWeight: 700, color: "var(--muted-foreground)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>
             {metric.label}
           </div>
 
@@ -669,7 +669,7 @@ export function BodyMeasurements() {
             <div
               onClick={openNumpad}
               style={{
-                width: 160, height: 160, borderRadius: "50%",
+                width: 170, height: 170, borderRadius: "50%",
                 background: "var(--muted)",
                 border: `2px solid ${numpadOpen && !isNA ? "var(--foreground)" : "var(--border)"}`,
                 boxShadow: numpadOpen && !isNA ? "0 0 0 5px rgba(26,35,50,0.1)" : "none",
@@ -686,12 +686,12 @@ export function BodyMeasurements() {
                 <span style={{ fontSize: 20, fontWeight: 700, color: "#9ca3af" }}>N/A</span>
               ) : (
                 <>
-                  <span style={{ fontSize: 44, fontWeight: 800, color: "var(--foreground)", letterSpacing: -2, lineHeight: 1 }}>
+                  <span style={{ fontSize: 48, fontWeight: 800, color: "var(--foreground)", letterSpacing: -2, lineHeight: 1 }}>
                     {dialDisplayVal !== null ? fmt(dialDisplayVal) : "—"}
                   </span>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "#9ca3af", marginTop: 4 }}>{metric.unit}</span>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: "#9ca3af", marginTop: 4 }}>{metric.unit}</span>
                   {!numpadOpen && (
-                    <span style={{ position: "absolute", bottom: 14, fontSize: 10, fontWeight: 600, color: "#9ca3af", letterSpacing: "0.04em" }}>
+                    <span style={{ position: "absolute", bottom: 14, fontSize: 11, fontWeight: 500, color: "#9ca3af", letterSpacing: "0.04em" }}>
                       tap to edit
                     </span>
                   )}
@@ -701,7 +701,7 @@ export function BodyMeasurements() {
           </div>
 
           {/* Last recorded */}
-          <div style={{ textAlign: "center", fontSize: 12, color: "#9ca3af", fontWeight: 500, marginBottom: 14 }}>
+          <div style={{ textAlign: "center", fontSize: 13, color: "#9ca3af", fontWeight: 500, marginBottom: 14 }}>
             {lastVal !== null ? `Last recorded: ${fmt(lastVal)} ${metric.unit}` : "No previous record"}
           </div>
 
@@ -710,10 +710,10 @@ export function BodyMeasurements() {
             onClick={toggleNA}
             style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", justifyContent: "center", marginBottom: 16, userSelect: "none" }}
           >
-            <div style={{ width: 36, height: 20, borderRadius: 10, background: isNA ? "var(--foreground)" : "var(--border)", position: "relative", transition: "background 0.2s", flexShrink: 0 }}>
-              <div style={{ position: "absolute", top: 3, left: 3, width: 14, height: 14, borderRadius: "50%", background: "#fff", transition: "transform 0.2s cubic-bezier(0.16,1,0.3,1)", transform: isNA ? "translateX(16px)" : "translateX(0)", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
+            <div style={{ width: 40, height: 22, borderRadius: 11, background: isNA ? "var(--foreground)" : "var(--border)", position: "relative", transition: "background 0.2s", flexShrink: 0 }}>
+              <div style={{ position: "absolute", top: 3, left: 3, width: 16, height: 16, borderRadius: "50%", background: "#fff", transition: "transform 0.2s cubic-bezier(0.16,1,0.3,1)", transform: isNA ? "translateX(18px)" : "translateX(0)", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
             </div>
-            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--muted-foreground)" }}>
+            <span style={{ fontSize: 13, fontWeight: 500, color: "var(--muted-foreground)" }}>
               Mark as N/A — I don't know this value
             </span>
           </div>
@@ -723,10 +723,10 @@ export function BodyMeasurements() {
             onClick={handleSave}
             disabled={saving}
             style={{
-              width: "100%", padding: 13,
+              width: "100%", padding: 15,
               background: saved ? "#059669" : "var(--foreground)",
               color: "var(--background)", border: "none", borderRadius: 14,
-              fontSize: 15, fontWeight: 700, cursor: "pointer",
+              fontSize: 16, fontWeight: 700, cursor: "pointer",
               fontFamily: "inherit", transition: "background 0.2s",
             }}
           >
@@ -748,7 +748,7 @@ export function BodyMeasurements() {
         {/* ── Summary panel ── */}
         <div style={{ background: "var(--card)", borderRadius: 20, border: "1px solid var(--border)", overflow: "hidden" }}>
           <div style={{ padding: "12px 16px 10px", borderBottom: "1px solid var(--border)" }}>
-            <h4 style={{ fontSize: 10, fontWeight: 800, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>
+            <h4 style={{ fontSize: 11, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>
               All Measurements
             </h4>
           </div>
@@ -762,7 +762,7 @@ export function BodyMeasurements() {
                 onClick={() => jumpTo(i)}
                 style={{
                   display: "flex", alignItems: "center", justifyContent: "space-between",
-                  padding: "10px 16px",
+                  padding: "12px 16px",
                   borderBottom: i < METRICS.length - 1 ? "1px solid var(--border)" : "none",
                   background: isActive ? "var(--muted)" : "transparent",
                   cursor: "pointer", transition: "background 0.1s",
@@ -770,13 +770,13 @@ export function BodyMeasurements() {
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <div style={{ width: 6, height: 6, borderRadius: "50%", background: isActive ? "var(--foreground)" : "transparent", flexShrink: 0 }} />
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "var(--muted-foreground)" }}>{m.label}</span>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: "var(--muted-foreground)" }}>{m.label}</span>
                 </div>
                 {mIsNA ? (
                   <span style={{ fontSize: 12, fontWeight: 700, color: "#9ca3af", background: "var(--muted)", padding: "3px 8px", borderRadius: 6 }}>N/A</span>
                 ) : (
                   <div style={{ display: "flex", alignItems: "baseline", gap: 3 }}>
-                    <span style={{ fontSize: 16, fontWeight: 800, color: "var(--foreground)" }}>{mVal !== null ? fmt(mVal) : "—"}</span>
+                    <span style={{ fontSize: 17, fontWeight: 800, color: "var(--foreground)" }}>{mVal !== null ? fmt(mVal) : "—"}</span>
                     <span style={{ fontSize: 11, fontWeight: 500, color: "#9ca3af" }}>{m.unit}</span>
                   </div>
                 )}
