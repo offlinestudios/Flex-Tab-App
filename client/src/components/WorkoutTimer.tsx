@@ -116,12 +116,12 @@ export function WorkoutTimer({ isActive, exerciseCount, totalSets, totalVolume, 
                 <img
                   src="/flextab-icon.png"
                   alt="FlexTab"
-                  style={{ width: 26, height: 26, objectFit: "contain" }}
+                  style={{ width: 26, height: 26, objectFit: "contain", filter: "var(--icon-invert, none)" }}
                 />
               </div>
               <div>
                 <h3 style={{ fontSize: 17, fontWeight: 800, color: "var(--foreground)", margin: "0 0 2px" }}>Workout Complete!</h3>
-                <p style={{ fontSize: 13, color: "#9ca3af", margin: 0 }}>Great work — here's your summary</p>
+                <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: 0 }}>Great work — here's your summary</p>
               </div>
             </div>
             {/* Stats grid */}
@@ -133,7 +133,7 @@ export function WorkoutTimer({ isActive, exerciseCount, totalSets, totalVolume, 
                 ["Volume", fmtVol(totalVolume) + " lbs"],
               ] as [string, string | number][]).map(([label, val]) => (
                 <div key={label} style={{ background: "var(--secondary)", borderRadius: 14, padding: 14 }}>
-                  <p style={{ fontSize: 11, fontWeight: 600, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 4px" }}>{label}</p>
+                  <p style={{ fontSize: 11, fontWeight: 600, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 4px" }}>{label}</p>
                   <p style={{ fontSize: 22, fontWeight: 800, color: "var(--foreground)", margin: 0 }}>{val}</p>
                 </div>
               ))}
@@ -154,7 +154,7 @@ export function WorkoutTimer({ isActive, exerciseCount, totalSets, totalVolume, 
             </button>
             <button
               onClick={() => setShowEndModal(false)}
-              style={{ width: "100%", background: "transparent", color: "#9ca3af", border: "none", borderRadius: 16, padding: 12, fontSize: 14, fontWeight: 600, cursor: "pointer" }}
+              style={{ width: "100%", background: "transparent", color: "var(--muted-foreground)", border: "none", borderRadius: 16, padding: 12, fontSize: 14, fontWeight: 600, cursor: "pointer" }}
             >
               Keep Going
             </button>

@@ -137,6 +137,8 @@
   --chart-4: oklch(0.540 0.249 198.6);
   --chart-5: oklch(0.464 0.201 191.6);
 
+  /* Icon invert filter — makes dark PNG logos visible on dark backgrounds */
+  --icon-invert: invert(1) brightness(2);
   /* Sidebar: same card colour in dark #252836 */
   --sidebar: oklch(0.241 0.032 258.5);
   --sidebar-foreground: oklch(0.957 0.003 247.9);
