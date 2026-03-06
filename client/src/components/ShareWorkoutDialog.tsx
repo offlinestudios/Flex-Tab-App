@@ -162,7 +162,7 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
           <button
             onClick={() => onOpenChange(false)}
             className="absolute top-4 right-4 transition-colors"
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', padding: 4 }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted-foreground)', padding: 4 }}
           >
             <X className="w-5 h-5" />
           </button>
@@ -170,7 +170,7 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
             <DialogTitle className="text-xl font-bold" style={{ color: 'var(--foreground)' }}>
               Share Workout
             </DialogTitle>
-            <p className="text-sm mt-0.5" style={{ color: '#9ca3af' }}>
+            <p className="text-sm mt-0.5" style={{ color: 'var(--muted-foreground)' }}>
               Share your workout progress with friends
             </p>
           </div>
@@ -286,7 +286,7 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
           <Button
             onClick={handleShare}
             className="w-full rounded-2xl h-12 text-sm font-bold"
-            style={{ background: '#0f172a', color: '#fff', border: 'none' }}
+            style={{ background: 'var(--foreground)', color: 'var(--background)', border: 'none' }}
           >
             <Share2 className="w-4 h-4 mr-2" />
             Share via...
@@ -295,7 +295,7 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
             onClick={handleDownload}
             variant="outline"
             className="w-full rounded-2xl h-12 text-sm font-bold"
-            style={{ border: '1.5px solid #0f172a', color: '#0f172a', background: 'transparent' }}
+            style={{ border: '1.5px solid var(--foreground)', color: 'var(--foreground)', background: 'transparent' }}
           >
             <Download className="w-4 h-4 mr-2" />
             Download as Image
