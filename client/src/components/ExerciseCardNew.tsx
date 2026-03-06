@@ -90,7 +90,7 @@ export function ExerciseCardNew({
                 width: i === currentIndex ? 20 : 7,
                 height: 7,
                 borderRadius: 4,
-                background: i === currentIndex ? 'var(--foreground)' : '#d1d5db',
+                background: i === currentIndex ? 'var(--foreground)' : 'var(--border)',
                 transition: 'width .2s',
               }}
             />
@@ -102,24 +102,24 @@ export function ExerciseCardNew({
       <div style={{ margin: '0 16px 14px', background: 'var(--secondary)', borderRadius: 14, padding: 14 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
           <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)' }}>{exercise.name}</span>
-          {lastWeight > 0 && <span style={{ fontSize: 12, fontWeight: 700, color: '#059669' }}>+4.2%</span>}
+          {lastWeight > 0 && <span style={{ fontSize: 12, fontWeight: 700, color: '#22c55e' }}>+4.2%</span>}
         </div>
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
           <div>
             {lastWeight > 0 ? (
               <>
-                <p style={{ fontSize: 12, color: '#9ca3af', margin: '0 0 2px' }}>
+                <p style={{ fontSize: 12, color: 'var(--muted-foreground)', margin: '0 0 2px' }}>
                   Last: <strong style={{ color: 'var(--foreground)' }}>{lastWeight} × {lastReps}</strong>
                 </p>
-                <p style={{ fontSize: 12, color: '#9ca3af', margin: '0 0 2px' }}>
+                <p style={{ fontSize: 12, color: 'var(--muted-foreground)', margin: '0 0 2px' }}>
                   Best: <strong style={{ color: 'var(--foreground)' }}>{bestWeight > 0 ? bestWeight : lastWeight + 10} × 3</strong>
                 </p>
-                <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>
+                <p style={{ fontSize: 12, color: 'var(--muted-foreground)', margin: 0 }}>
                   30d Vol: <strong style={{ color: 'var(--foreground)' }}>{totalVolume > 0 ? totalVolume.toLocaleString() : (lastWeight * lastReps * 3 * 8).toLocaleString()} lbs</strong>
                 </p>
               </>
             ) : (
-              <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>No history yet — log your first set!</p>
+              <p style={{ fontSize: 12, color: 'var(--muted-foreground)', margin: 0 }}>No history yet — log your first set!</p>
             )}
           </div>
           {/* Sparkline bars */}
@@ -144,39 +144,39 @@ export function ExerciseCardNew({
       <div style={{ padding: '0 20px' }}>
         {/* Sets */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0', borderBottom: '1px solid var(--border)' }}>
-          <span style={{ fontSize: 15, color: '#6b7280', fontWeight: 500 }}>Sets</span>
+          <span style={{ fontSize: 15, color: 'var(--muted-foreground)', fontWeight: 500 }}>Sets</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <button
               onClick={() => setSets(Math.max(1, sets - 1))}
-              style={{ width: 42, height: 42, borderRadius: '50%', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 22, color: '#555', border: 'none', flexShrink: 0 }}
+              style={{ width: 42, height: 42, borderRadius: '50%', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 22, color: 'var(--foreground)', border: 'none', flexShrink: 0 }}
             >−</button>
             <span style={{ fontSize: 30, fontWeight: 800, color: 'var(--foreground)', minWidth: 64, textAlign: 'center' }}>{sets}</span>
             <button
               onClick={() => setSets(sets + 1)}
-              style={{ width: 42, height: 42, borderRadius: '50%', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 22, color: '#555', border: 'none', flexShrink: 0 }}
+              style={{ width: 42, height: 42, borderRadius: '50%', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 22, color: 'var(--foreground)', border: 'none', flexShrink: 0 }}
             >+</button>
           </div>
         </div>
 
         {/* Reps */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0', borderBottom: '1px solid var(--border)' }}>
-          <span style={{ fontSize: 15, color: '#6b7280', fontWeight: 500 }}>Reps</span>
+          <span style={{ fontSize: 15, color: 'var(--muted-foreground)', fontWeight: 500 }}>Reps</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <button
               onClick={() => setReps(Math.max(1, reps - 1))}
-              style={{ width: 42, height: 42, borderRadius: '50%', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 22, color: '#555', border: 'none', flexShrink: 0 }}
+              style={{ width: 42, height: 42, borderRadius: '50%', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 22, color: 'var(--foreground)', border: 'none', flexShrink: 0 }}
             >−</button>
             <span style={{ fontSize: 30, fontWeight: 800, color: 'var(--foreground)', minWidth: 64, textAlign: 'center' }}>{reps}</span>
             <button
               onClick={() => setReps(reps + 1)}
-              style={{ width: 42, height: 42, borderRadius: '50%', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 22, color: '#555', border: 'none', flexShrink: 0 }}
+              style={{ width: 42, height: 42, borderRadius: '50%', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 22, color: 'var(--foreground)', border: 'none', flexShrink: 0 }}
             >+</button>
           </div>
         </div>
 
         {/* Weight (lbs) — label + large value, then slider below */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0 0' }}>
-          <span style={{ fontSize: 15, color: '#6b7280', fontWeight: 500 }}>Weight (lbs)</span>
+          <span style={{ fontSize: 15, color: 'var(--muted-foreground)', fontWeight: 500 }}>Weight (lbs)</span>
           <span style={{ fontSize: 28, fontWeight: 800, color: 'var(--foreground)' }}>{weight}</span>
         </div>
         {/* Slider */}
@@ -191,9 +191,9 @@ export function ExerciseCardNew({
             style={{ width: '100%', accentColor: 'var(--foreground)', height: 6, cursor: 'pointer' }}
           />
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-            <span style={{ fontSize: 11, color: '#d1d5db' }}>0</span>
-            <span style={{ fontSize: 11, color: '#9ca3af' }}>drag to adjust</span>
-            <span style={{ fontSize: 11, color: '#d1d5db' }}>600</span>
+            <span style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>0</span>
+            <span style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>drag to adjust</span>
+            <span style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>600</span>
           </div>
         </div>
       </div>
