@@ -27,10 +27,22 @@ export function CalendarModal({
 
   if (!open) return null;
 
-  // Build set of workout date strings for O(1) lookup
-  const workoutSet = new Set(workoutDates);
+  // Normalise any date string to YYYY-MM-DD (locale-independent)
+  const toYMD = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
-  const todayStr = today.toLocaleDateString();
+  // Incoming workoutDates may be 'M/D/YYYY' (en-US locale) — normalise all to YYYY-MM-DD
+  const normaliseDate = (raw: string): string => {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw; // already YYYY-MM-DD
+    const parsed = new Date(raw);
+    if (!isNaN(parsed.getTime())) return toYMD(parsed);
+    return raw;
+  };
+
+  // Build set of workout date strings for O(1) lookup
+  const workoutSet = new Set(workoutDates.map(normaliseDate));
+
+  const todayStr = toYMD(today);
 
   // First day of month and total days
   const firstDay = new Date(viewYear, viewMonth, 1).getDay();
@@ -47,7 +59,7 @@ export function CalendarModal({
 
   const handleDayClick = (day: number) => {
     const d = new Date(viewYear, viewMonth, day);
-    const str = d.toLocaleDateString();
+    const str = toYMD(d);
     onDateSelect(selectedDate === str ? undefined : str);
     onOpenChange(false);
   };
@@ -114,7 +126,7 @@ export function CalendarModal({
           {cells.map((day, i) => {
             if (!day) return <div key={`empty-${i}`} />;
             const d = new Date(viewYear, viewMonth, day);
-            const str = d.toLocaleDateString();
+            const str = toYMD(d);
             const isWorkout = workoutSet.has(str);
             const isToday = str === todayStr;
             const isSelected = str === selectedDate;
