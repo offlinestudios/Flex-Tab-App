@@ -3,6 +3,7 @@ import { createServer } from "http";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
+import { Pool } from "pg";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { appRouter } from "./railway-routers";
 import { createContext } from "./railway-context";
@@ -10,7 +11,31 @@ import { createContext } from "./railway-context";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+/**
+ * Run any pending schema migrations before the server starts.
+ * Each migration is idempotent (uses IF NOT EXISTS / IF EXISTS guards).
+ */
+async function runMigrations() {
+  if (!process.env.DATABASE_URL) {
+    console.warn('[Migrations] DATABASE_URL not set — skipping migrations');
+    return;
+  }
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  try {
+    console.log('[Migrations] Running startup migrations...');
+    await pool.query(`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "avatarUrl" text;`);
+    console.log('[Migrations] All migrations complete.');
+  } catch (err) {
+    console.error('[Migrations] Migration error (non-fatal):', err);
+  } finally {
+    await pool.end();
+  }
+}
+
 async function startServer() {
+  // Run migrations before anything else
+  await runMigrations();
+
   const app = express();
   const server = createServer(app);
   
