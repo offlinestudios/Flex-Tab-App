@@ -31,24 +31,32 @@ interface ShareWorkoutDialogProps {
 export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, duration }: ShareWorkoutDialogProps) {
   const shareCardRef = useRef<HTMLDivElement>(null);
 
-  // Calculate stats
+  // Calculate totals
   const totalSets = exercises.reduce((sum, e) => sum + e.sets, 0);
   const totalReps = exercises.reduce((sum, e) => sum + (e.sets * e.reps), 0);
   const totalVolume = exercises.reduce((sum, e) => sum + (e.sets * e.reps * e.weight), 0);
 
-  // Group exercises by name
+  // Group exercises — pick the BEST set per exercise (highest weight; tie-break on most reps)
   const groupedExercises = exercises.reduce((acc, exercise) => {
     const existing = acc.find(e => e.exercise === exercise.exercise);
     if (existing) {
       existing.totalSets += exercise.sets;
+      // Replace best set if this entry has higher weight, or equal weight but more reps
+      if (
+        exercise.weight > existing.bestWeight ||
+        (exercise.weight === existing.bestWeight && exercise.reps > existing.bestReps)
+      ) {
+        existing.bestWeight = exercise.weight;
+        existing.bestReps = exercise.reps;
+      }
     } else {
       const presetExercise = PRESET_EXERCISES.find(e => e.name === exercise.exercise);
       const category = presetExercise?.category || exercise.category || 'General';
       acc.push({
         exercise: exercise.exercise,
         totalSets: exercise.sets,
-        reps: exercise.reps,
-        weight: exercise.weight,
+        bestReps: exercise.reps,
+        bestWeight: exercise.weight,
         category,
         duration: exercise.duration,
         distance: exercise.distance,
@@ -57,11 +65,17 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
     }
     return acc;
   }, [] as Array<{
-    exercise: string; totalSets: number; reps: number; weight: number;
-    category: string; duration?: number; distance?: number; distanceUnit?: 'miles' | 'km';
+    exercise: string;
+    totalSets: number;
+    bestReps: number;
+    bestWeight: number;
+    category: string;
+    duration?: number;
+    distance?: number;
+    distanceUnit?: 'miles' | 'km';
   }>);
 
-  // Format date — parse as local date to avoid UTC offset issues
+  // Format date
   const [year, month, day] = date.includes('-')
     ? date.split('-').map(Number)
     : [new Date().getFullYear(), new Date().getMonth() + 1, new Date().getDate()];
@@ -75,17 +89,16 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
     month: 'short', day: 'numeric', year: 'numeric',
   });
 
-  // Volume display — abbreviate if >= 10,000 to avoid overflow
+  // Volume display — abbreviate if >= 10,000
   const volumeDisplay = totalVolume >= 10000
     ? `${(totalVolume / 1000).toFixed(1)}k`
     : totalVolume.toLocaleString();
-  const volumeFontSize = totalVolume >= 100000 ? '18px' : totalVolume >= 10000 ? '22px' : '28px';
 
   const generateShareText = () => {
     const exerciseList = groupedExercises
-      .map(e => `• ${e.exercise}: ${e.totalSets}×${e.reps} @ ${e.weight} lbs`)
+      .map(e => `• ${e.exercise}: ${e.totalSets}×${e.bestReps} @ ${e.bestWeight} lbs (best set)`)
       .join('\n');
-    return `💪 FlexTab Workout — ${shortDate}\n\n📊 ${totalSets} sets · ${totalReps} reps · ${totalVolume.toLocaleString()} lbs\n\n🏋️ Exercises:\n${exerciseList}\n\n🔗 https://www.flextab.app`;
+    return `💪 FlexTab Workout — ${shortDate}\n\n⏱ ${duration || '—'} · ${totalSets} sets · ${totalReps} reps · ${totalVolume.toLocaleString()} lbs\n\n🏋️ Exercises:\n${exerciseList}\n\n🔗 https://www.flextab.app`;
   };
 
   const handleShare = async () => {
@@ -128,6 +141,14 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
       toast.error("Failed to download image");
     }
   };
+
+  // Stat tiles — 4 tiles in a 2×2 grid, all equal size, no adaptive font sizing
+  const statTiles = [
+    { value: duration || '—', label: 'DURATION' },
+    { value: String(totalSets), label: 'SETS' },
+    { value: String(totalReps), label: 'REPS' },
+    { value: volumeDisplay, label: 'LBS' },
+  ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -186,13 +207,9 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
               </div>
             </div>
 
-            {/* Stat tiles — 3 equal columns */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16 }}>
-              {[
-                { value: String(totalSets), label: 'SETS', fontSize: '32px' },
-                { value: String(totalReps), label: 'REPS', fontSize: totalReps >= 1000 ? '24px' : '32px' },
-                { value: volumeDisplay, label: 'LBS', fontSize: volumeFontSize },
-              ].map(({ value, label, fontSize }) => (
+            {/* Stat tiles — 2×2 grid, all equal size */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
+              {statTiles.map(({ value, label }) => (
                 <div
                   key={label}
                   style={{
@@ -200,10 +217,9 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
                     borderRadius: 14,
                     padding: '14px 8px 10px',
                     textAlign: 'center',
-                    minWidth: 0,
                   }}
                 >
-                  <p style={{ fontSize, fontWeight: 800, color: '#0f172a', margin: 0, lineHeight: 1, wordBreak: 'break-all' }}>{value}</p>
+                  <p style={{ fontSize: 28, fontWeight: 800, color: '#0f172a', margin: 0, lineHeight: 1 }}>{value}</p>
                   <p style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', margin: '5px 0 0', textTransform: 'uppercase', letterSpacing: '0.07em' }}>{label}</p>
                 </div>
               ))}
@@ -241,7 +257,7 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
                   <p style={{ flex: 1, fontSize: 13, fontWeight: 700, color: '#0f172a', margin: 0, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {exercise.exercise}
                   </p>
-                  {/* Sets × reps pill */}
+                  {/* Best set pill */}
                   <div style={{
                     background: '#f1f5f9', borderRadius: 50,
                     padding: '4px 10px', flexShrink: 0,
@@ -249,7 +265,7 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
                     <p style={{ fontSize: 11, fontWeight: 700, color: '#475569', margin: 0, whiteSpace: 'nowrap' }}>
                       {exercise.category === 'Cardio'
                         ? [exercise.duration ? `${exercise.duration} min` : '', exercise.distance ? `${exercise.distance} ${exercise.distanceUnit}` : ''].filter(Boolean).join(' · ')
-                        : `${exercise.totalSets}×${exercise.reps} · ${exercise.weight} lbs`
+                        : `${exercise.totalSets}×${exercise.bestReps} · ${exercise.bestWeight} lbs`
                       }
                     </p>
                   </div>
