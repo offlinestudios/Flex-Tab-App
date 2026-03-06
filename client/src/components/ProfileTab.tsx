@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { formatDateFull } from "@/lib/dateUtils";
 import { useTheme } from "@/contexts/ThemeContext";
-import { trpc } from "@/lib/trpc";
 
 type ProfilePanel = 'posts' | 'logs' | 'prs';
 
@@ -632,18 +631,6 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [showShareSheet, setShowShareSheet] = useState(false);
   const [showTierDetails, setShowTierDetails] = useState(false);
-  const [avatarUploading, setAvatarUploading] = useState(false);
-
-  // Load persisted avatar from server
-  const { data: profileData, refetch: refetchProfile } = trpc.user.getProfile.useQuery(undefined, {
-    staleTime: 60_000,
-  });
-  const avatarUrl = profileData?.avatarUrl ?? null;
-
-  const getAvatarUploadUrl = trpc.user.getAvatarUploadUrl.useMutation();
-  const updateAvatar = trpc.user.updateAvatar.useMutation({
-    onSuccess: () => refetchProfile(),
-  });
 
   // Editable profile fields
   const [profileName, setProfileName] = useState<string>(user?.name || 'FlexTab User');
@@ -696,24 +683,6 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
     return fmtVol(vol) + ' lbs';
   })();
 
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setAvatarUploading(true);
-    try {
-      const { uploadUrl, key } = await getAvatarUploadUrl.mutateAsync({ mimeType: file.type });
-      const res = await fetch(uploadUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } });
-      if (!res.ok) throw new Error('Upload failed');
-      await updateAvatar.mutateAsync({ key });
-    } catch (err) {
-      console.error('Avatar upload error:', err);
-    } finally {
-      setAvatarUploading(false);
-      // Reset input so same file can be re-selected
-      e.target.value = '';
-    }
-  };
-
   const handleMediaUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
@@ -743,21 +712,13 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
             {/* Row 1: Avatar + real stats */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
               <div style={{ position: 'relative', flexShrink: 0 }}>
-                <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'var(--foreground)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 12px rgba(0,0,0,0.15)', overflow: 'hidden' }}>
-                  {avatarUrl ? (
-                    <img src={avatarUrl} alt={profileName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
-                    <span style={{ fontSize: 26, fontWeight: 800, color: 'var(--background)' }}>{initials}</span>
-                  )}
+                <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'var(--foreground)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 12px rgba(0,0,0,0.15)' }}>
+                  <span style={{ fontSize: 26, fontWeight: 800, color: 'var(--background)' }}>{initials}</span>
                 </div>
-                <label htmlFor="profile-avatar-upload" style={{ position: 'absolute', bottom: 2, right: 2, width: 24, height: 24, borderRadius: '50%', background: avatarUploading ? '#6b7280' : '#9ca3af', border: '2.5px solid var(--card)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: avatarUploading ? 'wait' : 'pointer' }}>
-                  {avatarUploading ? (
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><circle cx="12" cy="12" r="10" strokeDasharray="31.4" strokeDashoffset="10"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite"/></circle></svg>
-                  ) : (
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                  )}
+                <label htmlFor="profile-media-upload" style={{ position: 'absolute', bottom: 2, right: 2, width: 24, height: 24, borderRadius: '50%', background: '#9ca3af', border: '2.5px solid var(--card)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 </label>
-                <input id="profile-avatar-upload" type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarUpload} />
+                <input id="profile-media-upload" type="file" accept="image/*,video/*" multiple style={{ display: 'none' }} onChange={handleMediaUpload} />
               </div>
 
               {/* Workouts (real) + Followers / Following (0 until social graph exists) */}
