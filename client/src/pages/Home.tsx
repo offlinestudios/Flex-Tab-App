@@ -872,6 +872,9 @@ export default function Home() {
               const totalVol = exHistory.reduce((s, e) => s + e.vol, 0);
 
               if (exercise.category === 'Cardio') {
+                const cardioHistory = exHistory.filter(e => e.reps === 0);
+                const lastCardio = cardioHistory.length > 0 ? cardioHistory[cardioHistory.length - 1] : null;
+                const bestCardioDistance = cardioHistory.length > 0 ? Math.max(...cardioHistory.map(e => e.vol)) : 0;
                 return (
                   <CardioExerciseCard
                     key={exercise.id}
@@ -882,6 +885,19 @@ export default function Home() {
                       setSelectedExercises(updated);
                       setCurrentExerciseIndex(Math.min(safeIdx, updated.length - 1));
                     }}
+                    onNext={() => {
+                      if (safeIdx < selectedExercises.length - 1) {
+                        setCurrentExerciseIndex(safeIdx + 1);
+                      } else {
+                        setShowExerciseBrowser(true);
+                      }
+                    }}
+                    totalExercises={selectedExercises.length}
+                    currentIndex={safeIdx}
+                    lastDuration={lastCardio?.weight ?? 0}
+                    lastDistance={lastCardio?.reps ?? 0}
+                    bestDistance={bestCardioDistance}
+                    totalSessions={cardioHistory.length}
                     startTimestamp={cardioTimers[exercise.id]?.startTimestamp}
                     pausedElapsed={cardioTimers[exercise.id]?.pausedElapsed}
                     isTimerRunning={cardioTimers[exercise.id]?.isRunning}
