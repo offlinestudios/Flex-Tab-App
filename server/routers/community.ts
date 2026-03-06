@@ -174,7 +174,7 @@ export const communityRouter = router({
       const db = await getDb();
       if (!db) return { posts: [], total: 0 };
 
-      // Fetch posts with author name
+      // Fetch posts with author name and avatar
       const feedPosts = await db
         .select({
           id: posts.id,
@@ -183,6 +183,7 @@ export const communityRouter = router({
           workoutSessionId: posts.workoutSessionId,
           createdAt: posts.createdAt,
           authorName: users.name,
+          authorAvatarUrl: users.avatarUrl,
         })
         .from(posts)
         .leftJoin(users, eq(posts.userId, users.id))
@@ -308,6 +309,7 @@ export const communityRouter = router({
               .toLowerCase()
               .replace(/\s+/g, "")
               .slice(0, 20),
+          authorAvatarUrl: p.authorAvatarUrl ?? null,
           caption: p.caption,
           createdAt: p.createdAt.toISOString(),
           media,
@@ -416,6 +418,7 @@ export const communityRouter = router({
           body: postComments.body,
           createdAt: postComments.createdAt,
           authorName: users.name,
+          authorAvatarUrl: users.avatarUrl,
         })
         .from(postComments)
         .leftJoin(users, eq(postComments.userId, users.id))
@@ -437,6 +440,7 @@ export const communityRouter = router({
             .toLowerCase()
             .replace(/\s+/g, "")
             .slice(0, 20),
+        authorAvatarUrl: r.authorAvatarUrl ?? null,
       }));
     }),
 });
