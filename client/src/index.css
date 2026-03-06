@@ -87,6 +87,9 @@
   --chart-4: oklch(0.540 0.249 198.6);
   --chart-5: oklch(0.464 0.201 191.6);
 
+  /* Exercise browser icon tiles — dark navy tile in light mode for visual consistency with dark mode */
+  --exercise-icon-bg: oklch(0.241 0.032 258.5);   /* #252836 dark navy */
+  --exercise-icon-color: oklch(0.957 0.003 247.9); /* #f0f1f3 light icon */
   /* Sidebar: white in light mode */
   --sidebar: oklch(1 0 0);
   --sidebar-foreground: oklch(0.213 0.042 243.6);
@@ -139,6 +142,9 @@
 
   /* Icon invert filter — makes dark PNG logos visible on dark backgrounds */
   --icon-invert: invert(1) brightness(2);
+  /* Exercise browser icon tiles — slightly lighter tile in dark mode */
+  --exercise-icon-bg: oklch(0.271 0.038 258.5);   /* #2e3347 */
+  --exercise-icon-color: oklch(0.957 0.003 247.9); /* #f0f1f3 */
   /* Sidebar: same card colour in dark #252836 */
   --sidebar: oklch(0.241 0.032 258.5);
   --sidebar-foreground: oklch(0.957 0.003 247.9);
