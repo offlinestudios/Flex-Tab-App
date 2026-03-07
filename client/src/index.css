@@ -87,9 +87,9 @@
   --chart-4: oklch(0.540 0.249 198.6);
   --chart-5: oklch(0.464 0.201 191.6);
 
-  /* Exercise browser icon tiles — dark navy tile in light mode for visual consistency with dark mode */
-  --exercise-icon-bg: oklch(0.241 0.032 258.5);   /* #252836 dark navy */
-  --exercise-icon-color: oklch(0.957 0.003 247.9); /* #f0f1f3 light icon */
+  /* Exercise browser icon tiles — light grey in light mode */
+  --exercise-icon-bg: oklch(0.905 0.007 247.9);   /* #e2e4e8 light grey */
+  --exercise-icon-color: oklch(0.213 0.042 243.6); /* #1a2332 dark icon */
   /* Sidebar: white in light mode */
   --sidebar: oklch(1 0 0);
   --sidebar-foreground: oklch(0.213 0.042 243.6);
