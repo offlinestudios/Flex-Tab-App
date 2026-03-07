@@ -66,52 +66,71 @@ export function ExerciseDetailSheet({ detail, onClose }: ExerciseDetailSheetProp
           overflowY: "hidden",
         }}
       >
-        {/* Drag handle */}
-        <div style={{ padding: "12px 16px 0", flexShrink: 0 }}>
-          <div
-            style={{
-              width: 36,
-              height: 4,
-              borderRadius: 2,
-              background: "var(--border)",
-              margin: "0 auto",
-            }}
-          />
-        </div>
+        {/* Drag handle — shown above image or above content if no image */}
+        {!detail.image && (
+          <div style={{ padding: "12px 16px 0", flexShrink: 0 }}>
+            <div
+              style={{
+                width: 36,
+                height: 4,
+                borderRadius: 2,
+                background: "var(--border)",
+                margin: "0 auto",
+              }}
+            />
+          </div>
+        )}
 
         {/* Scrollable content */}
-        <div style={{ overflowY: "auto", flex: 1, padding: "0 16px calc(env(safe-area-inset-bottom,0px) + 24px)" }}>
-          {/* Exercise illustration */}
+        <div style={{ overflowY: "auto", flex: 1 }}>
+          {/* Exercise illustration — full-width, flush with card edges, top corners match card */}
           {detail.image && (
-            <div style={{ display: "flex", justifyContent: "center", marginTop: 16, marginBottom: 16 }}>
+            <div
+              style={{
+                width: "100%",
+                aspectRatio: "4 / 3",
+                overflow: "hidden",
+                background: "#eef0f5",
+                borderRadius: "20px 20px 0 0",
+                flexShrink: 0,
+                position: "relative",
+              }}
+            >
+              {/* Drag handle overlaid on image */}
               <div
                 style={{
-                  width: "90%",
-                  aspectRatio: "1 / 1",
-                  borderRadius: 16,
-                  overflow: "hidden",
-                  background: "#f4f4f6",
+                  position: "absolute",
+                  top: 10,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  width: 36,
+                  height: 4,
+                  borderRadius: 2,
+                  background: "rgba(0,0,0,0.18)",
+                  zIndex: 2,
                 }}
-              >
-                <img
-                  src={detail.image}
-                  alt={detail.name}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "contain",
-                    display: "block",
-                  }}
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).style.display = "none";
-                  }}
-                />
-              </div>
+              />
+              <img
+                src={detail.image}
+                alt={detail.name}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "contain",
+                  display: "block",
+                }}
+                onError={(e) => {
+                  (e.currentTarget.parentElement as HTMLDivElement).style.display = "none";
+                }}
+              />
             </div>
           )}
 
+          {/* Padded content below image */}
+          <div style={{ padding: "0 16px calc(env(safe-area-inset-bottom,0px) + 24px)" }}>
+
           {/* Name + category */}
-          <div style={{ marginBottom: 16 }}>
+          <div style={{ marginBottom: 16, marginTop: 16 }}>
             <h2
               style={{
                 fontSize: 22,
@@ -273,9 +292,9 @@ export function ExerciseDetailSheet({ detail, onClose }: ExerciseDetailSheetProp
                 {detail.tips}
               </p>
             </div>
-          )}
+           )}
+          </div>{/* end padded content */}
         </div>
-
         {/* Close button */}
         <div
           style={{
