@@ -7,6 +7,7 @@ import { Pool } from "pg";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { appRouter } from "./railway-routers";
 import { createContext } from "./railway-context";
+import { handleAvatarUpload } from "./avatarUpload";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -43,6 +44,9 @@ async function startServer() {
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   
+  // Avatar upload REST endpoint (bypasses browser-to-R2 CORS issues)
+  app.post("/api/upload-avatar", handleAvatarUpload);
+
   // tRPC API endpoints
   console.log('[Server] Setting up tRPC API at /api/trpc');
   app.use(

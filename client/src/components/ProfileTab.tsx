@@ -703,10 +703,26 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
     if (!file) return;
     setAvatarUploading(true);
     try {
-      const { uploadUrl, key } = await getAvatarUploadUrl.mutateAsync({ mimeType: file.type });
-      const res = await fetch(uploadUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } });
-      if (!res.ok) throw new Error('Upload failed');
-      await updateAvatar.mutateAsync({ key });
+      // Get the Supabase session token to authenticate the upload
+      const { supabase } = await import('@/lib/supabase');
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error('Not authenticated');
+
+      // POST the file to the server-side endpoint — avoids browser-to-R2 CORS/SSL issues
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/upload-avatar', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({ error: 'Upload failed' }));
+        throw new Error(errBody.error ?? 'Upload failed');
+      }
+      const { avatarUrl: newUrl } = await res.json();
+      if (newUrl) refetchProfile();
     } catch (err) {
       console.error('Avatar upload error:', err);
     } finally {
