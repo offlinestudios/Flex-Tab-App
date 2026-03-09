@@ -2,6 +2,7 @@ import { publicProcedure, router } from "./_core/trpc";
 import { workoutRouter } from "./routers/workout";
 import { communityRouter } from "./routers/community";
 import { userRouter } from "./routers/user";
+import { socialRouter } from "./routers/social";
 
 export const appRouter = router({
   // Simple health check
@@ -24,6 +25,9 @@ export const appRouter = router({
 
   // User profile endpoints (avatar upload, etc.)
   user: userRouter,
+
+  // Social graph endpoints (follow, unfollow, block, mute)
+  social: socialRouter,
 });
 
 export type AppRouter = typeof appRouter;

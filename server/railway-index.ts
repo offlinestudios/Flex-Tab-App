@@ -24,7 +24,43 @@ async function runMigrations() {
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
   try {
     console.log('[Migrations] Running startup migrations...');
+
+    // 0003: avatarUrl column
     await pool.query(`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "avatarUrl" text;`);
+
+    // 0004: social graph tables
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS "user_follows" (
+        "id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+        "followerId" integer NOT NULL,
+        "followeeId" integer NOT NULL,
+        "createdAt" timestamp DEFAULT now() NOT NULL,
+        UNIQUE ("followerId", "followeeId")
+      );
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS "user_blocks" (
+        "id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+        "blockerId" integer NOT NULL,
+        "blockedId" integer NOT NULL,
+        "createdAt" timestamp DEFAULT now() NOT NULL,
+        UNIQUE ("blockerId", "blockedId")
+      );
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS "user_mutes" (
+        "id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+        "muterId" integer NOT NULL,
+        "mutedId" integer NOT NULL,
+        "createdAt" timestamp DEFAULT now() NOT NULL,
+        UNIQUE ("muterId", "mutedId")
+      );
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS "user_follows_followerId_idx" ON "user_follows" ("followerId");`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS "user_follows_followeeId_idx" ON "user_follows" ("followeeId");`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS "user_blocks_blockerId_idx" ON "user_blocks" ("blockerId");`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS "user_mutes_muterId_idx" ON "user_mutes" ("muterId");`);
+
     console.log('[Migrations] All migrations complete.');
   } catch (err) {
     console.error('[Migrations] Migration error (non-fatal):', err);

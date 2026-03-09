@@ -1058,8 +1058,43 @@ function PostCard({
   const [showComments, setShowComments] = useState(false);
   const [liked, setLiked] = useState(post.likedByMe);
   const [likeCount, setLikeCount] = useState(post.likeCount);
+  const [showOverflow, setShowOverflow] = useState(false);
   const isReal = post.id > 0;
+  // Is this post from someone other than the current user?
+  const isOtherUser = isReal && post.userId !== currentUser?.id;
   const utils = trpc.useUtils();
+
+  // Social graph state for this post's author
+  const { data: rel } = (trpc as any).social.getRelationship.useQuery(
+    { userId: post.userId },
+    { enabled: isOtherUser, staleTime: 30_000 }
+  );
+  const [following, setFollowing] = useState<boolean | null>(null);
+  // Sync server state into local state once loaded
+  const serverFollowing: boolean = rel?.following ?? false;
+  const effectiveFollowing = following !== null ? following : serverFollowing;
+
+  const followMutation = (trpc as any).social.follow.useMutation({
+    onSuccess: () => { setFollowing(true); utils.social.getRelationship.invalidate({ userId: post.userId }); },
+  });
+  const unfollowMutation = (trpc as any).social.unfollow.useMutation({
+    onSuccess: () => { setFollowing(false); utils.social.getRelationship.invalidate({ userId: post.userId }); },
+  });
+  const blockMutation = (trpc as any).social.block.useMutation({
+    onSuccess: () => { setShowOverflow(false); utils.community.getFeed.invalidate(); },
+  });
+  const muteMutation = (trpc as any).social.mute.useMutation({
+    onSuccess: () => { setShowOverflow(false); utils.community.getFeed.invalidate(); },
+  });
+
+  const toggleFollow = () => {
+    if (!isOtherUser) return;
+    if (effectiveFollowing) {
+      unfollowMutation.mutate({ userId: post.userId });
+    } else {
+      followMutation.mutate({ userId: post.userId });
+    }
+  };
 
   const likeMutation = trpc.community.likePost.useMutation({
     onSuccess: () => utils.community.getFeed.invalidate(),
@@ -1117,26 +1152,149 @@ function PostCard({
               {post.authorHandle} · {timeAgo(post.createdAt)}
             </p>
           </div>
-          <button
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              color: "#9ca3af",
-              padding: 4,
-            }}
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="currentColor"
+
+          {/* Follow / Unfollow button — only shown for other users' posts */}
+          {isOtherUser && (
+            <button
+              onClick={toggleFollow}
+              style={{
+                padding: "5px 12px",
+                borderRadius: 50,
+                border: effectiveFollowing
+                  ? "1.5px solid var(--border)"
+                  : "1.5px solid var(--foreground)",
+                background: effectiveFollowing ? "var(--secondary)" : "var(--foreground)",
+                color: effectiveFollowing ? "var(--foreground)" : "var(--background)",
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+              }}
             >
-              <circle cx="12" cy="5" r="1.5" />
-              <circle cx="12" cy="12" r="1.5" />
-              <circle cx="12" cy="19" r="1.5" />
-            </svg>
-          </button>
+              {effectiveFollowing ? "Following" : "Follow"}
+            </button>
+          )}
+
+          {/* Three-dot overflow menu */}
+          <div style={{ position: "relative" }}>
+            <button
+              onClick={() => setShowOverflow((v) => !v)}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "#9ca3af",
+                padding: 4,
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="12" cy="5" r="1.5" />
+                <circle cx="12" cy="12" r="1.5" />
+                <circle cx="12" cy="19" r="1.5" />
+              </svg>
+            </button>
+
+            {showOverflow && (
+              <>
+                {/* Backdrop to close menu */}
+                <div
+                  onClick={() => setShowOverflow(false)}
+                  style={{ position: "fixed", inset: 0, zIndex: 299 }}
+                />
+                {/* Dropdown */}
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 28,
+                    right: 0,
+                    background: "var(--card)",
+                    border: "1.5px solid var(--border)",
+                    borderRadius: 14,
+                    boxShadow: "0 4px 24px rgba(0,0,0,0.15)",
+                    zIndex: 300,
+                    minWidth: 160,
+                    overflow: "hidden",
+                  }}
+                >
+                  {isOtherUser && (
+                    <>
+                      <button
+                        onClick={() => { setShowOverflow(false); toggleFollow(); }}
+                        style={{
+                          display: "block",
+                          width: "100%",
+                          padding: "12px 16px",
+                          background: "none",
+                          border: "none",
+                          textAlign: "left",
+                          fontSize: 14,
+                          fontWeight: 600,
+                          color: "var(--foreground)",
+                          cursor: "pointer",
+                        }}
+                      >
+                        {effectiveFollowing ? "Unfollow" : "Follow"}
+                      </button>
+                      <div style={{ height: 1, background: "var(--border)", margin: "0 12px" }} />
+                      <button
+                        onClick={() => muteMutation.mutate({ userId: post.userId })}
+                        style={{
+                          display: "block",
+                          width: "100%",
+                          padding: "12px 16px",
+                          background: "none",
+                          border: "none",
+                          textAlign: "left",
+                          fontSize: 14,
+                          fontWeight: 600,
+                          color: "var(--foreground)",
+                          cursor: "pointer",
+                        }}
+                      >
+                        Mute
+                      </button>
+                      <div style={{ height: 1, background: "var(--border)", margin: "0 12px" }} />
+                      <button
+                        onClick={() => blockMutation.mutate({ userId: post.userId })}
+                        style={{
+                          display: "block",
+                          width: "100%",
+                          padding: "12px 16px",
+                          background: "none",
+                          border: "none",
+                          textAlign: "left",
+                          fontSize: 14,
+                          fontWeight: 600,
+                          color: "#ef4444",
+                          cursor: "pointer",
+                        }}
+                      >
+                        Block
+                      </button>
+                    </>
+                  )}
+                  {!isOtherUser && (
+                    <button
+                      style={{
+                        display: "block",
+                        width: "100%",
+                        padding: "12px 16px",
+                        background: "none",
+                        border: "none",
+                        textAlign: "left",
+                        fontSize: 14,
+                        fontWeight: 600,
+                        color: "#ef4444",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Delete post
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Caption */}

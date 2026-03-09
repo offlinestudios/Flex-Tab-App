@@ -1,4 +1,4 @@
-import { decimal, integer, pgEnum, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
+import { decimal, integer, pgEnum, pgTable, text, timestamp, unique, varchar } from "drizzle-orm/pg-core";
 
 /**
  * Core user table backing auth flow.
@@ -148,3 +148,56 @@ export type InsertPost = typeof posts.$inferInsert;
 export type PostMedia = typeof postMedia.$inferSelect;
 export type PostLike = typeof postLikes.$inferSelect;
 export type PostComment = typeof postComments.$inferSelect;
+
+/**
+ * Social graph — follows
+ * One row per follower→followee relationship.
+ * Unique constraint prevents duplicate follows.
+ */
+export const userFollows = pgTable(
+  "user_follows",
+  {
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+    followerId: integer("followerId").notNull(),
+    followeeId: integer("followeeId").notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (t) => [unique().on(t.followerId, t.followeeId)]
+);
+
+/**
+ * Social graph — blocks
+ * When user A blocks user B:
+ *   - B's posts are hidden from A's feed
+ *   - B cannot see A's profile or posts
+ */
+export const userBlocks = pgTable(
+  "user_blocks",
+  {
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+    blockerId: integer("blockerId").notNull(),
+    blockedId: integer("blockedId").notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (t) => [unique().on(t.blockerId, t.blockedId)]
+);
+
+/**
+ * Social graph — mutes
+ * Muting hides a user's posts from your feed without notifying them.
+ * The muted user can still see your content.
+ */
+export const userMutes = pgTable(
+  "user_mutes",
+  {
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+    muterId: integer("muterId").notNull(),
+    mutedId: integer("mutedId").notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (t) => [unique().on(t.muterId, t.mutedId)]
+);
+
+export type UserFollow = typeof userFollows.$inferSelect;
+export type UserBlock = typeof userBlocks.$inferSelect;
+export type UserMute = typeof userMutes.$inferSelect;

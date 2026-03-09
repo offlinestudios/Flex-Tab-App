@@ -642,6 +642,15 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
   });
   const avatarUrl: string | null = myProfile?.avatarUrl ?? null;
 
+  // Social graph stats — follower / following counts
+  const { data: socialStats } = (trpc as any).social.getMyStats.useQuery(undefined, {
+    staleTime: 60_000,
+    retry: false,
+    throwOnError: false,
+  });
+  const followerCount: number = socialStats?.followerCount ?? 0;
+  const followingCount: number = socialStats?.followingCount ?? 0;
+
   const getAvatarUploadUrl = (trpc as any).user.getAvatarUploadUrl.useMutation();
   const updateAvatar = (trpc as any).user.updateAvatar.useMutation({
     onSuccess: () => { refetchProfile(); },
@@ -773,18 +782,18 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
                 <input id="profile-avatar-upload" type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarUpload} />
               </div>
 
-              {/* Workouts (real) + Followers / Following (0 until social graph exists) */}
+              {/* Workouts (real) + Followers / Following (live from social graph) */}
               <div style={{ flex: 1, display: 'flex', justifyContent: 'space-around' }}>
                 <div style={{ textAlign: 'center' }}>
                   <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', margin: '0 0 2px' }}>{workoutSessions.length}</p>
                   <p style={{ fontSize: 12, color: '#6b7280', margin: 0, fontWeight: 500 }}>Workouts</p>
                 </div>
                 <div style={{ textAlign: 'center' }}>
-                  <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', margin: '0 0 2px' }}>0</p>
+                  <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', margin: '0 0 2px' }}>{followerCount}</p>
                   <p style={{ fontSize: 12, color: '#6b7280', margin: 0, fontWeight: 500 }}>Followers</p>
                 </div>
                 <div style={{ textAlign: 'center' }}>
-                  <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', margin: '0 0 2px' }}>0</p>
+                  <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', margin: '0 0 2px' }}>{followingCount}</p>
                   <p style={{ fontSize: 12, color: '#6b7280', margin: 0, fontWeight: 500 }}>Following</p>
                 </div>
               </div>
