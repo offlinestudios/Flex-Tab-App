@@ -15,6 +15,7 @@ interface ExerciseCardNewProps {
   totalExercises?: number;
   currentIndex?: number;
   onNext?: () => void;
+  onPrev?: () => void;
   // Historical data for stat card
   lastWeight?: number;
   lastReps?: number;
@@ -36,6 +37,7 @@ export function ExerciseCardNew({
   totalExercises = 1,
   currentIndex = 0,
   onNext,
+  onPrev,
   lastWeight = 0,
   lastReps = 0,
   bestWeight = 0,
@@ -220,7 +222,18 @@ export function ExerciseCardNew({
           {isLogging ? 'Logging…' : justLogged ? '✓ Set Logged!' : 'Log Set'}
         </button>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
-          {onRemove ? (
+          {/* Left side: Remove or Previous */}
+          {onPrev ? (
+            <button
+              onClick={onPrev}
+              style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', color: 'var(--foreground)', fontSize: 14, fontWeight: 600, cursor: 'pointer', padding: '6px 0' }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <polyline points="15 18 9 12 15 6"/>
+              </svg>
+              Prev
+            </button>
+          ) : onRemove ? (
             <button
               onClick={() => onRemove(exercise.id)}
               style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: 14, fontWeight: 600, cursor: 'pointer', padding: '6px 0' }}
@@ -228,15 +241,26 @@ export function ExerciseCardNew({
               Remove Exercise
             </button>
           ) : <span />}
-          <button
-            onClick={onNext}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: 'var(--foreground)', fontSize: 14, fontWeight: 600, cursor: 'pointer', padding: '6px 0' }}
-          >
-            Next Exercise
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <polyline points="9 18 15 12 9 6"/>
-            </svg>
-          </button>
+          {/* Right side: Next or Remove (when Prev is showing on left) */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {onPrev && onRemove && (
+              <button
+                onClick={() => onRemove(exercise.id)}
+                style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: 14, fontWeight: 600, cursor: 'pointer', padding: '6px 0' }}
+              >
+                Remove
+              </button>
+            )}
+            <button
+              onClick={onNext}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: 'var(--foreground)', fontSize: 14, fontWeight: 600, cursor: 'pointer', padding: '6px 0' }}
+            >
+              {onNext ? (currentIndex !== undefined && totalExercises !== undefined && currentIndex < totalExercises - 1 ? 'Next Exercise' : 'Add Exercise') : 'Next Exercise'}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     </div>

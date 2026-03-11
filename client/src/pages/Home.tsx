@@ -783,7 +783,15 @@ export default function Home() {
         open={showExerciseBrowser}
         onClose={() => setShowExerciseBrowser(false)}
         onSelectExercise={(ex) => {
-          handleSelectExercise(ex);
+          // If the exercise is not already selected, add it and navigate to it
+          if (!selectedExercises.find((e) => e.id === ex.id)) {
+            const newExercises = [...selectedExercises, ex];
+            setSelectedExercises(newExercises);
+            // Jump directly to the newly added exercise
+            setCurrentExerciseIndex(newExercises.length - 1);
+          } else {
+            handleSelectExercise(ex);
+          }
           setShowExerciseBrowser(false);
         }}
         selectedExercises={selectedExercises}
@@ -929,6 +937,7 @@ export default function Home() {
                       setSelectedExercises(updated);
                       setCurrentExerciseIndex(Math.min(safeIdx, updated.length - 1));
                     }}
+                    onPrev={safeIdx > 0 ? () => setCurrentExerciseIndex(safeIdx - 1) : undefined}
                     onNext={() => {
                       const nextIdx = currentExerciseIndex + 1;
                       if (nextIdx < selectedExercises.length) {
@@ -964,13 +973,12 @@ export default function Home() {
                   }}
                   totalExercises={selectedExercises.length}
                   currentIndex={safeIdx}
+                  onPrev={safeIdx > 0 ? () => setCurrentExerciseIndex(safeIdx - 1) : undefined}
                   onNext={() => {
                     const nextIdx = currentExerciseIndex + 1;
                     if (nextIdx < selectedExercises.length) {
-                      // Navigate to the next already-added exercise
                       setCurrentExerciseIndex(nextIdx);
                     } else {
-                      // On the last exercise — open browser to add a new one
                       setShowExerciseBrowser(true);
                     }
                   }}
