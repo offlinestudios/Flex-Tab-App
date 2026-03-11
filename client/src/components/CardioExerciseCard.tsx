@@ -435,7 +435,7 @@ export function CardioExerciseCard({
             fontFamily: 'inherit', transition: 'background 0.15s',
           }}
         >
-          {isLogging ? 'Logging…' : 'Log Set'}
+          {isLogging ? 'Logging…' : 'Log Session'}
         </button>
       </div>
 

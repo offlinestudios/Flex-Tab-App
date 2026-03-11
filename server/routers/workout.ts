@@ -24,7 +24,7 @@ export const workoutRouter = router({
         date: z.string(), // Format: "M/D/YYYY"
         exercise: z.string(),
         sets: z.number().int().positive(),
-        reps: z.number().int().positive(),
+        reps: z.number().int().nonnegative(), // 0 is valid for cardio exercises
         weight: z.number().int().nonnegative(),
         time: z.string(), // Format: "HH:MM:SS AM/PM"
         // Cardio-specific fields (optional)

@@ -189,7 +189,7 @@ export default function Home() {
   }, [setLogsData]);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
-  const [shareWorkoutData, setShareWorkoutData] = useState<{ exercises: SetLog[]; date: string } | null>(null);
+  const [shareWorkoutData, setShareWorkoutData] = useState<{ exercises: SetLog[]; date: string; duration?: string } | null>(null);
   const [showExerciseBrowser, setShowExerciseBrowser] = useState(false);
   const [showRoutineBuilder, setShowRoutineBuilder] = useState(false);
   const [routines, setRoutines] = useState<Array<{id: string; name: string; exercises: Exercise[]}>>(() => {
@@ -742,11 +742,11 @@ export default function Home() {
           setSelectedExercises([]);
           setCurrentExerciseIndex(0);
         }}
-        onFinishAndShare={() => {
-          // Open the share dialog with today's session data
+        onFinishAndShare={(durationStr) => {
+          // Open the share dialog with today's session data and the elapsed duration
           const todaySession = workoutSessions.find(s => s.date === todayDateKey);
           if (todaySession && todaySession.exercises.length > 0) {
-            setShareWorkoutData({ exercises: todaySession.exercises, date: todayDateKey });
+            setShareWorkoutData({ exercises: todaySession.exercises, date: todayDateKey, duration: durationStr });
             setShowShareDialog(true);
           }
         }}
@@ -886,8 +886,9 @@ export default function Home() {
                       setCurrentExerciseIndex(Math.min(safeIdx, updated.length - 1));
                     }}
                     onNext={() => {
-                      if (safeIdx < selectedExercises.length - 1) {
-                        setCurrentExerciseIndex(safeIdx + 1);
+                      const nextIdx = currentExerciseIndex + 1;
+                      if (nextIdx < selectedExercises.length) {
+                        setCurrentExerciseIndex(nextIdx);
                       } else {
                         setShowExerciseBrowser(true);
                       }
@@ -920,9 +921,10 @@ export default function Home() {
                   totalExercises={selectedExercises.length}
                   currentIndex={safeIdx}
                   onNext={() => {
-                    if (safeIdx < selectedExercises.length - 1) {
+                    const nextIdx = currentExerciseIndex + 1;
+                    if (nextIdx < selectedExercises.length) {
                       // Navigate to the next already-added exercise
-                      setCurrentExerciseIndex(safeIdx + 1);
+                      setCurrentExerciseIndex(nextIdx);
                     } else {
                       // On the last exercise — open browser to add a new one
                       setShowExerciseBrowser(true);
@@ -1690,6 +1692,7 @@ export default function Home() {
           onOpenChange={setShowShareDialog}
           exercises={shareWorkoutData.exercises}
           date={shareWorkoutData.date}
+          duration={shareWorkoutData.duration}
         />
       )}
 

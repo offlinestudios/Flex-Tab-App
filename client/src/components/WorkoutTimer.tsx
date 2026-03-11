@@ -6,8 +6,9 @@ interface WorkoutTimerProps {
   totalSets: number;
   totalVolume: number;
   onEnd: () => void;
-  /** Called when the user taps "Finish Workout" — triggers the share screen */
-  onFinishAndShare?: () => void;
+  /** Called when the user taps "Finish Workout" — triggers the share screen.
+   *  Receives the formatted duration string, e.g. "36:12" */
+  onFinishAndShare?: (duration: string) => void;
 }
 
 export function WorkoutTimer({ isActive, exerciseCount, totalSets, totalVolume, onEnd, onFinishAndShare }: WorkoutTimerProps) {
@@ -142,10 +143,11 @@ export function WorkoutTimer({ isActive, exerciseCount, totalSets, totalVolume, 
             <button
               onClick={() => {
                 setShowEndModal(false);
+                const durationStr = fmt(seconds);
                 onEnd();
                 // Open the share screen after a short delay so the modal closes first
                 if (onFinishAndShare) {
-                  setTimeout(() => onFinishAndShare(), 200);
+                  setTimeout(() => onFinishAndShare(durationStr), 200);
                 }
               }}
               style={{ width: "100%", background: "var(--foreground)", color: "var(--background)", border: "none", borderRadius: 16, padding: 15, fontSize: 15, fontWeight: 700, cursor: "pointer", marginBottom: 10 }}
