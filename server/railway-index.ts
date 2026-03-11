@@ -61,6 +61,9 @@ async function runMigrations() {
     await pool.query(`CREATE INDEX IF NOT EXISTS "user_blocks_blockerId_idx" ON "user_blocks" ("blockerId");`);
     await pool.query(`CREATE INDEX IF NOT EXISTS "user_mutes_muterId_idx" ON "user_mutes" ("muterId");`);
 
+    // 0005: durationSeconds on workout_sessions
+    await pool.query(`ALTER TABLE "workout_sessions" ADD COLUMN IF NOT EXISTS "durationSeconds" integer;`);
+
     console.log('[Migrations] All migrations complete.');
   } catch (err) {
     console.error('[Migrations] Migration error (non-fatal):', err);

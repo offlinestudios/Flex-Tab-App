@@ -68,6 +68,7 @@ interface SetLog {
 interface WorkoutSession {
   date: string;
   exercises: SetLog[];
+  durationSeconds?: number | null;
 }
 
 interface Measurement {
@@ -127,6 +128,11 @@ export default function Home() {
   const [historyEditCell, setHistoryEditCell] = useState<{ rowIdx: number; field: 'reps' | 'weight' } | null>(null);
   const [historyNumpadBuf, setHistoryNumpadBuf] = useState<string>('');
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
+  // Workout date — defaults to today but can be changed to log a past session
+  const [workoutDateKey, setWorkoutDateKey] = useState<string>(
+    () => new Date().toLocaleDateString("en-US", { year: "numeric", month: "numeric", day: "numeric" })
+  );
+  const [showWorkoutDatePicker, setShowWorkoutDatePicker] = useState(false);
   
   // Fetch workout logs from database
   const { data: setLogsData = [], isLoading: setLogsLoading, error: setLogsError } = trpc.workout.getSetLogs.useQuery(undefined, {
@@ -152,6 +158,8 @@ export default function Home() {
   const workoutSessions: WorkoutSession[] = useMemo(() => {
     console.log('[DEBUG] useMemo running, setLogsData length:', setLogsData.length);
     const sessionMap = new Map<string, SetLog[]>();
+    // Track the session duration per date (last non-null value wins)
+    const durationMap = new Map<string, number | null>();
     
     setLogsData.forEach((log: any) => {
       // Extract date from the log (assuming it has a date field)
@@ -178,11 +186,19 @@ export default function Home() {
         distance: log.distance ? parseFloat(log.distance) : undefined,
         distanceUnit: log.distanceUnit,
       });
+
+      // Capture session duration if present (all rows for same session share the same value)
+      if (log.sessionDurationSeconds != null) {
+        durationMap.set(date, log.sessionDurationSeconds);
+      } else if (!durationMap.has(date)) {
+        durationMap.set(date, null);
+      }
     });
     
     const sessions = Array.from(sessionMap.entries()).map(([date, exercises]) => ({
       date,
       exercises,
+      durationSeconds: durationMap.get(date) ?? null,
     }));
     console.log('[DEBUG] Transformed workout sessions:', sessions);
     return sessions;
@@ -307,6 +323,8 @@ export default function Home() {
     },
   });
   
+  const finishWorkoutMutation = trpc.workout.finishWorkout.useMutation();
+
   const deleteSetLogMutation = trpc.workout.deleteSetLog.useMutation({
     onMutate: async (variables) => {
       // Cancel outgoing refetches
@@ -459,12 +477,6 @@ export default function Home() {
     distanceUnit?: 'miles' | 'km',
     calories?: number
   ) => {
-    const today = new Date().toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "numeric",
-      day: "numeric",
-    });
-
     const time = new Date().toLocaleTimeString("en-US", {
       hour: "2-digit",
       minute: "2-digit",
@@ -473,7 +485,7 @@ export default function Home() {
     });
 
     await logSetMutation.mutateAsync({
-      date: today,
+      date: workoutDateKey,
       exercise,
       sets,
       reps,
@@ -718,8 +730,15 @@ export default function Home() {
     : EXERCISE_LIB_DATA.filter(e => e.muscle === exerciseLibFilter);
 
   const todayLabel = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-
   const todayDateKey = new Date().toLocaleDateString("en-US", { year: "numeric", month: "numeric", day: "numeric" });
+  const isLoggingToday = workoutDateKey === todayDateKey;
+  // Human-readable label for the currently selected workout date
+  const workoutDateLabel = (() => {
+    if (isLoggingToday) return todayLabel;
+    // Parse M/D/YYYY format
+    const [m, d, y] = workoutDateKey.split('/').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  })();
   const timerTotalSets = allSetLogs
     .filter(e => e.date === todayDateKey)
     .reduce((s, e) => s + e.sets, 0);
@@ -741,12 +760,19 @@ export default function Home() {
           setWorkoutTimerActive(false);
           setSelectedExercises([]);
           setCurrentExerciseIndex(0);
+          // Reset workout date back to today for the next session
+          setWorkoutDateKey(new Date().toLocaleDateString("en-US", { year: "numeric", month: "numeric", day: "numeric" }));
         }}
         onFinishAndShare={(durationStr) => {
-          // Open the share dialog with today's session data and the elapsed duration
-          const todaySession = workoutSessions.find(s => s.date === todayDateKey);
-          if (todaySession && todaySession.exercises.length > 0) {
-            setShareWorkoutData({ exercises: todaySession.exercises, date: todayDateKey, duration: durationStr });
+          // Save duration to database
+          const durationSecs = durationStr.split(':').reduce((acc, t, i, arr) =>
+            i === arr.length - 1 ? acc + parseInt(t) : acc + parseInt(t) * 60, 0
+          );
+          finishWorkoutMutation.mutate({ date: workoutDateKey, durationSeconds: durationSecs });
+          // Open the share dialog with the session data and elapsed duration
+          const session = workoutSessions.find(s => s.date === workoutDateKey);
+          if (session && session.exercises.length > 0) {
+            setShareWorkoutData({ exercises: session.exercises, date: workoutDateKey, duration: durationStr });
             setShowShareDialog(true);
           }
         }}
@@ -780,7 +806,7 @@ export default function Home() {
         {/* ── Date / Page header ── (hidden on measurements tab — component owns its own header) */}
         <div style={{ display: activeTab === 'measurements' ? 'none' : 'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
           <h2 style={{ fontSize:20, fontWeight:800, color:'var(--foreground)', margin:0 }}>
-            {activeTab === 'log' ? todayLabel
+            {activeTab === 'log' ? workoutDateLabel
               : activeTab === 'measurements' ? 'Measurements'
               : activeTab === 'history' ? 'History'
               : activeTab === 'trends' ? 'Trends'
@@ -792,17 +818,31 @@ export default function Home() {
               : 'Profile'}
           </h2>
           {activeTab === 'log' && (
-            <button
-              onClick={() => setShowCalendarModal(true)}
-              style={{ width:36, height:36, borderRadius:10, background:'var(--secondary)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <rect x="3" y="4" width="18" height="18" rx="2"/>
-                <line x1="16" y1="2" x2="16" y2="6"/>
-                <line x1="8" y1="2" x2="8" y2="6"/>
-                <line x1="3" y1="10" x2="21" y2="10"/>
-              </svg>
-            </button>
+            <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+              {/* Log for a past date button */}
+              <button
+                onClick={() => setShowWorkoutDatePicker(true)}
+                title="Log for a different date"
+                style={{ display:'flex', alignItems:'center', gap:5, padding:'6px 12px', borderRadius:10, background: isLoggingToday ? 'var(--secondary)' : 'var(--foreground)', border:'none', cursor:'pointer', fontSize:12, fontWeight:700, color: isLoggingToday ? 'var(--muted-foreground)' : 'var(--background)' }}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                {isLoggingToday ? 'Log past workout' : 'Change date'}
+              </button>
+              <button
+                onClick={() => setShowCalendarModal(true)}
+                style={{ width:36, height:36, borderRadius:10, background:'var(--secondary)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12 6 12 12 16 14"/>
+                </svg>
+              </button>
+            </div>
           )}
         </div>
 
@@ -1032,7 +1072,14 @@ export default function Home() {
                     <div style={{ padding:'16px 20px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                       <h3 style={{ fontSize:15, fontWeight:700, color:'var(--foreground)', margin:0 }}>{formatDateFull(session.date)}</h3>
                       <button
-                        onClick={() => { setShareWorkoutData({ exercises: session.exercises, date: session.date }); setShowShareDialog(true); }}
+                        onClick={() => {
+                          // Format stored duration (seconds) into MM:SS string if available
+                          const storedDuration = session.durationSeconds
+                            ? `${Math.floor(session.durationSeconds / 60)}:${String(session.durationSeconds % 60).padStart(2, '0')}`
+                            : undefined;
+                          setShareWorkoutData({ exercises: session.exercises, date: session.date, duration: storedDuration });
+                          setShowShareDialog(true);
+                        }}
                         style={{ display:'flex', alignItems:'center', gap:5, fontSize:13, fontWeight:600, color:'var(--foreground)', background:'none', border:'none', cursor:'pointer' }}
                       >
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -1702,6 +1749,52 @@ export default function Home() {
           detail={selectedExerciseDetail}
           onClose={() => setSelectedExerciseDetail(null)}
         />
+      )}
+
+      {/* Workout Date Picker — log a past session */}
+      {showWorkoutDatePicker && (
+        <div
+          style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:1000, display:'flex', alignItems:'flex-end', justifyContent:'center' }}
+          onClick={() => setShowWorkoutDatePicker(false)}
+        >
+          <div
+            style={{ background:'var(--background)', borderRadius:'24px 24px 0 0', padding:'24px 20px 40px', width:'100%', maxWidth:480 }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
+              <h3 style={{ fontSize:17, fontWeight:800, color:'var(--foreground)', margin:0 }}>Log for a past date</h3>
+              <button onClick={() => setShowWorkoutDatePicker(false)} style={{ background:'none', border:'none', cursor:'pointer', color:'var(--muted-foreground)', fontSize:22, lineHeight:1 }}>×</button>
+            </div>
+            <p style={{ fontSize:13, color:'var(--muted-foreground)', marginBottom:16 }}>Select a date to log exercises for that day. All sets will be saved under the chosen date.</p>
+            <input
+              type="date"
+              max={(() => { const t = new Date(); return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`; })()}
+              defaultValue={(() => {
+                const [m, d, y] = workoutDateKey.split('/').map(Number);
+                return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+              })()}
+              onChange={e => {
+                if (!e.target.value) return;
+                const [y, m, d] = e.target.value.split('-').map(Number);
+                setWorkoutDateKey(`${m}/${d}/${y}`);
+              }}
+              style={{ width:'100%', padding:'14px 16px', borderRadius:14, border:'1.5px solid var(--border)', background:'var(--secondary)', color:'var(--foreground)', fontSize:16, fontFamily:'inherit', boxSizing:'border-box' }}
+            />
+            <div style={{ display:'flex', gap:10, marginTop:16 }}>
+              <button
+                onClick={() => {
+                  setWorkoutDateKey(todayDateKey);
+                  setShowWorkoutDatePicker(false);
+                }}
+                style={{ flex:1, padding:'13px 0', borderRadius:14, border:'1.5px solid var(--border)', background:'var(--secondary)', color:'var(--foreground)', fontSize:14, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}
+              >Reset to Today</button>
+              <button
+                onClick={() => setShowWorkoutDatePicker(false)}
+                style={{ flex:1, padding:'13px 0', borderRadius:14, border:'none', background:'var(--foreground)', color:'var(--background)', fontSize:14, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}
+              >Confirm</button>
+            </div>
+          </div>
+        </div>
       )}
     </DashboardLayout>
   );

@@ -37,6 +37,7 @@ export const workoutSessions = pgTable("workout_sessions", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   userId: integer("userId").notNull(),
   date: varchar("date", { length: 20 }).notNull(), // Format: "M/D/YYYY"
+  durationSeconds: integer("durationSeconds"), // Total workout duration in seconds (nullable for legacy rows)
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

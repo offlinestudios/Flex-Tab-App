@@ -14,6 +14,7 @@ import {
   updateCustomExercise,
   deleteCustomExercise,
   findOrCreateSession,
+  updateSessionDuration,
 } from "../db";
 
 export const workoutRouter = router({
@@ -53,6 +54,21 @@ export const workoutRouter = router({
         distanceUnit: input.distanceUnit,
         calories: input.calories,
       });
+      return { success: true };
+    }),
+
+  // Save workout duration when the user finishes a workout
+  finishWorkout: protectedProcedure
+    .input(
+      z.object({
+        date: z.string(), // Format: "M/D/YYYY"
+        durationSeconds: z.number().int().nonnegative(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Find the session for this date (it must already exist since sets were logged)
+      const sessionId = await findOrCreateSession(ctx.user.id, input.date);
+      await updateSessionDuration(sessionId, ctx.user.id, input.durationSeconds);
       return { success: true };
     }),
 

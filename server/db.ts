@@ -112,6 +112,15 @@ export async function getWorkoutSessionsByUser(userId: number) {
   return await db.select().from(workoutSessions).where(eq(workoutSessions.userId, userId));
 }
 
+export async function updateSessionDuration(sessionId: number, userId: number, durationSeconds: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return await db
+    .update(workoutSessions)
+    .set({ durationSeconds })
+    .where(and(eq(workoutSessions.id, sessionId), eq(workoutSessions.userId, userId)));
+}
+
 export async function findOrCreateSession(userId: number, date: string): Promise<number> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -161,6 +170,7 @@ export async function getSetLogsByUser(userId: number) {
       calories: setLogs.calories,
       createdAt: setLogs.createdAt,
       date: workoutSessions.date,
+      sessionDurationSeconds: workoutSessions.durationSeconds,
     })
     .from(setLogs)
     .leftJoin(workoutSessions, eq(setLogs.sessionId, workoutSessions.id))
