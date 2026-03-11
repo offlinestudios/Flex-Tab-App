@@ -1,0 +1,395 @@
+/**
+ * POST /api/generate-workout-card
+ *
+ * Accepts workout data as JSON, renders a PNG workout card using satori + resvg,
+ * uploads it to R2, and returns the public URL.
+ *
+ * This approach is used instead of html2canvas because html2canvas crashes in
+ * iOS Safari when the card contains CSS variables, env() values, or cross-origin
+ * images. Server-side rendering is reliable across all browsers and devices.
+ */
+
+import { Request, Response } from "express";
+import path from "path";
+import { fileURLToPath } from "url";
+import { readFileSync } from "fs";
+import { storagePut } from "./storage.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// ── Fonts (loaded once at module init) ──────────────────────────────────────
+const fontRegular = readFileSync(path.join(__dirname, "fonts/Inter-Regular.woff1"));
+const fontBold = readFileSync(path.join(__dirname, "fonts/Inter-Bold.woff1"));
+const fontExtraBold = readFileSync(path.join(__dirname, "fonts/Inter-ExtraBold.woff1"));
+
+// ── FlexTab logo as base64 data URI ─────────────────────────────────────────
+// Inline so satori never makes a network request for it
+let LOGO_DATA_URI = "";
+try {
+  const logoPath = path.join(__dirname, "../client/public/flextab-icon.png");
+  const logoBytes = readFileSync(logoPath);
+  LOGO_DATA_URI = `data:image/png;base64,${logoBytes.toString("base64")}`;
+} catch {
+  // Logo not found — will render without it
+}
+
+// ── Types ────────────────────────────────────────────────────────────────────
+interface ExerciseRow {
+  exercise: string;
+  totalSets: number;
+  bestReps: number;
+  bestWeight: number;
+  category: string;
+  duration?: number;
+  distance?: number;
+  distanceUnit?: "miles" | "km";
+}
+
+interface CardData {
+  date: string;           // e.g. "Monday, Mar 9, 2026"
+  duration?: string;      // e.g. "36:12"
+  totalSets: number;
+  totalReps: number;
+  volumeDisplay: string;  // e.g. "13.8k"
+  exercises: ExerciseRow[];
+}
+
+// ── Build the satori element tree ────────────────────────────────────────────
+function buildCardElement(data: CardData) {
+  const { date, duration, totalSets, totalReps, volumeDisplay, exercises } = data;
+
+  const statTiles = [
+    { value: duration || "—", label: "DURATION" },
+    { value: String(totalSets), label: "SETS" },
+    { value: String(totalReps), label: "REPS" },
+    { value: volumeDisplay, label: "VOLUME" },
+  ];
+
+  const exerciseRows = exercises.map((ex, i) => {
+    let pill: string;
+    if (ex.category === "Cardio") {
+      const parts = [
+        ex.duration ? `${ex.duration} min` : "",
+        ex.distance ? `${ex.distance} ${ex.distanceUnit ?? "km"}` : "",
+      ].filter(Boolean);
+      pill = parts.length ? parts.join(" · ") : `${ex.totalSets} set${ex.totalSets !== 1 ? "s" : ""}`;
+    } else if (ex.bestWeight > 0) {
+      pill = `Best: ${ex.bestReps} reps @ ${ex.bestWeight} lbs`;
+    } else {
+      pill = `Best: ${ex.bestReps} reps`;
+    }
+
+    const isLast = i === exercises.length - 1;
+
+    return {
+      type: "div",
+      props: {
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          paddingTop: 9,
+          paddingBottom: 9,
+          borderBottom: isLast ? "none" : "1px solid #f1f5f9",
+        },
+        children: [
+          // Number badge
+          {
+            type: "div",
+            props: {
+              style: {
+                width: 26,
+                height: 26,
+                borderRadius: 13,
+                background: "#0f172a",
+                color: "#fff",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 11,
+                fontWeight: 800,
+                flexShrink: 0,
+              },
+              children: String(i + 1),
+            },
+          },
+          // Exercise name
+          {
+            type: "div",
+            props: {
+              style: {
+                flex: 1,
+                fontSize: 13,
+                fontWeight: 700,
+                color: "#0f172a",
+                overflow: "hidden",
+              },
+              children: ex.exercise.length > 22 ? ex.exercise.slice(0, 21) + "…" : ex.exercise,
+            },
+          },
+          // Pill
+          {
+            type: "div",
+            props: {
+              style: {
+                background: "#f1f5f9",
+                borderRadius: 50,
+                paddingTop: 4,
+                paddingBottom: 4,
+                paddingLeft: 10,
+                paddingRight: 10,
+                flexShrink: 0,
+              },
+              children: {
+                type: "div",
+                props: {
+                  style: {
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: "#475569",
+                    whiteSpace: "nowrap",
+                  },
+                  children: pill,
+                },
+              },
+            },
+          },
+        ],
+      },
+    };
+  });
+
+  return {
+    type: "div",
+    props: {
+      style: {
+        display: "flex",
+        flexDirection: "column",
+        background: "#ffffff",
+        borderRadius: 20,
+        padding: "20px 20px 16px",
+        width: 390,
+        fontFamily: "Inter",
+      },
+      children: [
+        // ── Header ──────────────────────────────────────────────────────────
+        {
+          type: "div",
+          props: {
+            style: {
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: 16,
+            },
+            children: [
+              {
+                type: "div",
+                props: {
+                  style: { display: "flex", alignItems: "center", gap: 10 },
+                  children: [
+                    LOGO_DATA_URI
+                      ? {
+                          type: "img",
+                          props: {
+                            src: LOGO_DATA_URI,
+                            width: 32,
+                            height: 32,
+                            style: { borderRadius: 8 },
+                          },
+                        }
+                      : {
+                          type: "div",
+                          props: {
+                            style: {
+                              width: 32,
+                              height: 32,
+                              borderRadius: 8,
+                              background: "#0f172a",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              color: "#fff",
+                              fontSize: 14,
+                              fontWeight: 800,
+                            },
+                            children: "F",
+                          },
+                        },
+                    {
+                      type: "div",
+                      props: {
+                        style: { display: "flex", flexDirection: "column" },
+                        children: [
+                          {
+                            type: "div",
+                            props: {
+                              style: { fontSize: 15, fontWeight: 800, color: "#0f172a", lineHeight: 1.2 },
+                              children: "FlexTab",
+                            },
+                          },
+                          {
+                            type: "div",
+                            props: {
+                              style: { fontSize: 12, color: "#94a3b8", lineHeight: 1.3 },
+                              children: date,
+                            },
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+              },
+              {
+                type: "div",
+                props: {
+                  style: { fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em" },
+                  children: "Workout",
+                },
+              },
+            ],
+          },
+        },
+
+        // ── Stat tiles 2×2 ──────────────────────────────────────────────────
+        {
+          type: "div",
+          props: {
+            style: {
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 8,
+              marginBottom: 16,
+            },
+            children: statTiles.map(({ value, label }) => ({
+              type: "div",
+              props: {
+                style: {
+                  background: "#f8fafc",
+                  borderRadius: 14,
+                  padding: "14px 8px 10px",
+                  textAlign: "center",
+                  width: 175,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                },
+                children: [
+                  {
+                    type: "div",
+                    props: {
+                      style: { fontSize: 28, fontWeight: 800, color: "#0f172a", lineHeight: 1 },
+                      children: value,
+                    },
+                  },
+                  {
+                    type: "div",
+                    props: {
+                      style: { fontSize: 10, fontWeight: 700, color: "#94a3b8", marginTop: 5, textTransform: "uppercase", letterSpacing: "0.07em" },
+                      children: label,
+                    },
+                  },
+                ],
+              },
+            })),
+          },
+        },
+
+        // ── Divider ──────────────────────────────────────────────────────────
+        {
+          type: "div",
+          props: {
+            style: { height: 1, background: "#f1f5f9", marginBottom: 14 },
+          },
+        },
+
+        // ── Exercises heading ────────────────────────────────────────────────
+        {
+          type: "div",
+          props: {
+            style: { fontSize: 13, fontWeight: 800, color: "#0f172a", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.06em" },
+            children: "Exercises",
+          },
+        },
+
+        // ── Exercise rows ────────────────────────────────────────────────────
+        {
+          type: "div",
+          props: {
+            style: { display: "flex", flexDirection: "column" },
+            children: exerciseRows,
+          },
+        },
+
+        // ── Footer ───────────────────────────────────────────────────────────
+        {
+          type: "div",
+          props: {
+            style: {
+              marginTop: 14,
+              paddingTop: 12,
+              borderTop: "1px solid #f1f5f9",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6,
+            },
+            children: {
+              type: "div",
+              props: {
+                style: { fontSize: 11, color: "#cbd5e1" },
+                children: "flextab.app",
+              },
+            },
+          },
+        },
+      ],
+    },
+  };
+}
+
+// ── HTTP handler ─────────────────────────────────────────────────────────────
+export async function handleGenerateWorkoutCard(req: Request, res: Response) {
+  try {
+    const data: CardData = req.body;
+    if (!data || !data.exercises || !Array.isArray(data.exercises)) {
+      return res.status(400).json({ error: "Invalid card data" });
+    }
+
+    // Lazy-load satori and resvg to avoid issues at module load time
+    const { default: satori } = await import("satori");
+    const { Resvg } = await import("@resvg/resvg-js");
+
+    const cardElement = buildCardElement(data);
+
+    // Compute card height dynamically: header + tiles + divider + exercises + footer
+    const exerciseHeight = Math.max(data.exercises.length, 1) * 47;
+    const cardHeight = 80 + 160 + 20 + 30 + exerciseHeight + 50 + 40;
+
+    const svg = await satori(cardElement as any, {
+      width: 390,
+      height: cardHeight,
+      fonts: [
+        { name: "Inter", data: fontRegular, weight: 400, style: "normal" },
+        { name: "Inter", data: fontBold, weight: 700, style: "normal" },
+        { name: "Inter", data: fontExtraBold, weight: 800, style: "normal" },
+      ],
+    });
+
+    const resvg = new Resvg(svg, {
+      fitTo: { mode: "width", value: 780 }, // 2× for retina
+    });
+    const pngBuffer = resvg.render().asPng();
+
+    // Upload to R2 and return the public URL
+    const key = `workout-cards/${Date.now()}-${Math.random().toString(36).slice(2)}.png`;
+    const { url } = await storagePut(key, pngBuffer, "image/png");
+
+    return res.json({ url, key });
+  } catch (err: any) {
+    console.error("[workout-card] generation error:", err);
+    return res.status(500).json({ error: "Failed to generate card", detail: err?.message });
+  }
+}

@@ -3,10 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Share2, Download, X, Link, Users } from "lucide-react";
 import { toast } from "sonner";
 import { PRESET_EXERCISES } from "@/lib/exercises";
-import html2canvas from "html2canvas";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { trpc } from "@/lib/trpc";
-import { FLEXTAB_ICON_B64 } from "@/lib/flextabIconB64";
 
 interface SetLog {
   id: string;
@@ -36,8 +34,7 @@ const isIOS = () =>
   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
 export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, duration }: ShareWorkoutDialogProps) {
-  const shareCardRef = useRef<HTMLDivElement>(null);
-  const [sharingToFeed, setSharingToFeed] = useState(false);
+  const [loading, setLoading] = useState<null | 'share' | 'download' | 'community'>(null);
 
   const createPostMutation = trpc.community.createPost.useMutation();
   const getUploadUrlMutation = trpc.community.getUploadUrl.useMutation();
@@ -47,11 +44,7 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
   const totalReps = exercises.reduce((sum, e) => sum + e.sets * e.reps, 0);
   const totalVolume = exercises.reduce((sum, e) => sum + e.sets * e.reps * e.weight, 0);
 
-  // ── Group exercises — one row per exercise name ──────────────────────────────
-  // For each exercise, track:
-  //   • totalSets  — how many sets were logged
-  //   • bestReps   — reps in the heaviest set
-  //   • bestWeight — heaviest weight logged in any single set
+  // ── Group exercises ──────────────────────────────────────────────────────────
   const groupedExercises = exercises.reduce((acc, exercise) => {
     const existing = acc.find(e => e.exercise === exercise.exercise);
     if (existing) {
@@ -106,110 +99,131 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
     ? `${(totalVolume / 1000).toFixed(1)}k`
     : totalVolume.toLocaleString();
 
-  // ── Render card → PNG blob ───────────────────────────────────────────────────
-  const renderCardToBlob = async (): Promise<Blob> => {
-    if (!shareCardRef.current) throw new Error('Card not ready');
-    try {
-      const canvas = await html2canvas(shareCardRef.current, {
-        backgroundColor: '#ffffff',
-        scale: 3,
-        useCORS: false,   // disable CORS fetching — all images are inlined as data URIs
-        allowTaint: true, // allow any image pixel data
-        logging: false,
-        imageTimeout: 0,
-        removeContainer: true,
-      });
-      return new Promise<Blob>((resolve, reject) => {
-        canvas.toBlob(blob => {
-          if (blob) resolve(blob);
-          else reject(new Error('Canvas toBlob returned null'));
-        }, 'image/png');
-      });
-    } catch (err) {
-      console.error('html2canvas error:', err);
-      throw err;
+  // ── Call server to generate PNG and return a public URL ──────────────────────
+  const generateCardUrl = async (): Promise<string> => {
+    const payload = {
+      date: formattedDate,
+      duration,
+      totalSets,
+      totalReps,
+      volumeDisplay,
+      exercises: groupedExercises,
+    };
+
+    const res = await fetch('/api/generate-workout-card', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.detail || 'Server failed to generate card image');
     }
+
+    const { url } = await res.json();
+    if (!url) throw new Error('No URL returned from server');
+    return url;
   };
 
-  // ── Share via native share sheet (image file) ────────────────────────────────
+  // ── Share via native share sheet ─────────────────────────────────────────────
   const handleShare = async () => {
+    setLoading('share');
     try {
-      const blob = await renderCardToBlob();
-      const file = new File([blob], `flextab-workout-${shortDate.replace(/\s/g, '-')}.png`, { type: 'image/png' });
+      const url = await generateCardUrl();
 
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        // Web Share API Level 2 — passes the image to the native share sheet
-        // iOS will show Instagram, TikTok, iMessage, etc. as targets
+      if (navigator.share) {
+        // Share the URL — iOS will show a rich preview; the user can then
+        // tap the preview to open the image and save it, or forward it.
+        // Web Share API Level 2 file sharing requires the file to be fetched
+        // first, which we do here:
+        try {
+          const imgRes = await fetch(url);
+          const blob = await imgRes.blob();
+          const file = new File([blob], `flextab-workout-${shortDate.replace(/\s/g, '-')}.png`, { type: 'image/png' });
+
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({ files: [file], title: `FlexTab Workout — ${shortDate}` });
+            toast.success('Shared successfully!');
+            return;
+          }
+        } catch {
+          // File share not supported — fall through to URL share
+        }
+
+        // Fallback: share the URL
         await navigator.share({
-          files: [file],
           title: `FlexTab Workout — ${shortDate}`,
-        });
-        toast.success('Shared successfully!');
-      } else if (navigator.share) {
-        // Fallback: share as text (older browsers)
-        const exerciseList = groupedExercises
-          .map(e => `• ${e.exercise}: Best set — ${e.bestReps} reps @ ${e.bestWeight} lbs (${e.totalSets} sets total)`)
-          .join('\n');
-        await navigator.share({
-          title: `FlexTab Workout — ${shortDate}`,
-          text: `💪 FlexTab Workout — ${shortDate}\n\n⏱ ${duration || '—'} · ${totalSets} sets · ${totalReps} reps · ${volumeDisplay} lbs total volume\n\n🏋️ Exercises:\n${exerciseList}\n\n🔗 https://www.flextab.app`,
+          url,
+          text: `💪 ${shortDate} · ${totalSets} sets · ${totalReps} reps`,
         });
         toast.success('Shared successfully!');
       } else {
-        // Desktop fallback — copy to clipboard
-        await navigator.clipboard.writeText(`FlexTab Workout — ${shortDate}\nhttps://www.flextab.app`);
-        toast.success('Link copied to clipboard!');
+        // Desktop: copy URL to clipboard
+        await navigator.clipboard.writeText(url);
+        toast.success('Image URL copied to clipboard!');
       }
     } catch (error: any) {
-      if (error.name !== 'AbortError') toast.error('Failed to share');
+      if (error?.name !== 'AbortError') toast.error('Failed to share');
+    } finally {
+      setLoading(null);
     }
   };
 
-  // ── Download as image ────────────────────────────────────────────────────────
+  // ── Save / Download ──────────────────────────────────────────────────────────
   const handleDownload = async () => {
+    setLoading('download');
     try {
-      const blob = await renderCardToBlob();
-      const url = URL.createObjectURL(blob);
+      const url = await generateCardUrl();
 
       if (isIOS()) {
-        // iOS Safari blocks programmatic <a download> — open in new tab so
-        // the user can long-press → "Save to Photos"
+        // iOS Safari: open the image in a new tab — user long-presses → "Save to Photos"
         const newTab = window.open(url, '_blank');
         if (!newTab) {
-          toast.error('Please allow pop-ups to save the image');
+          // Pop-ups blocked — try opening in same tab
+          window.location.href = url;
         } else {
           toast.success('Long-press the image and tap "Save to Photos"');
         }
       } else {
-        // Desktop / Android — trigger file download
+        // Desktop / Android: fetch blob and trigger download
+        const imgRes = await fetch(url);
+        const blob = await imgRes.blob();
+        const blobUrl = URL.createObjectURL(blob);
         const link = document.createElement('a');
-        link.href = url;
+        link.href = blobUrl;
         link.download = `flextab-workout-${shortDate.replace(/\s/g, '-')}.png`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        URL.revokeObjectURL(blobUrl);
         toast.success('Workout image downloaded!');
       }
     } catch {
       toast.error('Failed to generate image');
+    } finally {
+      setLoading(null);
     }
   };
 
   // ── Share to FlexTab Community Feed ─────────────────────────────────────────
   const handleShareToFeed = async () => {
-    setSharingToFeed(true);
+    setLoading('community');
     try {
-      // 1. Render card to PNG blob
-      const blob = await renderCardToBlob();
+      // 1. Generate card PNG on server and get public URL
+      const imageUrl = await generateCardUrl();
 
-      // 2. Get a presigned R2 upload URL
+      // 2. Fetch the PNG blob so we can re-upload it via the community media flow
+      const imgRes = await fetch(imageUrl);
+      const blob = await imgRes.blob();
+
+      // 3. Get a presigned R2 upload URL from the community router
       const { uploadUrl, key } = await getUploadUrlMutation.mutateAsync({
         mimeType: 'image/png',
         mediaType: 'photo',
       });
 
-      // 3. Upload the PNG directly to R2
+      // 4. Upload to R2
       const uploadRes = await fetch(uploadUrl, {
         method: 'PUT',
         body: blob,
@@ -217,7 +231,7 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
       });
       if (!uploadRes.ok) throw new Error('Upload failed');
 
-      // 4. Create the community post
+      // 5. Create the community post
       await createPostMutation.mutateAsync({
         caption: `💪 Workout — ${shortDate}${duration ? ` · ${duration}` : ''} · ${totalSets} sets · ${totalReps} reps`,
         mediaItems: [{ key, mediaType: 'photo', mimeType: 'image/png' }],
@@ -228,7 +242,7 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
     } catch (err: any) {
       toast.error('Failed to post to community');
     } finally {
-      setSharingToFeed(false);
+      setLoading(null);
     }
   };
 
@@ -266,11 +280,10 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
           </div>
         </DialogHeader>
 
-        {/* Scrollable card area */}
+        {/* Scrollable card preview area */}
         <div className="flex-1 overflow-y-auto px-4 pb-2">
-          {/* ── Share card (captured by html2canvas) ── */}
+          {/* ── Share card preview (visual only — actual PNG is generated server-side) ── */}
           <div
-            ref={shareCardRef}
             style={{
               background: '#ffffff',
               borderRadius: 20,
@@ -283,7 +296,7 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <img
-                  src={FLEXTAB_ICON_B64}
+                  src="/flextab-icon.png"
                   alt="FlexTab"
                   style={{ width: 32, height: 32, borderRadius: 8, objectFit: 'cover' }}
                 />
@@ -334,7 +347,6 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
                     borderBottom: index < groupedExercises.length - 1 ? '1px solid #f1f5f9' : 'none',
                   }}
                 >
-                  {/* Numbered badge */}
                   <div style={{
                     width: 26, height: 26, borderRadius: '50%',
                     background: '#0f172a', color: '#fff',
@@ -343,13 +355,9 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
                   }}>
                     {index + 1}
                   </div>
-
-                  {/* Exercise name */}
                   <p style={{ flex: 1, fontSize: 13, fontWeight: 700, color: '#0f172a', margin: 0, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {exercise.exercise}
                   </p>
-
-                  {/* Best set pill — shows honest single-set data */}
                   <div style={{
                     background: '#f1f5f9', borderRadius: 50,
                     padding: '4px 10px', flexShrink: 0,
@@ -361,9 +369,7 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
                             exercise.distance ? `${exercise.distance} ${exercise.distanceUnit}` : '',
                           ].filter(Boolean).join(' · ') || `${exercise.totalSets} set${exercise.totalSets !== 1 ? 's' : ''}`
                         : exercise.bestWeight > 0
-                          // "Best: 8 reps @ 200 lbs"
                           ? `Best: ${exercise.bestReps} reps @ ${exercise.bestWeight} lbs`
-                          // Bodyweight exercise — just show best reps
                           : `Best: ${exercise.bestReps} reps`
                       }
                     </p>
@@ -383,36 +389,38 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
         {/* Action buttons */}
         <div style={{ padding: '8px 16px calc(16px + env(safe-area-inset-bottom))', background: 'var(--background)', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
 
-          {/* Share via native share sheet (image) — includes Instagram, TikTok, iMessage, etc. */}
+          {/* Share via native share sheet */}
           <Button
             onClick={handleShare}
+            disabled={loading !== null}
             className="w-full rounded-2xl h-12 text-sm font-bold"
             style={{ background: 'var(--foreground)', color: 'var(--background)', border: 'none' }}
           >
             <Share2 className="w-4 h-4 mr-2" />
-            Share via…
+            {loading === 'share' ? 'Preparing…' : 'Share via…'}
           </Button>
 
           {/* Share to FlexTab Community Feed */}
           <Button
             onClick={handleShareToFeed}
-            disabled={sharingToFeed}
+            disabled={loading !== null}
             className="w-full rounded-2xl h-12 text-sm font-bold"
-            style={{ background: '#f1f5f9', color: '#0f172a', border: 'none', opacity: sharingToFeed ? 0.7 : 1 }}
+            style={{ background: '#0f172a', color: '#ffffff', border: 'none', opacity: loading === 'community' ? 0.7 : 1 }}
           >
             <Users className="w-4 h-4 mr-2" />
-            {sharingToFeed ? 'Posting…' : 'Share to FlexTab Community'}
+            {loading === 'community' ? 'Posting…' : 'Share to FlexTab Community'}
           </Button>
 
-          {/* Download as image */}
+          {/* Save to Photos / Download */}
           <Button
             onClick={handleDownload}
+            disabled={loading !== null}
             variant="outline"
             className="w-full rounded-2xl h-12 text-sm font-bold"
             style={{ border: '1.5px solid var(--foreground)', color: 'var(--foreground)', background: 'transparent' }}
           >
             <Download className="w-4 h-4 mr-2" />
-            {isIOS() ? 'Save to Photos' : 'Download as Image'}
+            {loading === 'download' ? 'Generating…' : (isIOS() ? 'Save to Photos' : 'Download as Image')}
           </Button>
 
         </div>

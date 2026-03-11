@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 interface Exercise {
   id: string;
@@ -221,48 +221,111 @@ export function ExerciseCardNew({
         >
           {isLogging ? 'Logging…' : justLogged ? '✓ Set Logged!' : 'Log Set'}
         </button>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
-          {/* Left side: Remove or Previous */}
-          {onPrev ? (
-            <button
-              onClick={onPrev}
-              style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', color: 'var(--foreground)', fontSize: 14, fontWeight: 600, cursor: 'pointer', padding: '6px 0' }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <polyline points="15 18 9 12 15 6"/>
-              </svg>
-              Prev
-            </button>
-          ) : onRemove ? (
-            <button
-              onClick={() => onRemove(exercise.id)}
-              style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: 14, fontWeight: 600, cursor: 'pointer', padding: '6px 0' }}
-            >
-              Remove Exercise
-            </button>
-          ) : <span />}
-          {/* Right side: Next or Remove (when Prev is showing on left) */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            {onPrev && onRemove && (
-              <button
-                onClick={() => onRemove(exercise.id)}
-                style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: 14, fontWeight: 600, cursor: 'pointer', padding: '6px 0' }}
-              >
-                Remove
-              </button>
-            )}
-            <button
-              onClick={onNext}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: 'var(--foreground)', fontSize: 14, fontWeight: 600, cursor: 'pointer', padding: '6px 0' }}
-            >
-              {onNext ? (currentIndex !== undefined && totalExercises !== undefined && currentIndex < totalExercises - 1 ? 'Next Exercise' : 'Add Exercise') : 'Next Exercise'}
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <polyline points="9 18 15 12 9 6"/>
-              </svg>
-            </button>
-          </div>
-        </div>
+        <ExerciseNavRow
+          exerciseId={exercise.id}
+          currentIndex={currentIndex}
+          totalExercises={totalExercises}
+          onPrev={onPrev}
+          onNext={onNext}
+          onRemove={onRemove}
+        />
       </div>
+    </div>
+  );
+}
+
+// ── ExerciseNavRow ────────────────────────────────────────────────────────────
+// Clean navigation row: ‹ Prev on left, ⋯ menu in centre, Next/Add on right.
+// The three-dot menu contains the destructive "Remove Exercise" action.
+interface ExerciseNavRowProps {
+  exerciseId: string;
+  currentIndex?: number;
+  totalExercises?: number;
+  onPrev?: () => void;
+  onNext?: () => void;
+  onRemove?: (id: string) => void;
+}
+
+function ExerciseNavRow({ exerciseId, currentIndex = 0, totalExercises = 1, onPrev, onNext, onRemove }: ExerciseNavRowProps) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [menuOpen]);
+
+  const nextLabel = currentIndex < totalExercises - 1 ? 'Next Exercise' : 'Add Exercise';
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10, position: 'relative' }}>
+      {/* Left: Prev or spacer */}
+      {onPrev ? (
+        <button
+          onClick={onPrev}
+          style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', color: 'var(--foreground)', fontSize: 14, fontWeight: 600, cursor: 'pointer', padding: '6px 0' }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+          Prev
+        </button>
+      ) : <span style={{ width: 60 }} />}
+
+      {/* Centre: three-dot overflow menu */}
+      {onRemove && (
+        <div ref={menuRef} style={{ position: 'relative' }}>
+          <button
+            onClick={() => setMenuOpen(v => !v)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px 10px', color: 'var(--muted-foreground)', display: 'flex', alignItems: 'center' }}
+            aria-label="More options"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/>
+            </svg>
+          </button>
+          {menuOpen && (
+            <div style={{
+              position: 'absolute',
+              bottom: 'calc(100% + 6px)',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              background: 'var(--background)',
+              border: '1px solid var(--border)',
+              borderRadius: 12,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
+              minWidth: 160,
+              zIndex: 50,
+              overflow: 'hidden',
+            }}>
+              <button
+                onClick={() => { setMenuOpen(false); onRemove(exerciseId); }}
+                style={{ display: 'block', width: '100%', padding: '12px 16px', background: 'none', border: 'none', color: '#ef4444', fontSize: 14, fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}
+              >
+                Remove Exercise
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Right: Next / Add */}
+      <button
+        onClick={onNext}
+        style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: 'var(--foreground)', fontSize: 14, fontWeight: 600, cursor: 'pointer', padding: '6px 0' }}
+      >
+        {nextLabel}
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </button>
     </div>
   );
 }

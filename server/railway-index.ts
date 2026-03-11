@@ -8,6 +8,7 @@ import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { appRouter } from "./railway-routers";
 import { createContext } from "./railway-context";
 import { handleAvatarUpload } from "./avatarUpload";
+import { handleGenerateWorkoutCard } from "./workoutCardImage";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -85,6 +86,9 @@ async function startServer() {
   
   // Avatar upload REST endpoint (bypasses browser-to-R2 CORS issues)
   app.post("/api/upload-avatar", handleAvatarUpload);
+
+  // Workout card PNG generation (server-side satori rendering — avoids html2canvas iOS failures)
+  app.post("/api/generate-workout-card", handleGenerateWorkoutCard);
 
   // tRPC API endpoints
   console.log('[Server] Setting up tRPC API at /api/trpc');
