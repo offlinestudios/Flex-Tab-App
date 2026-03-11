@@ -819,17 +819,21 @@ export default function Home() {
           </h2>
           {activeTab === 'log' && (
             <div style={{ display:'flex', gap:8, alignItems:'center' }}>
-              {/* Indicator pill shown when logging for a past date */}
+              {/* Indicator pill — tap to reset back to today */}
               {!isLoggingToday && (
-                <span style={{ display:'flex', alignItems:'center', gap:5, padding:'5px 10px', borderRadius:10, background:'var(--foreground)', fontSize:12, fontWeight:700, color:'var(--background)' }}>
+                <button
+                  onClick={() => setWorkoutDateKey(todayDateKey)}
+                  title="Tap to log for today"
+                  style={{ display:'flex', alignItems:'center', gap:5, padding:'5px 10px', borderRadius:10, background:'var(--foreground)', border:'none', cursor:'pointer', fontSize:12, fontWeight:700, color:'var(--background)', fontFamily:'inherit' }}
+                >
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                     <rect x="3" y="4" width="18" height="18" rx="2"/>
                     <line x1="16" y1="2" x2="16" y2="6"/>
                     <line x1="8" y1="2" x2="8" y2="6"/>
                     <line x1="3" y1="10" x2="21" y2="10"/>
                   </svg>
-                  Past
-                </span>
+                  Past ×
+                </button>
               )}
               <button
                 onClick={() => setShowCalendarModal(true)}
