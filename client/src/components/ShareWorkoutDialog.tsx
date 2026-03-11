@@ -6,6 +6,7 @@ import { PRESET_EXERCISES } from "@/lib/exercises";
 import html2canvas from "html2canvas";
 import { useRef, useState } from "react";
 import { trpc } from "@/lib/trpc";
+import { FLEXTAB_ICON_B64 } from "@/lib/flextabIconB64";
 
 interface SetLog {
   id: string;
@@ -108,19 +109,26 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
   // ── Render card → PNG blob ───────────────────────────────────────────────────
   const renderCardToBlob = async (): Promise<Blob> => {
     if (!shareCardRef.current) throw new Error('Card not ready');
-    const canvas = await html2canvas(shareCardRef.current, {
-      backgroundColor: '#ffffff',
-      scale: 3,
-      useCORS: true,
-      allowTaint: false,
-      logging: false,
-    });
-    return new Promise<Blob>((resolve, reject) => {
-      canvas.toBlob(blob => {
-        if (blob) resolve(blob);
-        else reject(new Error('Failed to generate image'));
-      }, 'image/png');
-    });
+    try {
+      const canvas = await html2canvas(shareCardRef.current, {
+        backgroundColor: '#ffffff',
+        scale: 3,
+        useCORS: false,   // disable CORS fetching — all images are inlined as data URIs
+        allowTaint: true, // allow any image pixel data
+        logging: false,
+        imageTimeout: 0,
+        removeContainer: true,
+      });
+      return new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob(blob => {
+          if (blob) resolve(blob);
+          else reject(new Error('Canvas toBlob returned null'));
+        }, 'image/png');
+      });
+    } catch (err) {
+      console.error('html2canvas error:', err);
+      throw err;
+    }
   };
 
   // ── Share via native share sheet (image file) ────────────────────────────────
@@ -275,7 +283,7 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <img
-                  src="/flextab-icon.png"
+                  src={FLEXTAB_ICON_B64}
                   alt="FlexTab"
                   style={{ width: 32, height: 32, borderRadius: 8, objectFit: 'cover' }}
                 />
@@ -390,7 +398,7 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
             onClick={handleShareToFeed}
             disabled={sharingToFeed}
             className="w-full rounded-2xl h-12 text-sm font-bold"
-            style={{ background: '#3b82f6', color: '#ffffff', border: 'none', opacity: sharingToFeed ? 0.7 : 1 }}
+            style={{ background: '#f1f5f9', color: '#0f172a', border: 'none', opacity: sharingToFeed ? 0.7 : 1 }}
           >
             <Users className="w-4 h-4 mr-2" />
             {sharingToFeed ? 'Posting…' : 'Share to FlexTab Community'}
