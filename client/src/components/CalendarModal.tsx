@@ -6,6 +6,8 @@ interface CalendarModalProps {
   workoutDates: string[];
   selectedDate?: string;
   onDateSelect: (date: string | undefined) => void;
+  /** Called when the user wants to log a workout for a past date */
+  onLogForDate?: (dateKey: string) => void;
 }
 
 const DAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
@@ -20,10 +22,13 @@ export function CalendarModal({
   workoutDates,
   selectedDate,
   onDateSelect,
+  onLogForDate,
 }: CalendarModalProps) {
   const today = new Date();
   const [viewYear, setViewYear] = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth());
+  // The date the user tapped — drives the action panel
+  const [tappedDate, setTappedDate] = useState<string | null>(null);
 
   if (!open) return null;
 
@@ -33,10 +38,16 @@ export function CalendarModal({
 
   // Incoming workoutDates may be 'M/D/YYYY' (en-US locale) — normalise all to YYYY-MM-DD
   const normaliseDate = (raw: string): string => {
-    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw; // already YYYY-MM-DD
+    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
     const parsed = new Date(raw);
     if (!isNaN(parsed.getTime())) return toYMD(parsed);
     return raw;
+  };
+
+  // Convert YYYY-MM-DD back to M/D/YYYY locale key used by handleLogSet
+  const toLocaleKey = (ymd: string): string => {
+    const [y, m, d] = ymd.split('-').map(Number);
+    return `${m}/${d}/${y}`;
   };
 
   // Build set of workout date strings for O(1) lookup
@@ -60,9 +71,25 @@ export function CalendarModal({
   const handleDayClick = (day: number) => {
     const d = new Date(viewYear, viewMonth, day);
     const str = toYMD(d);
-    onDateSelect(selectedDate === str ? undefined : str);
-    onOpenChange(false);
+    if (str === todayStr) {
+      // Today — just close (no action panel needed)
+      onDateSelect(undefined);
+      onOpenChange(false);
+      return;
+    }
+    // Past date — show action panel
+    setTappedDate(str);
   };
+
+  // Human-readable label for the tapped date
+  const tappedLabel = tappedDate
+    ? (() => {
+        const [y, m, d] = tappedDate.split('-').map(Number);
+        return new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+      })()
+    : '';
+
+  const hasWorkout = tappedDate ? workoutSet.has(tappedDate) : false;
 
   // Build grid cells
   const cells: Array<number | null> = [];
@@ -73,7 +100,7 @@ export function CalendarModal({
     <>
       {/* Backdrop */}
       <div
-        onClick={() => onOpenChange(false)}
+        onClick={() => { setTappedDate(null); onOpenChange(false); }}
         style={{
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
           zIndex: 200, animation: 'fadeIn .2s ease',
@@ -129,14 +156,18 @@ export function CalendarModal({
             const str = toYMD(d);
             const isWorkout = workoutSet.has(str);
             const isToday = str === todayStr;
-            const isSelected = str === selectedDate;
+            const isSelected = str === selectedDate || str === tappedDate;
 
             let bg = 'transparent';
             let color = 'var(--foreground)';
             let border = 'none';
-            let fontWeight = 400;
+            let fontWeight: number = 400;
 
-            if (isWorkout && !isToday) {
+            if (isSelected && !isToday) {
+              bg = '#3b82f6';
+              color = '#ffffff';
+              fontWeight = 700;
+            } else if (isWorkout && !isToday) {
               bg = 'var(--foreground)';
               color = 'var(--background)';
               fontWeight = 700;
@@ -144,10 +175,6 @@ export function CalendarModal({
               bg = 'transparent';
               color = '#3b82f6';
               border = '2px solid #3b82f6';
-              fontWeight = 700;
-            } else if (isSelected) {
-              bg = 'var(--foreground)';
-              color = 'var(--background)';
               fontWeight = 700;
             }
 
@@ -197,6 +224,78 @@ export function CalendarModal({
             <span style={{ fontSize: 12, color: '#6b7280' }}>Today</span>
           </div>
         </div>
+
+        {/* ── Action panel — appears when a past date is tapped ── */}
+        {tappedDate && (
+          <div style={{
+            marginTop: 20,
+            borderTop: '1px solid var(--border)',
+            paddingTop: 20,
+          }}>
+            <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)', margin: '0 0 12px', textAlign: 'center' }}>
+              {tappedLabel}
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {/* Log workout for this date */}
+              <button
+                onClick={() => {
+                  if (onLogForDate) onLogForDate(toLocaleKey(tappedDate));
+                  setTappedDate(null);
+                  onOpenChange(false);
+                }}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  padding: '14px 0', borderRadius: 14, border: 'none',
+                  background: 'var(--foreground)', color: 'var(--background)',
+                  fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                {hasWorkout ? 'Add More to This Day' : 'Log Workout for This Day'}
+              </button>
+
+              {/* View history for this date */}
+              {hasWorkout && (
+                <button
+                  onClick={() => {
+                    onDateSelect(tappedDate);
+                    setTappedDate(null);
+                    onOpenChange(false);
+                  }}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    padding: '14px 0', borderRadius: 14,
+                    border: '1.5px solid var(--border)',
+                    background: 'var(--secondary)', color: 'var(--foreground)',
+                    fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+                  }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                  </svg>
+                  View Workout Log
+                </button>
+              )}
+
+              {/* Cancel */}
+              <button
+                onClick={() => setTappedDate(null)}
+                style={{
+                  padding: '10px 0', borderRadius: 14, border: 'none',
+                  background: 'transparent', color: '#9ca3af',
+                  fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <style>{`

@@ -15,7 +15,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { useSearch } from "wouter";
+import { useSearch, useLocation } from "wouter";
 
 import { WorkoutCalendar } from "@/components/WorkoutCalendar";
 import { WorkoutStatistics } from "@/components/WorkoutStatistics";
@@ -90,6 +90,7 @@ export default function Home() {
 
   // Must be called before any early returns (Rules of Hooks)
   const search = useSearch();
+  const [, setLocation] = useLocation();
   const activeTab = new URLSearchParams(search).get('tab') || 'log';
 
   // Migrate localStorage data to database
@@ -128,11 +129,10 @@ export default function Home() {
   const [historyEditCell, setHistoryEditCell] = useState<{ rowIdx: number; field: 'reps' | 'weight' } | null>(null);
   const [historyNumpadBuf, setHistoryNumpadBuf] = useState<string>('');
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
-  // Workout date — defaults to today but can be changed to log a past session
+  // Workout date — defaults to today but can be changed via the calendar to log a past session
   const [workoutDateKey, setWorkoutDateKey] = useState<string>(
     () => new Date().toLocaleDateString("en-US", { year: "numeric", month: "numeric", day: "numeric" })
   );
-  const [showWorkoutDatePicker, setShowWorkoutDatePicker] = useState(false);
   
   // Fetch workout logs from database
   const { data: setLogsData = [], isLoading: setLogsLoading, error: setLogsError } = trpc.workout.getSetLogs.useQuery(undefined, {
@@ -819,27 +819,27 @@ export default function Home() {
           </h2>
           {activeTab === 'log' && (
             <div style={{ display:'flex', gap:8, alignItems:'center' }}>
-              {/* Log for a past date button */}
-              <button
-                onClick={() => setShowWorkoutDatePicker(true)}
-                title="Log for a different date"
-                style={{ display:'flex', alignItems:'center', gap:5, padding:'6px 12px', borderRadius:10, background: isLoggingToday ? 'var(--secondary)' : 'var(--foreground)', border:'none', cursor:'pointer', fontSize:12, fontWeight:700, color: isLoggingToday ? 'var(--muted-foreground)' : 'var(--background)' }}
-              >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                  <rect x="3" y="4" width="18" height="18" rx="2"/>
-                  <line x1="16" y1="2" x2="16" y2="6"/>
-                  <line x1="8" y1="2" x2="8" y2="6"/>
-                  <line x1="3" y1="10" x2="21" y2="10"/>
-                </svg>
-                {isLoggingToday ? 'Log past workout' : 'Change date'}
-              </button>
+              {/* Indicator pill shown when logging for a past date */}
+              {!isLoggingToday && (
+                <span style={{ display:'flex', alignItems:'center', gap:5, padding:'5px 10px', borderRadius:10, background:'var(--foreground)', fontSize:12, fontWeight:700, color:'var(--background)' }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                  Past
+                </span>
+              )}
               <button
                 onClick={() => setShowCalendarModal(true)}
                 style={{ width:36, height:36, borderRadius:10, background:'var(--secondary)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <circle cx="12" cy="12" r="10"/>
-                  <polyline points="12 6 12 12 16 14"/>
+                  <rect x="3" y="4" width="18" height="18" rx="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
                 </svg>
               </button>
             </div>
@@ -1729,7 +1729,22 @@ export default function Home() {
         onOpenChange={setShowCalendarModal}
         workoutDates={workoutSessions.map(s => s.date)}
         selectedDate={selectedDate}
-        onDateSelect={setSelectedDate}
+        onDateSelect={(dateYMD) => {
+          // dateYMD is YYYY-MM-DD from CalendarModal — convert to M/D/YYYY for history filter
+          if (dateYMD) {
+            const [y, m, d] = dateYMD.split('-').map(Number);
+            setSelectedDate(`${m}/${d}/${y}`);
+          } else {
+            setSelectedDate(undefined);
+          }
+          // Navigate to history tab so the user sees the filtered day
+          setLocation('/dashboard?tab=history');
+        }}
+        onLogForDate={(dateKey) => {
+          // dateKey is M/D/YYYY — set as the workout date and switch to log tab
+          setWorkoutDateKey(dateKey);
+          setLocation('/dashboard?tab=log');
+        }}
       />
 
       {/* Share Workout Dialog */}
@@ -1751,51 +1766,7 @@ export default function Home() {
         />
       )}
 
-      {/* Workout Date Picker — log a past session */}
-      {showWorkoutDatePicker && (
-        <div
-          style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:1000, display:'flex', alignItems:'flex-end', justifyContent:'center' }}
-          onClick={() => setShowWorkoutDatePicker(false)}
-        >
-          <div
-            style={{ background:'var(--background)', borderRadius:'24px 24px 0 0', padding:'24px 20px 40px', width:'100%', maxWidth:480 }}
-            onClick={e => e.stopPropagation()}
-          >
-            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
-              <h3 style={{ fontSize:17, fontWeight:800, color:'var(--foreground)', margin:0 }}>Log for a past date</h3>
-              <button onClick={() => setShowWorkoutDatePicker(false)} style={{ background:'none', border:'none', cursor:'pointer', color:'var(--muted-foreground)', fontSize:22, lineHeight:1 }}>×</button>
-            </div>
-            <p style={{ fontSize:13, color:'var(--muted-foreground)', marginBottom:16 }}>Select a date to log exercises for that day. All sets will be saved under the chosen date.</p>
-            <input
-              type="date"
-              max={(() => { const t = new Date(); return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`; })()}
-              defaultValue={(() => {
-                const [m, d, y] = workoutDateKey.split('/').map(Number);
-                return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-              })()}
-              onChange={e => {
-                if (!e.target.value) return;
-                const [y, m, d] = e.target.value.split('-').map(Number);
-                setWorkoutDateKey(`${m}/${d}/${y}`);
-              }}
-              style={{ width:'100%', padding:'14px 16px', borderRadius:14, border:'1.5px solid var(--border)', background:'var(--secondary)', color:'var(--foreground)', fontSize:16, fontFamily:'inherit', boxSizing:'border-box' }}
-            />
-            <div style={{ display:'flex', gap:10, marginTop:16 }}>
-              <button
-                onClick={() => {
-                  setWorkoutDateKey(todayDateKey);
-                  setShowWorkoutDatePicker(false);
-                }}
-                style={{ flex:1, padding:'13px 0', borderRadius:14, border:'1.5px solid var(--border)', background:'var(--secondary)', color:'var(--foreground)', fontSize:14, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}
-              >Reset to Today</button>
-              <button
-                onClick={() => setShowWorkoutDatePicker(false)}
-                style={{ flex:1, padding:'13px 0', borderRadius:14, border:'none', background:'var(--foreground)', color:'var(--background)', fontSize:14, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}
-              >Confirm</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Past-date logging is now handled via the calendar modal */}
     </DashboardLayout>
   );
 }
