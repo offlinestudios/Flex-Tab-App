@@ -27,9 +27,11 @@ function getR2Client() {
 }
 
 function r2PublicUrl(key: string): string {
-  const bucket = process.env.R2_BUCKET_NAME || "flextab-storage";
-  // Standard R2 public URL format
-  return `https://${bucket}.r2.dev/${key}`;
+  // Use R2_PUBLIC_URL if set (e.g. https://pub-xxxx.r2.dev), otherwise fall back to bucket subdomain
+  const base = process.env.R2_PUBLIC_URL
+    ? process.env.R2_PUBLIC_URL.replace(/\/$/, "")
+    : `https://pub-${process.env.R2_ACCOUNT_ID}.r2.dev`;
+  return `${base}/${key}`;
 }
 
 async function getUserFromRequest(req: Request) {

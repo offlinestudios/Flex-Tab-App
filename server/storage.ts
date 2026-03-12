@@ -28,8 +28,10 @@ function getStorageConfig(): StorageConfig {
 
   // R2 endpoint format: https://<account_id>.r2.cloudflarestorage.com
   const endpoint = `https://${accountId}.r2.cloudflarestorage.com`;
-  // Public URL for R2 (requires public bucket or custom domain)
-  const publicUrl = `https://pub-${bucket}.r2.dev`;
+  // Public URL for R2 — use R2_PUBLIC_URL if set, otherwise derive from account hash
+  const publicUrl = process.env.R2_PUBLIC_URL
+    ? process.env.R2_PUBLIC_URL.replace(/\/$/, '')
+    : `https://pub-${accountId}.r2.dev`;
 
   const client = new S3Client({
     region: 'auto', // R2 uses 'auto' as the region
