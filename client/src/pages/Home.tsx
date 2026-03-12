@@ -1137,7 +1137,6 @@ export default function Home() {
                         const isCardio = sets[0]?.category === 'Cardio';
                         if (isCardio) {
                           // ── Cardio exercise card ──────────────────────────────────
-                          // Aggregate across all logged entries for this exercise on this day
                           const totalDuration = sets.reduce((s, e) => s + (e.duration ?? 0), 0);
                           const totalDistance = sets.reduce((s, e) => s + (e.distance ?? 0), 0);
                           const totalCalories = sets.reduce((s, e) => s + (e.calories ?? 0), 0);
@@ -1145,58 +1144,51 @@ export default function Home() {
                           const pace = totalDistance > 0 && totalDuration > 0
                             ? (totalDuration / totalDistance).toFixed(1)
                             : null;
-                          // Progress arc: fill based on duration (30 min = full)
-                          const arcPct = Math.min(totalDuration / 60, 1);
-                          const r = 22; const circ = 2 * Math.PI * r;
                           return (
                             <div key={exName} style={{ paddingBottom:14, marginBottom:14, borderBottom:'1px solid var(--border)' }}>
-                              {/* Header row */}
-                              <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10 }}>
-                                <div style={{ width:32, height:32, borderRadius:10, background:'rgba(5,150,105,0.12)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                    <circle cx="12" cy="5" r="1"/>
-                                    <path d="M9 20l3-9 3 9"/><path d="M6.5 15h11"/><path d="M12 11l-2-4"/><path d="M12 11l2-4"/>
-                                  </svg>
-                                </div>
-                                <p style={{ fontWeight:700, fontSize:14, color:'var(--foreground)', margin:0, flex:1 }}>{exName}</p>
-                                <span style={{ fontSize:11, fontWeight:700, color:'#059669', background:'rgba(5,150,105,0.1)', borderRadius:6, padding:'2px 8px' }}>Cardio</span>
+                              {/* Header: exercise name + edit button — identical layout to strength card */}
+                              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
+                                <p style={{ fontWeight:700, fontSize:14, color:'var(--foreground)', margin:0 }}>{exName}</p>
+                                {sets.length > 0 && (
+                                  <button
+                                    onClick={() => openHistoryEditSheet(sets)}
+                                    style={{ background:'none', border:'none', cursor:'pointer', color:'#9ca3af', padding:'2px 4px' }}
+                                    title="Edit"
+                                  >
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                    </svg>
+                                  </button>
+                                )}
                               </div>
-                              {/* Stats row */}
-                              <div style={{ display:'flex', alignItems:'center', gap:0 }}>
-                                {/* Circular progress arc */}
-                                <div style={{ position:'relative', width:64, height:64, flexShrink:0, marginRight:14 }}>
-                                  <svg width="64" height="64" style={{ transform:'rotate(-90deg)' }}>
-                                    <circle cx="32" cy="32" r={r} fill="none" stroke="var(--border)" strokeWidth="5"/>
-                                    <circle cx="32" cy="32" r={r} fill="none" stroke="#059669" strokeWidth="5"
-                                      strokeDasharray={circ}
-                                      strokeDashoffset={circ * (1 - arcPct)}
-                                      strokeLinecap="round"
-                                    />
-                                  </svg>
-                                  <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
-                                    <span style={{ fontSize:14, fontWeight:800, color:'var(--foreground)', lineHeight:1 }}>{totalDuration}</span>
-                                    <span style={{ fontSize:8, color:'#9ca3af', fontWeight:600 }}>min</span>
-                                  </div>
-                                </div>
-                                {/* Stat chips */}
-                                <div style={{ display:'flex', flexWrap:'wrap', gap:8, flex:1 }}>
-                                  {totalDistance > 0 && (
-                                    <div style={{ background:'var(--secondary)', borderRadius:10, padding:'6px 12px', minWidth:64 }}>
-                                      <p style={{ fontSize:9, color:'#9ca3af', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em', margin:'0 0 2px' }}>Distance</p>
-                                      <p style={{ fontSize:15, fontWeight:800, color:'var(--foreground)', margin:0 }}>{totalDistance.toFixed(1)}<span style={{ fontSize:10, fontWeight:500, color:'#9ca3af' }}> {distUnit}</span></p>
+                              {/* Stats row: mirrors the strength card's right-aligned stat block */}
+                              <div style={{ display:'flex', alignItems:'flex-end', justifyContent:'space-between', marginTop:4 }}>
+                                {/* Left: horizontal stat pills */}
+                                <div style={{ display:'flex', alignItems:'flex-end', gap:12 }}>
+                                  {totalDuration > 0 && (
+                                    <div>
+                                      <div style={{ fontSize:18, fontWeight:800, color:'var(--foreground)', lineHeight:1 }}>{totalDuration}<span style={{ fontSize:11, fontWeight:500, color:'#9ca3af' }}> min</span></div>
+                                      <div style={{ fontSize:11, color:'#9ca3af', marginTop:2 }}>Duration</div>
                                     </div>
                                   )}
-                                  {totalCalories > 0 && (
-                                    <div style={{ background:'var(--secondary)', borderRadius:10, padding:'6px 12px', minWidth:64 }}>
-                                      <p style={{ fontSize:9, color:'#9ca3af', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em', margin:'0 0 2px' }}>Calories</p>
-                                      <p style={{ fontSize:15, fontWeight:800, color:'#f97316', margin:0 }}>{totalCalories}<span style={{ fontSize:10, fontWeight:500, color:'#9ca3af' }}> kcal</span></p>
+                                  {totalDistance > 0 && (
+                                    <div>
+                                      <div style={{ fontSize:18, fontWeight:800, color:'var(--foreground)', lineHeight:1 }}>{totalDistance.toFixed(1)}<span style={{ fontSize:11, fontWeight:500, color:'#9ca3af' }}> {distUnit}</span></div>
+                                      <div style={{ fontSize:11, color:'#9ca3af', marginTop:2 }}>Distance</div>
                                     </div>
+                                  )}
+                                </div>
+                                {/* Right: secondary stats — mirrors the sets/reps block */}
+                                <div style={{ textAlign:'right' }}>
+                                  {totalCalories > 0 && (
+                                    <div style={{ fontSize:18, fontWeight:800, color:'var(--foreground)', lineHeight:1 }}>{totalCalories}<span style={{ fontSize:11, fontWeight:500, color:'#9ca3af' }}> kcal</span></div>
                                   )}
                                   {pace && (
-                                    <div style={{ background:'var(--secondary)', borderRadius:10, padding:'6px 12px', minWidth:64 }}>
-                                      <p style={{ fontSize:9, color:'#9ca3af', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em', margin:'0 0 2px' }}>Pace</p>
-                                      <p style={{ fontSize:15, fontWeight:800, color:'var(--foreground)', margin:0 }}>{pace}<span style={{ fontSize:10, fontWeight:500, color:'#9ca3af' }}> min/{distUnit === 'km' ? 'km' : 'mi'}</span></p>
-                                    </div>
+                                    <div style={{ fontSize:11, color:'#9ca3af', marginTop:2 }}>Pace {pace} min/{distUnit === 'km' ? 'km' : 'mi'}</div>
+                                  )}
+                                  {totalDuration === 0 && totalDistance === 0 && totalCalories === 0 && (
+                                    <div style={{ fontSize:11, color:'#9ca3af' }}>No data recorded</div>
                                   )}
                                 </div>
                               </div>
@@ -1247,14 +1239,41 @@ export default function Home() {
                         );
                       })}
                     </div>
-                    <div style={{ padding:'12px 16px', background:'var(--secondary)', borderTop:'1px solid var(--border)', display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:8 }}>
-                      {([['Reps', dayTotalReps], ['Sets', dayTotalSets], ['Volume', fmtVol(dayTotalVol)], ['Exercises', dayExCount]] as [string, string|number][]).map(([label, val]) => (
-                        <div key={label} style={{ textAlign:'center' }}>
-                          <p style={{ fontSize:11, color:'#9ca3af', fontWeight:500, margin:0 }}>{label}</p>
-                          <p style={{ fontSize:16, fontWeight:800, color:'var(--foreground)', margin:0 }}>{val}</p>
+                    {(() => {
+                      const isCardioOnlySession = session.exercises.every(e => e.category === 'Cardio');
+                      if (isCardioOnlySession) {
+                        const sessDuration = session.exercises.reduce((s, e) => s + (e.duration ?? 0), 0);
+                        const sessDistance = session.exercises.reduce((s, e) => s + (e.distance ?? 0), 0);
+                        const sessCalories = session.exercises.reduce((s, e) => s + (e.calories ?? 0), 0);
+                        const distUnit = session.exercises[0]?.distanceUnit ?? 'miles';
+                        const statsRow: [string, string|number][] = [
+                          ['Duration', sessDuration > 0 ? `${sessDuration} min` : '—'],
+                          ['Distance', sessDistance > 0 ? `${sessDistance.toFixed(1)} ${distUnit}` : '—'],
+                          ['Calories', sessCalories > 0 ? `${sessCalories} kcal` : '—'],
+                          ['Exercises', dayExCount],
+                        ];
+                        return (
+                          <div style={{ padding:'12px 16px', background:'var(--secondary)', borderTop:'1px solid var(--border)', display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:8 }}>
+                            {statsRow.map(([label, val]) => (
+                              <div key={label} style={{ textAlign:'center' }}>
+                                <p style={{ fontSize:11, color:'#9ca3af', fontWeight:500, margin:0 }}>{label}</p>
+                                <p style={{ fontSize:13, fontWeight:800, color:'var(--foreground)', margin:0 }}>{val}</p>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      }
+                      return (
+                        <div style={{ padding:'12px 16px', background:'var(--secondary)', borderTop:'1px solid var(--border)', display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:8 }}>
+                          {([['Reps', dayTotalReps], ['Sets', dayTotalSets], ['Volume', fmtVol(dayTotalVol)], ['Exercises', dayExCount]] as [string, string|number][]).map(([label, val]) => (
+                            <div key={label} style={{ textAlign:'center' }}>
+                              <p style={{ fontSize:11, color:'#9ca3af', fontWeight:500, margin:0 }}>{label}</p>
+                              <p style={{ fontSize:16, fontWeight:800, color:'var(--foreground)', margin:0 }}>{val}</p>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
+                      );
+                    })()}
                   </div>
                 );
               })
