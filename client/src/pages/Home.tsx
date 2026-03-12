@@ -63,6 +63,7 @@ interface SetLog {
   duration?: number; // Duration in minutes for cardio exercises
   distance?: number; // Distance covered (miles or kilometers)
   distanceUnit?: 'miles' | 'km'; // Unit for distance measurement
+  calories?: number; // Calories burned (cardio)
 }
 
 interface WorkoutSession {
@@ -188,6 +189,7 @@ export default function Home() {
         duration: log.duration,
         distance: log.distance ? parseFloat(log.distance) : undefined,
         distanceUnit: log.distanceUnit,
+        calories: log.calories ?? undefined,
       });
 
       // Capture session duration if present (all rows for same session share the same value)
@@ -1132,6 +1134,76 @@ export default function Home() {
                     </div>
                     <div style={{ padding:'12px 16px' }}>
                       {Object.entries(byEx).map(([exName, sets]) => {
+                        const isCardio = sets[0]?.category === 'Cardio';
+                        if (isCardio) {
+                          // ── Cardio exercise card ──────────────────────────────────
+                          // Aggregate across all logged entries for this exercise on this day
+                          const totalDuration = sets.reduce((s, e) => s + (e.duration ?? 0), 0);
+                          const totalDistance = sets.reduce((s, e) => s + (e.distance ?? 0), 0);
+                          const totalCalories = sets.reduce((s, e) => s + (e.calories ?? 0), 0);
+                          const distUnit = sets[0]?.distanceUnit ?? 'miles';
+                          const pace = totalDistance > 0 && totalDuration > 0
+                            ? (totalDuration / totalDistance).toFixed(1)
+                            : null;
+                          // Progress arc: fill based on duration (30 min = full)
+                          const arcPct = Math.min(totalDuration / 60, 1);
+                          const r = 22; const circ = 2 * Math.PI * r;
+                          return (
+                            <div key={exName} style={{ paddingBottom:14, marginBottom:14, borderBottom:'1px solid var(--border)' }}>
+                              {/* Header row */}
+                              <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10 }}>
+                                <div style={{ width:32, height:32, borderRadius:10, background:'rgba(5,150,105,0.12)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="12" cy="5" r="1"/>
+                                    <path d="M9 20l3-9 3 9"/><path d="M6.5 15h11"/><path d="M12 11l-2-4"/><path d="M12 11l2-4"/>
+                                  </svg>
+                                </div>
+                                <p style={{ fontWeight:700, fontSize:14, color:'var(--foreground)', margin:0, flex:1 }}>{exName}</p>
+                                <span style={{ fontSize:11, fontWeight:700, color:'#059669', background:'rgba(5,150,105,0.1)', borderRadius:6, padding:'2px 8px' }}>Cardio</span>
+                              </div>
+                              {/* Stats row */}
+                              <div style={{ display:'flex', alignItems:'center', gap:0 }}>
+                                {/* Circular progress arc */}
+                                <div style={{ position:'relative', width:64, height:64, flexShrink:0, marginRight:14 }}>
+                                  <svg width="64" height="64" style={{ transform:'rotate(-90deg)' }}>
+                                    <circle cx="32" cy="32" r={r} fill="none" stroke="var(--border)" strokeWidth="5"/>
+                                    <circle cx="32" cy="32" r={r} fill="none" stroke="#059669" strokeWidth="5"
+                                      strokeDasharray={circ}
+                                      strokeDashoffset={circ * (1 - arcPct)}
+                                      strokeLinecap="round"
+                                    />
+                                  </svg>
+                                  <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
+                                    <span style={{ fontSize:14, fontWeight:800, color:'var(--foreground)', lineHeight:1 }}>{totalDuration}</span>
+                                    <span style={{ fontSize:8, color:'#9ca3af', fontWeight:600 }}>min</span>
+                                  </div>
+                                </div>
+                                {/* Stat chips */}
+                                <div style={{ display:'flex', flexWrap:'wrap', gap:8, flex:1 }}>
+                                  {totalDistance > 0 && (
+                                    <div style={{ background:'var(--secondary)', borderRadius:10, padding:'6px 12px', minWidth:64 }}>
+                                      <p style={{ fontSize:9, color:'#9ca3af', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em', margin:'0 0 2px' }}>Distance</p>
+                                      <p style={{ fontSize:15, fontWeight:800, color:'var(--foreground)', margin:0 }}>{totalDistance.toFixed(1)}<span style={{ fontSize:10, fontWeight:500, color:'#9ca3af' }}> {distUnit}</span></p>
+                                    </div>
+                                  )}
+                                  {totalCalories > 0 && (
+                                    <div style={{ background:'var(--secondary)', borderRadius:10, padding:'6px 12px', minWidth:64 }}>
+                                      <p style={{ fontSize:9, color:'#9ca3af', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em', margin:'0 0 2px' }}>Calories</p>
+                                      <p style={{ fontSize:15, fontWeight:800, color:'#f97316', margin:0 }}>{totalCalories}<span style={{ fontSize:10, fontWeight:500, color:'#9ca3af' }}> kcal</span></p>
+                                    </div>
+                                  )}
+                                  {pace && (
+                                    <div style={{ background:'var(--secondary)', borderRadius:10, padding:'6px 12px', minWidth:64 }}>
+                                      <p style={{ fontSize:9, color:'#9ca3af', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em', margin:'0 0 2px' }}>Pace</p>
+                                      <p style={{ fontSize:15, fontWeight:800, color:'var(--foreground)', margin:0 }}>{pace}<span style={{ fontSize:10, fontWeight:500, color:'#9ca3af' }}> min/{distUnit === 'km' ? 'km' : 'mi'}</span></p>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        }
+                        // ── Strength exercise card (unchanged) ────────────────────
                         const flatSets = sets.flatMap(s => Array.from({ length: s.sets }, () => ({ weight: s.weight, reps: s.reps })));
                         const maxW = Math.max(...flatSets.map(s => s.weight), 1);
                         const minW = Math.min(...flatSets.map(s => s.weight));
