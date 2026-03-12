@@ -90,11 +90,18 @@ export const workoutRouter = router({
         sets: z.number().int().positive().optional(),
         reps: z.number().int().positive().optional(),
         weight: z.number().int().nonnegative().optional(),
+        // Cardio-specific fields
+        duration: z.number().int().nonnegative().optional(),
+        distance: z.number().nonnegative().optional(),
+        distanceUnit: z.enum(['miles', 'km']).optional(),
+        calories: z.number().int().nonnegative().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const { id, ...data } = input;
-      await updateSetLog(id, ctx.user.id, data);
+      const { id, distance, ...rest } = input;
+      const data: Record<string, unknown> = { ...rest };
+      if (distance !== undefined) data.distance = distance.toString();
+      await updateSetLog(id, ctx.user.id, data as any);
       return { success: true };
     }),
 

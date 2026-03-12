@@ -130,6 +130,9 @@ export default function Home() {
   const [historyEditForms, setHistoryEditForms] = useState<Array<{ id: string; reps: number; weight: number }>>([]);
   const [historyEditCell, setHistoryEditCell] = useState<{ rowIdx: number; field: 'reps' | 'weight' } | null>(null);
   const [historyNumpadBuf, setHistoryNumpadBuf] = useState<string>('');
+  // Cardio-specific edit sheet
+  const [cardioEditSheet, setCardioEditSheet] = useState<{ exercise: string; sets: SetLog[] } | null>(null);
+  const [cardioEditForm, setCardioEditForm] = useState<{ duration: string; distance: string; distanceUnit: 'miles' | 'km'; calories: string }>({ duration: '', distance: '', distanceUnit: 'miles', calories: '' });
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
   // Workout date — defaults to today but can be changed via the calendar to log a past session
   const [workoutDateKey, setWorkoutDateKey] = useState<string>(
@@ -559,6 +562,54 @@ export default function Home() {
     setHistoryEditForms([]);
     setHistoryEditCell(null);
     setHistoryNumpadBuf('');
+  };
+  /* ── Cardio history edit helpers ── */
+  const openCardioEditSheet = (sets: SetLog[]) => {
+    if (sets.length === 0) return;
+    setCardioEditSheet({ exercise: sets[0].exercise, sets });
+    // Aggregate values from all rows for this exercise on this day
+    const totalDuration = sets.reduce((s, e) => s + (e.duration ?? 0), 0);
+    const totalDistance = sets.reduce((s, e) => s + (e.distance ?? 0), 0);
+    const totalCalories = sets.reduce((s, e) => s + (e.calories ?? 0), 0);
+    const distUnit = sets[0]?.distanceUnit ?? 'miles';
+    setCardioEditForm({
+      duration: totalDuration > 0 ? String(totalDuration) : '',
+      distance: totalDistance > 0 ? String(totalDistance) : '',
+      distanceUnit: distUnit,
+      calories: totalCalories > 0 ? String(totalCalories) : '',
+    });
+  };
+  const closeCardioEditSheet = () => {
+    setCardioEditSheet(null);
+    setCardioEditForm({ duration: '', distance: '', distanceUnit: 'miles', calories: '' });
+  };
+  const handleCardioSave = async () => {
+    if (!cardioEditSheet) return;
+    try {
+      // Update the first (and usually only) DB row with the new cardio values
+      const firstSet = cardioEditSheet.sets[0];
+      await updateSetLogMutation.mutateAsync({
+        id: parseInt(firstSet.id),
+        duration: cardioEditForm.duration ? parseInt(cardioEditForm.duration) : undefined,
+        distance: cardioEditForm.distance ? parseFloat(cardioEditForm.distance) : undefined,
+        distanceUnit: cardioEditForm.distanceUnit,
+        calories: cardioEditForm.calories ? parseInt(cardioEditForm.calories) : undefined,
+      });
+      closeCardioEditSheet();
+    } catch (e) {
+      console.error('Failed to update cardio log:', e);
+    }
+  };
+  const handleCardioDelete = async () => {
+    if (!cardioEditSheet) return;
+    try {
+      await Promise.all(
+        cardioEditSheet.sets.map(s => deleteSetLogMutation.mutateAsync({ id: parseInt(s.id) }))
+      );
+      closeCardioEditSheet();
+    } catch (e) {
+      console.error('Failed to delete cardio log:', e);
+    }
   };
   const openHistoryNumpad = (rowIdx: number, field: 'reps' | 'weight') => {
     setHistoryEditCell({ rowIdx, field });
@@ -1151,7 +1202,7 @@ export default function Home() {
                                 <p style={{ fontWeight:700, fontSize:14, color:'var(--foreground)', margin:0 }}>{exName}</p>
                                 {sets.length > 0 && (
                                   <button
-                                    onClick={() => openHistoryEditSheet(sets)}
+                                    onClick={() => openCardioEditSheet(sets)}
                                     style={{ background:'none', border:'none', cursor:'pointer', color:'#9ca3af', padding:'2px 4px' }}
                                     title="Edit"
                                   >
@@ -1162,33 +1213,61 @@ export default function Home() {
                                   </button>
                                 )}
                               </div>
-                              {/* Stats row: mirrors the strength card's right-aligned stat block */}
-                              <div style={{ display:'flex', alignItems:'flex-end', justifyContent:'space-between', marginTop:4 }}>
-                                {/* Left: horizontal stat pills */}
-                                <div style={{ display:'flex', alignItems:'flex-end', gap:12 }}>
-                                  {totalDuration > 0 && (
-                                    <div>
-                                      <div style={{ fontSize:18, fontWeight:800, color:'var(--foreground)', lineHeight:1 }}>{totalDuration}<span style={{ fontSize:11, fontWeight:500, color:'#9ca3af' }}> min</span></div>
-                                      <div style={{ fontSize:11, color:'#9ca3af', marginTop:2 }}>Duration</div>
+                              {/* Stats row: circular arc for duration + side stats */}
+                              <div style={{ display:'flex', alignItems:'center', gap:20, marginTop:8 }}>
+                                {/* Circular arc — 60 min = full circle, uses app foreground colour */}
+                                {(() => {
+                                  const R = 34, stroke = 5;
+                                  const circ = 2 * Math.PI * R;
+                                  const pct = totalDuration > 0 ? Math.min(totalDuration / 60, 1) : 0;
+                                  const dash = pct * circ;
+                                  const size = (R + stroke) * 2;
+                                  return (
+                                    <div style={{ position:'relative', width:size, height:size, flexShrink:0 }}>
+                                      <svg width={size} height={size} style={{ transform:'rotate(-90deg)' }}>
+                                        {/* Track */}
+                                        <circle cx={size/2} cy={size/2} r={R} fill="none" stroke="var(--border)" strokeWidth={stroke} />
+                                        {/* Progress */}
+                                        <circle
+                                          cx={size/2} cy={size/2} r={R} fill="none"
+                                          stroke="var(--foreground)" strokeWidth={stroke}
+                                          strokeDasharray={`${dash} ${circ}`}
+                                          strokeLinecap="round"
+                                        />
+                                      </svg>
+                                      {/* Centre label */}
+                                      <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
+                                        <span style={{ fontSize:16, fontWeight:800, color:'var(--foreground)', lineHeight:1 }}>{totalDuration > 0 ? totalDuration : '—'}</span>
+                                        <span style={{ fontSize:9, color:'#9ca3af', fontWeight:500 }}>min</span>
+                                      </div>
                                     </div>
-                                  )}
+                                  );
+                                })()}
+                                {/* Side stats */}
+                                <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
                                   {totalDistance > 0 && (
                                     <div>
-                                      <div style={{ fontSize:18, fontWeight:800, color:'var(--foreground)', lineHeight:1 }}>{totalDistance.toFixed(1)}<span style={{ fontSize:11, fontWeight:500, color:'#9ca3af' }}> {distUnit}</span></div>
-                                      <div style={{ fontSize:11, color:'#9ca3af', marginTop:2 }}>Distance</div>
+                                      <span style={{ fontSize:15, fontWeight:800, color:'var(--foreground)' }}>{totalDistance.toFixed(1)}</span>
+                                      <span style={{ fontSize:11, color:'#9ca3af', marginLeft:3 }}>{distUnit}</span>
+                                      <span style={{ fontSize:11, color:'#9ca3af', marginLeft:6 }}>Distance</span>
                                     </div>
                                   )}
-                                </div>
-                                {/* Right: secondary stats — mirrors the sets/reps block */}
-                                <div style={{ textAlign:'right' }}>
                                   {totalCalories > 0 && (
-                                    <div style={{ fontSize:18, fontWeight:800, color:'var(--foreground)', lineHeight:1 }}>{totalCalories}<span style={{ fontSize:11, fontWeight:500, color:'#9ca3af' }}> kcal</span></div>
+                                    <div>
+                                      <span style={{ fontSize:15, fontWeight:800, color:'var(--foreground)' }}>{totalCalories}</span>
+                                      <span style={{ fontSize:11, color:'#9ca3af', marginLeft:3 }}>kcal</span>
+                                      <span style={{ fontSize:11, color:'#9ca3af', marginLeft:6 }}>Calories</span>
+                                    </div>
                                   )}
                                   {pace && (
-                                    <div style={{ fontSize:11, color:'#9ca3af', marginTop:2 }}>Pace {pace} min/{distUnit === 'km' ? 'km' : 'mi'}</div>
+                                    <div>
+                                      <span style={{ fontSize:15, fontWeight:800, color:'var(--foreground)' }}>{pace}</span>
+                                      <span style={{ fontSize:11, color:'#9ca3af', marginLeft:3 }}>min/{distUnit === 'km' ? 'km' : 'mi'}</span>
+                                      <span style={{ fontSize:11, color:'#9ca3af', marginLeft:6 }}>Pace</span>
+                                    </div>
                                   )}
                                   {totalDuration === 0 && totalDistance === 0 && totalCalories === 0 && (
-                                    <div style={{ fontSize:11, color:'#9ca3af' }}>No data recorded</div>
+                                    <span style={{ fontSize:11, color:'#9ca3af' }}>No data recorded</span>
                                   )}
                                 </div>
                               </div>
@@ -1853,6 +1932,102 @@ export default function Home() {
           </>
         );
       })()}
+
+      {/* ── Cardio history edit sheet ── */}
+      {cardioEditSheet && (
+        <>
+          {/* Backdrop */}
+          <div
+            onPointerDown={e => { e.preventDefault(); closeCardioEditSheet(); }}
+            style={{ position:'fixed', inset:0, zIndex:40, background:'rgba(0,0,0,0.35)' }}
+          />
+          {/* Sheet */}
+          <div style={{
+            position:'fixed', left:0, right:0, bottom:0,
+            background:'var(--card)',
+            borderTop:'1px solid var(--border)',
+            borderRadius:'20px 20px 0 0',
+            padding:'10px 16px calc(env(safe-area-inset-bottom,0px) + 16px)',
+            zIndex:50,
+            boxShadow:'0 -8px 32px rgba(0,0,0,0.14)',
+            maxWidth:480, margin:'0 auto',
+          }}>
+            {/* Drag handle */}
+            <div style={{ width:36, height:4, borderRadius:2, background:'var(--border)', margin:'0 auto 16px' }} />
+            {/* Title + close */}
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
+              <span style={{ fontSize:15, fontWeight:700, color:'var(--foreground)' }}>{cardioEditSheet.exercise}</span>
+              <button onPointerDown={e => { e.preventDefault(); closeCardioEditSheet(); }} style={{ background:'none', border:'none', cursor:'pointer', color:'#9ca3af', padding:4 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            {/* Fields */}
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:16 }}>
+              {/* Duration */}
+              <div>
+                <label style={{ fontSize:11, fontWeight:700, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.07em', display:'block', marginBottom:6 }}>Duration (min)</label>
+                <input
+                  type="number" inputMode="numeric" min="0"
+                  value={cardioEditForm.duration}
+                  onChange={e => setCardioEditForm(f => ({ ...f, duration: e.target.value }))}
+                  style={{ width:'100%', padding:'10px 12px', background:'var(--secondary)', border:'1.5px solid var(--border)', borderRadius:12, fontSize:20, fontWeight:800, color:'var(--foreground)', textAlign:'center', fontFamily:'inherit', boxSizing:'border-box' }}
+                  placeholder="0"
+                />
+              </div>
+              {/* Calories */}
+              <div>
+                <label style={{ fontSize:11, fontWeight:700, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.07em', display:'block', marginBottom:6 }}>Calories (kcal)</label>
+                <input
+                  type="number" inputMode="numeric" min="0"
+                  value={cardioEditForm.calories}
+                  onChange={e => setCardioEditForm(f => ({ ...f, calories: e.target.value }))}
+                  style={{ width:'100%', padding:'10px 12px', background:'var(--secondary)', border:'1.5px solid var(--border)', borderRadius:12, fontSize:20, fontWeight:800, color:'var(--foreground)', textAlign:'center', fontFamily:'inherit', boxSizing:'border-box' }}
+                  placeholder="0"
+                />
+              </div>
+              {/* Distance */}
+              <div>
+                <label style={{ fontSize:11, fontWeight:700, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.07em', display:'block', marginBottom:6 }}>Distance</label>
+                <input
+                  type="number" inputMode="decimal" min="0" step="0.1"
+                  value={cardioEditForm.distance}
+                  onChange={e => setCardioEditForm(f => ({ ...f, distance: e.target.value }))}
+                  style={{ width:'100%', padding:'10px 12px', background:'var(--secondary)', border:'1.5px solid var(--border)', borderRadius:12, fontSize:20, fontWeight:800, color:'var(--foreground)', textAlign:'center', fontFamily:'inherit', boxSizing:'border-box' }}
+                  placeholder="0.0"
+                />
+              </div>
+              {/* Distance unit toggle */}
+              <div>
+                <label style={{ fontSize:11, fontWeight:700, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.07em', display:'block', marginBottom:6 }}>Unit</label>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:6 }}>
+                  {(['miles', 'km'] as const).map(unit => (
+                    <button
+                      key={unit}
+                      onPointerDown={e => { e.preventDefault(); setCardioEditForm(f => ({ ...f, distanceUnit: unit })); }}
+                      style={{
+                        padding:'10px 0', borderRadius:12, border:'1.5px solid var(--border)',
+                        background: cardioEditForm.distanceUnit === unit ? 'var(--foreground)' : 'var(--secondary)',
+                        color: cardioEditForm.distanceUnit === unit ? 'var(--background)' : 'var(--foreground)',
+                        fontSize:14, fontWeight:700, cursor:'pointer', fontFamily:'inherit',
+                      }}
+                    >{unit}</button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            {/* Save */}
+            <button
+              onPointerDown={e => { e.preventDefault(); handleCardioSave(); }}
+              style={{ width:'100%', padding:13, background:'var(--foreground)', color:'var(--background)', border:'none', borderRadius:14, fontSize:15, fontWeight:700, cursor:'pointer', fontFamily:'inherit', marginBottom:10 }}
+            >Save Changes</button>
+            {/* Delete */}
+            <button
+              onPointerDown={e => { e.preventDefault(); handleCardioDelete(); }}
+              style={{ width:'100%', padding:13, background:'transparent', color:'#ef4444', border:'1.5px solid #ef4444', borderRadius:14, fontSize:15, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}
+            >Delete Exercise Log</button>
+          </div>
+        </>
+      )}
 
       {/* Calendar Modal */}
       <CalendarModal
