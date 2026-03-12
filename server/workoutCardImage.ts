@@ -10,29 +10,17 @@
  */
 
 import { Request, Response } from "express";
-import path from "path";
-import { fileURLToPath } from "url";
-import { readFileSync } from "fs";
 import { storagePut } from "./storage.js";
+import { INTER_REGULAR_B64, INTER_BOLD_B64 } from "./fontData.js";
+import { FLEXTAB_ICON_B64 } from "../client/src/lib/flextabIconB64.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// ── Fonts (decoded from embedded base64 — no file system access needed) ──────
+const fontRegular = Buffer.from(INTER_REGULAR_B64, "base64");
+const fontBold = Buffer.from(INTER_BOLD_B64, "base64");
+const fontExtraBold = fontBold; // Use bold as fallback for extra-bold
 
-// ── Fonts (loaded once at module init) ──────────────────────────────────────
-const fontRegular = readFileSync(path.join(__dirname, "fonts/Inter-Regular.woff1"));
-const fontBold = readFileSync(path.join(__dirname, "fonts/Inter-Bold.woff1"));
-const fontExtraBold = readFileSync(path.join(__dirname, "fonts/Inter-ExtraBold.woff1"));
-
-// ── FlexTab logo as base64 data URI ─────────────────────────────────────────
-// Inline so satori never makes a network request for it
-let LOGO_DATA_URI = "";
-try {
-  const logoPath = path.join(__dirname, "../client/public/flextab-icon.png");
-  const logoBytes = readFileSync(logoPath);
-  LOGO_DATA_URI = `data:image/png;base64,${logoBytes.toString("base64")}`;
-} catch {
-  // Logo not found — will render without it
-}
+// ── FlexTab logo ─────────────────────────────────────────────────────────────
+const LOGO_DATA_URI = FLEXTAB_ICON_B64;
 
 // ── Types ────────────────────────────────────────────────────────────────────
 interface ExerciseRow {
