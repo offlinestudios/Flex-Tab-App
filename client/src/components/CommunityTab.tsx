@@ -24,6 +24,7 @@ interface FeedPost {
   userId: number;
   authorName: string;
   authorHandle: string;
+  authorAvatarUrl?: string | null;
   caption: string | null;
   createdAt: string;
   likeCount: number;
@@ -41,6 +42,7 @@ interface Comment {
   createdAt: string;
   authorName: string;
   authorHandle: string;
+  authorAvatarUrl?: string | null;
 }
 
 /* ─────────────────────────────────────────────────────────────────
@@ -130,7 +132,26 @@ function getInitials(name: string): string {
 /* ─────────────────────────────────────────────────────────────────
    Avatar
 ───────────────────────────────────────────────────────────────── */
-function Avatar({ name, size = 40 }: { name: string; size?: number }) {
+function Avatar({ name, avatarUrl, size = 40 }: { name: string; avatarUrl?: string | null; size?: number }) {
+  if (avatarUrl) {
+    return (
+      <img
+        src={avatarUrl}
+        alt={name}
+        style={{
+          width: size,
+          height: size,
+          borderRadius: "50%",
+          objectFit: "cover",
+          flexShrink: 0,
+        }}
+        onError={(e) => {
+          // Fall back to initials on broken image
+          (e.currentTarget as HTMLImageElement).style.display = "none";
+        }}
+      />
+    );
+  }
   return (
     <div
       style={{
@@ -448,7 +469,7 @@ function CommentsSheet({
               key={c.id}
               style={{ display: "flex", gap: 10, marginBottom: 14 }}
             >
-              <Avatar name={c.authorName} size={32} />
+              <Avatar name={c.authorName} avatarUrl={c.authorAvatarUrl} size={32} />
               <div>
                 <p
                   style={{
@@ -614,12 +635,7 @@ function NewPostComposer({
       await createPost.mutateAsync({
         caption: caption.trim() || undefined,
         mediaItems,
-        workoutSessionData: attachedSession
-          ? {
-              date: attachedSession.date,
-              exercises: attachedSession.exercises,
-            }
-          : undefined,
+        workoutSessionId: attachedSession?.sessionId ?? undefined,
       });
     } catch (e: any) {
       setError(e.message ?? "Something went wrong");
@@ -1136,7 +1152,7 @@ function PostCard({
             gap: 10,
           }}
         >
-          <Avatar name={post.authorName} size={42} />
+          <Avatar name={post.authorName} avatarUrl={post.authorAvatarUrl} size={42} />
           <div style={{ flex: 1 }}>
             <p
               style={{

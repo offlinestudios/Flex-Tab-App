@@ -69,6 +69,7 @@ interface WorkoutSession {
   date: string;
   exercises: SetLog[];
   durationSeconds?: number | null;
+  sessionId?: number | null;
 }
 
 interface Measurement {
@@ -160,6 +161,8 @@ export default function Home() {
     const sessionMap = new Map<string, SetLog[]>();
     // Track the session duration per date (last non-null value wins)
     const durationMap = new Map<string, number | null>();
+    // Track the sessionId per date (first log's sessionId wins)
+    const sessionIdMap = new Map<string, number | null>();
     
     setLogsData.forEach((log: any) => {
       // Extract date from the log (assuming it has a date field)
@@ -193,12 +196,17 @@ export default function Home() {
       } else if (!durationMap.has(date)) {
         durationMap.set(date, null);
       }
+      // Capture sessionId (first log per date wins)
+      if (!sessionIdMap.has(date)) {
+        sessionIdMap.set(date, log.sessionId ?? null);
+      }
     });
     
     const sessions = Array.from(sessionMap.entries()).map(([date, exercises]) => ({
       date,
       exercises,
       durationSeconds: durationMap.get(date) ?? null,
+      sessionId: sessionIdMap.get(date) ?? null,
     }));
     console.log('[DEBUG] Transformed workout sessions:', sessions);
     return sessions;

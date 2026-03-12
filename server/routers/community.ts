@@ -38,8 +38,10 @@ function getR2Client() {
 }
 
 function r2PublicUrl(key: string): string {
-  const bucket = process.env.R2_BUCKET_NAME || "flextab-storage";
-  return `https://pub-${bucket}.r2.dev/${key}`;
+  const base = process.env.R2_PUBLIC_URL
+    ? process.env.R2_PUBLIC_URL.replace(/\/$/, "")
+    : `https://pub-${process.env.R2_ACCOUNT_ID}.r2.dev`;
+  return `${base}/${key}`;
 }
 
 /* ─────────────────────────────────────────────────────────────────
@@ -183,6 +185,7 @@ export const communityRouter = router({
           workoutSessionId: posts.workoutSessionId,
           createdAt: posts.createdAt,
           authorName: users.name,
+          authorAvatarUrl: users.avatarUrl,
         })
         .from(posts)
         .leftJoin(users, eq(posts.userId, users.id))
@@ -302,6 +305,7 @@ export const communityRouter = router({
           id: p.id,
           userId: p.userId,
           authorName: p.authorName ?? "FlexTab User",
+          authorAvatarUrl: p.authorAvatarUrl ?? null,
           authorHandle:
             "@" +
             (p.authorName ?? "user")
@@ -416,6 +420,7 @@ export const communityRouter = router({
           body: postComments.body,
           createdAt: postComments.createdAt,
           authorName: users.name,
+          authorAvatarUrl: users.avatarUrl,
         })
         .from(postComments)
         .leftJoin(users, eq(postComments.userId, users.id))
@@ -431,6 +436,7 @@ export const communityRouter = router({
         body: r.body,
         createdAt: r.createdAt.toISOString(),
         authorName: r.authorName ?? "FlexTab User",
+        authorAvatarUrl: r.authorAvatarUrl ?? null,
         authorHandle:
           "@" +
           (r.authorName ?? "user")
