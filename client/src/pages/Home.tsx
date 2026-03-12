@@ -914,8 +914,28 @@ export default function Home() {
               </div>
             )}
 
-            {/* Exercise Cards — single-card flip navigation like prototype */}
-            {selectedExercises.length > 0 && (() => {
+            {/* Exercise Cards — swipe left/right to navigate between exercises */}
+            {selectedExercises.length > 0 && (
+              <div
+                onTouchStart={(e) => { setTouchEnd(null); setTouchStart(e.targetTouches[0].clientX); }}
+                onTouchMove={(e) => setTouchEnd(e.targetTouches[0].clientX)}
+                onTouchEnd={() => {
+                  if (!touchStart || !touchEnd) return;
+                  const dist = touchStart - touchEnd;
+                  const safeIdx2 = Math.min(currentExerciseIndex, selectedExercises.length - 1);
+                  if (dist > 60) {
+                    // Swipe left → next exercise
+                    const nextIdx = safeIdx2 + 1;
+                    if (nextIdx < selectedExercises.length) setCurrentExerciseIndex(nextIdx);
+                    else setShowExerciseBrowser(true);
+                  } else if (dist < -60 && safeIdx2 > 0) {
+                    // Swipe right → previous exercise
+                    setCurrentExerciseIndex(safeIdx2 - 1);
+                  }
+                }}
+                style={{ touchAction: 'pan-y' }}
+              >
+            {(() => {
               const safeIdx = Math.min(currentExerciseIndex, selectedExercises.length - 1);
               const exercise = selectedExercises[safeIdx];
               const exHistory = exProgressMap[exercise.name] || [];
@@ -937,7 +957,6 @@ export default function Home() {
                       setSelectedExercises(updated);
                       setCurrentExerciseIndex(Math.min(safeIdx, updated.length - 1));
                     }}
-                    onPrev={safeIdx > 0 ? () => setCurrentExerciseIndex(safeIdx - 1) : undefined}
                     onNext={() => {
                       const nextIdx = currentExerciseIndex + 1;
                       if (nextIdx < selectedExercises.length) {
@@ -973,7 +992,6 @@ export default function Home() {
                   }}
                   totalExercises={selectedExercises.length}
                   currentIndex={safeIdx}
-                  onPrev={safeIdx > 0 ? () => setCurrentExerciseIndex(safeIdx - 1) : undefined}
                   onNext={() => {
                     const nextIdx = currentExerciseIndex + 1;
                     if (nextIdx < selectedExercises.length) {
@@ -989,6 +1007,8 @@ export default function Home() {
                 />
               );
             })()}
+              </div>
+            )}
 
             {/* Today's logged sets summary */}
             {(() => {

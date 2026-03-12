@@ -24,7 +24,6 @@ interface CardioExerciseCardProps {
   ) => Promise<void>;
   onRemove?: (exerciseId: string) => void;
   onNext?: () => void;
-  onPrev?: () => void;
   totalExercises?: number;
   currentIndex?: number;
   userWeightLbs?: number;
@@ -134,7 +133,6 @@ export function CardioExerciseCard({
   onLogSet,
   onRemove,
   onNext,
-  onPrev,
   totalExercises,
   currentIndex,
   userWeightLbs,
@@ -446,7 +444,6 @@ export function CardioExerciseCard({
         exerciseId={exercise.id}
         currentIndex={currentIndex}
         totalExercises={totalExercises}
-        onPrev={onPrev}
         onNext={onNext}
         onRemove={onRemove}
       />
@@ -459,79 +456,24 @@ interface CardioNavRowProps {
   exerciseId: string;
   currentIndex?: number;
   totalExercises?: number;
-  onPrev?: () => void;
   onNext?: () => void;
   onRemove?: (id: string) => void;
 }
 
-function CardioNavRow({ exerciseId, currentIndex = 0, totalExercises = 1, onPrev, onNext, onRemove }: CardioNavRowProps) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!menuOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [menuOpen]);
-
+function CardioNavRow({ exerciseId, currentIndex = 0, totalExercises = 1, onNext, onRemove }: CardioNavRowProps) {
   const nextLabel = currentIndex < totalExercises - 1 ? 'Next Exercise' : 'Add Exercise';
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 20px 16px', position: 'relative' }}>
-      {/* Left: Prev or spacer */}
-      {onPrev ? (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 20px 16px' }}>
+      {/* Left: Remove Exercise */}
+      {onRemove ? (
         <button
-          onClick={onPrev}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: 'var(--foreground)', fontFamily: 'inherit', padding: '6px 0', display: 'flex', alignItems: 'center', gap: 4 }}
+          onClick={() => onRemove(exerciseId)}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: '#ef4444', fontFamily: 'inherit', padding: '6px 0' }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
-          Prev
+          Remove Exercise
         </button>
-      ) : <div style={{ width: 60 }} />}
-
-      {/* Centre: three-dot overflow menu */}
-      {onRemove && (
-        <div ref={menuRef} style={{ position: 'relative' }}>
-          <button
-            onClick={() => setMenuOpen(v => !v)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px 10px', color: 'var(--muted-foreground)', display: 'flex', alignItems: 'center' }}
-            aria-label="More options"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/>
-            </svg>
-          </button>
-          {menuOpen && (
-            <div style={{
-              position: 'absolute',
-              bottom: 'calc(100% + 6px)',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              background: 'var(--background)',
-              border: '1px solid var(--border)',
-              borderRadius: 12,
-              boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
-              minWidth: 160,
-              zIndex: 50,
-              overflow: 'hidden',
-            }}>
-              <button
-                onClick={() => { setMenuOpen(false); onRemove(exerciseId); }}
-                style={{ display: 'block', width: '100%', padding: '12px 16px', background: 'none', border: 'none', color: '#ef4444', fontSize: 14, fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}
-              >
-                Remove Exercise
-              </button>
-            </div>
-          )}
-        </div>
-      )}
+      ) : <div />}
 
       {/* Right: Next / Add */}
       {onNext && (
