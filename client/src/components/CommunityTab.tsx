@@ -559,7 +559,7 @@ function CommentsSheet({
 /* ─────────────────────────────────────────────────────────────────
    New post composer (bottom sheet)
 ───────────────────────────────────────────────────────────────── */
-function NewPostComposer({
+export function NewPostComposer({
   currentUser,
   workoutSessions = [],
   onClose,

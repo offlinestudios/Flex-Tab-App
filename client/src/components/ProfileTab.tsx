@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { formatDateFull } from "@/lib/dateUtils";
 import { useTheme } from "@/contexts/ThemeContext";
 import { trpc } from "@/lib/trpc";
+import { NewPostComposer } from "./CommunityTab";
 
 type ProfilePanel = 'posts' | 'logs' | 'prs';
 
@@ -627,6 +628,7 @@ function ShareSheet({ profileName, onClose }: ShareSheetProps) {
 ───────────────────────────────────────────────────────────────── */
 export function ProfileTab({ user, workoutSessions, measurements, prMap: externalPrMap }: ProfileTabProps) {
   const [activePanel, setActivePanel] = useState<ProfilePanel>('posts');
+  const [showPostComposer, setShowPostComposer] = useState(false);
   // Real posts from the database (replaces the old fake local-only state)
   const { data: myPostsData = [], refetch: refetchMyPosts } = (trpc as any).community.getMyPosts.useQuery(undefined, {
     staleTime: 30_000,
@@ -882,6 +884,14 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
           <div style={{ background: 'var(--card)', borderRadius: 20, border: '1.5px solid var(--border)', overflow: 'hidden' }}>
             {myPosts.length > 0 ? (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2 }}>
+                {/* Add new post tile */}
+                <button
+                  onClick={() => setShowPostComposer(true)}
+                  style={{ aspectRatio: '1', background: 'var(--secondary)', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, cursor: 'pointer' }}
+                >
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  <span style={{ fontSize: 10, color: '#9ca3af', fontWeight: 600 }}>New Post</span>
+                </button>
                 {myPosts.map((post) => (
                   <div key={post.id} style={{ aspectRatio: '1', overflow: 'hidden', position: 'relative', background: 'var(--secondary)' }}>
                     {post.thumbnailUrl ? (
@@ -915,14 +925,25 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', gap: 10 }}>
-                <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <button
+                  onClick={() => setShowPostComposer(true)}
+                  style={{ width: 52, height: 52, borderRadius: '50%', background: 'var(--secondary)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                >
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                </div>
+                </button>
                 <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>No posts yet</p>
-                <p style={{ fontSize: 12, color: '#9ca3af', margin: 0, textAlign: 'center' }}>Share a photo or video from the Community tab</p>
+                <p style={{ fontSize: 12, color: '#9ca3af', margin: 0, textAlign: 'center' }}>Tap the icon above to share your first photo or video</p>
               </div>
             )}
           </div>
+        )}
+        {/* Post composer sheet — triggered from profile posts grid */}
+        {showPostComposer && (
+          <NewPostComposer
+            currentUser={user}
+            workoutSessions={workoutSessions}
+            onClose={() => setShowPostComposer(false)}
+          />
         )}
 
         {/* ── LOGS panel ── */}
