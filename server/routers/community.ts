@@ -445,4 +445,65 @@ export const communityRouter = router({
             .slice(0, 20),
       }));
     }),
+
+  /**
+   * Get the current user's own posts (for the Profile page grid).
+   * Returns posts newest-first with their first media item thumbnail.
+   */
+  getMyPosts: protectedProcedure
+    .input(
+      z.object({
+        limit: z.number().int().min(1).max(100).default(50),
+        offset: z.number().int().nonnegative().default(0),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return [];
+      // Fetch this user's posts
+      const myPosts = await db
+        .select({
+          id: posts.id,
+          caption: posts.caption,
+          createdAt: posts.createdAt,
+        })
+        .from(posts)
+        .where(eq(posts.userId, ctx.user.id))
+        .orderBy(desc(posts.createdAt))
+        .limit(input.limit)
+        .offset(input.offset);
+      if (myPosts.length === 0) return [];
+      const postIds = myPosts.map((p) => p.id);
+      // Fetch all media for these posts
+      const mediaRows = await db
+        .select({
+          postId: postMedia.postId,
+          r2Key: postMedia.r2Key,
+          mediaType: postMedia.mediaType,
+          mimeType: postMedia.mimeType,
+        })
+        .from(postMedia)
+        .where(
+          postIds.length === 1
+            ? eq(postMedia.postId, postIds[0])
+            : sql`${postMedia.postId} IN (${sql.join(postIds.map((id) => sql`${id}`), sql`, `)})`
+        )
+        .orderBy(postMedia.postId);
+      // Group media by postId (keep first item per post as thumbnail)
+      const mediaByPost = new Map<number, typeof mediaRows[0]>();
+      for (const m of mediaRows) {
+        if (!mediaByPost.has(m.postId)) mediaByPost.set(m.postId, m);
+      }
+      return myPosts.map((p) => {
+        const thumb = mediaByPost.get(p.id);
+        return {
+          id: p.id,
+          caption: p.caption,
+          createdAt: p.createdAt.toISOString(),
+          thumbnailUrl: thumb ? r2PublicUrl(thumb.r2Key) : null,
+          mediaType: thumb?.mediaType ?? null,
+          mimeType: thumb?.mimeType ?? null,
+        };
+      });
+    }),
 });

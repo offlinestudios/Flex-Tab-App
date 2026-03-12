@@ -587,6 +587,8 @@ function NewPostComposer({
   const createPost = trpc.community.createPost.useMutation({
     onSuccess: () => {
       utils.community.getFeed.invalidate();
+      // Also refresh the profile page posts grid
+      (utils as any).community.getMyPosts.invalidate();
       onClose();
     },
     onError: (e) => setError(e.message),

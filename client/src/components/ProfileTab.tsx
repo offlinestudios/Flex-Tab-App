@@ -627,7 +627,13 @@ function ShareSheet({ profileName, onClose }: ShareSheetProps) {
 ───────────────────────────────────────────────────────────────── */
 export function ProfileTab({ user, workoutSessions, measurements, prMap: externalPrMap }: ProfileTabProps) {
   const [activePanel, setActivePanel] = useState<ProfilePanel>('posts');
-  const [mediaItems, setMediaItems] = useState<string[]>([]);
+  // Real posts from the database (replaces the old fake local-only state)
+  const { data: myPostsData = [], refetch: refetchMyPosts } = (trpc as any).community.getMyPosts.useQuery(undefined, {
+    staleTime: 30_000,
+    retry: false,
+    throwOnError: false,
+  });
+  const myPosts: Array<{ id: number; caption: string | null; createdAt: string; thumbnailUrl: string | null; mediaType: string | null }> = myPostsData;
   const [showEditModal, setShowEditModal] = useState(false);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [showShareSheet, setShowShareSheet] = useState(false);
@@ -740,13 +746,11 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
     }
   };
 
-  const handleMediaUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
-    Array.from(files).forEach(file => {
-      const url = URL.createObjectURL(file);
-      setMediaItems(prev => [...prev, url]);
-    });
+  // Profile grid "Add" button now opens the Community tab composer via a state lift
+  // For now, clicking Add navigates to the community tab
+  const handleMediaUpload = (_e: React.ChangeEvent<HTMLInputElement>) => {
+    // No-op: posting is done via the Community tab composer
+    // This input is kept for future direct-from-profile posting
   };
 
   const handleShare = () => {
@@ -876,25 +880,46 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
         {/* ── POSTS panel ── */}
         {activePanel === 'posts' && (
           <div style={{ background: 'var(--card)', borderRadius: 20, border: '1.5px solid var(--border)', overflow: 'hidden' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2 }}>
-              <label htmlFor="profile-media-upload-grid" style={{ aspectRatio: '1', background: 'var(--secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, cursor: 'pointer' }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                <span style={{ fontSize: 10, color: '#9ca3af', fontWeight: 600 }}>Add</span>
-              </label>
-              <input id="profile-media-upload-grid" type="file" accept="image/*,video/*" multiple style={{ display: 'none' }} onChange={handleMediaUpload} />
-              {mediaItems.map((url, i) => (
-                <div key={i} style={{ aspectRatio: '1', overflow: 'hidden' }}>
-                  <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                </div>
-              ))}
-            </div>
-            {mediaItems.length === 0 && (
+            {myPosts.length > 0 ? (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2 }}>
+                {myPosts.map((post) => (
+                  <div key={post.id} style={{ aspectRatio: '1', overflow: 'hidden', position: 'relative', background: 'var(--secondary)' }}>
+                    {post.thumbnailUrl ? (
+                      post.mediaType === 'video' ? (
+                        <>
+                          <video
+                            src={post.thumbnailUrl}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            muted
+                            playsInline
+                            preload="metadata"
+                          />
+                          {/* Video play indicator */}
+                          <div style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,0.55)', borderRadius: 4, padding: '2px 5px' }}>
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                          </div>
+                        </>
+                      ) : (
+                        <img src={post.thumbnailUrl} alt={post.caption ?? ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      )
+                    ) : (
+                      /* Text-only post — show caption preview */
+                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8 }}>
+                        <p style={{ fontSize: 11, color: 'var(--foreground)', textAlign: 'center', margin: 0, lineHeight: 1.3, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical' }}>
+                          {post.caption ?? ''}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', gap: 10 }}>
                 <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                 </div>
                 <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>No posts yet</p>
-                <p style={{ fontSize: 12, color: '#9ca3af', margin: 0, textAlign: 'center' }}>Upload a photo or video to share your workouts</p>
+                <p style={{ fontSize: 12, color: '#9ca3af', margin: 0, textAlign: 'center' }}>Share a photo or video from the Community tab</p>
               </div>
             )}
           </div>
