@@ -10,6 +10,9 @@ import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { handleAvatarUpload } from "../avatarUpload";
+import { handleMediaUpload } from "../mediaUpload";
+import { handleGenerateWorkoutCard } from "../workoutCardImage";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -41,6 +44,12 @@ async function startServer() {
 
   // Serve exercise images as static files BEFORE clerk middleware (no auth needed)
   app.use("/exercises", express.static(path.resolve(__dirname, "../../client/public/exercises")));
+
+  // REST endpoints for file uploads and image generation
+  // These must be registered BEFORE Clerk middleware so multipart uploads are not intercepted
+  app.post("/api/upload-avatar", handleAvatarUpload);
+  app.post("/api/upload-media", handleMediaUpload);
+  app.post("/api/generate-workout-card", handleGenerateWorkoutCard);
 
   // Add Clerk middleware for authentication
   app.use(clerkMiddleware());
