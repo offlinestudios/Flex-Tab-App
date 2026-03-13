@@ -99,8 +99,9 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
     ? `${(totalVolume / 1000).toFixed(1)}k`
     : totalVolume.toLocaleString();
 
-  // ── Call server to generate PNG and return a public URL ──────────────────────
-  const generateCardUrl = async (): Promise<string> => {
+  // ── Call server to generate PNG ─────────────────────────────────────────────
+  // Returns { dataUri, url, key } — dataUri is always present, url/key may be null if R2 is unavailable
+  const generateCard = async (): Promise<{ dataUri: string; url: string | null; key: string | null }> => {
     const payload = {
       date: formattedDate,
       duration,
@@ -121,27 +122,27 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
       throw new Error(err?.detail || 'Server failed to generate card image');
     }
 
-    const { url } = await res.json();
-    if (!url) throw new Error('No URL returned from server');
-    return url;
+    const data = await res.json();
+    if (!data.dataUri) throw new Error('No image data returned from server');
+    return data;
   };
 
   // ── Share via native share sheet ─────────────────────────────────────────────
   const handleShare = async () => {
     setLoading('share');
     try {
-      const url = await generateCardUrl();
+      const { dataUri, url } = await generateCard();
 
       if (navigator.share) {
-        // Share the URL — iOS will show a rich preview; the user can then
-        // tap the preview to open the image and save it, or forward it.
-        // Web Share API Level 2 file sharing requires the file to be fetched
-        // first, which we do here:
-        try {
-          const imgRes = await fetch(url);
-          const blob = await imgRes.blob();
-          const file = new File([blob], `flextab-workout-${shortDate.replace(/\s/g, '-')}.png`, { type: 'image/png' });
+        // Convert data URI to a File for Web Share API Level 2
+        const byteString = atob(dataUri.split(',')[1]);
+        const ab = new ArrayBuffer(byteString.length);
+        const ia = new Uint8Array(ab);
+        for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
+        const blob = new Blob([ab], { type: 'image/png' });
+        const file = new File([blob], `flextab-workout-${shortDate.replace(/\s/g, '-')}.png`, { type: 'image/png' });
 
+        try {
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
             await navigator.share({ files: [file], title: `FlexTab Workout — ${shortDate}` });
             toast.success('Shared successfully!');
@@ -151,16 +152,16 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
           // File share not supported — fall through to URL share
         }
 
-        // Fallback: share the URL
+        // Fallback: share the R2 URL if available, otherwise the data URI
         await navigator.share({
           title: `FlexTab Workout — ${shortDate}`,
-          url,
+          url: url ?? dataUri,
           text: `💪 ${shortDate} · ${totalSets} sets · ${totalReps} reps`,
         });
         toast.success('Shared successfully!');
       } else {
         // Desktop: copy URL to clipboard
-        await navigator.clipboard.writeText(url);
+        await navigator.clipboard.writeText(url ?? dataUri);
         toast.success('Image URL copied to clipboard!');
       }
     } catch (error: any) {
@@ -170,33 +171,36 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
     }
   };
 
-  // ── Save / Download ──────────────────────────────────────────────────────────
+  // ── Save / Download ────────────────────────────────────────────
   const handleDownload = async () => {
     setLoading('download');
     try {
-      const url = await generateCardUrl();
+      const { dataUri } = await generateCard();
+      const filename = `flextab-workout-${shortDate.replace(/\s/g, '-')}.png`;
 
       if (isIOS()) {
-        // iOS Safari: open the image in a new tab — user long-presses → "Save to Photos"
-        const newTab = window.open(url, '_blank');
+        // iOS Safari: open the data URI in a new tab — user long-presses → "Save to Photos"
+        // (data URIs work on iOS without CORS issues)
+        const newTab = window.open(dataUri, '_blank');
         if (!newTab) {
-          // Pop-ups blocked — try opening in same tab
-          window.location.href = url;
+          // Pop-ups blocked — create a temporary anchor and click it
+          const link = document.createElement('a');
+          link.href = dataUri;
+          link.download = filename;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
         } else {
           toast.success('Long-press the image and tap "Save to Photos"');
         }
       } else {
-        // Desktop / Android: fetch blob and trigger download
-        const imgRes = await fetch(url);
-        const blob = await imgRes.blob();
-        const blobUrl = URL.createObjectURL(blob);
+        // Desktop / Android: trigger download directly from data URI
         const link = document.createElement('a');
-        link.href = blobUrl;
-        link.download = `flextab-workout-${shortDate.replace(/\s/g, '-')}.png`;
+        link.href = dataUri;
+        link.download = filename;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        URL.revokeObjectURL(blobUrl);
         toast.success('Workout image downloaded!');
       }
     } catch {
@@ -206,35 +210,44 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
     }
   };
 
-  // ── Share to FlexTab Community Feed ─────────────────────────────────────────
+  // ── Share to FlexTab Community Feed ───────────────────────────────────────
   const handleShareToFeed = async () => {
     setLoading('community');
     try {
-      // 1. Generate card PNG on server and get public URL
-      const imageUrl = await generateCardUrl();
+      // 1. Generate card PNG on server — returns dataUri (always) and R2 url (best-effort)
+      const { dataUri, url: r2Url, key: r2Key } = await generateCard();
 
-      // 2. Fetch the PNG blob so we can re-upload it via the community media flow
-      const imgRes = await fetch(imageUrl);
-      const blob = await imgRes.blob();
+      let mediaKey: string;
 
-      // 3. Get a presigned R2 upload URL from the community router
-      const { uploadUrl, key } = await getUploadUrlMutation.mutateAsync({
-        mimeType: 'image/png',
-        mediaType: 'photo',
-      });
+      if (r2Url && r2Key) {
+        // R2 upload already done server-side — reuse the key directly
+        mediaKey = r2Key;
+      } else {
+        // R2 upload failed server-side — convert dataUri to blob and upload client-side
+        const byteString = atob(dataUri.split(',')[1]);
+        const ab = new ArrayBuffer(byteString.length);
+        const ia = new Uint8Array(ab);
+        for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
+        const blob = new Blob([ab], { type: 'image/png' });
 
-      // 4. Upload to R2
-      const uploadRes = await fetch(uploadUrl, {
-        method: 'PUT',
-        body: blob,
-        headers: { 'Content-Type': 'image/png' },
-      });
-      if (!uploadRes.ok) throw new Error('Upload failed');
+        const { uploadUrl, key } = await getUploadUrlMutation.mutateAsync({
+          mimeType: 'image/png',
+          mediaType: 'photo',
+        });
 
-      // 5. Create the community post
+        const uploadRes = await fetch(uploadUrl, {
+          method: 'PUT',
+          body: blob,
+          headers: { 'Content-Type': 'image/png' },
+        });
+        if (!uploadRes.ok) throw new Error('Upload failed');
+        mediaKey = key;
+      }
+
+      // Create the community post
       await createPostMutation.mutateAsync({
         caption: `💪 Workout — ${shortDate}${duration ? ` · ${duration}` : ''} · ${totalSets} sets · ${totalReps} reps`,
-        mediaItems: [{ key, mediaType: 'photo', mimeType: 'image/png' }],
+        mediaItems: [{ key: mediaKey, mediaType: 'photo', mimeType: 'image/png' }],
       });
 
       toast.success('Posted to FlexTab Community!');

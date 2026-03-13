@@ -371,11 +371,22 @@ export async function handleGenerateWorkoutCard(req: Request, res: Response) {
     });
     const pngBuffer = resvg.render().asPng();
 
-    // Upload to R2 and return the public URL
-    const key = `workout-cards/${Date.now()}-${Math.random().toString(36).slice(2)}.png`;
-    const { url } = await storagePut(key, pngBuffer, "image/png");
+    // Convert to base64 data URI for client-side use (avoids cross-origin fetch issues)
+    const dataUri = `data:image/png;base64,${Buffer.from(pngBuffer).toString('base64')}`;
 
-    return res.json({ url, key });
+    // Also upload to R2 for the community feed flow (best-effort — don't fail if R2 is unavailable)
+    let url: string | null = null;
+    let key: string | null = null;
+    try {
+      const r2Key = `workout-cards/${Date.now()}-${Math.random().toString(36).slice(2)}.png`;
+      const result = await storagePut(r2Key, pngBuffer, "image/png");
+      url = result.url;
+      key = r2Key;
+    } catch (r2Err: any) {
+      console.warn("[workout-card] R2 upload failed (non-fatal):", r2Err?.message);
+    }
+
+    return res.json({ url, key, dataUri });
   } catch (err: any) {
     console.error("[workout-card] generation error:", err);
     return res.status(500).json({ error: "Failed to generate card", detail: err?.message });
