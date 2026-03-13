@@ -218,7 +218,7 @@ export default function Home() {
   }, [setLogsData]);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
-  const [shareWorkoutData, setShareWorkoutData] = useState<{ exercises: SetLog[]; date: string; duration?: string } | null>(null);
+  const [shareWorkoutData, setShareWorkoutData] = useState<{ exercises: SetLog[]; date: string; duration?: string; workoutSessionId?: number | null } | null>(null);
   const [showExerciseBrowser, setShowExerciseBrowser] = useState(false);
   const [showRoutineBuilder, setShowRoutineBuilder] = useState(false);
   const [routines, setRoutines] = useState<Array<{id: string; name: string; exercises: Exercise[]}>>(() => {
@@ -833,7 +833,7 @@ export default function Home() {
           // Open the share dialog with the session data and elapsed duration
           const session = workoutSessions.find(s => s.date === workoutDateKey);
           if (session && session.exercises.length > 0) {
-            setShareWorkoutData({ exercises: session.exercises, date: workoutDateKey, duration: durationStr });
+            setShareWorkoutData({ exercises: session.exercises, date: workoutDateKey, duration: durationStr, workoutSessionId: session.sessionId ?? null });
             setShowShareDialog(true);
           }
         }}
@@ -1088,7 +1088,7 @@ export default function Home() {
                   <div style={{ padding:'16px 20px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                     <h3 style={{ fontSize:15, fontWeight:700, color:'var(--foreground)', margin:0 }}>Today's Workout</h3>
                     <button
-                      onClick={() => { setShareWorkoutData({ exercises: todaySession.exercises, date: today }); setShowShareDialog(true); }}
+                      onClick={() => { setShareWorkoutData({ exercises: todaySession.exercises, date: today, workoutSessionId: todaySession.sessionId ?? null }); setShowShareDialog(true); }}
                       style={{ display:'flex', alignItems:'center', gap:5, fontSize:13, fontWeight:600, color:'var(--foreground)', background:'none', border:'none', cursor:'pointer' }}
                     >
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -1170,7 +1170,7 @@ export default function Home() {
                           const storedDuration = session.durationSeconds
                             ? `${Math.floor(session.durationSeconds / 60)}:${String(session.durationSeconds % 60).padStart(2, '0')}`
                             : undefined;
-                          setShareWorkoutData({ exercises: session.exercises, date: session.date, duration: storedDuration });
+                          setShareWorkoutData({ exercises: session.exercises, date: session.date, duration: storedDuration, workoutSessionId: session.sessionId ?? null });
                           setShowShareDialog(true);
                         }}
                         style={{ display:'flex', alignItems:'center', gap:5, fontSize:13, fontWeight:600, color:'var(--foreground)', background:'none', border:'none', cursor:'pointer' }}
@@ -2061,6 +2061,7 @@ export default function Home() {
           exercises={shareWorkoutData.exercises}
           date={shareWorkoutData.date}
           duration={shareWorkoutData.duration}
+          workoutSessionId={shareWorkoutData.workoutSessionId}
         />
       )}
 

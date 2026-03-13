@@ -8,6 +8,7 @@ import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { appRouter } from "./railway-routers";
 import { createContext } from "./railway-context";
 import { handleAvatarUpload } from "./avatarUpload";
+import { handleMediaUpload } from "./mediaUpload";
 import { handleGenerateWorkoutCard } from "./workoutCardImage";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -25,6 +26,52 @@ async function runMigrations() {
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
   try {
     console.log('[Migrations] Running startup migrations...');
+
+    // 0002: community tables (posts, post_media, post_likes, post_comments)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS "posts" (
+        "id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+        "userId" integer NOT NULL,
+        "caption" text,
+        "workoutSessionId" integer,
+        "createdAt" timestamp DEFAULT now() NOT NULL,
+        "updatedAt" timestamp DEFAULT now() NOT NULL
+      );
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS "post_media" (
+        "id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+        "postId" integer NOT NULL,
+        "userId" integer NOT NULL,
+        "r2Key" text NOT NULL,
+        "mediaType" varchar(10) NOT NULL,
+        "mimeType" varchar(64) NOT NULL,
+        "createdAt" timestamp DEFAULT now() NOT NULL
+      );
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS "post_likes" (
+        "id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+        "postId" integer NOT NULL,
+        "userId" integer NOT NULL,
+        "createdAt" timestamp DEFAULT now() NOT NULL,
+        UNIQUE ("postId", "userId")
+      );
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS "post_comments" (
+        "id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+        "postId" integer NOT NULL,
+        "userId" integer NOT NULL,
+        "body" text NOT NULL,
+        "createdAt" timestamp DEFAULT now() NOT NULL
+      );
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS "posts_userId_idx" ON "posts" ("userId");`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS "posts_createdAt_idx" ON "posts" ("createdAt" DESC);`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS "post_media_postId_idx" ON "post_media" ("postId");`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS "post_likes_postId_idx" ON "post_likes" ("postId");`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS "post_comments_postId_idx" ON "post_comments" ("postId");`);
 
     // 0003: avatarUrl column
     await pool.query(`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "avatarUrl" text;`);
@@ -86,6 +133,9 @@ async function startServer() {
   
   // Avatar upload REST endpoint (bypasses browser-to-R2 CORS issues)
   app.post("/api/upload-avatar", handleAvatarUpload);
+
+  // Community media upload REST endpoint (server-side upload avoids browser-to-R2 CORS issues)
+  app.post("/api/upload-media", handleMediaUpload);
 
   // Workout card PNG generation (server-side satori rendering — avoids html2canvas iOS failures)
   app.post("/api/generate-workout-card", handleGenerateWorkoutCard);

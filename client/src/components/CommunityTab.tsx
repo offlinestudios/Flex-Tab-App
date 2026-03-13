@@ -1,5 +1,7 @@
 import { useState, useRef } from "react";
 import { trpc } from "@/lib/trpc";
+import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 /* ─────────────────────────────────────────────────────────────────
    Types
@@ -583,7 +585,6 @@ export function NewPostComposer({
     new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
-  const getUploadUrl = trpc.community.getUploadUrl.useMutation();
   const createPost = trpc.community.createPost.useMutation({
     onSuccess: () => {
       utils.community.getFeed.invalidate();
@@ -611,6 +612,11 @@ export function NewPostComposer({
     setError(null);
 
     try {
+      // Get the Supabase session token to authenticate the server-side upload
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error("Not authenticated");
+
       const mediaItems: {
         key: string;
         mediaType: "photo" | "video";
@@ -618,20 +624,20 @@ export function NewPostComposer({
       }[] = [];
 
       for (const file of mediaFiles) {
-        const mediaType: "photo" | "video" = file.type.startsWith("video/")
-          ? "video"
-          : "photo";
-        const { uploadUrl, key } = await getUploadUrl.mutateAsync({
-          mimeType: file.type,
-          mediaType,
+        // Upload via server-side endpoint to avoid browser-to-R2 CORS issues
+        const formData = new FormData();
+        formData.append("file", file);
+        const res = await fetch("/api/upload-media", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
         });
-        const res = await fetch(uploadUrl, {
-          method: "PUT",
-          body: file,
-          headers: { "Content-Type": file.type },
-        });
-        if (!res.ok) throw new Error("Media upload failed");
-        mediaItems.push({ key, mediaType, mimeType: file.type });
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({ error: "Upload failed" }));
+          throw new Error(errBody.error ?? "Media upload failed");
+        }
+        const { key, mediaType, mimeType } = await res.json();
+        mediaItems.push({ key, mediaType, mimeType });
       }
 
       await createPost.mutateAsync({
@@ -640,7 +646,9 @@ export function NewPostComposer({
         workoutSessionId: attachedSession?.sessionId ?? undefined,
       });
     } catch (e: any) {
-      setError(e.message ?? "Something went wrong");
+      const msg = e.message ?? "Something went wrong";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setUploading(false);
     }

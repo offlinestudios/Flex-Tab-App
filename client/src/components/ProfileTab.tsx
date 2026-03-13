@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { formatDateFull } from "@/lib/dateUtils";
 import { useTheme } from "@/contexts/ThemeContext";
 import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 import { NewPostComposer } from "./CommunityTab";
 
 type ProfilePanel = 'posts' | 'logs' | 'prs';
@@ -739,9 +740,13 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
         throw new Error(errBody.error ?? 'Upload failed');
       }
       const { avatarUrl: newUrl } = await res.json();
-      if (newUrl) refetchProfile();
-    } catch (err) {
+      if (newUrl) {
+        refetchProfile();
+        toast.success('Profile picture updated!');
+      }
+    } catch (err: any) {
       console.error('Avatar upload error:', err);
+      toast.error(err?.message ?? 'Failed to upload profile picture. Please try again.');
     } finally {
       setAvatarUploading(false);
       e.target.value = '';

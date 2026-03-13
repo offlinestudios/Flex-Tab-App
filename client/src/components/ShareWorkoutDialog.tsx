@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { PRESET_EXERCISES } from "@/lib/exercises";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
+import { supabase } from "@/lib/supabase";
 
 interface SetLog {
   id: string;
@@ -26,6 +27,7 @@ interface ShareWorkoutDialogProps {
   exercises: SetLog[];
   date: string;
   duration?: string; // e.g. "36:12"
+  workoutSessionId?: number | null; // ID of the workout session to link to the community post
 }
 
 /** Detect iOS Safari — programmatic <a download> is blocked there */
@@ -33,11 +35,10 @@ const isIOS = () =>
   /iPad|iPhone|iPod/.test(navigator.userAgent) ||
   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
-export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, duration }: ShareWorkoutDialogProps) {
+export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, duration, workoutSessionId }: ShareWorkoutDialogProps) {
   const [loading, setLoading] = useState<null | 'share' | 'download' | 'community'>(null);
 
   const createPostMutation = trpc.community.createPost.useMutation();
-  const getUploadUrlMutation = trpc.community.getUploadUrl.useMutation();
 
   // ── Totals ──────────────────────────────────────────────────────────────────
   const totalSets = exercises.reduce((sum, e) => sum + e.sets, 0);
@@ -223,31 +224,38 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
         // R2 upload already done server-side — reuse the key directly
         mediaKey = r2Key;
       } else {
-        // R2 upload failed server-side — convert dataUri to blob and upload client-side
+        // R2 upload failed server-side — convert dataUri to blob and upload via server-side endpoint
         const byteString = atob(dataUri.split(',')[1]);
         const ab = new ArrayBuffer(byteString.length);
         const ia = new Uint8Array(ab);
         for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
         const blob = new Blob([ab], { type: 'image/png' });
 
-        const { uploadUrl, key } = await getUploadUrlMutation.mutateAsync({
-          mimeType: 'image/png',
-          mediaType: 'photo',
-        });
+        // Authenticate for server-side upload
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        if (!token) throw new Error('Not authenticated');
 
-        const uploadRes = await fetch(uploadUrl, {
-          method: 'PUT',
-          body: blob,
-          headers: { 'Content-Type': 'image/png' },
+        const formData = new FormData();
+        formData.append('file', blob, 'workout-card.png');
+        const uploadRes = await fetch('/api/upload-media', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
         });
-        if (!uploadRes.ok) throw new Error('Upload failed');
+        if (!uploadRes.ok) {
+          const errBody = await uploadRes.json().catch(() => ({ error: 'Upload failed' }));
+          throw new Error(errBody.error ?? 'Upload failed');
+        }
+        const { key } = await uploadRes.json();
         mediaKey = key;
       }
 
-      // Create the community post
+      // Create the community post, linking to the workout session if available
       await createPostMutation.mutateAsync({
         caption: `💪 Workout — ${shortDate}${duration ? ` · ${duration}` : ''} · ${totalSets} sets · ${totalReps} reps`,
         mediaItems: [{ key: mediaKey, mediaType: 'photo', mimeType: 'image/png' }],
+        workoutSessionId: workoutSessionId ?? undefined,
       });
 
       toast.success('Posted to FlexTab Community!');
