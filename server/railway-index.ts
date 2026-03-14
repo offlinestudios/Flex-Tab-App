@@ -27,6 +27,13 @@ async function runMigrations() {
   try {
     console.log('[Migrations] Running startup migrations...');
 
+    // 0001: cardio columns on set_logs (category, duration, distance, distanceUnit, calories)
+    await pool.query(`ALTER TABLE "set_logs" ADD COLUMN IF NOT EXISTS "category" text;`);
+    await pool.query(`ALTER TABLE "set_logs" ADD COLUMN IF NOT EXISTS "duration" integer;`);
+    await pool.query(`ALTER TABLE "set_logs" ADD COLUMN IF NOT EXISTS "distance" numeric(6, 2);`);
+    await pool.query(`ALTER TABLE "set_logs" ADD COLUMN IF NOT EXISTS "distanceUnit" varchar(10);`);
+    await pool.query(`ALTER TABLE "set_logs" ADD COLUMN IF NOT EXISTS "calories" integer;`);
+
     // 0002: community tables (posts, post_media, post_likes, post_comments)
     await pool.query(`
       CREATE TABLE IF NOT EXISTS "posts" (
