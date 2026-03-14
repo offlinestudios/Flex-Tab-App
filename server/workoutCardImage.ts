@@ -4,9 +4,9 @@
  * Accepts workout data as JSON, renders a PNG workout card using satori + resvg,
  * uploads it to R2, and returns the public URL.
  *
- * This approach is used instead of html2canvas because html2canvas crashes in
- * iOS Safari when the card contains CSS variables, env() values, or cross-origin
- * images. Server-side rendering is reliable across all browsers and devices.
+ * Satori rule: every <div> that has more than one child MUST have an explicit
+ * display property set to "flex", "contents", or "none". Block layout is not
+ * supported. All divs in this file are audited to comply with this requirement.
  */
 
 import { Request, Response } from "express";
@@ -74,7 +74,7 @@ function buildCardElement(data: CardData) {
       type: "div",
       props: {
         style: {
-          display: "flex",
+          display: "flex",          // ✓ multi-child row
           alignItems: "center",
           gap: 10,
           paddingTop: 9,
@@ -82,7 +82,7 @@ function buildCardElement(data: CardData) {
           borderBottom: isLast ? "none" : "1px solid #f1f5f9",
         },
         children: [
-          // Number badge
+          // Number badge — single text child, display:flex for centering
           {
             type: "div",
             props: {
@@ -102,7 +102,7 @@ function buildCardElement(data: CardData) {
               children: String(i + 1),
             },
           },
-          // Exercise name
+          // Exercise name — single text child
           {
             type: "div",
             props: {
@@ -112,11 +112,13 @@ function buildCardElement(data: CardData) {
                 fontWeight: 700,
                 color: "#0f172a",
                 overflow: "hidden",
+                display: "flex",
+                alignItems: "center",
               },
               children: ex.exercise.length > 22 ? ex.exercise.slice(0, 21) + "…" : ex.exercise,
             },
           },
-          // Pill
+          // Pill container — single child div inside, display:flex required
           {
             type: "div",
             props: {
@@ -128,6 +130,8 @@ function buildCardElement(data: CardData) {
                 paddingLeft: 10,
                 paddingRight: 10,
                 flexShrink: 0,
+                display: "flex",       // ✓ required even for single child
+                alignItems: "center",
               },
               children: {
                 type: "div",
@@ -137,6 +141,8 @@ function buildCardElement(data: CardData) {
                     fontWeight: 700,
                     color: "#475569",
                     whiteSpace: "nowrap",
+                    display: "flex",
+                    alignItems: "center",
                   },
                   children: pill,
                 },
@@ -152,7 +158,7 @@ function buildCardElement(data: CardData) {
     type: "div",
     props: {
       style: {
-        display: "flex",
+        display: "flex",              // ✓ root multi-child column
         flexDirection: "column",
         background: "#ffffff",
         borderRadius: 20,
@@ -166,7 +172,7 @@ function buildCardElement(data: CardData) {
           type: "div",
           props: {
             style: {
-              display: "flex",
+              display: "flex",        // ✓ multi-child row
               alignItems: "center",
               justifyContent: "space-between",
               marginBottom: 16,
@@ -175,7 +181,7 @@ function buildCardElement(data: CardData) {
               {
                 type: "div",
                 props: {
-                  style: { display: "flex", alignItems: "center", gap: 10 },
+                  style: { display: "flex", alignItems: "center", gap: 10 }, // ✓
                   children: [
                     LOGO_DATA_URI
                       ? {
@@ -208,19 +214,19 @@ function buildCardElement(data: CardData) {
                     {
                       type: "div",
                       props: {
-                        style: { display: "flex", flexDirection: "column" },
+                        style: { display: "flex", flexDirection: "column" }, // ✓ multi-child column
                         children: [
                           {
                             type: "div",
                             props: {
-                              style: { fontSize: 15, fontWeight: 800, color: "#0f172a", lineHeight: 1.2 },
+                              style: { fontSize: 15, fontWeight: 800, color: "#0f172a", lineHeight: 1.2, display: "flex" },
                               children: "FlexTab",
                             },
                           },
                           {
                             type: "div",
                             props: {
-                              style: { fontSize: 12, color: "#94a3b8", lineHeight: 1.3 },
+                              style: { fontSize: 12, color: "#94a3b8", lineHeight: 1.3, display: "flex" },
                               children: date,
                             },
                           },
@@ -233,7 +239,7 @@ function buildCardElement(data: CardData) {
               {
                 type: "div",
                 props: {
-                  style: { fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em" },
+                  style: { fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", display: "flex" },
                   children: "Workout",
                 },
               },
@@ -246,7 +252,7 @@ function buildCardElement(data: CardData) {
           type: "div",
           props: {
             style: {
-              display: "flex",
+              display: "flex",        // ✓ multi-child flex-wrap
               flexWrap: "wrap",
               gap: 8,
               marginBottom: 16,
@@ -260,7 +266,7 @@ function buildCardElement(data: CardData) {
                   padding: "14px 8px 10px",
                   textAlign: "center",
                   width: 175,
-                  display: "flex",
+                  display: "flex",    // ✓ multi-child column
                   flexDirection: "column",
                   alignItems: "center",
                 },
@@ -268,14 +274,14 @@ function buildCardElement(data: CardData) {
                   {
                     type: "div",
                     props: {
-                      style: { fontSize: 28, fontWeight: 800, color: "#0f172a", lineHeight: 1 },
+                      style: { fontSize: 28, fontWeight: 800, color: "#0f172a", lineHeight: 1, display: "flex" },
                       children: value,
                     },
                   },
                   {
                     type: "div",
                     props: {
-                      style: { fontSize: 10, fontWeight: 700, color: "#94a3b8", marginTop: 5, textTransform: "uppercase", letterSpacing: "0.07em" },
+                      style: { fontSize: 10, fontWeight: 700, color: "#94a3b8", marginTop: 5, textTransform: "uppercase", letterSpacing: "0.07em", display: "flex" },
                       children: label,
                     },
                   },
@@ -285,28 +291,28 @@ function buildCardElement(data: CardData) {
           },
         },
 
-        // ── Divider ──────────────────────────────────────────────────────────
+        // ── Divider — zero children, display:flex still needed ──────────────
         {
           type: "div",
           props: {
-            style: { height: 1, background: "#f1f5f9", marginBottom: 14 },
+            style: { height: 1, background: "#f1f5f9", marginBottom: 14, display: "flex" },
           },
         },
 
-        // ── Exercises heading ────────────────────────────────────────────────
+        // ── Exercises heading — single text child ────────────────────────────
         {
           type: "div",
           props: {
-            style: { fontSize: 13, fontWeight: 800, color: "#0f172a", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.06em" },
+            style: { fontSize: 13, fontWeight: 800, color: "#0f172a", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "flex" },
             children: "Exercises",
           },
         },
 
-        // ── Exercise rows ────────────────────────────────────────────────────
+        // ── Exercise rows container ──────────────────────────────────────────
         {
           type: "div",
           props: {
-            style: { display: "flex", flexDirection: "column" },
+            style: { display: "flex", flexDirection: "column" }, // ✓ multi-child column
             children: exerciseRows,
           },
         },
@@ -319,7 +325,7 @@ function buildCardElement(data: CardData) {
               marginTop: 14,
               paddingTop: 12,
               borderTop: "1px solid #f1f5f9",
-              display: "flex",
+              display: "flex",        // ✓ required
               alignItems: "center",
               justifyContent: "center",
               gap: 6,
@@ -327,7 +333,7 @@ function buildCardElement(data: CardData) {
             children: {
               type: "div",
               props: {
-                style: { fontSize: 11, color: "#cbd5e1" },
+                style: { fontSize: 11, color: "#cbd5e1", display: "flex" },
                 children: "flextab.app",
               },
             },
