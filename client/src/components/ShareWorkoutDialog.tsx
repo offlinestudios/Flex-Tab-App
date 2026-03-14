@@ -282,24 +282,33 @@ export function ShareWorkoutDialog({
               marginBottom: 4,
             }}
           >
-            {/* ── Header: logo + FlexTab name + date only ── */}
+            {/* ── Header: logo + FlexTab + date (left), userName (right) ── */}
             <div style={{
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'space-between',
               marginBottom: 18,
               paddingBottom: 16,
               borderBottom: `1px solid ${C.divider}`,
-              gap: 10,
             }}>
-              <img
-                src="/flextab-icon.png"
-                alt="FlexTab"
-                style={{ width: 40, height: 40, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }}
-              />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <p style={{ fontSize: 15, fontWeight: 800, color: C.textPrimary, margin: 0, lineHeight: 1 }}>FlexTab</p>
-                <p style={{ fontSize: 11, color: C.textMuted, margin: 0 }}>{formattedDate}</p>
+              {/* Left: logo + app name + date */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <img
+                  src="/flextab-icon.png"
+                  alt="FlexTab"
+                  style={{ width: 40, height: 40, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }}
+                />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <p style={{ fontSize: 15, fontWeight: 800, color: C.textPrimary, margin: 0, lineHeight: 1 }}>FlexTab</p>
+                  <p style={{ fontSize: 11, color: C.textMuted, margin: 0 }}>{formattedDate}</p>
+                </div>
               </div>
+              {/* Right: user name */}
+              {userName && (
+                <p style={{ fontSize: 11, fontWeight: 700, color: C.textMuted, margin: 0, textTransform: 'uppercase', letterSpacing: '0.06em', flexShrink: 0 }}>
+                  {userName}
+                </p>
+              )}
             </div>
 
             {/* Stat tiles — 2×2 grid */}
