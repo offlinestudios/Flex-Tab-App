@@ -594,11 +594,11 @@ export default function Home() {
   };
   const handleCardioSave = async () => {
     if (!cardioEditSheet) return;
-    // Read directly from DOM refs so we always get the latest typed value,
-    // even if onPointerDown fires before the input's blur/onChange commits.
-    const rawDuration = cardioDurationRef.current?.value ?? cardioEditForm.duration;
-    const rawCalories = cardioCaloriesRef.current?.value ?? cardioEditForm.calories;
-    const rawDistance = cardioDistanceRef.current?.value ?? cardioEditForm.distance;
+    // Use React state directly — onClick fires after blur so state is always committed.
+    // Fall back to DOM ref value as a safety net.
+    const rawDuration = cardioEditForm.duration || cardioDurationRef.current?.value || '';
+    const rawCalories = cardioEditForm.calories || cardioCaloriesRef.current?.value || '';
+    const rawDistance = cardioEditForm.distance || cardioDistanceRef.current?.value || '';
     const savedDuration = rawDuration ? parseInt(rawDuration) : undefined;
     const savedDistance = rawDistance ? parseFloat(rawDistance) : undefined;
     const savedDistanceUnit = cardioEditForm.distanceUnit;
@@ -2057,12 +2057,12 @@ export default function Home() {
             </div>
             {/* Save */}
             <button
-              onPointerDown={e => { e.preventDefault(); handleCardioSave(); }}
+              onClick={handleCardioSave}
               style={{ width:'100%', padding:13, background:'var(--foreground)', color:'var(--background)', border:'none', borderRadius:14, fontSize:15, fontWeight:700, cursor:'pointer', fontFamily:'inherit', marginBottom:10 }}
             >Save Changes</button>
             {/* Delete */}
             <button
-              onPointerDown={e => { e.preventDefault(); handleCardioDelete(); }}
+              onClick={handleCardioDelete}
               style={{ width:'100%', padding:13, background:'transparent', color:'#ef4444', border:'1.5px solid #ef4444', borderRadius:14, fontSize:15, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}
             >Delete Exercise Log</button>
           </div>
