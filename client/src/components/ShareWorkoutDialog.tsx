@@ -3,8 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Share2, X, Link } from "lucide-react";
 import { toast } from "sonner";
 import { PRESET_EXERCISES } from "@/lib/exercises";
-import { useState } from "react";
-
+import { useState, useEffect } from "react";
 
 interface SetLog {
   id: string;
@@ -25,15 +24,61 @@ interface ShareWorkoutDialogProps {
   onOpenChange: (open: boolean) => void;
   exercises: SetLog[];
   date: string;
-  duration?: string; // e.g. "36:12"
-  workoutSessionId?: number | null; // ID of the workout session to link to the community post
+  duration?: string;
+  workoutSessionId?: number | null;
 }
+
+// ── Theme palette (mirrors server/workoutCardImage.ts) ───────────────────────
+const THEMES = {
+  light: {
+    cardBg:      '#ffffff',
+    tileBg:      '#f8fafc',
+    pillBg:      '#f1f5f9',
+    divider:     '#f1f5f9',
+    textPrimary: '#0f172a',
+    textMuted:   '#94a3b8',
+    textPill:    '#475569',
+    textFooter:  '#cbd5e1',
+    badgeBg:     '#0f172a',
+    badgeText:   '#ffffff',
+    shadow:      '0 2px 16px rgba(0,0,0,0.08)',
+  },
+  dark: {
+    cardBg:      '#0f172a',
+    tileBg:      '#1e293b',
+    pillBg:      '#1e293b',
+    divider:     '#1e293b',
+    textPrimary: '#f1f5f9',
+    textMuted:   '#64748b',
+    textPill:    '#94a3b8',
+    textFooter:  '#334155',
+    badgeBg:     '#334155',
+    badgeText:   '#f1f5f9',
+    shadow:      '0 2px 24px rgba(0,0,0,0.4)',
+  },
+} as const;
+
+type ThemeKey = keyof typeof THEMES;
 
 export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, duration, workoutSessionId }: ShareWorkoutDialogProps) {
   const [loading, setLoading] = useState<null | 'share'>(null);
 
+  // ── Detect current app theme ─────────────────────────────────────────────────
+  const [theme, setTheme] = useState<ThemeKey>('light');
+  useEffect(() => {
+    const isDark = document.documentElement.classList.contains('dark');
+    setTheme(isDark ? 'dark' : 'light');
 
-  // ── Totals ──────────────────────────────────────────────────────────────────
+    const observer = new MutationObserver(() => {
+      setTheme(document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
+
+  const C = THEMES[theme];
+
+  // ── Totals ───────────────────────────────────────────────────────────────────
   const totalSets = exercises.reduce((sum, e) => sum + e.sets, 0);
   const totalReps = exercises.reduce((sum, e) => sum + e.sets * e.reps, 0);
   const totalVolume = exercises.reduce((sum, e) => sum + e.sets * e.reps * e.weight, 0);
@@ -93,8 +138,7 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
     ? `${(totalVolume / 1000).toFixed(1)}k`
     : totalVolume.toLocaleString();
 
-  // ── Call server to generate PNG ─────────────────────────────────────────────
-  // Returns { dataUri, url, key } — dataUri is always present, url/key may be null if R2 is unavailable
+  // ── Call server to generate PNG ──────────────────────────────────────────────
   const generateCard = async (): Promise<{ dataUri: string; url: string | null; key: string | null }> => {
     const payload = {
       date: formattedDate,
@@ -103,6 +147,7 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
       totalReps,
       volumeDisplay,
       exercises: groupedExercises,
+      theme, // pass current theme to server
     };
 
     const res = await fetch('/api/generate-workout-card', {
@@ -128,7 +173,6 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
       const { dataUri, url } = await generateCard();
 
       if (navigator.share) {
-        // Convert data URI to a File for Web Share API Level 2
         const byteString = atob(dataUri.split(',')[1]);
         const ab = new ArrayBuffer(byteString.length);
         const ia = new Uint8Array(ab);
@@ -146,7 +190,6 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
           // File share not supported — fall through to URL share
         }
 
-        // Fallback: share the R2 URL if available, otherwise the data URI
         await navigator.share({
           title: `FlexTab Workout — ${shortDate}`,
           url: url ?? dataUri,
@@ -154,7 +197,6 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
         });
         toast.success('Shared successfully!');
       } else {
-        // Desktop: copy URL to clipboard
         await navigator.clipboard.writeText(url ?? dataUri);
         toast.success('Image URL copied to clipboard!');
       }
@@ -164,8 +206,6 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
       setLoading(null);
     }
   };
-
-
 
   // ── Stat tiles ───────────────────────────────────────────────────────────────
   const statTiles = [
@@ -203,13 +243,13 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
 
         {/* Scrollable card preview area */}
         <div className="flex-1 overflow-y-auto px-4 pb-2">
-          {/* ── Share card preview (visual only — actual PNG is generated server-side) ── */}
+          {/* ── Share card preview — mirrors the server-rendered PNG ── */}
           <div
             style={{
-              background: '#ffffff',
+              background: C.cardBg,
               borderRadius: 20,
               padding: '20px 20px 16px',
-              boxShadow: '0 2px 16px rgba(0,0,0,0.08)',
+              boxShadow: C.shadow,
               marginBottom: 4,
             }}
           >
@@ -222,12 +262,12 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
                   style={{ width: 32, height: 32, borderRadius: 8, objectFit: 'cover' }}
                 />
                 <div>
-                  <p style={{ fontSize: 15, fontWeight: 800, color: '#0f172a', margin: 0, lineHeight: 1.2 }}>FlexTab</p>
-                  <p style={{ fontSize: 12, color: '#94a3b8', margin: 0, lineHeight: 1.3 }}>{formattedDate}</p>
+                  <p style={{ fontSize: 15, fontWeight: 800, color: C.textPrimary, margin: 0, lineHeight: 1.2 }}>FlexTab</p>
+                  <p style={{ fontSize: 12, color: C.textMuted, margin: 0, lineHeight: 1.3 }}>{formattedDate}</p>
                 </div>
               </div>
               <div style={{ textAlign: 'right' }}>
-                <p style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Workout</p>
+                <p style={{ fontSize: 11, fontWeight: 700, color: C.textMuted, margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Workout</p>
               </div>
             </div>
 
@@ -237,23 +277,23 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
                 <div
                   key={label}
                   style={{
-                    background: '#f8fafc',
+                    background: C.tileBg,
                     borderRadius: 14,
                     padding: '14px 8px 10px',
                     textAlign: 'center',
                   }}
                 >
-                  <p style={{ fontSize: 28, fontWeight: 800, color: '#0f172a', margin: 0, lineHeight: 1 }}>{value}</p>
-                  <p style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', margin: '5px 0 0', textTransform: 'uppercase', letterSpacing: '0.07em' }}>{label}</p>
+                  <p style={{ fontSize: 28, fontWeight: 800, color: C.textPrimary, margin: 0, lineHeight: 1 }}>{value}</p>
+                  <p style={{ fontSize: 10, fontWeight: 700, color: C.textMuted, margin: '5px 0 0', textTransform: 'uppercase', letterSpacing: '0.07em' }}>{label}</p>
                 </div>
               ))}
             </div>
 
             {/* Divider */}
-            <div style={{ height: 1, background: '#f1f5f9', marginBottom: 14 }} />
+            <div style={{ height: 1, background: C.divider, marginBottom: 14 }} />
 
             {/* Exercises section */}
-            <p style={{ fontSize: 13, fontWeight: 800, color: '#0f172a', margin: '0 0 10px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            <p style={{ fontSize: 13, fontWeight: 800, color: C.textPrimary, margin: '0 0 10px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               Exercises
             </p>
             <div>
@@ -265,25 +305,25 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
                     alignItems: 'center',
                     gap: 10,
                     padding: '9px 0',
-                    borderBottom: index < groupedExercises.length - 1 ? '1px solid #f1f5f9' : 'none',
+                    borderBottom: index < groupedExercises.length - 1 ? `1px solid ${C.divider}` : 'none',
                   }}
                 >
                   <div style={{
                     width: 26, height: 26, borderRadius: '50%',
-                    background: '#0f172a', color: '#fff',
+                    background: C.badgeBg, color: C.badgeText,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: 11, fontWeight: 800, flexShrink: 0,
                   }}>
                     {index + 1}
                   </div>
-                  <p style={{ flex: 1, fontSize: 13, fontWeight: 700, color: '#0f172a', margin: 0, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <p style={{ flex: 1, fontSize: 13, fontWeight: 700, color: C.textPrimary, margin: 0, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {exercise.exercise}
                   </p>
                   <div style={{
-                    background: '#f1f5f9', borderRadius: 50,
+                    background: C.pillBg, borderRadius: 50,
                     padding: '4px 10px', flexShrink: 0,
                   }}>
-                    <p style={{ fontSize: 11, fontWeight: 700, color: '#475569', margin: 0, whiteSpace: 'nowrap' }}>
+                    <p style={{ fontSize: 11, fontWeight: 700, color: C.textPill, margin: 0, whiteSpace: 'nowrap' }}>
                       {exercise.category === 'Cardio'
                         ? [
                             exercise.duration ? `${exercise.duration} min` : '',
@@ -300,17 +340,15 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
             </div>
 
             {/* Footer */}
-            <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-              <Link style={{ width: 12, height: 12, color: '#cbd5e1' }} />
-              <p style={{ fontSize: 11, color: '#cbd5e1', margin: 0 }}>flextab.app</p>
+            <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${C.divider}`, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+              <Link style={{ width: 12, height: 12, color: C.textFooter }} />
+              <p style={{ fontSize: 11, color: C.textFooter, margin: 0 }}>flextab.app</p>
             </div>
           </div>
         </div>
 
         {/* Action buttons */}
         <div style={{ padding: '8px 16px calc(16px + env(safe-area-inset-bottom))', background: 'var(--background)', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
-
-          {/* Share via native share sheet */}
           <Button
             onClick={handleShare}
             disabled={loading !== null}
@@ -320,9 +358,6 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
             <Share2 className="w-4 h-4 mr-2" />
             {loading === 'share' ? 'Preparing…' : 'Share via…'}
           </Button>
-
-
-
         </div>
       </DialogContent>
     </Dialog>

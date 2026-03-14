@@ -22,6 +22,36 @@ const fontExtraBold = fontBold; // Use bold as fallback for extra-bold
 // ── FlexTab logo ─────────────────────────────────────────────────────────────
 const LOGO_DATA_URI = FLEXTAB_ICON_B64;
 
+// ── Theme palettes ────────────────────────────────────────────────────────────
+const THEMES = {
+  light: {
+    cardBg:        "#ffffff",
+    tileBg:        "#f8fafc",
+    pillBg:        "#f1f5f9",
+    divider:       "#f1f5f9",
+    textPrimary:   "#0f172a",
+    textMuted:     "#94a3b8",
+    textPill:      "#475569",
+    textFooter:    "#cbd5e1",
+    badgeBg:       "#0f172a",
+    badgeText:     "#ffffff",
+  },
+  dark: {
+    cardBg:        "#0f172a",
+    tileBg:        "#1e293b",
+    pillBg:        "#1e293b",
+    divider:       "#1e293b",
+    textPrimary:   "#f1f5f9",
+    textMuted:     "#64748b",
+    textPill:      "#94a3b8",
+    textFooter:    "#334155",
+    badgeBg:       "#334155",
+    badgeText:     "#f1f5f9",
+  },
+} as const;
+
+type Theme = keyof typeof THEMES;
+
 // ── Types ────────────────────────────────────────────────────────────────────
 interface ExerciseRow {
   exercise: string;
@@ -41,11 +71,13 @@ interface CardData {
   totalReps: number;
   volumeDisplay: string;  // e.g. "13.8k"
   exercises: ExerciseRow[];
+  theme?: Theme;          // "light" (default) | "dark"
 }
 
 // ── Build the satori element tree ────────────────────────────────────────────
 function buildCardElement(data: CardData) {
   const { date, duration, totalSets, totalReps, volumeDisplay, exercises } = data;
+  const C = THEMES[data.theme === "dark" ? "dark" : "light"];
 
   const statTiles = [
     { value: duration || "—", label: "DURATION" },
@@ -74,15 +106,15 @@ function buildCardElement(data: CardData) {
       type: "div",
       props: {
         style: {
-          display: "flex",          // ✓ multi-child row
+          display: "flex",
           alignItems: "center",
           gap: 10,
           paddingTop: 9,
           paddingBottom: 9,
-          borderBottom: isLast ? "none" : "1px solid #f1f5f9",
+          borderBottom: isLast ? "none" : `1px solid ${C.divider}`,
         },
         children: [
-          // Number badge — single text child, display:flex for centering
+          // Number badge
           {
             type: "div",
             props: {
@@ -90,8 +122,8 @@ function buildCardElement(data: CardData) {
                 width: 26,
                 height: 26,
                 borderRadius: 13,
-                background: "#0f172a",
-                color: "#fff",
+                background: C.badgeBg,
+                color: C.badgeText,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -102,7 +134,7 @@ function buildCardElement(data: CardData) {
               children: String(i + 1),
             },
           },
-          // Exercise name — single text child
+          // Exercise name
           {
             type: "div",
             props: {
@@ -110,7 +142,7 @@ function buildCardElement(data: CardData) {
                 flex: 1,
                 fontSize: 13,
                 fontWeight: 700,
-                color: "#0f172a",
+                color: C.textPrimary,
                 overflow: "hidden",
                 display: "flex",
                 alignItems: "center",
@@ -118,19 +150,19 @@ function buildCardElement(data: CardData) {
               children: ex.exercise.length > 22 ? ex.exercise.slice(0, 21) + "…" : ex.exercise,
             },
           },
-          // Pill container — single child div inside, display:flex required
+          // Pill
           {
             type: "div",
             props: {
               style: {
-                background: "#f1f5f9",
+                background: C.pillBg,
                 borderRadius: 50,
                 paddingTop: 4,
                 paddingBottom: 4,
                 paddingLeft: 10,
                 paddingRight: 10,
                 flexShrink: 0,
-                display: "flex",       // ✓ required even for single child
+                display: "flex",
                 alignItems: "center",
               },
               children: {
@@ -139,7 +171,7 @@ function buildCardElement(data: CardData) {
                   style: {
                     fontSize: 11,
                     fontWeight: 700,
-                    color: "#475569",
+                    color: C.textPill,
                     whiteSpace: "nowrap",
                     display: "flex",
                     alignItems: "center",
@@ -154,13 +186,45 @@ function buildCardElement(data: CardData) {
     };
   });
 
+  // Helper to build a stat tile
+  const makeTile = ({ value, label }: { value: string; label: string }) => ({
+    type: "div",
+    props: {
+      style: {
+        background: C.tileBg,
+        borderRadius: 14,
+        padding: "14px 8px 10px",
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+      },
+      children: [
+        {
+          type: "div",
+          props: {
+            style: { fontSize: 28, fontWeight: 800, color: C.textPrimary, lineHeight: 1, display: "flex" },
+            children: value,
+          },
+        },
+        {
+          type: "div",
+          props: {
+            style: { fontSize: 10, fontWeight: 700, color: C.textMuted, marginTop: 5, textTransform: "uppercase", letterSpacing: "0.07em", display: "flex" },
+            children: label,
+          },
+        },
+      ],
+    },
+  });
+
   return {
     type: "div",
     props: {
       style: {
-        display: "flex",              // ✓ root multi-child column
+        display: "flex",
         flexDirection: "column",
-        background: "#ffffff",
+        background: C.cardBg,
         borderRadius: 20,
         padding: "20px 20px 16px",
         width: 390,
@@ -172,7 +236,7 @@ function buildCardElement(data: CardData) {
           type: "div",
           props: {
             style: {
-              display: "flex",        // ✓ multi-child row
+              display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
               marginBottom: 16,
@@ -181,7 +245,7 @@ function buildCardElement(data: CardData) {
               {
                 type: "div",
                 props: {
-                  style: { display: "flex", alignItems: "center", gap: 10 }, // ✓
+                  style: { display: "flex", alignItems: "center", gap: 10 },
                   children: [
                     LOGO_DATA_URI
                       ? {
@@ -200,11 +264,11 @@ function buildCardElement(data: CardData) {
                               width: 32,
                               height: 32,
                               borderRadius: 8,
-                              background: "#0f172a",
+                              background: C.badgeBg,
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
-                              color: "#fff",
+                              color: C.badgeText,
                               fontSize: 14,
                               fontWeight: 800,
                             },
@@ -214,19 +278,19 @@ function buildCardElement(data: CardData) {
                     {
                       type: "div",
                       props: {
-                        style: { display: "flex", flexDirection: "column" }, // ✓ multi-child column
+                        style: { display: "flex", flexDirection: "column" },
                         children: [
                           {
                             type: "div",
                             props: {
-                              style: { fontSize: 15, fontWeight: 800, color: "#0f172a", lineHeight: 1.2, display: "flex" },
+                              style: { fontSize: 15, fontWeight: 800, color: C.textPrimary, lineHeight: 1.2, display: "flex" },
                               children: "FlexTab",
                             },
                           },
                           {
                             type: "div",
                             props: {
-                              style: { fontSize: 12, color: "#94a3b8", lineHeight: 1.3, display: "flex" },
+                              style: { fontSize: 12, color: C.textMuted, lineHeight: 1.3, display: "flex" },
                               children: date,
                             },
                           },
@@ -239,7 +303,7 @@ function buildCardElement(data: CardData) {
               {
                 type: "div",
                 props: {
-                  style: { fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", display: "flex" },
+                  style: { fontSize: 11, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.05em", display: "flex" },
                   children: "Workout",
                 },
               },
@@ -263,36 +327,7 @@ function buildCardElement(data: CardData) {
                 type: "div",
                 props: {
                   style: { display: "flex", flexDirection: "row", gap: 8 },
-                  children: statTiles.slice(0, 2).map(({ value, label }) => ({
-                    type: "div",
-                    props: {
-                      style: {
-                        background: "#f8fafc",
-                        borderRadius: 14,
-                        padding: "14px 8px 10px",
-                        flex: 1,
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                      },
-                      children: [
-                        {
-                          type: "div",
-                          props: {
-                            style: { fontSize: 28, fontWeight: 800, color: "#0f172a", lineHeight: 1, display: "flex" },
-                            children: value,
-                          },
-                        },
-                        {
-                          type: "div",
-                          props: {
-                            style: { fontSize: 10, fontWeight: 700, color: "#94a3b8", marginTop: 5, textTransform: "uppercase", letterSpacing: "0.07em", display: "flex" },
-                            children: label,
-                          },
-                        },
-                      ],
-                    },
-                  })),
+                  children: statTiles.slice(0, 2).map(makeTile),
                 },
               },
               // Row 2: Reps + Volume
@@ -300,55 +335,26 @@ function buildCardElement(data: CardData) {
                 type: "div",
                 props: {
                   style: { display: "flex", flexDirection: "row", gap: 8 },
-                  children: statTiles.slice(2, 4).map(({ value, label }) => ({
-                    type: "div",
-                    props: {
-                      style: {
-                        background: "#f8fafc",
-                        borderRadius: 14,
-                        padding: "14px 8px 10px",
-                        flex: 1,
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                      },
-                      children: [
-                        {
-                          type: "div",
-                          props: {
-                            style: { fontSize: 28, fontWeight: 800, color: "#0f172a", lineHeight: 1, display: "flex" },
-                            children: value,
-                          },
-                        },
-                        {
-                          type: "div",
-                          props: {
-                            style: { fontSize: 10, fontWeight: 700, color: "#94a3b8", marginTop: 5, textTransform: "uppercase", letterSpacing: "0.07em", display: "flex" },
-                            children: label,
-                          },
-                        },
-                      ],
-                    },
-                  })),
+                  children: statTiles.slice(2, 4).map(makeTile),
                 },
               },
             ],
           },
         },
 
-        // ── Divider — zero children, display:flex still needed ──────────────
+        // ── Divider ──────────────────────────────────────────────────────────
         {
           type: "div",
           props: {
-            style: { height: 1, background: "#f1f5f9", marginBottom: 14, display: "flex" },
+            style: { height: 1, background: C.divider, marginBottom: 14, display: "flex" },
           },
         },
 
-        // ── Exercises heading — single text child ────────────────────────────
+        // ── Exercises heading ────────────────────────────────────────────────
         {
           type: "div",
           props: {
-            style: { fontSize: 13, fontWeight: 800, color: "#0f172a", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "flex" },
+            style: { fontSize: 13, fontWeight: 800, color: C.textPrimary, marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "flex" },
             children: "Exercises",
           },
         },
@@ -357,7 +363,7 @@ function buildCardElement(data: CardData) {
         {
           type: "div",
           props: {
-            style: { display: "flex", flexDirection: "column" }, // ✓ multi-child column
+            style: { display: "flex", flexDirection: "column" },
             children: exerciseRows,
           },
         },
@@ -369,8 +375,8 @@ function buildCardElement(data: CardData) {
             style: {
               marginTop: 14,
               paddingTop: 12,
-              borderTop: "1px solid #f1f5f9",
-              display: "flex",        // ✓ required
+              borderTop: `1px solid ${C.divider}`,
+              display: "flex",
               alignItems: "center",
               justifyContent: "center",
               gap: 6,
@@ -378,7 +384,7 @@ function buildCardElement(data: CardData) {
             children: {
               type: "div",
               props: {
-                style: { fontSize: 11, color: "#cbd5e1", display: "flex" },
+                style: { fontSize: 11, color: C.textFooter, display: "flex" },
                 children: "flextab.app",
               },
             },
@@ -396,10 +402,6 @@ export async function handleGenerateWorkoutCard(req: Request, res: Response) {
     if (!data || !data.exercises || !Array.isArray(data.exercises)) {
       return res.status(400).json({ error: "Invalid card data" });
     }
-    console.log('[workout-card] R2_ACCOUNT_ID:', process.env.R2_ACCOUNT_ID ? 'Set' : 'MISSING');
-    console.log('[workout-card] R2_ACCESS_KEY_ID:', process.env.R2_ACCESS_KEY_ID ? 'Set' : 'MISSING');
-    console.log('[workout-card] R2_SECRET_ACCESS_KEY:', process.env.R2_SECRET_ACCESS_KEY ? 'Set' : 'MISSING');
-    console.log('[workout-card] R2_BUCKET_NAME:', process.env.R2_BUCKET_NAME || '(default: flextab-storage)');
 
     // Lazy-load satori and resvg to avoid issues at module load time
     const { default: satori } = await import("satori");
@@ -439,7 +441,6 @@ export async function handleGenerateWorkoutCard(req: Request, res: Response) {
       key = r2Key;
     } catch (r2Err: any) {
       console.warn('[workout-card] R2 upload failed (non-fatal):', r2Err?.message);
-      console.warn('[workout-card] R2 error stack:', r2Err?.stack?.split('\n')[0]);
     }
 
     return res.json({ url, key, dataUri });
