@@ -294,7 +294,7 @@ export function ShareWorkoutDialog({
               {/* Left: logo + app name + date */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <img
-                  src="/flextab-icon.png"
+                  src={theme === 'dark' ? '/flextab-icon-white.png' : '/flextab-icon.png'}
                   alt="FlexTab"
                   style={{ width: 40, height: 40, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }}
                 />

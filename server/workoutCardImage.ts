@@ -12,7 +12,7 @@
 import { Request, Response } from "express";
 import { storagePut } from "./storage.js";
 import { INTER_REGULAR_B64, INTER_BOLD_B64 } from "./fontData.js";
-import { FLEXTAB_ICON_B64 } from "../client/src/lib/flextabIconB64.js";
+import { FLEXTAB_ICON_B64, FLEXTAB_ICON_WHITE_B64 } from "../client/src/lib/flextabIconB64.js";
 
 // ── Fonts (decoded from embedded base64 — no file system access needed) ──────
 const fontRegular = Buffer.from(INTER_REGULAR_B64, "base64");
@@ -21,6 +21,7 @@ const fontExtraBold = fontBold; // Use bold as fallback for extra-bold
 
 // ── FlexTab logo ─────────────────────────────────────────────────────────────
 const LOGO_DATA_URI = FLEXTAB_ICON_B64;
+const LOGO_WHITE_DATA_URI = FLEXTAB_ICON_WHITE_B64;
 
 // ── Theme palettes ────────────────────────────────────────────────────────────
 const THEMES = {
@@ -264,35 +265,26 @@ function buildCardElement(data: CardData) {
           props: {
             style: { display: "flex", alignItems: "center", gap: 10 },
             children: [
-              // Logo
-              LOGO_DATA_URI
-                ? {
-                    type: "div",
+              // Logo — use white version on dark theme
+              {
+                type: "div",
+                props: {
+                  style: {
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    width: 40, height: 40, borderRadius: 10,
+                    background: "transparent",
+                    flexShrink: 0,
+                  },
+                  children: {
+                    type: "img",
                     props: {
-                      style: {
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        width: 40, height: 40, borderRadius: 10,
-                        background: data.theme === "dark" ? "#ffffff" : "transparent",
-                        flexShrink: 0,
-                      },
-                      children: {
-                        type: "img",
-                        props: { src: LOGO_DATA_URI, width: 36, height: 36, style: { borderRadius: 8 } },
-                      },
-                    },
-                  }
-                : {
-                    type: "div",
-                    props: {
-                      style: {
-                        width: 40, height: 40, borderRadius: 10,
-                        background: C.badgeBg, display: "flex",
-                        alignItems: "center", justifyContent: "center",
-                        color: C.badgeText, fontSize: 18, fontWeight: 800, flexShrink: 0,
-                      },
-                      children: "F",
+                      src: data.theme === "dark" ? LOGO_WHITE_DATA_URI : LOGO_DATA_URI,
+                      width: 36, height: 36,
+                      style: { borderRadius: 8 },
                     },
                   },
+                },
+              },
               // App name + date stacked
               {
                 type: "div",
