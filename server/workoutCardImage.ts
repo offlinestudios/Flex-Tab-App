@@ -44,7 +44,7 @@ const THEMES = {
     textPrimary:   "#f1f5f9",
     textMuted:     "#64748b",
     textPill:      "#94a3b8",
-    textFooter:    "#334155",
+    textFooter:    "#94a3b8",
     badgeBg:       "#334155",
     badgeText:     "#f1f5f9",
   },
@@ -249,12 +249,27 @@ function buildCardElement(data: CardData) {
                   children: [
                     LOGO_DATA_URI
                       ? {
-                          type: "img",
+                          type: "div",
                           props: {
-                            src: LOGO_DATA_URI,
-                            width: 32,
-                            height: 32,
-                            style: { borderRadius: 8 },
+                            style: {
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              width: 36,
+                              height: 36,
+                              borderRadius: 8,
+                              background: data.theme === "dark" ? "#ffffff" : "transparent",
+                              padding: data.theme === "dark" ? 2 : 0,
+                            },
+                            children: {
+                              type: "img",
+                              props: {
+                                src: LOGO_DATA_URI,
+                                width: 32,
+                                height: 32,
+                                style: { borderRadius: 6 },
+                              },
+                            },
                           },
                         }
                       : {
