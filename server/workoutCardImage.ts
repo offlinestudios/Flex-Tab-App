@@ -38,6 +38,7 @@ const THEMES = {
     badgeText:     "#ffffff",
     gradeBg:       "#f1f5f9",
     gradeText:     "#475569",
+    headerDivider: "#e2e8f0",
   },
   dark: {
     outerBg:      "#0f172a",  // opaque outer canvas (no transparency)
@@ -53,6 +54,7 @@ const THEMES = {
     badgeText:     "#f1f5f9",
     gradeBg:       "#1e293b",
     gradeText:     "#94a3b8",
+    headerDivider: "#1e293b",
   },
 } as const;
 
@@ -236,90 +238,196 @@ function buildCardElement(data: CardData) {
     },
   });
 
-  // ── User info row (name + grade badge) — only rendered when userName is provided ──
-  const userInfoRow = userName
+  // ── Grade badge pill ──────────────────────────────────────────────────────
+  const gradeBadge = lifterGrade
     ? {
         type: "div",
         props: {
           style: {
+            background: C.gradeBg,
+            borderRadius: 50,
+            paddingTop: 3,
+            paddingBottom: 3,
+            paddingLeft: 9,
+            paddingRight: 9,
             display: "flex",
             alignItems: "center",
-            gap: 8,
-            marginBottom: 14,
-            paddingBottom: 14,
-            borderBottom: `1px solid ${C.divider}`,
+            gap: 5,
+            flexShrink: 0,
           },
           children: [
-            // Name
             {
               type: "div",
               props: {
                 style: {
-                  fontSize: 14,
-                  fontWeight: 800,
-                  color: C.textPrimary,
-                  flex: 1,
+                  width: 6,
+                  height: 6,
+                  borderRadius: 3,
+                  background: gradeColor,
                   display: "flex",
-                  alignItems: "center",
+                  flexShrink: 0,
                 },
-                children: userName,
               },
             },
-            // Grade badge (only if lifterGrade is provided)
-            ...(lifterGrade
-              ? [
-                  {
-                    type: "div",
-                    props: {
-                      style: {
-                        background: C.gradeBg,
-                        borderRadius: 50,
-                        paddingTop: 4,
-                        paddingBottom: 4,
-                        paddingLeft: 10,
-                        paddingRight: 10,
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 5,
-                        flexShrink: 0,
-                      },
-                      children: [
-                        // Coloured dot
-                        {
-                          type: "div",
-                          props: {
-                            style: {
-                              width: 7,
-                              height: 7,
-                              borderRadius: 4,
-                              background: gradeColor,
-                              display: "flex",
-                              flexShrink: 0,
-                            },
-                          },
-                        },
-                        // Grade label
-                        {
-                          type: "div",
-                          props: {
-                            style: {
-                              fontSize: 11,
-                              fontWeight: 700,
-                              color: gradeColor,
-                              display: "flex",
-                            },
-                            children: lifterGrade,
-                          },
-                        },
-                      ],
-                    },
-                  },
-                ]
-              : []),
+            {
+              type: "div",
+              props: {
+                style: {
+                  fontSize: 10,
+                  fontWeight: 700,
+                  color: gradeColor,
+                  display: "flex",
+                  letterSpacing: "0.03em",
+                },
+                children: lifterGrade.toUpperCase(),
+              },
+            },
           ],
         },
       }
     : null;
+
+  // ── Unified header ────────────────────────────────────────────────────────
+  // Layout:
+  //   [Logo]  [FlexTab (bold) · date (muted)]          [WORKOUT]
+  //           [User name (large)]  [grade badge]
+  //
+  // The logo is vertically centred against the two text lines on the left.
+  // "WORKOUT" sits at the top-right, aligned to the first text line.
+  const headerElement = {
+    type: "div",
+    props: {
+      style: {
+        display: "flex",
+        alignItems: "flex-start",
+        justifyContent: "space-between",
+        marginBottom: 18,
+        paddingBottom: 16,
+        borderBottom: `1px solid ${C.headerDivider}`,
+      },
+      children: [
+        // Left: logo + text block
+        {
+          type: "div",
+          props: {
+            style: { display: "flex", alignItems: "flex-start", gap: 11 },
+            children: [
+              // Logo — vertically centred against the two-line text block
+              {
+                type: "div",
+                props: {
+                  style: {
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: 40,
+                    height: 40,
+                    borderRadius: 10,
+                    background: data.theme === "dark" ? "#ffffff" : "transparent",
+                    marginTop: 2,
+                    flexShrink: 0,
+                  },
+                  children: LOGO_DATA_URI
+                    ? {
+                        type: "img",
+                        props: {
+                          src: LOGO_DATA_URI,
+                          width: 36,
+                          height: 36,
+                          style: { borderRadius: 8 },
+                        },
+                      }
+                    : {
+                        type: "div",
+                        props: {
+                          style: {
+                            width: 36,
+                            height: 36,
+                            borderRadius: 8,
+                            background: C.badgeBg,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: C.badgeText,
+                            fontSize: 16,
+                            fontWeight: 800,
+                          },
+                          children: "F",
+                        },
+                      },
+                },
+              },
+              // Text block: app name + date row, then name + grade row
+              {
+                type: "div",
+                props: {
+                  style: { display: "flex", flexDirection: "column", gap: 4 },
+                  children: [
+                    // Row 1: "FlexTab" · date
+                    {
+                      type: "div",
+                      props: {
+                        style: { display: "flex", alignItems: "baseline", gap: 7 },
+                        children: [
+                          {
+                            type: "div",
+                            props: {
+                              style: { fontSize: 14, fontWeight: 800, color: C.textPrimary, display: "flex", lineHeight: 1 },
+                              children: "FlexTab",
+                            },
+                          },
+                          {
+                            type: "div",
+                            props: {
+                              style: { fontSize: 11, color: C.textMuted, display: "flex", lineHeight: 1 },
+                              children: date,
+                            },
+                          },
+                        ],
+                      },
+                    },
+                    // Row 2: user name (large) + grade badge
+                    {
+                      type: "div",
+                      props: {
+                        style: { display: "flex", alignItems: "center", gap: 8 },
+                        children: [
+                          {
+                            type: "div",
+                            props: {
+                              style: { fontSize: 20, fontWeight: 800, color: C.textPrimary, display: "flex", lineHeight: 1.1 },
+                              children: userName || "Athlete",
+                            },
+                          },
+                          ...(gradeBadge ? [gradeBadge] : []),
+                        ],
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        },
+        // Right: "WORKOUT" label — top-aligned
+        {
+          type: "div",
+          props: {
+            style: {
+              fontSize: 10,
+              fontWeight: 700,
+              color: C.textMuted,
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+              display: "flex",
+              marginTop: 4,
+            },
+            children: "Workout",
+          },
+        },
+      ],
+    },
+  };
 
   // ── Root card element ─────────────────────────────────────────────────────
   // The outermost div fills the entire satori canvas with an opaque background
@@ -348,103 +456,8 @@ function buildCardElement(data: CardData) {
             fontFamily: "Inter",
           },
           children: [
-            // ── Header ──────────────────────────────────────────────────────────
-            {
-              type: "div",
-              props: {
-                style: {
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  marginBottom: 16,
-                },
-                children: [
-                  {
-                    type: "div",
-                    props: {
-                      style: { display: "flex", alignItems: "center", gap: 10 },
-                      children: [
-                        LOGO_DATA_URI
-                          ? {
-                              type: "div",
-                              props: {
-                                style: {
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  width: 36,
-                                  height: 36,
-                                  borderRadius: 8,
-                                  background: data.theme === "dark" ? "#ffffff" : "transparent",
-                                  padding: data.theme === "dark" ? 2 : 0,
-                                },
-                                children: {
-                                  type: "img",
-                                  props: {
-                                    src: LOGO_DATA_URI,
-                                    width: 32,
-                                    height: 32,
-                                    style: { borderRadius: 6 },
-                                  },
-                                },
-                              },
-                            }
-                          : {
-                              type: "div",
-                              props: {
-                                style: {
-                                  width: 32,
-                                  height: 32,
-                                  borderRadius: 8,
-                                  background: C.badgeBg,
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  color: C.badgeText,
-                                  fontSize: 14,
-                                  fontWeight: 800,
-                                },
-                                children: "F",
-                              },
-                            },
-                        {
-                          type: "div",
-                          props: {
-                            style: { display: "flex", flexDirection: "column" },
-                            children: [
-                              {
-                                type: "div",
-                                props: {
-                                  style: { fontSize: 15, fontWeight: 800, color: C.textPrimary, lineHeight: 1.2, display: "flex" },
-                                  children: "FlexTab",
-                                },
-                              },
-                              {
-                                type: "div",
-                                props: {
-                                  style: { fontSize: 12, color: C.textMuted, lineHeight: 1.3, display: "flex" },
-                                  children: date,
-                                },
-                              },
-                            ],
-                          },
-                        },
-                      ],
-                    },
-                  },
-                  {
-                    type: "div",
-                    props: {
-                      style: { fontSize: 11, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.05em", display: "flex" },
-                      children: "Workout",
-                    },
-                  },
-                ],
-              },
-            },
-
-            // ── User info row (name + grade) — only when provided ────────────
-            ...(userInfoRow ? [userInfoRow] : []),
+            // ── Unified header ───────────────────────────────────────────────
+            headerElement,
 
             // ── Stat tiles 2×2 (two explicit rows — satori does not support flexWrap) ──
             {
@@ -546,10 +559,9 @@ export async function handleGenerateWorkoutCard(req: Request, res: Response) {
 
     const cardElement = buildCardElement(data);
 
-    // Compute card height dynamically: header + user-info row (if present) + tiles + divider + exercises + footer
-    const userInfoHeight = data.userName ? 46 : 0; // row height + bottom margin/border
+    // Compute card height dynamically: header + tiles + divider + exercises + footer
     const exerciseHeight = Math.max(data.exercises.length, 1) * 47;
-    const cardHeight = 80 + userInfoHeight + 160 + 20 + 30 + exerciseHeight + 50 + 40;
+    const cardHeight = 96 + 160 + 20 + 30 + exerciseHeight + 50 + 40;
 
     const svg = await satori(cardElement as any, {
       width: 390,

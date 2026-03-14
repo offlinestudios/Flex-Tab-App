@@ -282,61 +282,65 @@ export function ShareWorkoutDialog({
               marginBottom: 4,
             }}
           >
-            {/* Card header: logo + date */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {/* ── Unified header: logo · app name + date · user name + grade · WORKOUT label ── */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              justifyContent: 'space-between',
+              marginBottom: 18,
+              paddingBottom: 16,
+              borderBottom: `1px solid ${C.divider}`,
+            }}>
+              {/* Left: logo + text block */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 11 }}>
+                {/* Logo */}
                 <img
                   src="/flextab-icon.png"
                   alt="FlexTab"
-                  style={{ width: 32, height: 32, borderRadius: 8, objectFit: 'cover' }}
+                  style={{ width: 40, height: 40, borderRadius: 10, objectFit: 'cover', marginTop: 2, flexShrink: 0 }}
                 />
-                <div>
-                  <p style={{ fontSize: 15, fontWeight: 800, color: C.textPrimary, margin: 0, lineHeight: 1.2 }}>FlexTab</p>
-                  <p style={{ fontSize: 12, color: C.textMuted, margin: 0, lineHeight: 1.3 }}>{formattedDate}</p>
+                {/* Text block */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {/* Row 1: app name · date */}
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 7 }}>
+                    <p style={{ fontSize: 14, fontWeight: 800, color: C.textPrimary, margin: 0, lineHeight: 1 }}>FlexTab</p>
+                    <p style={{ fontSize: 11, color: C.textMuted, margin: 0, lineHeight: 1 }}>{formattedDate}</p>
+                  </div>
+                  {/* Row 2: user name + grade badge */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <p style={{ fontSize: 20, fontWeight: 800, color: C.textPrimary, margin: 0, lineHeight: 1.1 }}>
+                      {userName || 'Athlete'}
+                    </p>
+                    {lifterGrade && (
+                      <div style={{
+                        background: C.gradeBg,
+                        borderRadius: 50,
+                        padding: '3px 9px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 5,
+                        flexShrink: 0,
+                      }}>
+                        <div style={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: '50%',
+                          background: gradeColor,
+                          flexShrink: 0,
+                        }} />
+                        <p style={{ fontSize: 10, fontWeight: 700, color: gradeColor, margin: 0, whiteSpace: 'nowrap', letterSpacing: '0.03em' }}>
+                          {lifterGrade.toUpperCase()}
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-              <div style={{ textAlign: 'right' }}>
-                <p style={{ fontSize: 11, fontWeight: 700, color: C.textMuted, margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Workout</p>
-              </div>
+              {/* Right: WORKOUT label — top-aligned */}
+              <p style={{ fontSize: 10, fontWeight: 700, color: C.textMuted, margin: '4px 0 0', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                Workout
+              </p>
             </div>
-
-            {/* User info row (name + grade badge) — only when userName is provided */}
-            {userName && (
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                marginBottom: 14,
-                paddingBottom: 14,
-                borderBottom: `1px solid ${C.divider}`,
-              }}>
-                <p style={{ flex: 1, fontSize: 14, fontWeight: 800, color: C.textPrimary, margin: 0 }}>
-                  {userName}
-                </p>
-                {lifterGrade && (
-                  <div style={{
-                    background: C.gradeBg,
-                    borderRadius: 50,
-                    padding: '4px 10px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 5,
-                    flexShrink: 0,
-                  }}>
-                    <div style={{
-                      width: 7,
-                      height: 7,
-                      borderRadius: '50%',
-                      background: gradeColor,
-                      flexShrink: 0,
-                    }} />
-                    <p style={{ fontSize: 11, fontWeight: 700, color: gradeColor, margin: 0, whiteSpace: 'nowrap' }}>
-                      {lifterGrade}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
 
             {/* Stat tiles — 2×2 grid */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
