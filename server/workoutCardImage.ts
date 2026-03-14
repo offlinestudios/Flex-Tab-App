@@ -209,7 +209,7 @@ function buildCardElement(data: CardData) {
     },
   });
 
-  // ── Grade badge ───────────────────────────────────────────────────────────
+  // ── Grade badge (used in user info row) ───────────────────────────────────
   const gradeBadge = lifterGrade
     ? {
         type: "div",
@@ -245,119 +245,139 @@ function buildCardElement(data: CardData) {
     : null;
 
   // ── Header ────────────────────────────────────────────────────────────────
-  // Layout (Strava-style athlete card):
+  // Original layout restored:
   //
   //   ┌──────────────────────────────────────────────┐
-  //   │  JULIAN ROSS          ● INTERMEDIATE         │
-  //   │  WORKOUT  ·  Wed, Mar 11, 2026               │
-  //   │                                    [Logo]    │
+  //   │  [Logo]  FlexTab               WORKOUT       │
+  //   │          Wednesday, Mar 11, 2026             │
+  //   ├──────────────────────────────────────────────┤
+  //   │  Julian Ross          ● INTERMEDIATE         │  ← only when userName set
   //   └──────────────────────────────────────────────┘
-  //
-  // Name is the largest element. Grade badge sits inline.
-  // App name + date are a small sub-line. Logo is a right-side watermark.
   const headerElement = {
     type: "div",
     props: {
       style: {
         display: "flex",
-        alignItems: "flex-start",
-        justifyContent: "space-between",
+        flexDirection: "column",
         marginBottom: 18,
         paddingBottom: 16,
         borderBottom: `1px solid ${C.headerDivider}`,
+        gap: 10,
       },
       children: [
-        // Left column: name + grade, then sub-line
+        // ── Top row: logo + app name/date + WORKOUT label ─────────────────
         {
           type: "div",
           props: {
-            style: { display: "flex", flexDirection: "column", gap: 5, flex: 1 },
+            style: {
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            },
             children: [
-              // Row 1: name (hero) + grade badge
+              // Left: logo + text
               {
                 type: "div",
                 props: {
-                  style: { display: "flex", alignItems: "center", gap: 8 },
+                  style: { display: "flex", alignItems: "center", gap: 10 },
+                  children: [
+                    // Logo
+                    LOGO_DATA_URI
+                      ? {
+                          type: "div",
+                          props: {
+                            style: {
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                              width: 40, height: 40, borderRadius: 10,
+                              background: data.theme === "dark" ? "#ffffff" : "transparent",
+                              flexShrink: 0,
+                            },
+                            children: {
+                              type: "img",
+                              props: { src: LOGO_DATA_URI, width: 36, height: 36, style: { borderRadius: 8 } },
+                            },
+                          },
+                        }
+                      : {
+                          type: "div",
+                          props: {
+                            style: {
+                              width: 40, height: 40, borderRadius: 10,
+                              background: C.badgeBg, display: "flex",
+                              alignItems: "center", justifyContent: "center",
+                              color: C.badgeText, fontSize: 18, fontWeight: 800, flexShrink: 0,
+                            },
+                            children: "F",
+                          },
+                        },
+                    // App name + date stacked
+                    {
+                      type: "div",
+                      props: {
+                        style: { display: "flex", flexDirection: "column", gap: 2 },
+                        children: [
+                          {
+                            type: "div",
+                            props: {
+                              style: { fontSize: 15, fontWeight: 800, color: C.textPrimary, display: "flex" },
+                              children: "FlexTab",
+                            },
+                          },
+                          {
+                            type: "div",
+                            props: {
+                              style: { fontSize: 11, color: C.textMuted, display: "flex" },
+                              children: date,
+                            },
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+              },
+              // Right: WORKOUT label
+              {
+                type: "div",
+                props: {
+                  style: {
+                    fontSize: 11, fontWeight: 700, color: C.textMuted,
+                    textTransform: "uppercase", letterSpacing: "0.08em", display: "flex",
+                  },
+                  children: "Workout",
+                },
+              },
+            ],
+          },
+        },
+
+        // ── User info row (only when userName is provided) ─────────────────
+        ...(userName
+          ? [
+              {
+                type: "div",
+                props: {
+                  style: {
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    paddingTop: 6,
+                    borderTop: `1px solid ${C.divider}`,
+                  },
                   children: [
                     {
                       type: "div",
                       props: {
-                        style: {
-                          fontSize: 22, fontWeight: 800, color: C.textPrimary,
-                          display: "flex", lineHeight: 1, letterSpacing: "-0.01em",
-                        },
-                        children: (userName || "Athlete").toUpperCase(),
+                        style: { fontSize: 14, fontWeight: 800, color: C.textPrimary, display: "flex" },
+                        children: userName,
                       },
                     },
                     ...(gradeBadge ? [gradeBadge] : []),
                   ],
                 },
               },
-              // Row 2: "WORKOUT · date" — small muted sub-line
-              {
-                type: "div",
-                props: {
-                  style: { display: "flex", alignItems: "center", gap: 5 },
-                  children: [
-                    {
-                      type: "div",
-                      props: {
-                        style: {
-                          fontSize: 10, fontWeight: 700, color: C.textMuted,
-                          textTransform: "uppercase", letterSpacing: "0.07em", display: "flex",
-                        },
-                        children: "Workout",
-                      },
-                    },
-                    {
-                      type: "div",
-                      props: {
-                        style: { fontSize: 10, color: C.textMuted, display: "flex" },
-                        children: "·",
-                      },
-                    },
-                    {
-                      type: "div",
-                      props: {
-                        style: { fontSize: 10, color: C.textMuted, display: "flex" },
-                        children: date,
-                      },
-                    },
-                  ],
-                },
-              },
-            ],
-          },
-        },
-        // Right: logo watermark
-        LOGO_DATA_URI
-          ? {
-              type: "div",
-              props: {
-                style: {
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  width: 36, height: 36, borderRadius: 9,
-                  background: data.theme === "dark" ? "#ffffff" : "transparent",
-                  flexShrink: 0, marginLeft: 12,
-                },
-                children: {
-                  type: "img",
-                  props: { src: LOGO_DATA_URI, width: 32, height: 32, style: { borderRadius: 7 } },
-                },
-              },
-            }
-          : {
-              type: "div",
-              props: {
-                style: {
-                  width: 36, height: 36, borderRadius: 9,
-                  background: C.badgeBg, display: "flex",
-                  alignItems: "center", justifyContent: "center",
-                  color: C.badgeText, fontSize: 16, fontWeight: 800, flexShrink: 0,
-                },
-                children: "F",
-              },
-            },
+            ]
+          : []),
       ],
     },
   };
@@ -473,8 +493,9 @@ export async function handleGenerateWorkoutCard(req: Request, res: Response) {
 
     const cardElement = buildCardElement(data);
 
+    const userInfoRowHeight = data.userName ? 36 : 0;
     const exerciseHeight = Math.max(data.exercises.length, 1) * 47;
-    const cardHeight = 96 + 160 + 20 + 30 + exerciseHeight + 50 + 40;
+    const cardHeight = 96 + userInfoRowHeight + 160 + 20 + 30 + exerciseHeight + 50 + 40;
 
     const svg = await satori(cardElement as any, {
       width: 390,
