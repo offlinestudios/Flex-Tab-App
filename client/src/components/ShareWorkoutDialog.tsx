@@ -26,6 +26,10 @@ interface ShareWorkoutDialogProps {
   date: string;
   duration?: string;
   workoutSessionId?: number | null;
+  /** Display name shown on the card (e.g. "Alex Johnson") */
+  userName?: string;
+  /** Lifter grade shown on the card (e.g. "Advanced") */
+  lifterGrade?: string;
 }
 
 // ── Theme palette (mirrors server/workoutCardImage.ts) ───────────────────────
@@ -41,6 +45,8 @@ const THEMES = {
     textFooter:  '#cbd5e1',
     badgeBg:     '#0f172a',
     badgeText:   '#ffffff',
+    gradeBg:     '#f1f5f9',
+    gradeText:   '#475569',
     shadow:      '0 2px 16px rgba(0,0,0,0.08)',
   },
   dark: {
@@ -54,13 +60,33 @@ const THEMES = {
     textFooter:  '#334155',
     badgeBg:     '#334155',
     badgeText:   '#f1f5f9',
+    gradeBg:     '#1e293b',
+    gradeText:   '#94a3b8',
     shadow:      '0 2px 24px rgba(0,0,0,0.4)',
   },
 } as const;
 
+// Grade accent colours (vivid — same in both themes)
+const GRADE_COLORS: Record<string, string> = {
+  Novice:       '#9ca3af',
+  Intermediate: '#3b82f6',
+  Advanced:     '#8b5cf6',
+  Elite:        '#f59e0b',
+  Legend:       '#ef4444',
+};
+
 type ThemeKey = keyof typeof THEMES;
 
-export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, duration, workoutSessionId }: ShareWorkoutDialogProps) {
+export function ShareWorkoutDialog({
+  open,
+  onOpenChange,
+  exercises,
+  date,
+  duration,
+  workoutSessionId,
+  userName,
+  lifterGrade,
+}: ShareWorkoutDialogProps) {
   const [loading, setLoading] = useState<null | 'share'>(null);
 
   // ── Detect current app theme ─────────────────────────────────────────────────
@@ -77,6 +103,7 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
   }, []);
 
   const C = THEMES[theme];
+  const gradeColor = lifterGrade ? (GRADE_COLORS[lifterGrade] ?? C.gradeText) : C.gradeText;
 
   // ── Totals ───────────────────────────────────────────────────────────────────
   const totalSets = exercises.reduce((sum, e) => sum + e.sets, 0);
@@ -148,6 +175,8 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
       volumeDisplay,
       exercises: groupedExercises,
       theme, // pass current theme to server
+      userName,
+      lifterGrade,
     };
 
     const res = await fetch('/api/generate-workout-card', {
@@ -271,6 +300,44 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
               </div>
             </div>
 
+            {/* User info row (name + grade badge) — only when userName is provided */}
+            {userName && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                marginBottom: 14,
+                paddingBottom: 14,
+                borderBottom: `1px solid ${C.divider}`,
+              }}>
+                <p style={{ flex: 1, fontSize: 14, fontWeight: 800, color: C.textPrimary, margin: 0 }}>
+                  {userName}
+                </p>
+                {lifterGrade && (
+                  <div style={{
+                    background: C.gradeBg,
+                    borderRadius: 50,
+                    padding: '4px 10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 5,
+                    flexShrink: 0,
+                  }}>
+                    <div style={{
+                      width: 7,
+                      height: 7,
+                      borderRadius: '50%',
+                      background: gradeColor,
+                      flexShrink: 0,
+                    }} />
+                    <p style={{ fontSize: 11, fontWeight: 700, color: gradeColor, margin: 0, whiteSpace: 'nowrap' }}>
+                      {lifterGrade}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Stat tiles — 2×2 grid */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
               {statTiles.map(({ value, label }) => (
@@ -296,6 +363,7 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
             <p style={{ fontSize: 13, fontWeight: 800, color: C.textPrimary, margin: '0 0 10px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               Exercises
             </p>
+  
             <div>
               {groupedExercises.map((exercise, index) => (
                 <div

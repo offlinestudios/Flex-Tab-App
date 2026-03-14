@@ -25,6 +25,7 @@ const LOGO_DATA_URI = FLEXTAB_ICON_B64;
 // ── Theme palettes ────────────────────────────────────────────────────────────
 const THEMES = {
   light: {
+    outerBg:      "#f1f5f9",  // opaque outer canvas (no transparency)
     cardBg:        "#ffffff",
     tileBg:        "#f8fafc",
     pillBg:        "#f1f5f9",
@@ -35,8 +36,11 @@ const THEMES = {
     textFooter:    "#cbd5e1",
     badgeBg:       "#0f172a",
     badgeText:     "#ffffff",
+    gradeBg:       "#f1f5f9",
+    gradeText:     "#475569",
   },
   dark: {
+    outerBg:      "#0f172a",  // opaque outer canvas (no transparency)
     cardBg:        "#0f172a",
     tileBg:        "#1e293b",
     pillBg:        "#1e293b",
@@ -47,8 +51,19 @@ const THEMES = {
     textFooter:    "#94a3b8",
     badgeBg:       "#334155",
     badgeText:     "#f1f5f9",
+    gradeBg:       "#1e293b",
+    gradeText:     "#94a3b8",
   },
 } as const;
+
+// Grade accent colours (same in both themes — they're vivid enough)
+const GRADE_COLORS: Record<string, string> = {
+  Novice:       "#9ca3af",
+  Intermediate: "#3b82f6",
+  Advanced:     "#8b5cf6",
+  Elite:        "#f59e0b",
+  Legend:       "#ef4444",
+};
 
 type Theme = keyof typeof THEMES;
 
@@ -72,12 +87,15 @@ interface CardData {
   volumeDisplay: string;  // e.g. "13.8k"
   exercises: ExerciseRow[];
   theme?: Theme;          // "light" (default) | "dark"
+  userName?: string;      // e.g. "Alex Johnson"
+  lifterGrade?: string;   // e.g. "Advanced"
 }
 
 // ── Build the satori element tree ────────────────────────────────────────────
 function buildCardElement(data: CardData) {
-  const { date, duration, totalSets, totalReps, volumeDisplay, exercises } = data;
+  const { date, duration, totalSets, totalReps, volumeDisplay, exercises, userName, lifterGrade } = data;
   const C = THEMES[data.theme === "dark" ? "dark" : "light"];
+  const gradeColor = lifterGrade ? (GRADE_COLORS[lifterGrade] ?? C.gradeText) : C.gradeText;
 
   const statTiles = [
     { value: duration || "—", label: "DURATION" },
@@ -218,194 +236,298 @@ function buildCardElement(data: CardData) {
     },
   });
 
+  // ── User info row (name + grade badge) — only rendered when userName is provided ──
+  const userInfoRow = userName
+    ? {
+        type: "div",
+        props: {
+          style: {
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            marginBottom: 14,
+            paddingBottom: 14,
+            borderBottom: `1px solid ${C.divider}`,
+          },
+          children: [
+            // Name
+            {
+              type: "div",
+              props: {
+                style: {
+                  fontSize: 14,
+                  fontWeight: 800,
+                  color: C.textPrimary,
+                  flex: 1,
+                  display: "flex",
+                  alignItems: "center",
+                },
+                children: userName,
+              },
+            },
+            // Grade badge (only if lifterGrade is provided)
+            ...(lifterGrade
+              ? [
+                  {
+                    type: "div",
+                    props: {
+                      style: {
+                        background: C.gradeBg,
+                        borderRadius: 50,
+                        paddingTop: 4,
+                        paddingBottom: 4,
+                        paddingLeft: 10,
+                        paddingRight: 10,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 5,
+                        flexShrink: 0,
+                      },
+                      children: [
+                        // Coloured dot
+                        {
+                          type: "div",
+                          props: {
+                            style: {
+                              width: 7,
+                              height: 7,
+                              borderRadius: 4,
+                              background: gradeColor,
+                              display: "flex",
+                              flexShrink: 0,
+                            },
+                          },
+                        },
+                        // Grade label
+                        {
+                          type: "div",
+                          props: {
+                            style: {
+                              fontSize: 11,
+                              fontWeight: 700,
+                              color: gradeColor,
+                              display: "flex",
+                            },
+                            children: lifterGrade,
+                          },
+                        },
+                      ],
+                    },
+                  },
+                ]
+              : []),
+          ],
+        },
+      }
+    : null;
+
+  // ── Root card element ─────────────────────────────────────────────────────
+  // The outermost div fills the entire satori canvas with an opaque background
+  // so that Instagram (and any other app) never shows a black fill behind the card.
   return {
     type: "div",
     props: {
       style: {
         display: "flex",
-        flexDirection: "column",
-        background: C.cardBg,
-        borderRadius: 20,
-        padding: "20px 20px 16px",
-        width: 390,
-        fontFamily: "Inter",
+        width: "100%",
+        height: "100%",
+        background: C.outerBg,
+        alignItems: "center",
+        justifyContent: "center",
       },
-      children: [
-        // ── Header ──────────────────────────────────────────────────────────
-        {
-          type: "div",
-          props: {
-            style: {
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: 16,
-            },
-            children: [
-              {
-                type: "div",
-                props: {
-                  style: { display: "flex", alignItems: "center", gap: 10 },
-                  children: [
-                    LOGO_DATA_URI
-                      ? {
-                          type: "div",
-                          props: {
-                            style: {
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              width: 36,
-                              height: 36,
-                              borderRadius: 8,
-                              background: data.theme === "dark" ? "#ffffff" : "transparent",
-                              padding: data.theme === "dark" ? 2 : 0,
-                            },
-                            children: {
-                              type: "img",
-                              props: {
-                                src: LOGO_DATA_URI,
-                                width: 32,
-                                height: 32,
-                                style: { borderRadius: 6 },
-                              },
-                            },
-                          },
-                        }
-                      : {
-                          type: "div",
-                          props: {
-                            style: {
-                              width: 32,
-                              height: 32,
-                              borderRadius: 8,
-                              background: C.badgeBg,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              color: C.badgeText,
-                              fontSize: 14,
-                              fontWeight: 800,
-                            },
-                            children: "F",
-                          },
-                        },
-                    {
-                      type: "div",
-                      props: {
-                        style: { display: "flex", flexDirection: "column" },
-                        children: [
-                          {
-                            type: "div",
-                            props: {
-                              style: { fontSize: 15, fontWeight: 800, color: C.textPrimary, lineHeight: 1.2, display: "flex" },
-                              children: "FlexTab",
-                            },
-                          },
-                          {
-                            type: "div",
-                            props: {
-                              style: { fontSize: 12, color: C.textMuted, lineHeight: 1.3, display: "flex" },
-                              children: date,
-                            },
-                          },
-                        ],
-                      },
-                    },
-                  ],
-                },
-              },
-              {
-                type: "div",
-                props: {
-                  style: { fontSize: 11, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.05em", display: "flex" },
-                  children: "Workout",
-                },
-              },
-            ],
+      children: {
+        type: "div",
+        props: {
+          style: {
+            display: "flex",
+            flexDirection: "column",
+            background: C.cardBg,
+            borderRadius: 20,
+            padding: "20px 20px 16px",
+            width: 390,
+            fontFamily: "Inter",
           },
-        },
-
-        // ── Stat tiles 2×2 (two explicit rows — satori does not support flexWrap) ──
-        {
-          type: "div",
-          props: {
-            style: {
-              display: "flex",
-              flexDirection: "column",
-              gap: 8,
-              marginBottom: 16,
-            },
-            children: [
-              // Row 1: Duration + Sets
-              {
-                type: "div",
-                props: {
-                  style: { display: "flex", flexDirection: "row", gap: 8 },
-                  children: statTiles.slice(0, 2).map(makeTile),
-                },
-              },
-              // Row 2: Reps + Volume
-              {
-                type: "div",
-                props: {
-                  style: { display: "flex", flexDirection: "row", gap: 8 },
-                  children: statTiles.slice(2, 4).map(makeTile),
-                },
-              },
-            ],
-          },
-        },
-
-        // ── Divider ──────────────────────────────────────────────────────────
-        {
-          type: "div",
-          props: {
-            style: { height: 1, background: C.divider, marginBottom: 14, display: "flex" },
-          },
-        },
-
-        // ── Exercises heading ────────────────────────────────────────────────
-        {
-          type: "div",
-          props: {
-            style: { fontSize: 13, fontWeight: 800, color: C.textPrimary, marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "flex" },
-            children: "Exercises",
-          },
-        },
-
-        // ── Exercise rows container ──────────────────────────────────────────
-        {
-          type: "div",
-          props: {
-            style: { display: "flex", flexDirection: "column" },
-            children: exerciseRows,
-          },
-        },
-
-        // ── Footer ───────────────────────────────────────────────────────────
-        {
-          type: "div",
-          props: {
-            style: {
-              marginTop: 14,
-              paddingTop: 12,
-              borderTop: `1px solid ${C.divider}`,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 6,
-            },
-            children: {
+          children: [
+            // ── Header ──────────────────────────────────────────────────────────
+            {
               type: "div",
               props: {
-                style: { fontSize: 11, color: C.textFooter, display: "flex" },
-                children: "flextab.app",
+                style: {
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: 16,
+                },
+                children: [
+                  {
+                    type: "div",
+                    props: {
+                      style: { display: "flex", alignItems: "center", gap: 10 },
+                      children: [
+                        LOGO_DATA_URI
+                          ? {
+                              type: "div",
+                              props: {
+                                style: {
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  width: 36,
+                                  height: 36,
+                                  borderRadius: 8,
+                                  background: data.theme === "dark" ? "#ffffff" : "transparent",
+                                  padding: data.theme === "dark" ? 2 : 0,
+                                },
+                                children: {
+                                  type: "img",
+                                  props: {
+                                    src: LOGO_DATA_URI,
+                                    width: 32,
+                                    height: 32,
+                                    style: { borderRadius: 6 },
+                                  },
+                                },
+                              },
+                            }
+                          : {
+                              type: "div",
+                              props: {
+                                style: {
+                                  width: 32,
+                                  height: 32,
+                                  borderRadius: 8,
+                                  background: C.badgeBg,
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  color: C.badgeText,
+                                  fontSize: 14,
+                                  fontWeight: 800,
+                                },
+                                children: "F",
+                              },
+                            },
+                        {
+                          type: "div",
+                          props: {
+                            style: { display: "flex", flexDirection: "column" },
+                            children: [
+                              {
+                                type: "div",
+                                props: {
+                                  style: { fontSize: 15, fontWeight: 800, color: C.textPrimary, lineHeight: 1.2, display: "flex" },
+                                  children: "FlexTab",
+                                },
+                              },
+                              {
+                                type: "div",
+                                props: {
+                                  style: { fontSize: 12, color: C.textMuted, lineHeight: 1.3, display: "flex" },
+                                  children: date,
+                                },
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                  },
+                  {
+                    type: "div",
+                    props: {
+                      style: { fontSize: 11, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.05em", display: "flex" },
+                      children: "Workout",
+                    },
+                  },
+                ],
               },
             },
-          },
+
+            // ── User info row (name + grade) — only when provided ────────────
+            ...(userInfoRow ? [userInfoRow] : []),
+
+            // ── Stat tiles 2×2 (two explicit rows — satori does not support flexWrap) ──
+            {
+              type: "div",
+              props: {
+                style: {
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                  marginBottom: 16,
+                },
+                children: [
+                  // Row 1: Duration + Sets
+                  {
+                    type: "div",
+                    props: {
+                      style: { display: "flex", flexDirection: "row", gap: 8 },
+                      children: statTiles.slice(0, 2).map(makeTile),
+                    },
+                  },
+                  // Row 2: Reps + Volume
+                  {
+                    type: "div",
+                    props: {
+                      style: { display: "flex", flexDirection: "row", gap: 8 },
+                      children: statTiles.slice(2, 4).map(makeTile),
+                    },
+                  },
+                ],
+              },
+            },
+
+            // ── Divider ──────────────────────────────────────────────────────────
+            {
+              type: "div",
+              props: {
+                style: { height: 1, background: C.divider, marginBottom: 14, display: "flex" },
+              },
+            },
+
+            // ── Exercises heading ────────────────────────────────────────────────
+            {
+              type: "div",
+              props: {
+                style: { fontSize: 13, fontWeight: 800, color: C.textPrimary, marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.06em", display: "flex" },
+                children: "Exercises",
+              },
+            },
+
+            // ── Exercise rows container ──────────────────────────────────────────
+            {
+              type: "div",
+              props: {
+                style: { display: "flex", flexDirection: "column" },
+                children: exerciseRows,
+              },
+            },
+
+            // ── Footer ───────────────────────────────────────────────────────────
+            {
+              type: "div",
+              props: {
+                style: {
+                  marginTop: 14,
+                  paddingTop: 12,
+                  borderTop: `1px solid ${C.divider}`,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 6,
+                },
+                children: {
+                  type: "div",
+                  props: {
+                    style: { fontSize: 11, color: C.textFooter, display: "flex" },
+                    children: "flextab.app",
+                  },
+                },
+              },
+            },
+          ],
         },
-      ],
+      },
     },
   };
 }
@@ -424,9 +546,10 @@ export async function handleGenerateWorkoutCard(req: Request, res: Response) {
 
     const cardElement = buildCardElement(data);
 
-    // Compute card height dynamically: header + tiles + divider + exercises + footer
+    // Compute card height dynamically: header + user-info row (if present) + tiles + divider + exercises + footer
+    const userInfoHeight = data.userName ? 46 : 0; // row height + bottom margin/border
     const exerciseHeight = Math.max(data.exercises.length, 1) * 47;
-    const cardHeight = 80 + 160 + 20 + 30 + exerciseHeight + 50 + 40;
+    const cardHeight = 80 + userInfoHeight + 160 + 20 + 30 + exerciseHeight + 50 + 40;
 
     const svg = await satori(cardElement as any, {
       width: 390,

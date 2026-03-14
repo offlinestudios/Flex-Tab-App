@@ -2082,16 +2082,26 @@ export default function Home() {
       />
 
       {/* Share Workout Dialog */}
-      {shareWorkoutData && (
-        <ShareWorkoutDialog
-          open={showShareDialog}
-          onOpenChange={setShowShareDialog}
-          exercises={shareWorkoutData.exercises}
-          date={shareWorkoutData.date}
-          duration={shareWorkoutData.duration}
-          workoutSessionId={shareWorkoutData.workoutSessionId}
-        />
-      )}
+      {shareWorkoutData && (() => {
+        const sessionCount = workoutSessions.length;
+        const lifterGrade =
+          sessionCount < 5  ? 'Novice' :
+          sessionCount < 20 ? 'Intermediate' :
+          sessionCount < 50 ? 'Advanced' :
+          sessionCount < 100 ? 'Elite' : 'Legend';
+        return (
+          <ShareWorkoutDialog
+            open={showShareDialog}
+            onOpenChange={setShowShareDialog}
+            exercises={shareWorkoutData.exercises}
+            date={shareWorkoutData.date}
+            duration={shareWorkoutData.duration}
+            workoutSessionId={shareWorkoutData.workoutSessionId}
+            userName={user?.name || undefined}
+            lifterGrade={lifterGrade}
+          />
+        );
+      })()}
 
       {/* Exercise Detail Bottom Sheet */}
       {selectedExerciseDetail && (
