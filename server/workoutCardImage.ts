@@ -311,16 +311,16 @@ function buildCardElement(data: CardData) {
             ],
           },
         },
-        // Right: user name (only when provided)
+        // Right: user name (only when provided) — vertically centred, regular weight
         ...(userName
           ? [
               {
                 type: "div",
                 props: {
                   style: {
-                    fontSize: 11, fontWeight: 700, color: C.textMuted,
-                    textTransform: "uppercase", letterSpacing: "0.06em",
-                    display: "flex", flexShrink: 0,
+                    fontSize: 11, fontWeight: 400, color: C.textMuted,
+                    letterSpacing: "0.03em",
+                    display: "flex", flexShrink: 0, alignSelf: "center",
                   },
                   children: userName,
                 },

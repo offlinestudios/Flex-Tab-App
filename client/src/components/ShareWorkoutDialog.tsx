@@ -305,7 +305,7 @@ export function ShareWorkoutDialog({
               </div>
               {/* Right: user name */}
               {userName && (
-                <p style={{ fontSize: 11, fontWeight: 700, color: C.textMuted, margin: 0, textTransform: 'uppercase', letterSpacing: '0.06em', flexShrink: 0 }}>
+                <p style={{ fontSize: 11, fontWeight: 400, color: C.textMuted, margin: 0, letterSpacing: '0.03em', flexShrink: 0, alignSelf: 'center' }}>
                   {userName}
                 </p>
               )}
