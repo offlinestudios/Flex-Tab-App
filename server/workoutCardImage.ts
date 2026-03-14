@@ -247,47 +247,92 @@ function buildCardElement(data: CardData) {
           },
         },
 
-        // ── Stat tiles 2×2 ──────────────────────────────────────────────────
+        // ── Stat tiles 2×2 (two explicit rows — satori does not support flexWrap) ──
         {
           type: "div",
           props: {
             style: {
-              display: "flex",        // ✓ multi-child flex-wrap
-              flexWrap: "wrap",
+              display: "flex",
+              flexDirection: "column",
               gap: 8,
               marginBottom: 16,
             },
-            children: statTiles.map(({ value, label }) => ({
-              type: "div",
-              props: {
-                style: {
-                  background: "#f8fafc",
-                  borderRadius: 14,
-                  padding: "14px 8px 10px",
-                  textAlign: "center",
-                  width: 175,
-                  display: "flex",    // ✓ multi-child column
-                  flexDirection: "column",
-                  alignItems: "center",
+            children: [
+              // Row 1: Duration + Sets
+              {
+                type: "div",
+                props: {
+                  style: { display: "flex", flexDirection: "row", gap: 8 },
+                  children: statTiles.slice(0, 2).map(({ value, label }) => ({
+                    type: "div",
+                    props: {
+                      style: {
+                        background: "#f8fafc",
+                        borderRadius: 14,
+                        padding: "14px 8px 10px",
+                        flex: 1,
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                      },
+                      children: [
+                        {
+                          type: "div",
+                          props: {
+                            style: { fontSize: 28, fontWeight: 800, color: "#0f172a", lineHeight: 1, display: "flex" },
+                            children: value,
+                          },
+                        },
+                        {
+                          type: "div",
+                          props: {
+                            style: { fontSize: 10, fontWeight: 700, color: "#94a3b8", marginTop: 5, textTransform: "uppercase", letterSpacing: "0.07em", display: "flex" },
+                            children: label,
+                          },
+                        },
+                      ],
+                    },
+                  })),
                 },
-                children: [
-                  {
-                    type: "div",
-                    props: {
-                      style: { fontSize: 28, fontWeight: 800, color: "#0f172a", lineHeight: 1, display: "flex" },
-                      children: value,
-                    },
-                  },
-                  {
-                    type: "div",
-                    props: {
-                      style: { fontSize: 10, fontWeight: 700, color: "#94a3b8", marginTop: 5, textTransform: "uppercase", letterSpacing: "0.07em", display: "flex" },
-                      children: label,
-                    },
-                  },
-                ],
               },
-            })),
+              // Row 2: Reps + Volume
+              {
+                type: "div",
+                props: {
+                  style: { display: "flex", flexDirection: "row", gap: 8 },
+                  children: statTiles.slice(2, 4).map(({ value, label }) => ({
+                    type: "div",
+                    props: {
+                      style: {
+                        background: "#f8fafc",
+                        borderRadius: 14,
+                        padding: "14px 8px 10px",
+                        flex: 1,
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                      },
+                      children: [
+                        {
+                          type: "div",
+                          props: {
+                            style: { fontSize: 28, fontWeight: 800, color: "#0f172a", lineHeight: 1, display: "flex" },
+                            children: value,
+                          },
+                        },
+                        {
+                          type: "div",
+                          props: {
+                            style: { fontSize: 10, fontWeight: 700, color: "#94a3b8", marginTop: 5, textTransform: "uppercase", letterSpacing: "0.07em", display: "flex" },
+                            children: label,
+                          },
+                        },
+                      ],
+                    },
+                  })),
+                },
+              },
+            ],
           },
         },
 

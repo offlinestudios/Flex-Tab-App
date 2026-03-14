@@ -1,11 +1,10 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Share2, Download, X, Link, Users } from "lucide-react";
+import { Share2, X, Link } from "lucide-react";
 import { toast } from "sonner";
 import { PRESET_EXERCISES } from "@/lib/exercises";
 import { useState } from "react";
-import { trpc } from "@/lib/trpc";
-import { supabase } from "@/lib/supabase";
+
 
 interface SetLog {
   id: string;
@@ -30,15 +29,9 @@ interface ShareWorkoutDialogProps {
   workoutSessionId?: number | null; // ID of the workout session to link to the community post
 }
 
-/** Detect iOS Safari — programmatic <a download> is blocked there */
-const isIOS = () =>
-  /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-
 export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, duration, workoutSessionId }: ShareWorkoutDialogProps) {
-  const [loading, setLoading] = useState<null | 'share' | 'download' | 'community'>(null);
+  const [loading, setLoading] = useState<null | 'share'>(null);
 
-  const createPostMutation = trpc.community.createPost.useMutation();
 
   // ── Totals ──────────────────────────────────────────────────────────────────
   const totalSets = exercises.reduce((sum, e) => sum + e.sets, 0);
@@ -172,100 +165,7 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
     }
   };
 
-  // ── Save / Download ────────────────────────────────────────────
-  const handleDownload = async () => {
-    setLoading('download');
-    try {
-      const { dataUri } = await generateCard();
-      const filename = `flextab-workout-${shortDate.replace(/\s/g, '-')}.png`;
 
-      if (isIOS()) {
-        // iOS Safari: open the data URI in a new tab — user long-presses → "Save to Photos"
-        // (data URIs work on iOS without CORS issues)
-        const newTab = window.open(dataUri, '_blank');
-        if (!newTab) {
-          // Pop-ups blocked — create a temporary anchor and click it
-          const link = document.createElement('a');
-          link.href = dataUri;
-          link.download = filename;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        } else {
-          toast.success('Long-press the image and tap "Save to Photos"');
-        }
-      } else {
-        // Desktop / Android: trigger download directly from data URI
-        const link = document.createElement('a');
-        link.href = dataUri;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast.success('Workout image downloaded!');
-      }
-    } catch {
-      toast.error('Failed to generate image');
-    } finally {
-      setLoading(null);
-    }
-  };
-
-  // ── Share to FlexTab Community Feed ───────────────────────────────────────
-  const handleShareToFeed = async () => {
-    setLoading('community');
-    try {
-      // 1. Generate card PNG on server — returns dataUri (always) and R2 url (best-effort)
-      const { dataUri, url: r2Url, key: r2Key } = await generateCard();
-
-      let mediaKey: string;
-
-      if (r2Url && r2Key) {
-        // R2 upload already done server-side — reuse the key directly
-        mediaKey = r2Key;
-      } else {
-        // R2 upload failed server-side — convert dataUri to blob and upload via server-side endpoint
-        const byteString = atob(dataUri.split(',')[1]);
-        const ab = new ArrayBuffer(byteString.length);
-        const ia = new Uint8Array(ab);
-        for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
-        const blob = new Blob([ab], { type: 'image/png' });
-
-        // Authenticate for server-side upload
-        const { data: { session } } = await supabase.auth.getSession();
-        const token = session?.access_token;
-        if (!token) throw new Error('Not authenticated');
-
-        const formData = new FormData();
-        formData.append('file', blob, 'workout-card.png');
-        const uploadRes = await fetch('/api/upload-media', {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token}` },
-          body: formData,
-        });
-        if (!uploadRes.ok) {
-          const errBody = await uploadRes.json().catch(() => ({ error: 'Upload failed' }));
-          throw new Error(errBody.error ?? 'Upload failed');
-        }
-        const { key } = await uploadRes.json();
-        mediaKey = key;
-      }
-
-      // Create the community post, linking to the workout session if available
-      await createPostMutation.mutateAsync({
-        caption: `💪 Workout — ${shortDate}${duration ? ` · ${duration}` : ''} · ${totalSets} sets · ${totalReps} reps`,
-        mediaItems: [{ key: mediaKey, mediaType: 'photo', mimeType: 'image/png' }],
-        workoutSessionId: workoutSessionId ?? undefined,
-      });
-
-      toast.success('Posted to FlexTab Community!');
-      onOpenChange(false);
-    } catch (err: any) {
-      toast.error('Failed to post to community');
-    } finally {
-      setLoading(null);
-    }
-  };
 
   // ── Stat tiles ───────────────────────────────────────────────────────────────
   const statTiles = [
@@ -421,28 +321,7 @@ export function ShareWorkoutDialog({ open, onOpenChange, exercises, date, durati
             {loading === 'share' ? 'Preparing…' : 'Share via…'}
           </Button>
 
-          {/* Share to FlexTab Community Feed */}
-          <Button
-            onClick={handleShareToFeed}
-            disabled={loading !== null}
-            className="w-full rounded-2xl h-12 text-sm font-bold"
-            style={{ background: '#0f172a', color: '#ffffff', border: 'none', opacity: loading === 'community' ? 0.7 : 1 }}
-          >
-            <Users className="w-4 h-4 mr-2" />
-            {loading === 'community' ? 'Posting…' : 'Share to FlexTab Community'}
-          </Button>
 
-          {/* Save to Photos / Download */}
-          <Button
-            onClick={handleDownload}
-            disabled={loading !== null}
-            variant="outline"
-            className="w-full rounded-2xl h-12 text-sm font-bold"
-            style={{ border: '1.5px solid var(--foreground)', color: 'var(--foreground)', background: 'transparent' }}
-          >
-            <Download className="w-4 h-4 mr-2" />
-            {loading === 'download' ? 'Generating…' : (isIOS() ? 'Save to Photos' : 'Download as Image')}
-          </Button>
 
         </div>
       </DialogContent>
