@@ -3,6 +3,8 @@
 
 import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { NodeHttpHandler } from '@smithy/node-http-handler';
+import https from 'https';
 
 type StorageConfig = {
   client: S3Client;
@@ -28,10 +30,26 @@ function getStorageConfig(): StorageConfig {
 
   // R2 endpoint format: https://<account_id>.r2.cloudflarestorage.com
   const endpoint = `https://${accountId}.r2.cloudflarestorage.com`;
+  const r2Hostname = `${accountId}.r2.cloudflarestorage.com`;
+
   // Public URL for R2 — use R2_PUBLIC_URL if set, otherwise derive from account hash
   const publicUrl = process.env.R2_PUBLIC_URL
     ? process.env.R2_PUBLIC_URL.replace(/\/$/, '')
     : `https://pub-${accountId}.r2.dev`;
+
+  // CRITICAL FIX: Railway/Docker containers can fail TLS handshake with R2 (SSL alert 40)
+  // because the AWS SDK's default keepAlive agent may reuse a socket from a prior request
+  // that had a different SNI hostname, causing R2 to reject the handshake.
+  //
+  // The fix is to provide a custom httpsAgent with:
+  //   1. keepAlive: false — forces a fresh TLS handshake per request, ensuring SNI is always sent
+  //   2. servername: r2Hostname — explicitly sets the SNI hostname on every connection
+  //
+  // This is the documented fix for the EPROTO / SSL alert number 40 error with Cloudflare R2.
+  const r2HttpsAgent = new https.Agent({
+    keepAlive: false,
+    servername: r2Hostname,
+  });
 
   const client = new S3Client({
     region: 'auto', // R2 uses 'auto' as the region
@@ -40,10 +58,12 @@ function getStorageConfig(): StorageConfig {
       accessKeyId,
       secretAccessKey,
     },
-    // Force path style for R2 compatibility
+    // Force path style must be false for R2 virtual-hosted style
     forcePathStyle: false,
-    // Disable SSL verification issues
-    tls: true,
+    // Provide a custom request handler with the fixed httpsAgent
+    requestHandler: new NodeHttpHandler({
+      httpsAgent: r2HttpsAgent,
+    }),
     // CRITICAL: AWS SDK v3.729+ defaults to sending x-amz-checksum-crc32 headers
     // on every PutObject/UploadPart call. Cloudflare R2 does not support these
     // checksum headers and rejects them with:

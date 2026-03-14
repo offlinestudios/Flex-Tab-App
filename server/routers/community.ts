@@ -14,6 +14,8 @@ import {
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { S3Client } from "@aws-sdk/client-s3";
+import { NodeHttpHandler } from "@smithy/node-http-handler";
+import https from "https";
 import { randomUUID } from "crypto";
 
 /* ─────────────────────────────────────────────────────────────────
@@ -28,12 +30,16 @@ function getR2Client() {
     throw new Error("R2 credentials missing");
   }
 
+  const r2Hostname = `${accountId}.r2.cloudflarestorage.com`;
+  // CRITICAL FIX: Use a custom httpsAgent with keepAlive:false and explicit servername
+  // to prevent SSL alert 40 (TLS handshake failure) in Railway/Docker containers.
+  const r2HttpsAgent = new https.Agent({ keepAlive: false, servername: r2Hostname });
   return new S3Client({
     region: "auto",
-    endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+    endpoint: `https://${r2Hostname}`,
     credentials: { accessKeyId, secretAccessKey },
     forcePathStyle: false,
-    tls: true,
+    requestHandler: new NodeHttpHandler({ httpsAgent: r2HttpsAgent }),
     // AWS SDK v3.729+ sends x-amz-checksum-crc32 by default; R2 rejects it.
     // WHEN_REQUIRED disables automatic checksum injection for R2 compatibility.
     requestChecksumCalculation: 'WHEN_REQUIRED' as any,
