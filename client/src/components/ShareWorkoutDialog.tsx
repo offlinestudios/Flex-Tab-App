@@ -282,61 +282,24 @@ export function ShareWorkoutDialog({
               marginBottom: 4,
             }}
           >
-            {/* ── Header: original layout — logo + FlexTab + date left, WORKOUT right ── */}
+            {/* ── Header: logo + FlexTab name + date only ── */}
             <div style={{
               display: 'flex',
-              flexDirection: 'column',
+              alignItems: 'center',
               marginBottom: 18,
               paddingBottom: 16,
               borderBottom: `1px solid ${C.divider}`,
               gap: 10,
             }}>
-              {/* Top row: logo + app name/date + WORKOUT label */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                {/* Left: logo + text */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <img
-                    src="/flextab-icon.png"
-                    alt="FlexTab"
-                    style={{ width: 40, height: 40, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }}
-                  />
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <p style={{ fontSize: 15, fontWeight: 800, color: C.textPrimary, margin: 0, lineHeight: 1 }}>FlexTab</p>
-                    <p style={{ fontSize: 11, color: C.textMuted, margin: 0 }}>{formattedDate}</p>
-                  </div>
-                </div>
-                {/* Right: WORKOUT label */}
-                <p style={{ fontSize: 11, fontWeight: 700, color: C.textMuted, margin: 0, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Workout</p>
+              <img
+                src="/flextab-icon.png"
+                alt="FlexTab"
+                style={{ width: 40, height: 40, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }}
+              />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <p style={{ fontSize: 15, fontWeight: 800, color: C.textPrimary, margin: 0, lineHeight: 1 }}>FlexTab</p>
+                <p style={{ fontSize: 11, color: C.textMuted, margin: 0 }}>{formattedDate}</p>
               </div>
-
-              {/* User info row — only shown when userName is provided */}
-              {userName && (
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  paddingTop: 6,
-                  borderTop: `1px solid ${C.divider}`,
-                }}>
-                  <p style={{ fontSize: 14, fontWeight: 800, color: C.textPrimary, margin: 0 }}>{userName}</p>
-                  {lifterGrade && (
-                    <div style={{
-                      background: C.gradeBg,
-                      borderRadius: 50,
-                      padding: '3px 9px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 5,
-                      flexShrink: 0,
-                    }}>
-                      <div style={{ width: 6, height: 6, borderRadius: '50%', background: gradeColor, flexShrink: 0 }} />
-                      <p style={{ fontSize: 10, fontWeight: 700, color: gradeColor, margin: 0, whiteSpace: 'nowrap', letterSpacing: '0.04em' }}>
-                        {lifterGrade.toUpperCase()}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
 
             {/* Stat tiles — 2×2 grid */}

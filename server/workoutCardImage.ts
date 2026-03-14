@@ -245,139 +245,71 @@ function buildCardElement(data: CardData) {
     : null;
 
   // ── Header ────────────────────────────────────────────────────────────────
-  // Original layout restored:
-  //
-  //   ┌──────────────────────────────────────────────┐
-  //   │  [Logo]  FlexTab               WORKOUT       │
-  //   │          Wednesday, Mar 11, 2026             │
-  //   ├──────────────────────────────────────────────┤
-  //   │  Julian Ross          ● INTERMEDIATE         │  ← only when userName set
-  //   └──────────────────────────────────────────────┘
+  // Clean layout: logo + FlexTab name + date only.
   const headerElement = {
     type: "div",
     props: {
       style: {
         display: "flex",
-        flexDirection: "column",
+        alignItems: "center",
         marginBottom: 18,
         paddingBottom: 16,
         borderBottom: `1px solid ${C.headerDivider}`,
         gap: 10,
       },
       children: [
-        // ── Top row: logo + app name/date + WORKOUT label ─────────────────
+        // Logo
+        LOGO_DATA_URI
+          ? {
+              type: "div",
+              props: {
+                style: {
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  width: 40, height: 40, borderRadius: 10,
+                  background: data.theme === "dark" ? "#ffffff" : "transparent",
+                  flexShrink: 0,
+                },
+                children: {
+                  type: "img",
+                  props: { src: LOGO_DATA_URI, width: 36, height: 36, style: { borderRadius: 8 } },
+                },
+              },
+            }
+          : {
+              type: "div",
+              props: {
+                style: {
+                  width: 40, height: 40, borderRadius: 10,
+                  background: C.badgeBg, display: "flex",
+                  alignItems: "center", justifyContent: "center",
+                  color: C.badgeText, fontSize: 18, fontWeight: 800, flexShrink: 0,
+                },
+                children: "F",
+              },
+            },
+        // App name + date stacked
         {
           type: "div",
           props: {
-            style: {
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            },
+            style: { display: "flex", flexDirection: "column", gap: 2 },
             children: [
-              // Left: logo + text
               {
                 type: "div",
                 props: {
-                  style: { display: "flex", alignItems: "center", gap: 10 },
-                  children: [
-                    // Logo
-                    LOGO_DATA_URI
-                      ? {
-                          type: "div",
-                          props: {
-                            style: {
-                              display: "flex", alignItems: "center", justifyContent: "center",
-                              width: 40, height: 40, borderRadius: 10,
-                              background: data.theme === "dark" ? "#ffffff" : "transparent",
-                              flexShrink: 0,
-                            },
-                            children: {
-                              type: "img",
-                              props: { src: LOGO_DATA_URI, width: 36, height: 36, style: { borderRadius: 8 } },
-                            },
-                          },
-                        }
-                      : {
-                          type: "div",
-                          props: {
-                            style: {
-                              width: 40, height: 40, borderRadius: 10,
-                              background: C.badgeBg, display: "flex",
-                              alignItems: "center", justifyContent: "center",
-                              color: C.badgeText, fontSize: 18, fontWeight: 800, flexShrink: 0,
-                            },
-                            children: "F",
-                          },
-                        },
-                    // App name + date stacked
-                    {
-                      type: "div",
-                      props: {
-                        style: { display: "flex", flexDirection: "column", gap: 2 },
-                        children: [
-                          {
-                            type: "div",
-                            props: {
-                              style: { fontSize: 15, fontWeight: 800, color: C.textPrimary, display: "flex" },
-                              children: "FlexTab",
-                            },
-                          },
-                          {
-                            type: "div",
-                            props: {
-                              style: { fontSize: 11, color: C.textMuted, display: "flex" },
-                              children: date,
-                            },
-                          },
-                        ],
-                      },
-                    },
-                  ],
+                  style: { fontSize: 15, fontWeight: 800, color: C.textPrimary, display: "flex" },
+                  children: "FlexTab",
                 },
               },
-              // Right: WORKOUT label
               {
                 type: "div",
                 props: {
-                  style: {
-                    fontSize: 11, fontWeight: 700, color: C.textMuted,
-                    textTransform: "uppercase", letterSpacing: "0.08em", display: "flex",
-                  },
-                  children: "Workout",
+                  style: { fontSize: 11, color: C.textMuted, display: "flex" },
+                  children: date,
                 },
               },
             ],
           },
         },
-
-        // ── User info row (only when userName is provided) ─────────────────
-        ...(userName
-          ? [
-              {
-                type: "div",
-                props: {
-                  style: {
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    paddingTop: 6,
-                    borderTop: `1px solid ${C.divider}`,
-                  },
-                  children: [
-                    {
-                      type: "div",
-                      props: {
-                        style: { fontSize: 14, fontWeight: 800, color: C.textPrimary, display: "flex" },
-                        children: userName,
-                      },
-                    },
-                    ...(gradeBadge ? [gradeBadge] : []),
-                  ],
-                },
-              },
-            ]
-          : []),
       ],
     },
   };
