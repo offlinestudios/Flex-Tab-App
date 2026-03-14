@@ -28,6 +28,8 @@ interface ShareWorkoutDialogProps {
   workoutSessionId?: number | null;
   /** Display name shown on the card (e.g. "Alex Johnson") */
   userName?: string;
+  /** URL of the user's profile photo for the card avatar circle */
+  userAvatarUrl?: string;
   /** Lifter grade shown on the card (e.g. "Advanced") */
   lifterGrade?: string;
 }
@@ -85,6 +87,7 @@ export function ShareWorkoutDialog({
   duration,
   workoutSessionId,
   userName,
+  userAvatarUrl,
   lifterGrade,
 }: ShareWorkoutDialogProps) {
   const [loading, setLoading] = useState<null | 'share'>(null);
@@ -176,6 +179,7 @@ export function ShareWorkoutDialog({
       exercises: groupedExercises,
       theme, // pass current theme to server
       userName,
+      userAvatarUrl,
       lifterGrade,
     };
 
@@ -303,11 +307,25 @@ export function ShareWorkoutDialog({
                   <p style={{ fontSize: 11, color: C.textMuted, margin: 0 }}>{formattedDate}</p>
                 </div>
               </div>
-              {/* Right: user name */}
+              {/* Right: avatar circle + first name */}
               {userName && (
-                <p style={{ fontSize: 11, fontWeight: 400, color: C.textMuted, margin: 0, letterSpacing: '0.03em', flexShrink: 0, alignSelf: 'center' }}>
-                  {userName}
-                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: '50%',
+                    overflow: 'hidden', flexShrink: 0,
+                    background: C.tileBg,
+                    border: `2px solid ${C.divider}`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    {userAvatarUrl
+                      ? <img src={userAvatarUrl} alt={userName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      : <span style={{ fontSize: 14, fontWeight: 700, color: C.textPrimary }}>{userName.charAt(0).toUpperCase()}</span>
+                    }
+                  </div>
+                  <p style={{ fontSize: 10, fontWeight: 500, color: C.textMuted, margin: 0, letterSpacing: '0.02em' }}>
+                    {userName.split(' ')[0]}
+                  </p>
+                </div>
               )}
             </div>
 

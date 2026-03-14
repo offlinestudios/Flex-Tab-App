@@ -155,6 +155,11 @@ export default function Home() {
     enabled: isAuthenticated,
     refetchOnWindowFocus: false,
   });
+  // Fetch user profile for avatar URL used in the share card
+  const { data: userProfile } = (trpc as any).user.getProfile.useQuery(undefined, {
+    enabled: isAuthenticated,
+    refetchOnWindowFocus: false,
+  });
   
   // Debug logging
   useEffect(() => {
@@ -2110,6 +2115,7 @@ export default function Home() {
             duration={shareWorkoutData.duration}
             workoutSessionId={shareWorkoutData.workoutSessionId}
             userName={user?.name || undefined}
+            userAvatarUrl={userProfile?.avatarUrl || undefined}
             lifterGrade={lifterGrade}
           />
         );

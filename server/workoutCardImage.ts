@@ -89,12 +89,13 @@ interface CardData {
   exercises: ExerciseRow[];
   theme?: Theme;          // "light" (default) | "dark"
   userName?: string;      // e.g. "Alex Johnson"
+  userAvatarUrl?: string; // URL or data-URI of the user's profile photo
   lifterGrade?: string;   // e.g. "Advanced"
 }
 
 // ── Build the satori element tree ────────────────────────────────────────────
 function buildCardElement(data: CardData) {
-  const { date, duration, totalSets, totalReps, volumeDisplay, exercises, userName, lifterGrade } = data;
+  const { date, duration, totalSets, totalReps, volumeDisplay, exercises, userName, userAvatarUrl, lifterGrade } = data;
   const C = THEMES[data.theme === "dark" ? "dark" : "light"];
   const gradeColor = lifterGrade ? (GRADE_COLORS[lifterGrade] ?? C.textMuted) : C.textMuted;
 
@@ -311,18 +312,61 @@ function buildCardElement(data: CardData) {
             ],
           },
         },
-        // Right: user name (only when provided) — vertically centred, regular weight
+        // Right: avatar circle + first name (only when userName provided)
         ...(userName
           ? [
               {
                 type: "div",
                 props: {
                   style: {
-                    fontSize: 11, fontWeight: 400, color: C.textMuted,
-                    letterSpacing: "0.03em",
-                    display: "flex", flexShrink: 0, alignSelf: "center",
+                    display: "flex", flexDirection: "column",
+                    alignItems: "center", gap: 4, flexShrink: 0,
                   },
-                  children: userName,
+                  children: [
+                    // Avatar circle
+                    {
+                      type: "div",
+                      props: {
+                        style: {
+                          width: 36, height: 36, borderRadius: 18,
+                          overflow: "hidden", flexShrink: 0,
+                          background: C.tileBg,
+                          border: `2px solid ${C.headerDivider}`,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                        },
+                        children: userAvatarUrl
+                          ? {
+                              type: "img",
+                              props: {
+                                src: userAvatarUrl,
+                                width: 36, height: 36,
+                                style: { objectFit: "cover" },
+                              },
+                            }
+                          : {
+                              type: "div",
+                              props: {
+                                style: {
+                                  fontSize: 14, fontWeight: 700,
+                                  color: C.textPrimary, display: "flex",
+                                },
+                                children: userName.charAt(0).toUpperCase(),
+                              },
+                            },
+                      },
+                    },
+                    // First name only
+                    {
+                      type: "div",
+                      props: {
+                        style: {
+                          fontSize: 10, fontWeight: 500, color: C.textMuted,
+                          letterSpacing: "0.02em", display: "flex",
+                        },
+                        children: userName.split(" ")[0],
+                      },
+                    },
+                  ],
                 },
               },
             ]
