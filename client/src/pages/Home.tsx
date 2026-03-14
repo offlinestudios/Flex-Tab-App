@@ -373,7 +373,7 @@ export default function Home() {
       // Snapshot the previous value
       const previousSetLogs = utils.workout.getSetLogs.getData();
       
-      // Optimistically update the set
+      // Optimistically update the set (including cardio fields)
       utils.workout.getSetLogs.setData(undefined, (old) =>
         (old || []).map((log) =>
           log.id === variables.id
@@ -381,7 +381,11 @@ export default function Home() {
                 ...log, 
                 sets: variables.sets ?? log.sets, 
                 reps: variables.reps ?? log.reps, 
-                weight: variables.weight ?? log.weight 
+                weight: variables.weight ?? log.weight,
+                duration: variables.duration ?? log.duration,
+                distance: variables.distance !== undefined ? String(variables.distance) : log.distance,
+                distanceUnit: variables.distanceUnit ?? log.distanceUnit,
+                calories: variables.calories ?? log.calories,
               }
             : log
         )
@@ -585,15 +589,39 @@ export default function Home() {
   };
   const handleCardioSave = async () => {
     if (!cardioEditSheet) return;
+    // Capture form values before any async state changes
+    const savedDuration = cardioEditForm.duration ? parseInt(cardioEditForm.duration) : undefined;
+    const savedDistance = cardioEditForm.distance ? parseFloat(cardioEditForm.distance) : undefined;
+    const savedDistanceUnit = cardioEditForm.distanceUnit;
+    const savedCalories = cardioEditForm.calories ? parseInt(cardioEditForm.calories) : undefined;
     try {
       // Update the first (and usually only) DB row with the new cardio values
       const firstSet = cardioEditSheet.sets[0];
       await updateSetLogMutation.mutateAsync({
         id: parseInt(firstSet.id),
-        duration: cardioEditForm.duration ? parseInt(cardioEditForm.duration) : undefined,
-        distance: cardioEditForm.distance ? parseFloat(cardioEditForm.distance) : undefined,
-        distanceUnit: cardioEditForm.distanceUnit,
-        calories: cardioEditForm.calories ? parseInt(cardioEditForm.calories) : undefined,
+        duration: savedDuration,
+        distance: savedDistance,
+        distanceUnit: savedDistanceUnit,
+        calories: savedCalories,
+      });
+      // Update the sheet's sets snapshot so the form is not reset by the
+      // cache invalidation re-render that fires immediately after mutateAsync
+      setCardioEditSheet(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          sets: prev.sets.map((s, i) =>
+            i === 0
+              ? {
+                  ...s,
+                  duration: savedDuration ?? s.duration,
+                  distance: savedDistance ?? s.distance,
+                  distanceUnit: savedDistanceUnit,
+                  calories: savedCalories ?? s.calories,
+                }
+              : s
+          ),
+        };
       });
       closeCardioEditSheet();
     } catch (e) {
