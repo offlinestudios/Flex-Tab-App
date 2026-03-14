@@ -345,6 +345,10 @@ export async function handleGenerateWorkoutCard(req: Request, res: Response) {
     if (!data || !data.exercises || !Array.isArray(data.exercises)) {
       return res.status(400).json({ error: "Invalid card data" });
     }
+    console.log('[workout-card] R2_ACCOUNT_ID:', process.env.R2_ACCOUNT_ID ? 'Set' : 'MISSING');
+    console.log('[workout-card] R2_ACCESS_KEY_ID:', process.env.R2_ACCESS_KEY_ID ? 'Set' : 'MISSING');
+    console.log('[workout-card] R2_SECRET_ACCESS_KEY:', process.env.R2_SECRET_ACCESS_KEY ? 'Set' : 'MISSING');
+    console.log('[workout-card] R2_BUCKET_NAME:', process.env.R2_BUCKET_NAME || '(default: flextab-storage)');
 
     // Lazy-load satori and resvg to avoid issues at module load time
     const { default: satori } = await import("satori");
@@ -383,7 +387,8 @@ export async function handleGenerateWorkoutCard(req: Request, res: Response) {
       url = result.url;
       key = r2Key;
     } catch (r2Err: any) {
-      console.warn("[workout-card] R2 upload failed (non-fatal):", r2Err?.message);
+      console.warn('[workout-card] R2 upload failed (non-fatal):', r2Err?.message);
+      console.warn('[workout-card] R2 error stack:', r2Err?.stack?.split('\n')[0]);
     }
 
     return res.json({ url, key, dataUri });

@@ -77,6 +77,19 @@ async function startServer() {
     console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
   }
 
+  // Log R2 configuration at startup so missing vars are immediately visible
+  console.log('[Server] =========================');
+  console.log('[Server] R2 CONFIGURATION CHECK');
+  console.log('[Server] =========================');
+  console.log('[Server] R2_ACCOUNT_ID:', process.env.R2_ACCOUNT_ID ? 'Set (' + process.env.R2_ACCOUNT_ID.slice(0, 6) + '...)' : 'MISSING ⚠️');
+  console.log('[Server] R2_ACCESS_KEY_ID:', process.env.R2_ACCESS_KEY_ID ? 'Set' : 'MISSING ⚠️');
+  console.log('[Server] R2_SECRET_ACCESS_KEY:', process.env.R2_SECRET_ACCESS_KEY ? 'Set' : 'MISSING ⚠️');
+  console.log('[Server] R2_BUCKET_NAME:', process.env.R2_BUCKET_NAME || '(default: flextab-storage)');
+  console.log('[Server] R2_PUBLIC_URL:', process.env.R2_PUBLIC_URL || '(not set — will derive from account ID)');
+  console.log('[Server] VITE_SUPABASE_URL:', process.env.VITE_SUPABASE_URL ? 'Set' : 'MISSING ⚠️');
+  console.log('[Server] SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Set' : 'MISSING (falling back to anon key)');
+  console.log('[Server] =========================');
+
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
   });
