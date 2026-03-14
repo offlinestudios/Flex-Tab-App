@@ -44,6 +44,14 @@ function getStorageConfig(): StorageConfig {
     forcePathStyle: false,
     // Disable SSL verification issues
     tls: true,
+    // CRITICAL: AWS SDK v3.729+ defaults to sending x-amz-checksum-crc32 headers
+    // on every PutObject/UploadPart call. Cloudflare R2 does not support these
+    // checksum headers and rejects them with:
+    //   "NotImplemented: Header 'x-amz-checksum-crc32' not implemented"
+    // Setting WHEN_REQUIRED disables the automatic checksum injection so R2
+    // only receives checksums when the caller explicitly requests them.
+    requestChecksumCalculation: 'WHEN_REQUIRED' as any,
+    responseChecksumValidation: 'WHEN_REQUIRED' as any,
   });
 
   storageConfig = { client, bucket, publicUrl };

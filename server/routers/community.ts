@@ -34,6 +34,10 @@ function getR2Client() {
     credentials: { accessKeyId, secretAccessKey },
     forcePathStyle: false,
     tls: true,
+    // AWS SDK v3.729+ sends x-amz-checksum-crc32 by default; R2 rejects it.
+    // WHEN_REQUIRED disables automatic checksum injection for R2 compatibility.
+    requestChecksumCalculation: 'WHEN_REQUIRED' as any,
+    responseChecksumValidation: 'WHEN_REQUIRED' as any,
   });
 }
 
