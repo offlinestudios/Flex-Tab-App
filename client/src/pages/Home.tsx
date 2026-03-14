@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Menu, Plus, Trash2, Edit2, X, Dumbbell, Target, Weight, Activity, TrendingUp, Calendar, Share2 } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
@@ -133,6 +133,11 @@ export default function Home() {
   // Cardio-specific edit sheet
   const [cardioEditSheet, setCardioEditSheet] = useState<{ exercise: string; sets: SetLog[] } | null>(null);
   const [cardioEditForm, setCardioEditForm] = useState<{ duration: string; distance: string; distanceUnit: 'miles' | 'km'; calories: string }>({ duration: '', distance: '', distanceUnit: 'miles', calories: '' });
+  // Refs so handleCardioSave can read the latest input values even when
+  // onPointerDown fires before the focused input's blur/onChange commits.
+  const cardioDurationRef = useRef<HTMLInputElement>(null);
+  const cardioCaloriesRef = useRef<HTMLInputElement>(null);
+  const cardioDistanceRef = useRef<HTMLInputElement>(null);
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
   // Workout date — defaults to today but can be changed via the calendar to log a past session
   const [workoutDateKey, setWorkoutDateKey] = useState<string>(
@@ -589,11 +594,15 @@ export default function Home() {
   };
   const handleCardioSave = async () => {
     if (!cardioEditSheet) return;
-    // Capture form values before any async state changes
-    const savedDuration = cardioEditForm.duration ? parseInt(cardioEditForm.duration) : undefined;
-    const savedDistance = cardioEditForm.distance ? parseFloat(cardioEditForm.distance) : undefined;
+    // Read directly from DOM refs so we always get the latest typed value,
+    // even if onPointerDown fires before the input's blur/onChange commits.
+    const rawDuration = cardioDurationRef.current?.value ?? cardioEditForm.duration;
+    const rawCalories = cardioCaloriesRef.current?.value ?? cardioEditForm.calories;
+    const rawDistance = cardioDistanceRef.current?.value ?? cardioEditForm.distance;
+    const savedDuration = rawDuration ? parseInt(rawDuration) : undefined;
+    const savedDistance = rawDistance ? parseFloat(rawDistance) : undefined;
     const savedDistanceUnit = cardioEditForm.distanceUnit;
-    const savedCalories = cardioEditForm.calories ? parseInt(cardioEditForm.calories) : undefined;
+    const savedCalories = rawCalories ? parseInt(rawCalories) : undefined;
     try {
       // Update the first (and usually only) DB row with the new cardio values
       const firstSet = cardioEditSheet.sets[0];
@@ -1995,6 +2004,7 @@ export default function Home() {
               <div>
                 <label style={{ fontSize:11, fontWeight:700, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.07em', display:'block', marginBottom:6 }}>Duration (min)</label>
                 <input
+                  ref={cardioDurationRef}
                   type="number" inputMode="numeric" min="0"
                   value={cardioEditForm.duration}
                   onChange={e => setCardioEditForm(f => ({ ...f, duration: e.target.value }))}
@@ -2006,6 +2016,7 @@ export default function Home() {
               <div>
                 <label style={{ fontSize:11, fontWeight:700, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.07em', display:'block', marginBottom:6 }}>Calories (kcal)</label>
                 <input
+                  ref={cardioCaloriesRef}
                   type="number" inputMode="numeric" min="0"
                   value={cardioEditForm.calories}
                   onChange={e => setCardioEditForm(f => ({ ...f, calories: e.target.value }))}
@@ -2017,6 +2028,7 @@ export default function Home() {
               <div>
                 <label style={{ fontSize:11, fontWeight:700, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.07em', display:'block', marginBottom:6 }}>Distance</label>
                 <input
+                  ref={cardioDistanceRef}
                   type="number" inputMode="decimal" min="0" step="0.1"
                   value={cardioEditForm.distance}
                   onChange={e => setCardioEditForm(f => ({ ...f, distance: e.target.value }))}
