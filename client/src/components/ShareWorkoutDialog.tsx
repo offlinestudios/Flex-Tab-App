@@ -380,12 +380,11 @@ export function ShareWorkoutDialog({
             </div>
 
             {/* Footer */}
-            <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${C.divider}`, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Link style={{ width: 12, height: 12, color: C.textFooter }} />
-                <p style={{ fontSize: 11, color: C.textFooter, margin: 0 }}>flextab.app</p>
-              </div>
-
+            <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${C.divider}`, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+              <Link style={{ width: 12, height: 12, color: C.textFooter }} />
+              <p style={{ fontSize: 11, color: C.textFooter, margin: 0 }}>
+                {userName ? `@${userName.toLowerCase().replace(/\s+/g, '')} · flextab.app` : 'flextab.app'}
+              </p>
             </div>
           </div>
         </div>

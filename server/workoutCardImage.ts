@@ -277,12 +277,17 @@ function buildCardElement(data: CardData) {
   };
 
   // ── Footer children ───────────────────────────────────────────────────────
+  // Option C: single centred byline — "@username · flextab.app" (or just "flextab.app")
+  const footerText = userName
+    ? `@${userName.toLowerCase().replace(/\s+/g, "")} · flextab.app`
+    : "flextab.app";
+
   const footerChildren: object[] = [
     {
       type: "div",
       props: {
         style: { fontSize: 11, color: C.textFooter, display: "flex" },
-        children: "flextab.app",
+        children: footerText,
       },
     },
   ];
