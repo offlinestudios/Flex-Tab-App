@@ -247,19 +247,20 @@ function buildCardElement(data: CardData) {
     : null;
 
   // ── Header ────────────────────────────────────────────────────────────────
-  // Layout: [Logo] FlexTab / date / @username (left, stacked)
+  // Layout: [Logo] FlexTab (left) | @username aligned with date (right)
   const headerElement = {
     type: "div",
     props: {
       style: {
         display: "flex",
-        alignItems: "center",
+        alignItems: "flex-start",
+        justifyContent: "space-between",
         marginBottom: 18,
         paddingBottom: 16,
         borderBottom: `1px solid ${C.headerDivider}`,
       },
       children: [
-        // Left: logo + app name + date + @username
+        // Left: logo + app name + date
         {
           type: "div",
           props: {
@@ -285,7 +286,7 @@ function buildCardElement(data: CardData) {
                   },
                 },
               },
-              // App name + date + @username stacked
+              // App name + date stacked
               {
                 type: "div",
                 props: {
@@ -305,23 +306,42 @@ function buildCardElement(data: CardData) {
                         children: date,
                       },
                     },
-                    ...(userName
-                      ? [
-                          {
-                            type: "div",
-                            props: {
-                              style: { fontSize: 10, color: C.textMuted, display: "flex", marginTop: 1 },
-                              children: `@${userName.toLowerCase().replace(/\s+/g, "")}`,
-                            },
-                          },
-                        ]
-                      : []),
                   ],
                 },
               },
             ],
           },
         },
+        // Right: @username — vertically offset to align with the date line
+        // Logo is 40px tall; FlexTab title is ~18px (15px + lineHeight); date sits below that.
+        // paddingTop pushes the name down to sit beside the date.
+        ...(userName
+          ? [
+              {
+                type: "div",
+                props: {
+                  style: {
+                    display: "flex",
+                    alignItems: "flex-end",
+                    flexShrink: 0,
+                    paddingTop: 20,
+                  },
+                  children: {
+                    type: "div",
+                    props: {
+                      style: {
+                        fontSize: 10, fontWeight: 400,
+                        color: C.textMuted,
+                        display: "flex",
+                        lineHeight: 1,
+                      },
+                      children: `@${userName.toLowerCase().replace(/\s+/g, "")}`,
+                    },
+                  },
+                },
+              },
+            ]
+          : []),
       ],
     },
   };
