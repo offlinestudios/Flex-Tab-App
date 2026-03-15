@@ -286,16 +286,14 @@ export function ShareWorkoutDialog({
               marginBottom: 4,
             }}
           >
-            {/* ── Header: logo + FlexTab + date (left), userName (right) ── */}
+            {/* ── Header: logo + FlexTab + date + @username (all left, stacked) ── */}
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'space-between',
               marginBottom: 18,
               paddingBottom: 16,
               borderBottom: `1px solid ${C.divider}`,
             }}>
-              {/* Left: logo + app name + date */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <img
                   src={theme === 'dark' ? '/flextab-icon-white.png' : '/flextab-icon.png'}
@@ -305,16 +303,13 @@ export function ShareWorkoutDialog({
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   <p style={{ fontSize: 15, fontWeight: 800, color: C.textPrimary, margin: 0, lineHeight: 1 }}>FlexTab</p>
                   <p style={{ fontSize: 11, color: C.textMuted, margin: 0 }}>{formattedDate}</p>
+                  {userName && (
+                    <p style={{ fontSize: 10, color: C.textMuted, margin: 0, marginTop: 1 }}>
+                      @{userName.toLowerCase().replace(/\s+/g, '')}
+                    </p>
+                  )}
                 </div>
               </div>
-              {/* Right: user name — aligned to FlexTab title height */}
-              {userName && (
-                <div style={{ display: 'flex', alignItems: 'flex-start', flexShrink: 0 }}>
-                  <p style={{ fontSize: 15, fontWeight: 400, color: C.textMuted, margin: 0, lineHeight: 1 }}>
-                    {userName}
-                  </p>
-                </div>
-              )}
             </div>
 
             {/* Stat tiles — 2×2 grid */}

@@ -247,20 +247,19 @@ function buildCardElement(data: CardData) {
     : null;
 
   // ── Header ────────────────────────────────────────────────────────────────
-  // Layout: [Logo] FlexTab / date (left)          userName (right)
+  // Layout: [Logo] FlexTab / date / @username (left, stacked)
   const headerElement = {
     type: "div",
     props: {
       style: {
         display: "flex",
         alignItems: "center",
-        justifyContent: "space-between",
         marginBottom: 18,
         paddingBottom: 16,
         borderBottom: `1px solid ${C.headerDivider}`,
       },
       children: [
-        // Left: logo + app name + date
+        // Left: logo + app name + date + @username
         {
           type: "div",
           props: {
@@ -286,7 +285,7 @@ function buildCardElement(data: CardData) {
                   },
                 },
               },
-              // App name + date stacked
+              // App name + date + @username stacked
               {
                 type: "div",
                 props: {
@@ -306,40 +305,23 @@ function buildCardElement(data: CardData) {
                         children: date,
                       },
                     },
+                    ...(userName
+                      ? [
+                          {
+                            type: "div",
+                            props: {
+                              style: { fontSize: 10, color: C.textMuted, display: "flex", marginTop: 1 },
+                              children: `@${userName.toLowerCase().replace(/\s+/g, "")}`,
+                            },
+                          },
+                        ]
+                      : []),
                   ],
                 },
               },
             ],
           },
         },
-        // Right: user name — same vertical level as "FlexTab" title
-        ...(userName
-          ? [
-              {
-                type: "div",
-                props: {
-                  style: {
-                    display: "flex",
-                    alignItems: "flex-start",
-                    flexShrink: 0,
-                    paddingTop: 0,
-                  },
-                  children: {
-                    type: "div",
-                    props: {
-                      style: {
-                        fontSize: 15, fontWeight: 400,
-                        color: C.textMuted,
-                        display: "flex",
-                        lineHeight: 1,
-                      },
-                      children: userName,
-                    },
-                  },
-                },
-              },
-            ]
-          : []),
       ],
     },
   };
