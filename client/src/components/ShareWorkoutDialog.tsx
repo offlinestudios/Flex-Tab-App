@@ -307,14 +307,7 @@ export function ShareWorkoutDialog({
                   <p style={{ fontSize: 11, color: C.textMuted, margin: 0 }}>{formattedDate}</p>
                 </div>
               </div>
-              {/* Right: @username — pushed down to align with the date line */}
-              {userName && (
-                <div style={{ display: 'flex', alignItems: 'flex-end', flexShrink: 0, paddingTop: 20 }}>
-                  <p style={{ fontSize: 10, fontWeight: 400, color: C.textMuted, margin: 0, lineHeight: 1 }}>
-                    @{userName.toLowerCase().replace(/\s+/g, '')}
-                  </p>
-                </div>
-              )}
+
             </div>
 
             {/* Stat tiles — 2×2 grid */}
@@ -387,9 +380,16 @@ export function ShareWorkoutDialog({
             </div>
 
             {/* Footer */}
-            <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${C.divider}`, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-              <Link style={{ width: 12, height: 12, color: C.textFooter }} />
-              <p style={{ fontSize: 11, color: C.textFooter, margin: 0 }}>flextab.app</p>
+            <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${C.divider}`, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Link style={{ width: 12, height: 12, color: C.textFooter }} />
+                <p style={{ fontSize: 11, color: C.textFooter, margin: 0 }}>flextab.app</p>
+              </div>
+              {userName && (
+                <p style={{ fontSize: 10, color: C.textFooter, margin: 0 }}>
+                  @{userName.toLowerCase().replace(/\s+/g, '')}
+                </p>
+              )}
             </div>
           </div>
         </div>

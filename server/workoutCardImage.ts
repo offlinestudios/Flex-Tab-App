@@ -95,9 +95,8 @@ interface CardData {
 
 // ── Build the satori element tree ────────────────────────────────────────────
 function buildCardElement(data: CardData) {
-  const { date, duration, totalSets, totalReps, volumeDisplay, exercises, userName, userAvatarUrl, lifterGrade } = data;
+  const { date, duration, totalSets, totalReps, volumeDisplay, exercises, userName, lifterGrade } = data;
   const C = THEMES[data.theme === "dark" ? "dark" : "light"];
-  const gradeColor = lifterGrade ? (GRADE_COLORS[lifterGrade] ?? C.textMuted) : C.textMuted;
 
   const statTiles = [
     { value: duration || "—", label: "DURATION" },
@@ -211,140 +210,91 @@ function buildCardElement(data: CardData) {
     },
   });
 
-  // ── Grade badge (used in user info row) ───────────────────────────────────
-  const gradeBadge = lifterGrade
-    ? {
-        type: "div",
-        props: {
-          style: {
-            background: C.gradeBg, borderRadius: 50,
-            paddingTop: 3, paddingBottom: 3, paddingLeft: 9, paddingRight: 9,
-            display: "flex", alignItems: "center", gap: 5, flexShrink: 0,
-          },
-          children: [
-            {
-              type: "div",
-              props: {
-                style: {
-                  width: 6, height: 6, borderRadius: 3,
-                  background: gradeColor, display: "flex", flexShrink: 0,
-                },
-              },
-            },
-            {
-              type: "div",
-              props: {
-                style: {
-                  fontSize: 10, fontWeight: 700, color: gradeColor,
-                  display: "flex", letterSpacing: "0.04em",
-                },
-                children: lifterGrade.toUpperCase(),
-              },
-            },
-          ],
-        },
-      }
-    : null;
-
   // ── Header ────────────────────────────────────────────────────────────────
-  // Layout: [Logo] FlexTab (left) | @username aligned with date (right)
+  // Layout: [Logo] FlexTab / date (left only — no right element)
   const headerElement = {
     type: "div",
     props: {
       style: {
         display: "flex",
-        alignItems: "flex-start",
-        justifyContent: "space-between",
+        alignItems: "center",
         marginBottom: 18,
         paddingBottom: 16,
         borderBottom: `1px solid ${C.headerDivider}`,
       },
-      children: [
-        // Left: logo + app name + date
-        {
-          type: "div",
-          props: {
-            style: { display: "flex", alignItems: "center", gap: 10 },
-            children: [
-              // Logo — use white version on dark theme
-              {
-                type: "div",
-                props: {
-                  style: {
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    width: 40, height: 40, borderRadius: 10,
-                    background: "transparent",
-                    flexShrink: 0,
-                  },
-                  children: {
-                    type: "img",
-                    props: {
-                      src: data.theme === "dark" ? LOGO_WHITE_DATA_URI : LOGO_DATA_URI,
-                      width: 36, height: 36,
-                      style: { borderRadius: 8 },
-                    },
+      children: {
+        type: "div",
+        props: {
+          style: { display: "flex", alignItems: "center", gap: 10 },
+          children: [
+            // Logo — use white version on dark theme
+            {
+              type: "div",
+              props: {
+                style: {
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  width: 40, height: 40, borderRadius: 10,
+                  background: "transparent",
+                  flexShrink: 0,
+                },
+                children: {
+                  type: "img",
+                  props: {
+                    src: data.theme === "dark" ? LOGO_WHITE_DATA_URI : LOGO_DATA_URI,
+                    width: 36, height: 36,
+                    style: { borderRadius: 8 },
                   },
                 },
               },
-              // App name + date stacked
-              {
-                type: "div",
-                props: {
-                  style: { display: "flex", flexDirection: "column", gap: 2 },
-                  children: [
-                    {
-                      type: "div",
-                      props: {
-                        style: { fontSize: 15, fontWeight: 800, color: C.textPrimary, display: "flex" },
-                        children: "FlexTab",
-                      },
-                    },
-                    {
-                      type: "div",
-                      props: {
-                        style: { fontSize: 11, color: C.textMuted, display: "flex" },
-                        children: date,
-                      },
-                    },
-                  ],
-                },
-              },
-            ],
-          },
-        },
-        // Right: @username — vertically offset to align with the date line
-        // Logo is 40px tall; FlexTab title is ~18px (15px + lineHeight); date sits below that.
-        // paddingTop pushes the name down to sit beside the date.
-        ...(userName
-          ? [
-              {
-                type: "div",
-                props: {
-                  style: {
-                    display: "flex",
-                    alignItems: "flex-end",
-                    flexShrink: 0,
-                    paddingTop: 20,
-                  },
-                  children: {
+            },
+            // App name + date stacked
+            {
+              type: "div",
+              props: {
+                style: { display: "flex", flexDirection: "column", gap: 2 },
+                children: [
+                  {
                     type: "div",
                     props: {
-                      style: {
-                        fontSize: 10, fontWeight: 400,
-                        color: C.textMuted,
-                        display: "flex",
-                        lineHeight: 1,
-                      },
-                      children: `@${userName.toLowerCase().replace(/\s+/g, "")}`,
+                      style: { fontSize: 15, fontWeight: 800, color: C.textPrimary, display: "flex" },
+                      children: "FlexTab",
                     },
                   },
-                },
+                  {
+                    type: "div",
+                    props: {
+                      style: { fontSize: 11, color: C.textMuted, display: "flex" },
+                      children: date,
+                    },
+                  },
+                ],
               },
-            ]
-          : []),
-      ],
+            },
+          ],
+        },
+      },
     },
   };
+
+  // ── Footer children ───────────────────────────────────────────────────────
+  const footerChildren: object[] = [
+    {
+      type: "div",
+      props: {
+        style: { fontSize: 11, color: C.textFooter, display: "flex" },
+        children: "flextab.app",
+      },
+    },
+  ];
+  if (userName) {
+    footerChildren.push({
+      type: "div",
+      props: {
+        style: { fontSize: 10, color: C.textFooter, display: "flex" },
+        children: `@${userName.toLowerCase().replace(/\s+/g, "")}`,
+      },
+    });
+  }
 
   // ── Root card element ─────────────────────────────────────────────────────
   return {
@@ -426,15 +376,9 @@ function buildCardElement(data: CardData) {
                 style: {
                   marginTop: 14, paddingTop: 12,
                   borderTop: `1px solid ${C.divider}`,
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                  display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
                 },
-                children: {
-                  type: "div",
-                  props: {
-                    style: { fontSize: 11, color: C.textFooter, display: "flex" },
-                    children: "flextab.app",
-                  },
-                },
+                children: footerChildren,
               },
             },
           ],
@@ -457,9 +401,10 @@ export async function handleGenerateWorkoutCard(req: Request, res: Response) {
 
     const cardElement = buildCardElement(data);
 
-    const userInfoRowHeight = data.userName ? 36 : 0;
     const exerciseHeight = Math.max(data.exercises.length, 1) * 47;
-    const cardHeight = 96 + userInfoRowHeight + 160 + 20 + 30 + exerciseHeight + 50 + 40;
+    // Footer is slightly taller when @username is shown
+    const footerHeight = data.userName ? 56 : 40;
+    const cardHeight = 96 + 160 + 20 + 30 + exerciseHeight + footerHeight;
 
     const svg = await satori(cardElement as any, {
       width: 390,
