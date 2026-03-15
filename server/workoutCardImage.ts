@@ -286,15 +286,7 @@ function buildCardElement(data: CardData) {
       },
     },
   ];
-  if (userName) {
-    footerChildren.push({
-      type: "div",
-      props: {
-        style: { fontSize: 10, color: C.textFooter, display: "flex" },
-        children: `@${userName.toLowerCase().replace(/\s+/g, "")}`,
-      },
-    });
-  }
+
 
   // ── Root card element ─────────────────────────────────────────────────────
   return {

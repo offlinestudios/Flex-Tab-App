@@ -385,11 +385,7 @@ export function ShareWorkoutDialog({
                 <Link style={{ width: 12, height: 12, color: C.textFooter }} />
                 <p style={{ fontSize: 11, color: C.textFooter, margin: 0 }}>flextab.app</p>
               </div>
-              {userName && (
-                <p style={{ fontSize: 10, color: C.textFooter, margin: 0 }}>
-                  @{userName.toLowerCase().replace(/\s+/g, '')}
-                </p>
-              )}
+
             </div>
           </div>
         </div>
