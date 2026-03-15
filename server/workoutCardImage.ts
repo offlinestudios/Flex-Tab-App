@@ -312,61 +312,30 @@ function buildCardElement(data: CardData) {
             ],
           },
         },
-        // Right: avatar circle + first name (only when userName provided)
+        // Right: user name — same vertical level as "FlexTab" title
         ...(userName
           ? [
               {
                 type: "div",
                 props: {
                   style: {
-                    display: "flex", flexDirection: "column",
-                    alignItems: "center", gap: 4, flexShrink: 0,
+                    display: "flex",
+                    alignItems: "flex-start",
+                    flexShrink: 0,
+                    paddingTop: 0,
                   },
-                  children: [
-                    // Avatar circle
-                    {
-                      type: "div",
-                      props: {
-                        style: {
-                          width: 36, height: 36, borderRadius: 18,
-                          overflow: "hidden", flexShrink: 0,
-                          background: C.tileBg,
-                          border: `2px solid ${C.headerDivider}`,
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                        },
-                        children: userAvatarUrl
-                          ? {
-                              type: "img",
-                              props: {
-                                src: userAvatarUrl,
-                                width: 36, height: 36,
-                                style: { objectFit: "cover" },
-                              },
-                            }
-                          : {
-                              type: "div",
-                              props: {
-                                style: {
-                                  fontSize: 14, fontWeight: 700,
-                                  color: C.textPrimary, display: "flex",
-                                },
-                                children: userName.charAt(0).toUpperCase(),
-                              },
-                            },
+                  children: {
+                    type: "div",
+                    props: {
+                      style: {
+                        fontSize: 15, fontWeight: 400,
+                        color: C.textMuted,
+                        display: "flex",
+                        lineHeight: 1,
                       },
+                      children: userName,
                     },
-                    // First name only
-                    {
-                      type: "div",
-                      props: {
-                        style: {
-                          fontSize: 10, fontWeight: 500, color: C.textMuted,
-                          letterSpacing: "0.02em", display: "flex",
-                        },
-                        children: userName.split(" ")[0],
-                      },
-                    },
-                  ],
+                  },
                 },
               },
             ]
