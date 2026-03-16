@@ -99,14 +99,29 @@ export const workoutRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       console.log('[updateSetLog] received input:', JSON.stringify(input));
-      console.log('[updateSetLog] userId:', ctx.user.id);
+      console.log('[updateSetLog] ctx.user.id:', ctx.user.id, 'ctx.user.openId:', ctx.user.openId);
+      
+      // First, fetch the actual row to verify it exists and check its userId
+      const db = await import('../db').then(m => m.getDb());
+      if (db) {
+        const { setLogs: setLogsTable } = await import('../../drizzle/schema');
+        const { eq } = await import('drizzle-orm');
+        const existing = await db.select({ id: setLogsTable.id, userId: setLogsTable.userId, exercise: setLogsTable.exercise }).from(setLogsTable).where(eq(setLogsTable.id, input.id)).limit(1);
+        console.log('[updateSetLog] existing row:', JSON.stringify(existing));
+        if (existing.length === 0) {
+          console.error('[updateSetLog] ERROR: No row found with id', input.id);
+        } else if (existing[0].userId !== ctx.user.id) {
+          console.error('[updateSetLog] ERROR: userId mismatch! Row userId:', existing[0].userId, 'ctx userId:', ctx.user.id);
+        }
+      }
+      
       const { id, distance, ...rest } = input;
       const data: Record<string, unknown> = { ...rest };
       if (distance !== undefined) data.distance = distance.toString();
       console.log('[updateSetLog] data to write to DB:', JSON.stringify(data));
       const result = await updateSetLog(id, ctx.user.id, data as any);
-      console.log('[updateSetLog] DB result:', JSON.stringify(result));
-      return { success: true };
+      console.log('[updateSetLog] DB update result rowCount:', (result as any)?.rowCount);
+      return { success: true, rowsUpdated: (result as any)?.rowCount ?? 'unknown' };
     }),
 
   // Measurements

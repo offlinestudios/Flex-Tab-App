@@ -659,7 +659,7 @@ export default function Home() {
         distanceUnit: savedDistanceUnit,
         calories: savedCalories,
       });
-      console.log('[CardioSave] mutateAsync result:', result);
+      console.log('[CardioSave] mutateAsync result:', JSON.stringify(result));
       // Update the sheet's sets snapshot so the form is not reset by the
       // cache invalidation re-render that fires immediately after mutateAsync
       setCardioEditSheet(prev => {
