@@ -2,28 +2,32 @@
 
 ## Required Environment Variables
 
-Add these environment variables in your Railway project dashboard:
+Add these environment variables in your Railway project dashboard under **Variables**.
 
-### **Authentication (Clerk)**
+---
+
+### Authentication (Supabase)
 
 ```
-CLERK_PUBLISHABLE_KEY=pk_live_Y2xlcmsuZmxleHRhYi5hcHA=
-CLERK_SECRET_KEY=sk_live_...
-VITE_CLERK_PUBLISHABLE_KEY=pk_live_Y2xlcmsuZmxleHRhYi5hcHA=
+VITE_SUPABASE_URL=https://your-project-id.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJ...your-anon-key...
+SUPABASE_SERVICE_ROLE_KEY=eyJ...your-service-role-key...
 ```
 
 **Where to find these:**
-- Go to https://dashboard.clerk.com
-- Select your FlexTab application
-- Navigate to "API Keys"
-- Copy both the Publishable Key and Secret Key
+- Go to [https://supabase.com/dashboard](https://supabase.com/dashboard)
+- Select your FlexTab project
+- Navigate to **Settings → API**
+- Copy:
+  - `Project URL` → `VITE_SUPABASE_URL`
+  - `anon / public` key → `VITE_SUPABASE_ANON_KEY`
+  - `service_role` key → `SUPABASE_SERVICE_ROLE_KEY`
 
-**Important:** 
-- `CLERK_PUBLISHABLE_KEY` - Used by server-side Clerk middleware
-- `CLERK_SECRET_KEY` - Used for server-side API calls to Clerk
-- `VITE_CLERK_PUBLISHABLE_KEY` - Used by client-side React app (must start with `VITE_`)
+> **Important:** `SUPABASE_SERVICE_ROLE_KEY` is used server-side only to verify JWTs and auto-create user records. Never expose it to the client. If this key is missing, the server falls back to the anon key, which may cause auth failures for upload endpoints.
 
-### **Database (PostgreSQL)**
+---
+
+### Database (PostgreSQL)
 
 ```
 DATABASE_URL=postgresql://username:password@host:port/database?sslmode=require
@@ -31,33 +35,42 @@ DATABASE_URL=postgresql://username:password@host:port/database?sslmode=require
 
 **Where to find this:**
 - In Railway dashboard, go to your PostgreSQL service
-- Click on "Connect" tab
-- Copy the "Postgres Connection URL"
-- Make sure it includes `?sslmode=require` at the end
-
-### **Application Configuration**
-
-```
-NODE_ENV=production
-PORT=3000
-```
-
-**Note:** Railway automatically sets `PORT`, but you can override it if needed.
+- Click the **Connect** tab
+- Copy the **Postgres Connection URL**
+- Ensure it includes `?sslmode=require` at the end
 
 ---
 
-## Optional Environment Variables
+### Application Configuration
 
-These are only needed if you use specific features:
+```
+NODE_ENV=production
+PORT=8080
+```
 
-### **Cloudflare R2 Storage** (for file uploads)
+> Railway automatically sets `PORT`. The default in this app is `8080`.
+
+---
+
+## Required for File Uploads (Profile Photos & Community Media)
+
+Both the profile photo upload (`POST /api/upload-avatar`) and community media upload (`POST /api/upload-media`) require Cloudflare R2. **Without these, all uploads will return a 500 error.**
 
 ```
 R2_ACCOUNT_ID=your_cloudflare_account_id
-R2_ACCESS_KEY_ID=your_r2_access_key
-R2_SECRET_ACCESS_KEY=your_r2_secret_key
-R2_BUCKET_NAME=your_bucket_name
+R2_ACCESS_KEY_ID=your_r2_access_key_id
+R2_SECRET_ACCESS_KEY=your_r2_secret_access_key
+R2_BUCKET_NAME=flextab-storage
+R2_PUBLIC_URL=https://pub-xxxxxxxxxxxx.r2.dev
 ```
+
+**Where to find these:**
+- Go to [https://dash.cloudflare.com](https://dash.cloudflare.com)
+- Navigate to **R2 Object Storage**
+- Create a bucket (e.g. `flextab-storage`) if you haven't already
+- Go to **Manage R2 API Tokens** to generate `R2_ACCESS_KEY_ID` and `R2_SECRET_ACCESS_KEY`
+- Your `R2_ACCOUNT_ID` is shown in the right sidebar of the R2 dashboard
+- `R2_PUBLIC_URL` is the public dev URL for your bucket (e.g. `https://pub-xxxx.r2.dev`) — enable public access on the bucket to get this
 
 ---
 
@@ -65,20 +78,26 @@ R2_BUCKET_NAME=your_bucket_name
 
 1. Go to your Railway project dashboard
 2. Click on your service/deployment
-3. Click on the "Variables" tab
-4. Click "New Variable"
+3. Click the **Variables** tab
+4. Click **New Variable**
 5. Add each variable name and value
-6. Railway will automatically redeploy after you save
+6. Railway will automatically redeploy after saving
 
 ---
 
 ## Verification
 
-After adding all variables, check the deployment logs for:
+After deploying, check the **Deploy Logs** for these lines:
 
 ```
-[Server] Clerk publishable key: Set
+[Server] VITE_SUPABASE_URL: Set
+[Server] SUPABASE_SERVICE_ROLE_KEY: Set  (or: MISSING (falling back to anon key))
+[Server] R2_ACCOUNT_ID: Set (fbcc4a...)
+[Server] R2_ACCESS_KEY_ID: Set
+[Server] R2_SECRET_ACCESS_KEY: Set
+[Server] R2_PUBLIC_URL: https://pub-xxxx.r2.dev
 [Server] Database URL: Set
+[Server] Server started successfully
 ```
 
-If you see "Missing" for any of these, the environment variable wasn't set correctly.
+If any R2 variable shows `Missing`, file uploads will fail. If `SUPABASE_SERVICE_ROLE_KEY` is missing, upload endpoints may return `401 Unauthorized` for some users.

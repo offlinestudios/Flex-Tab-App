@@ -55,8 +55,27 @@ async function getUserFromRequest(req: Request) {
   if (!supabaseUser || error) return null;
   const db = await getDb();
   if (!db) return null;
-  const [user] = await db.select().from(users).where(eq(users.openId, supabaseUser.id)).limit(1);
-  return user ?? null;
+
+  // Look up existing user
+  const existingUsers = await db.select().from(users).where(eq(users.openId, supabaseUser.id)).limit(1);
+  if (existingUsers.length > 0) return existingUsers[0];
+
+  // Auto-create user record if it doesn't exist yet (mirrors railway-context.ts behaviour)
+  try {
+    const newUsers = await db
+      .insert(users)
+      .values({
+        openId: supabaseUser.id,
+        email: supabaseUser.email || "",
+        name: supabaseUser.user_metadata?.name || supabaseUser.email || "User",
+        role: "user",
+      })
+      .returning();
+    return newUsers[0] ?? null;
+  } catch (insertErr) {
+    console.error("[AvatarUpload] Failed to auto-create user:", insertErr);
+    return null;
+  }
 }
 
 export async function handleAvatarUpload(req: Request, res: Response) {
