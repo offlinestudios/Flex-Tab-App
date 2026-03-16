@@ -6,6 +6,8 @@ import { users } from "../../drizzle/schema";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { S3Client } from "@aws-sdk/client-s3";
+import { NodeHttpHandler } from "@smithy/node-http-handler";
+import https from "https";
 import { randomUUID } from "crypto";
 
 function getR2Client() {
@@ -15,12 +17,17 @@ function getR2Client() {
   if (!accountId || !accessKeyId || !secretAccessKey) {
     throw new Error("R2 credentials missing");
   }
+  const r2Hostname = `${accountId}.r2.cloudflarestorage.com`;
+  // forcePathStyle:true + custom httpsAgent prevents SSL alert 40 in Railway/Docker
+  const r2HttpsAgent = new https.Agent({ keepAlive: false, servername: r2Hostname });
   return new S3Client({
     region: "auto",
-    endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+    endpoint: `https://${r2Hostname}`,
     credentials: { accessKeyId, secretAccessKey },
-    forcePathStyle: false,
-    tls: true,
+    forcePathStyle: true,
+    requestHandler: new NodeHttpHandler({ httpsAgent: r2HttpsAgent }),
+    requestChecksumCalculation: 'WHEN_REQUIRED' as any,
+    responseChecksumValidation: 'WHEN_REQUIRED' as any,
   });
 }
 

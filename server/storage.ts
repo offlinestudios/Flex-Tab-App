@@ -58,8 +58,9 @@ function getStorageConfig(): StorageConfig {
       accessKeyId,
       secretAccessKey,
     },
-    // Force path style must be false for R2 virtual-hosted style
-    forcePathStyle: false,
+    // forcePathStyle:true ensures the SDK connects to the account-level hostname
+    // (matching the SNI in httpsAgent) rather than bucket.account.r2.cloudflarestorage.com
+    forcePathStyle: true,
     // Provide a custom request handler with the fixed httpsAgent
     requestHandler: new NodeHttpHandler({
       httpsAgent: r2HttpsAgent,

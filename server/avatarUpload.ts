@@ -20,14 +20,15 @@ function getR2Client() {
   const accessKeyId = process.env.R2_ACCESS_KEY_ID!;
   const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY!;
   const r2Hostname = `${accountId}.r2.cloudflarestorage.com`;
-  // CRITICAL FIX: Use a custom httpsAgent with keepAlive:false and explicit servername
-  // to prevent SSL alert 40 (TLS handshake failure) in Railway/Docker containers.
+  // CRITICAL FIX: Use forcePathStyle:true so the SDK connects to the account-level
+  // hostname (not bucket.account.r2.cloudflarestorage.com), matching the SNI in the
+  // httpsAgent and preventing SSL alert 40 (TLS handshake failure) in Railway/Docker.
   const r2HttpsAgent = new https.Agent({ keepAlive: false, servername: r2Hostname });
   return new S3Client({
     region: "auto",
     endpoint: `https://${r2Hostname}`,
     credentials: { accessKeyId, secretAccessKey },
-    forcePathStyle: false,
+    forcePathStyle: true,
     requestHandler: new NodeHttpHandler({ httpsAgent: r2HttpsAgent }),
     // AWS SDK v3.729+ sends x-amz-checksum-crc32 by default; R2 rejects it.
     // WHEN_REQUIRED disables automatic checksum injection for R2 compatibility.

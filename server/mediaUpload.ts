@@ -30,7 +30,7 @@ function getR2Client() {
     region: "auto",
     endpoint: `https://${r2Hostname}`,
     credentials: { accessKeyId, secretAccessKey },
-    forcePathStyle: false,
+    forcePathStyle: true,
     requestHandler: new NodeHttpHandler({ httpsAgent: r2HttpsAgent }),
     // AWS SDK v3.729+ sends x-amz-checksum-crc32 by default; R2 rejects it.
     // WHEN_REQUIRED disables automatic checksum injection for R2 compatibility.
