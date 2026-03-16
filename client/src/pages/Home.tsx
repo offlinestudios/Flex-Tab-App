@@ -148,14 +148,6 @@ export default function Home() {
   const { data: setLogsData = [], isLoading: setLogsLoading, error: setLogsError } = trpc.workout.getSetLogs.useQuery(undefined, {
     enabled: isAuthenticated,
     refetchOnWindowFocus: false,
-    select: (data) => {
-      // Log any cardio rows to trace what the server returns after a save
-      const cardioRows = data.filter((r: any) => r.category === 'Cardio' || r.exercise === 'Cycling');
-      if (cardioRows.length > 0) {
-        console.log('[getSetLogs select] cardio rows from server:', JSON.stringify(cardioRows.map((r: any) => ({ id: r.id, exercise: r.exercise, duration: r.duration, distance: r.distance, calories: r.calories, distanceUnit: r.distanceUnit }))));
-      }
-      return data;
-    },
   });
   
   // Fetch measurements from database
@@ -169,17 +161,8 @@ export default function Home() {
     refetchOnWindowFocus: false,
   });
   
-  // Debug logging
-  useEffect(() => {
-    console.log('[DEBUG] setLogsData:', setLogsData);
-    console.log('[DEBUG] setLogsLoading:', setLogsLoading);
-    console.log('[DEBUG] setLogsError:', setLogsError);
-    console.log('[DEBUG] isAuthenticated:', isAuthenticated);
-  }, [setLogsData, setLogsLoading, setLogsError, isAuthenticated]);
-  
   // Transform flat set logs into grouped workout sessions
   const workoutSessions: WorkoutSession[] = useMemo(() => {
-    console.log('[DEBUG] useMemo running, setLogsData length:', setLogsData.length);
     const sessionMap = new Map<string, SetLog[]>();
     // Track the session duration per date (last non-null value wins)
     const durationMap = new Map<string, number | null>();
@@ -608,15 +591,6 @@ export default function Home() {
   const handleCardioSave = async () => {
     if (!cardioEditSheet) return;
 
-    // --- DEBUG: log all input sources ---
-    console.log('[CardioSave] cardioEditForm state:', cardioEditForm);
-    console.log('[CardioSave] DOM refs:', {
-      duration: cardioDurationRef.current?.value,
-      calories: cardioCaloriesRef.current?.value,
-      distance: cardioDistanceRef.current?.value,
-    });
-    console.log('[CardioSave] sets in sheet:', cardioEditSheet.sets);
-
     // Always read from the DOM ref first (guaranteed to reflect what the user
     // typed), then fall back to React state.  This avoids the stale-closure
     // problem where the state hasn't flushed before the handler runs.
@@ -625,72 +599,48 @@ export default function Home() {
     const rawDistance = (cardioDistanceRef.current?.value ?? cardioEditForm.distance).trim();
     const savedDistanceUnit = cardioEditForm.distanceUnit;
 
-    console.log('[CardioSave] raw values:', { rawDuration, rawCalories, rawDistance, savedDistanceUnit });
-
-    // Parse — treat empty string as 0 so we always send a valid number to the
-    // server (avoids the field being omitted and the DB keeping the old value).
+    // Parse — treat empty string as 0
     const savedDuration = rawDuration !== '' ? parseInt(rawDuration, 10) : 0;
     const savedCalories = rawCalories !== '' ? parseInt(rawCalories, 10) : 0;
     const savedDistance = rawDistance !== '' ? parseFloat(rawDistance) : 0;
 
-    console.log('[CardioSave] parsed values:', { savedDuration, savedCalories, savedDistance });
-
-    // Guard against NaN (user typed non-numeric characters)
+    // Guard against NaN
     if (isNaN(savedDuration) || isNaN(savedCalories) || isNaN(savedDistance)) {
-      console.error('[CardioSave] NaN detected — aborting save', { savedDuration, savedCalories, savedDistance });
       alert('Invalid values detected. Please enter numbers only.');
       return;
     }
 
     const firstSet = cardioEditSheet.sets[0];
-    const parsedId = parseInt(firstSet.id, 10);
-    console.log('[CardioSave] firstSet.id:', firstSet.id, '→ parsedId:', parsedId);
-
-    if (isNaN(parsedId) || parsedId <= 0) {
-      console.error('[CardioSave] Invalid set ID — aborting save', firstSet.id);
-      alert('Cannot save: invalid exercise ID. Please refresh and try again.');
-      return;
-    }
 
     try {
-      console.log('[CardioSave] calling mutateAsync with:', {
-        id: parsedId,
+      // Step 1: Delete ALL existing rows for this grouped cardio entry.
+      // The UI shows aggregated totals across all rows, so we must replace
+      // the whole group — not just update one row — to keep the display consistent.
+      await Promise.all(
+        cardioEditSheet.sets.map(s => deleteSetLogMutation.mutateAsync({ id: parseInt(s.id) }))
+      );
+
+      // Step 2: Re-create a single canonical row with the new totals.
+      const time = new Date().toLocaleTimeString('en-US', {
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true,
+      });
+      await logSetMutation.mutateAsync({
+        date: firstSet.date,
+        exercise: firstSet.exercise,
+        sets: 1,
+        reps: 0,
+        weight: 0,
+        time,
+        category: firstSet.category || 'Cardio',
         duration: savedDuration,
         distance: savedDistance,
         distanceUnit: savedDistanceUnit,
         calories: savedCalories,
       });
-      const result = await updateSetLogMutation.mutateAsync({
-        id: parsedId,
-        duration: savedDuration,
-        distance: savedDistance,
-        distanceUnit: savedDistanceUnit,
-        calories: savedCalories,
-      });
-      console.log('[CardioSave] mutateAsync result:', JSON.stringify(result));
-      // Update the sheet's sets snapshot so the form is not reset by the
-      // cache invalidation re-render that fires immediately after mutateAsync
-      setCardioEditSheet(prev => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          sets: prev.sets.map((s, i) =>
-            i === 0
-              ? {
-                  ...s,
-                  duration: savedDuration,
-                  distance: savedDistance,
-                  distanceUnit: savedDistanceUnit,
-                  calories: savedCalories,
-                }
-              : s
-          ),
-        };
-      });
+
       closeCardioEditSheet();
-      console.log('[CardioSave] save complete, sheet closed');
     } catch (e) {
-      console.error('[CardioSave] Failed to update cardio log:', e);
+      console.error('[CardioSave] Failed to save cardio log:', e);
       alert('Failed to save changes. Please try again.');
     }
   };
@@ -2114,12 +2064,12 @@ export default function Home() {
             </div>
             {/* Save */}
             <button
-              onClick={handleCardioSave}
+              onPointerDown={(e) => { e.preventDefault(); handleCardioSave(); }}
               style={{ width:'100%', padding:13, background:'var(--foreground)', color:'var(--background)', border:'none', borderRadius:14, fontSize:15, fontWeight:700, cursor:'pointer', fontFamily:'inherit', marginBottom:10 }}
             >Save Changes</button>
             {/* Delete */}
             <button
-              onClick={handleCardioDelete}
+              onPointerDown={(e) => { e.preventDefault(); handleCardioDelete(); }}
               style={{ width:'100%', padding:13, background:'transparent', color:'#ef4444', border:'1.5px solid #ef4444', borderRadius:14, fontSize:15, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}
             >Delete Exercise Log</button>
           </div>
