@@ -274,16 +274,37 @@ export function ShareWorkoutDialog({
           </div>
         </DialogHeader>
 
-        {/* Scrollable card preview area */}
+        {/* Story-format card preview (9:16 aspect ratio) */}
         <div className="flex-1 overflow-y-auto px-4 pb-2">
-          {/* ── Share card preview — mirrors the server-rendered PNG ── */}
+          {/* Outer story canvas — full-bleed background, 9:16 ratio */}
+          <div
+            style={{
+              position: 'relative',
+              width: '100%',
+              aspectRatio: '9 / 16',
+              background: theme === 'dark' ? '#0a0f1e' : '#e8edf2',
+              borderRadius: 20,
+              overflow: 'hidden',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: 4,
+            }}
+          >
+            {/* Safe-zone indicator lines (subtle) */}
+            <div style={{ position: 'absolute', top: '13.5%', left: 0, right: 0, height: 1, background: 'rgba(128,128,128,0.12)' }} />
+            <div style={{ position: 'absolute', bottom: '17.7%', left: 0, right: 0, height: 1, background: 'rgba(128,128,128,0.12)' }} />
+
+          {/* Card panel — centered in safe zone */}
           <div
             style={{
               background: C.cardBg,
-              borderRadius: 20,
-              padding: '20px 20px 16px',
+              borderRadius: 16,
+              padding: '14px 14px 12px',
               boxShadow: C.shadow,
-              marginBottom: 4,
+              width: 'calc(100% - 32px)',
+              marginTop: '13.5%',
+              marginBottom: '17.7%',
             }}
           >
             {/* ── Header: logo + FlexTab + date (left) | @username aligned with date (right) ── */}
@@ -310,20 +331,22 @@ export function ShareWorkoutDialog({
 
             </div>
 
-            {/* Stat tiles — 2×2 grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
+            {/* Stat tiles — 2×2 grid (no border, just subtle fill) */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 12 }}>
               {statTiles.map(({ value, label }) => (
                 <div
                   key={label}
                   style={{
                     background: C.tileBg,
-                    borderRadius: 14,
-                    padding: '14px 8px 10px',
+                    borderRadius: 12,
+                    padding: '12px 8px 8px',
                     textAlign: 'center',
+                    border: 'none',
+                    outline: 'none',
                   }}
                 >
-                  <p style={{ fontSize: 28, fontWeight: 800, color: C.textPrimary, margin: 0, lineHeight: 1 }}>{value}</p>
-                  <p style={{ fontSize: 10, fontWeight: 700, color: C.textMuted, margin: '5px 0 0', textTransform: 'uppercase', letterSpacing: '0.07em' }}>{label}</p>
+                  <p style={{ fontSize: 22, fontWeight: 800, color: C.textPrimary, margin: 0, lineHeight: 1 }}>{value}</p>
+                  <p style={{ fontSize: 9, fontWeight: 700, color: C.textMuted, margin: '4px 0 0', textTransform: 'uppercase', letterSpacing: '0.07em' }}>{label}</p>
                 </div>
               ))}
             </div>
@@ -380,12 +403,12 @@ export function ShareWorkoutDialog({
             </div>
 
             {/* Footer */}
-            <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${C.divider}`, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-              <Link style={{ width: 12, height: 12, color: C.textFooter }} />
-              <p style={{ fontSize: 11, color: C.textFooter, margin: 0 }}>
+            <div style={{ marginTop: 10, paddingTop: 8, borderTop: `1px solid ${C.divider}`, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+              <p style={{ fontSize: 10, color: C.textFooter, margin: 0 }}>
                 {userName ? `@${userName.toLowerCase().replace(/\s+/g, '')} · flextab.app` : 'flextab.app'}
               </p>
             </div>
+          </div>
           </div>
         </div>
 
