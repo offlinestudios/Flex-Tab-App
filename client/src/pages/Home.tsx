@@ -599,20 +599,31 @@ export default function Home() {
   };
   const handleCardioSave = async () => {
     if (!cardioEditSheet) return;
-    // Use React state directly — onClick fires after blur so state is always committed.
-    // Fall back to DOM ref value as a safety net.
-    const rawDuration = cardioEditForm.duration || cardioDurationRef.current?.value || '';
-    const rawCalories = cardioEditForm.calories || cardioCaloriesRef.current?.value || '';
-    const rawDistance = cardioEditForm.distance || cardioDistanceRef.current?.value || '';
-    const savedDuration = rawDuration ? parseInt(rawDuration) : undefined;
-    const savedDistance = rawDistance ? parseFloat(rawDistance) : undefined;
+    // Always read from the DOM ref first (guaranteed to reflect what the user
+    // typed), then fall back to React state.  This avoids the stale-closure
+    // problem where the state hasn't flushed before the handler runs.
+    const rawDuration = (cardioDurationRef.current?.value ?? cardioEditForm.duration).trim();
+    const rawCalories = (cardioCaloriesRef.current?.value ?? cardioEditForm.calories).trim();
+    const rawDistance = (cardioDistanceRef.current?.value ?? cardioEditForm.distance).trim();
     const savedDistanceUnit = cardioEditForm.distanceUnit;
-    const savedCalories = rawCalories ? parseInt(rawCalories) : undefined;
+
+    // Parse — treat empty string as 0 so we always send a valid number to the
+    // server (avoids the field being omitted and the DB keeping the old value).
+    const savedDuration = rawDuration !== '' ? parseInt(rawDuration, 10) : 0;
+    const savedCalories = rawCalories !== '' ? parseInt(rawCalories, 10) : 0;
+    const savedDistance = rawDistance !== '' ? parseFloat(rawDistance) : 0;
+
+    // Guard against NaN (user typed non-numeric characters)
+    if (isNaN(savedDuration) || isNaN(savedCalories) || isNaN(savedDistance)) {
+      console.error('Invalid cardio values — aborting save');
+      return;
+    }
+
     try {
       // Update the first (and usually only) DB row with the new cardio values
       const firstSet = cardioEditSheet.sets[0];
       await updateSetLogMutation.mutateAsync({
-        id: parseInt(firstSet.id),
+        id: parseInt(firstSet.id, 10),
         duration: savedDuration,
         distance: savedDistance,
         distanceUnit: savedDistanceUnit,
@@ -628,10 +639,10 @@ export default function Home() {
             i === 0
               ? {
                   ...s,
-                  duration: savedDuration ?? s.duration,
-                  distance: savedDistance ?? s.distance,
+                  duration: savedDuration,
+                  distance: savedDistance,
                   distanceUnit: savedDistanceUnit,
-                  calories: savedCalories ?? s.calories,
+                  calories: savedCalories,
                 }
               : s
           ),
@@ -640,6 +651,7 @@ export default function Home() {
       closeCardioEditSheet();
     } catch (e) {
       console.error('Failed to update cardio log:', e);
+      alert('Failed to save changes. Please try again.');
     }
   };
   const handleCardioDelete = async () => {
