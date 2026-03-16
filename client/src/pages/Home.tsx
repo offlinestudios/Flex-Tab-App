@@ -599,6 +599,16 @@ export default function Home() {
   };
   const handleCardioSave = async () => {
     if (!cardioEditSheet) return;
+
+    // --- DEBUG: log all input sources ---
+    console.log('[CardioSave] cardioEditForm state:', cardioEditForm);
+    console.log('[CardioSave] DOM refs:', {
+      duration: cardioDurationRef.current?.value,
+      calories: cardioCaloriesRef.current?.value,
+      distance: cardioDistanceRef.current?.value,
+    });
+    console.log('[CardioSave] sets in sheet:', cardioEditSheet.sets);
+
     // Always read from the DOM ref first (guaranteed to reflect what the user
     // typed), then fall back to React state.  This avoids the stale-closure
     // problem where the state hasn't flushed before the handler runs.
@@ -607,28 +617,49 @@ export default function Home() {
     const rawDistance = (cardioDistanceRef.current?.value ?? cardioEditForm.distance).trim();
     const savedDistanceUnit = cardioEditForm.distanceUnit;
 
+    console.log('[CardioSave] raw values:', { rawDuration, rawCalories, rawDistance, savedDistanceUnit });
+
     // Parse — treat empty string as 0 so we always send a valid number to the
     // server (avoids the field being omitted and the DB keeping the old value).
     const savedDuration = rawDuration !== '' ? parseInt(rawDuration, 10) : 0;
     const savedCalories = rawCalories !== '' ? parseInt(rawCalories, 10) : 0;
     const savedDistance = rawDistance !== '' ? parseFloat(rawDistance) : 0;
 
+    console.log('[CardioSave] parsed values:', { savedDuration, savedCalories, savedDistance });
+
     // Guard against NaN (user typed non-numeric characters)
     if (isNaN(savedDuration) || isNaN(savedCalories) || isNaN(savedDistance)) {
-      console.error('Invalid cardio values — aborting save');
+      console.error('[CardioSave] NaN detected — aborting save', { savedDuration, savedCalories, savedDistance });
+      alert('Invalid values detected. Please enter numbers only.');
+      return;
+    }
+
+    const firstSet = cardioEditSheet.sets[0];
+    const parsedId = parseInt(firstSet.id, 10);
+    console.log('[CardioSave] firstSet.id:', firstSet.id, '→ parsedId:', parsedId);
+
+    if (isNaN(parsedId) || parsedId <= 0) {
+      console.error('[CardioSave] Invalid set ID — aborting save', firstSet.id);
+      alert('Cannot save: invalid exercise ID. Please refresh and try again.');
       return;
     }
 
     try {
-      // Update the first (and usually only) DB row with the new cardio values
-      const firstSet = cardioEditSheet.sets[0];
-      await updateSetLogMutation.mutateAsync({
-        id: parseInt(firstSet.id, 10),
+      console.log('[CardioSave] calling mutateAsync with:', {
+        id: parsedId,
         duration: savedDuration,
         distance: savedDistance,
         distanceUnit: savedDistanceUnit,
         calories: savedCalories,
       });
+      const result = await updateSetLogMutation.mutateAsync({
+        id: parsedId,
+        duration: savedDuration,
+        distance: savedDistance,
+        distanceUnit: savedDistanceUnit,
+        calories: savedCalories,
+      });
+      console.log('[CardioSave] mutateAsync result:', result);
       // Update the sheet's sets snapshot so the form is not reset by the
       // cache invalidation re-render that fires immediately after mutateAsync
       setCardioEditSheet(prev => {
@@ -649,8 +680,9 @@ export default function Home() {
         };
       });
       closeCardioEditSheet();
+      console.log('[CardioSave] save complete, sheet closed');
     } catch (e) {
-      console.error('Failed to update cardio log:', e);
+      console.error('[CardioSave] Failed to update cardio log:', e);
       alert('Failed to save changes. Please try again.');
     }
   };

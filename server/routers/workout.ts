@@ -98,10 +98,14 @@ export const workoutRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      console.log('[updateSetLog] received input:', JSON.stringify(input));
+      console.log('[updateSetLog] userId:', ctx.user.id);
       const { id, distance, ...rest } = input;
       const data: Record<string, unknown> = { ...rest };
       if (distance !== undefined) data.distance = distance.toString();
-      await updateSetLog(id, ctx.user.id, data as any);
+      console.log('[updateSetLog] data to write to DB:', JSON.stringify(data));
+      const result = await updateSetLog(id, ctx.user.id, data as any);
+      console.log('[updateSetLog] DB result:', JSON.stringify(result));
       return { success: true };
     }),
 
