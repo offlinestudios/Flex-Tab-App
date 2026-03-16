@@ -148,6 +148,14 @@ export default function Home() {
   const { data: setLogsData = [], isLoading: setLogsLoading, error: setLogsError } = trpc.workout.getSetLogs.useQuery(undefined, {
     enabled: isAuthenticated,
     refetchOnWindowFocus: false,
+    select: (data) => {
+      // Log any cardio rows to trace what the server returns after a save
+      const cardioRows = data.filter((r: any) => r.category === 'Cardio' || r.exercise === 'Cycling');
+      if (cardioRows.length > 0) {
+        console.log('[getSetLogs select] cardio rows from server:', JSON.stringify(cardioRows.map((r: any) => ({ id: r.id, exercise: r.exercise, duration: r.duration, distance: r.distance, calories: r.calories, distanceUnit: r.distanceUnit }))));
+      }
+      return data;
+    },
   });
   
   // Fetch measurements from database
