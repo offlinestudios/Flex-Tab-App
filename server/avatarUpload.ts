@@ -1,44 +1,19 @@
 /**
  * Avatar upload REST endpoint.
  * Accepts a multipart/form-data POST with a single "file" field,
- * uploads it to R2 server-side (avoids browser CORS/SSL issues with direct PUT),
+ * uploads it to R2 using a raw signed HTTPS PUT (bypasses AWS SDK TLS issues),
  * saves the public URL to the users table, and returns { avatarUrl }.
  */
 import { Request, Response } from "express";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { NodeHttpHandler } from "@smithy/node-http-handler";
-import https from "https";
 import { createClient } from "@supabase/supabase-js";
 import { getDb } from "./db";
 import { users } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import Busboy from "busboy";
-
-function getR2Client() {
-  const accountId = process.env.R2_ACCOUNT_ID!;
-  const accessKeyId = process.env.R2_ACCESS_KEY_ID!;
-  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY!;
-  const r2Hostname = `${accountId}.r2.cloudflarestorage.com`;
-  // CRITICAL FIX: Use forcePathStyle:true so the SDK connects to the account-level
-  // hostname (not bucket.account.r2.cloudflarestorage.com), matching the SNI in the
-  // httpsAgent and preventing SSL alert 40 (TLS handshake failure) in Railway/Docker.
-  const r2HttpsAgent = new https.Agent({ keepAlive: false, servername: r2Hostname });
-  return new S3Client({
-    region: "auto",
-    endpoint: `https://${r2Hostname}`,
-    credentials: { accessKeyId, secretAccessKey },
-    forcePathStyle: true,
-    requestHandler: new NodeHttpHandler({ httpsAgent: r2HttpsAgent }),
-    // AWS SDK v3.729+ sends x-amz-checksum-crc32 by default; R2 rejects it.
-    // WHEN_REQUIRED disables automatic checksum injection for R2 compatibility.
-    requestChecksumCalculation: 'WHEN_REQUIRED' as any,
-    responseChecksumValidation: 'WHEN_REQUIRED' as any,
-  });
-}
+import { r2PutObject } from "./r2Upload";
 
 function r2PublicUrl(key: string): string {
-  // Use R2_PUBLIC_URL if set (e.g. https://pub-xxxx.r2.dev), otherwise fall back to bucket subdomain
   const base = process.env.R2_PUBLIC_URL
     ? process.env.R2_PUBLIC_URL.replace(/\/$/, "")
     : `https://pub-${process.env.R2_ACCOUNT_ID}.r2.dev`;
@@ -57,11 +32,9 @@ async function getUserFromRequest(req: Request) {
   const db = await getDb();
   if (!db) return null;
 
-  // Look up existing user
   const existingUsers = await db.select().from(users).where(eq(users.openId, supabaseUser.id)).limit(1);
   if (existingUsers.length > 0) return existingUsers[0];
 
-  // Auto-create user record if it doesn't exist yet (mirrors railway-context.ts behaviour)
   try {
     const newUsers = await db
       .insert(users)
@@ -81,18 +54,18 @@ async function getUserFromRequest(req: Request) {
 
 export async function handleAvatarUpload(req: Request, res: Response) {
   try {
-    // Authenticate
     const user = await getUserFromRequest(req);
     if (!user) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    // Check R2 credentials
-    if (!process.env.R2_ACCOUNT_ID || !process.env.R2_ACCESS_KEY_ID || !process.env.R2_SECRET_ACCESS_KEY) {
+    const accountId = process.env.R2_ACCOUNT_ID;
+    const accessKeyId = process.env.R2_ACCESS_KEY_ID;
+    const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
+    if (!accountId || !accessKeyId || !secretAccessKey) {
       return res.status(500).json({ error: "R2 credentials not configured" });
     }
 
-    // Parse multipart form using busboy
     const fileBuffer = await new Promise<{ buffer: Buffer; mimeType: string; ext: string }>((resolve, reject) => {
       const bb = Busboy({ headers: req.headers });
       let resolved = false;
@@ -117,19 +90,21 @@ export async function handleAvatarUpload(req: Request, res: Response) {
       req.pipe(bb);
     });
 
-    // Upload to R2
     const key = `avatars/${user.id}/${randomUUID()}.${fileBuffer.ext}`;
     const bucket = process.env.R2_BUCKET_NAME || "flextab-storage";
-    const client = getR2Client();
 
-    await client.send(new PutObjectCommand({
-      Bucket: bucket,
-      Key: key,
-      Body: fileBuffer.buffer,
-      ContentType: fileBuffer.mimeType,
-    }));
+    console.log("[AvatarUpload] Uploading to R2 via raw HTTPS PUT:", key);
+    await r2PutObject({
+      accountId,
+      accessKeyId,
+      secretAccessKey,
+      bucket,
+      key,
+      body: fileBuffer.buffer,
+      contentType: fileBuffer.mimeType,
+    });
+    console.log("[AvatarUpload] R2 upload success");
 
-    // Save URL to database
     const avatarUrl = r2PublicUrl(key);
     const db = await getDb();
     if (!db) return res.status(500).json({ error: "Database not available" });

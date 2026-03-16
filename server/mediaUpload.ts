@@ -2,42 +2,19 @@
  * POST /api/upload-media
  *
  * Accepts a multipart/form-data POST with a single "file" field,
- * uploads it to R2 server-side (avoids browser CORS issues with direct PUT),
+ * uploads it to R2 using a raw signed HTTPS PUT (bypasses AWS SDK TLS issues),
  * and returns { key, url, mediaType, mimeType }.
  *
  * Used by the community post composer for photos and videos.
  */
 import { Request, Response } from "express";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { NodeHttpHandler } from "@smithy/node-http-handler";
-import https from "https";
 import { createClient } from "@supabase/supabase-js";
 import { getDb } from "./db";
 import { users } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import Busboy from "busboy";
-
-function getR2Client() {
-  const accountId = process.env.R2_ACCOUNT_ID!;
-  const accessKeyId = process.env.R2_ACCESS_KEY_ID!;
-  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY!;
-  const r2Hostname = `${accountId}.r2.cloudflarestorage.com`;
-  // CRITICAL FIX: Use a custom httpsAgent with keepAlive:false and explicit servername
-  // to prevent SSL alert 40 (TLS handshake failure) in Railway/Docker containers.
-  const r2HttpsAgent = new https.Agent({ keepAlive: false, servername: r2Hostname });
-  return new S3Client({
-    region: "auto",
-    endpoint: `https://${r2Hostname}`,
-    credentials: { accessKeyId, secretAccessKey },
-    forcePathStyle: true,
-    requestHandler: new NodeHttpHandler({ httpsAgent: r2HttpsAgent }),
-    // AWS SDK v3.729+ sends x-amz-checksum-crc32 by default; R2 rejects it.
-    // WHEN_REQUIRED disables automatic checksum injection for R2 compatibility.
-    requestChecksumCalculation: 'WHEN_REQUIRED' as any,
-    responseChecksumValidation: 'WHEN_REQUIRED' as any,
-  });
-}
+import { r2PutObject } from "./r2Upload";
 
 function r2PublicUrl(key: string): string {
   const base = process.env.R2_PUBLIC_URL
@@ -62,7 +39,6 @@ async function getUserFromRequest(req: Request) {
   const db = await getDb();
   if (!db) return null;
 
-  // Look up existing user
   const existingUsers = await db
     .select()
     .from(users)
@@ -70,7 +46,6 @@ async function getUserFromRequest(req: Request) {
     .limit(1);
   if (existingUsers.length > 0) return existingUsers[0];
 
-  // Auto-create user record if it doesn't exist yet (mirrors railway-context.ts behaviour)
   try {
     const newUsers = await db
       .insert(users)
@@ -90,22 +65,18 @@ async function getUserFromRequest(req: Request) {
 
 export async function handleMediaUpload(req: Request, res: Response) {
   try {
-    // Authenticate
     const user = await getUserFromRequest(req);
     if (!user) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    // Check R2 credentials
-    if (
-      !process.env.R2_ACCOUNT_ID ||
-      !process.env.R2_ACCESS_KEY_ID ||
-      !process.env.R2_SECRET_ACCESS_KEY
-    ) {
+    const accountId = process.env.R2_ACCOUNT_ID;
+    const accessKeyId = process.env.R2_ACCESS_KEY_ID;
+    const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
+    if (!accountId || !accessKeyId || !secretAccessKey) {
       return res.status(500).json({ error: "R2 credentials not configured" });
     }
 
-    // Parse multipart form using busboy
     const fileData = await new Promise<{
       buffer: Buffer;
       mimeType: string;
@@ -134,24 +105,24 @@ export async function handleMediaUpload(req: Request, res: Response) {
       req.pipe(bb);
     });
 
-    // Determine media type
     const mediaType: "photo" | "video" = fileData.mimeType.startsWith("video/")
       ? "video"
       : "photo";
 
-    // Upload to R2
     const key = `posts/${user.id}/media/${randomUUID()}.${fileData.ext}`;
     const bucket = process.env.R2_BUCKET_NAME || "flextab-storage";
-    const client = getR2Client();
 
-    await client.send(
-      new PutObjectCommand({
-        Bucket: bucket,
-        Key: key,
-        Body: fileData.buffer,
-        ContentType: fileData.mimeType,
-      })
-    );
+    console.log("[MediaUpload] Uploading to R2 via raw HTTPS PUT:", key);
+    await r2PutObject({
+      accountId,
+      accessKeyId,
+      secretAccessKey,
+      bucket,
+      key,
+      body: fileData.buffer,
+      contentType: fileData.mimeType,
+    });
+    console.log("[MediaUpload] R2 upload success");
 
     const url = r2PublicUrl(key);
 
