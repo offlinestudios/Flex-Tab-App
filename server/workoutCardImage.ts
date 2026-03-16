@@ -2,8 +2,13 @@
  * POST /api/generate-workout-card
  *
  * Renders a full 1080×1920 Instagram story/reel PNG using satori + resvg.
- * Content is centered in the story safe zone (top 260px + bottom 340px reserved
- * for Instagram's UI chrome so nothing is obscured).
+ *
+ * Design: full-bleed — content fills the entire canvas edge-to-edge.
+ * No floating card. Background is a rich dark or light gradient.
+ * Content is laid out in three zones:
+ *   - Top zone  (header + stat tiles)
+ *   - Mid zone  (exercises list — flex:1 to fill remaining space)
+ *   - Bottom zone (footer)
  *
  * Satori rule: every <div> with more than one child MUST have display:"flex".
  */
@@ -22,59 +27,46 @@ const fontExtraBold = fontBold;
 const STORY_W = 1080;
 const STORY_H = 1920;
 
-// Safe zone: leave top 260px and bottom 340px clear of Instagram chrome
-const SAFE_TOP    = 260;
-const SAFE_BOTTOM = 340;
-const SAFE_H      = STORY_H - SAFE_TOP - SAFE_BOTTOM; // 1320px usable
-
-// Card sits inside the safe zone with horizontal padding
-const CARD_H_PAD = 60; // px each side
-const CARD_W     = STORY_W - CARD_H_PAD * 2; // 960px
+// Padding — generous breathing room, not a safe-zone constraint
+const PAD_H   = 72;   // horizontal padding
+const PAD_TOP = 120;  // top padding (below status bar area)
+const PAD_BOT = 160;  // bottom padding (above home indicator)
 
 // ── Theme palettes ────────────────────────────────────────────────────────────
 const THEMES = {
   light: {
-    // Full-bleed gradient background (light warm grey → white)
-    bgTop:         "#e8edf2",
-    bgBottom:      "#f8fafc",
-    cardBg:        "#ffffff",
-    // Stat tiles: no border, just a very subtle fill
-    tileBg:        "#f1f5f9",
-    pillBg:        "#f1f5f9",
-    divider:       "#e2e8f0",
-    textPrimary:   "#0f172a",
-    textMuted:     "#94a3b8",
-    textPill:      "#475569",
-    textFooter:    "#cbd5e1",
-    badgeBg:       "#0f172a",
-    badgeText:     "#ffffff",
-    shadow:        "0 8px 48px rgba(0,0,0,0.12)",
+    bg:           "#f0f4f8",
+    accentBg:     "#ffffff",
+    tileBg:       "#e8edf4",
+    tileAccent:   "#0f172a",
+    divider:      "#dde3ec",
+    textPrimary:  "#0f172a",
+    textSecondary:"#475569",
+    textMuted:    "#94a3b8",
+    textFooter:   "#b0bec5",
+    badgeBg:      "#0f172a",
+    badgeText:    "#ffffff",
+    pillBg:       "#e8edf4",
+    pillText:     "#475569",
+    logoFilter:   "none",
   },
   dark: {
-    // Full-bleed gradient background (deep navy → near-black)
-    bgTop:         "#0a0f1e",
-    bgBottom:      "#0f172a",
-    cardBg:        "#131c2e",
-    tileBg:        "#1e293b",
-    pillBg:        "#1e293b",
-    divider:       "#1e293b",
-    textPrimary:   "#f1f5f9",
-    textMuted:     "#64748b",
-    textPill:      "#94a3b8",
-    textFooter:    "#334155",
-    badgeBg:       "#334155",
-    badgeText:     "#f1f5f9",
-    shadow:        "0 8px 48px rgba(0,0,0,0.5)",
+    bg:           "#080d1a",
+    accentBg:     "#111827",
+    tileBg:       "#1a2236",
+    tileAccent:   "#60a5fa",
+    divider:      "#1e293b",
+    textPrimary:  "#f1f5f9",
+    textSecondary:"#94a3b8",
+    textMuted:    "#475569",
+    textFooter:   "#2d3748",
+    badgeBg:      "#1e293b",
+    badgeText:    "#f1f5f9",
+    pillBg:       "#1a2236",
+    pillText:     "#94a3b8",
+    logoFilter:   "none",
   },
 } as const;
-
-const GRADE_COLORS: Record<string, string> = {
-  Novice:       "#9ca3af",
-  Intermediate: "#3b82f6",
-  Advanced:     "#8b5cf6",
-  Elite:        "#f59e0b",
-  Legend:       "#ef4444",
-};
 
 type Theme = keyof typeof THEMES;
 
@@ -104,8 +96,9 @@ interface CardData {
 
 // ── Build the full story element tree ────────────────────────────────────────
 function buildStoryElement(data: CardData) {
-  const { date, duration, totalSets, totalReps, volumeDisplay, exercises, userName, lifterGrade } = data;
+  const { date, duration, totalSets, totalReps, volumeDisplay, exercises, userName } = data;
   const C = THEMES[data.theme === "dark" ? "dark" : "light"];
+  const isDark = data.theme === "dark";
 
   const statTiles = [
     { value: duration || "—", label: "DURATION" },
@@ -114,15 +107,15 @@ function buildStoryElement(data: CardData) {
     { value: volumeDisplay,        label: "VOLUME"   },
   ];
 
-  // ── Stat tile (no border — just subtle background + rounded corners) ────────
+  // ── Stat tile — large, no border, just fill ──────────────────────────────
   const makeTile = ({ value, label }: { value: string; label: string }) => ({
     type: "div",
     props: {
       style: {
         background: C.tileBg,
-        borderRadius: 24,
-        paddingTop: 28, paddingBottom: 22,
-        paddingLeft: 16, paddingRight: 16,
+        borderRadius: 28,
+        paddingTop: 36, paddingBottom: 28,
+        paddingLeft: 20, paddingRight: 20,
         flex: 1,
         display: "flex", flexDirection: "column", alignItems: "center",
       },
@@ -130,7 +123,10 @@ function buildStoryElement(data: CardData) {
         {
           type: "div",
           props: {
-            style: { fontSize: 52, fontWeight: 800, color: C.textPrimary, lineHeight: 1, display: "flex" },
+            style: {
+              fontSize: 60, fontWeight: 800, color: C.textPrimary,
+              lineHeight: 1, display: "flex",
+            },
             children: value,
           },
         },
@@ -138,8 +134,9 @@ function buildStoryElement(data: CardData) {
           type: "div",
           props: {
             style: {
-              fontSize: 18, fontWeight: 700, color: C.textMuted,
-              marginTop: 10, textTransform: "uppercase", letterSpacing: "0.08em", display: "flex",
+              fontSize: 20, fontWeight: 700, color: C.textMuted,
+              marginTop: 12, textTransform: "uppercase",
+              letterSpacing: "0.1em", display: "flex",
             },
             children: label,
           },
@@ -149,7 +146,9 @@ function buildStoryElement(data: CardData) {
   });
 
   // ── Exercise rows ─────────────────────────────────────────────────────────
-  const exerciseRows = exercises.map((ex, i) => {
+  // Show max 6 exercises to avoid overflow
+  const visibleExercises = exercises.slice(0, 6);
+  const exerciseRows = visibleExercises.map((ex, i) => {
     let pill: string;
     if (ex.category === "Cardio") {
       const parts = [
@@ -163,14 +162,14 @@ function buildStoryElement(data: CardData) {
       pill = `Best: ${ex.bestReps} reps`;
     }
 
-    const isLast = i === exercises.length - 1;
+    const isLast = i === visibleExercises.length - 1;
 
     return {
       type: "div",
       props: {
         style: {
-          display: "flex", alignItems: "center", gap: 20,
-          paddingTop: 18, paddingBottom: 18,
+          display: "flex", alignItems: "center", gap: 24,
+          paddingTop: 22, paddingBottom: 22,
           borderBottom: isLast ? "none" : `1px solid ${C.divider}`,
         },
         children: [
@@ -179,10 +178,10 @@ function buildStoryElement(data: CardData) {
             type: "div",
             props: {
               style: {
-                width: 46, height: 46, borderRadius: 23,
+                width: 52, height: 52, borderRadius: 26,
                 background: C.badgeBg, color: C.badgeText,
                 display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 20, fontWeight: 800, flexShrink: 0,
+                fontSize: 22, fontWeight: 800, flexShrink: 0,
               },
               children: String(i + 1),
             },
@@ -192,10 +191,10 @@ function buildStoryElement(data: CardData) {
             type: "div",
             props: {
               style: {
-                flex: 1, fontSize: 26, fontWeight: 700, color: C.textPrimary,
-                overflow: "hidden", display: "flex", alignItems: "center",
+                flex: 1, fontSize: 30, fontWeight: 700, color: C.textPrimary,
+                display: "flex", alignItems: "center",
               },
-              children: ex.exercise.length > 24 ? ex.exercise.slice(0, 23) + "…" : ex.exercise,
+              children: ex.exercise.length > 22 ? ex.exercise.slice(0, 21) + "…" : ex.exercise,
             },
           },
           // Pill
@@ -204,15 +203,16 @@ function buildStoryElement(data: CardData) {
             props: {
               style: {
                 background: C.pillBg, borderRadius: 50,
-                paddingTop: 8, paddingBottom: 8, paddingLeft: 20, paddingRight: 20,
+                paddingTop: 10, paddingBottom: 10,
+                paddingLeft: 24, paddingRight: 24,
                 flexShrink: 0, display: "flex", alignItems: "center",
               },
               children: {
                 type: "div",
                 props: {
                   style: {
-                    fontSize: 20, fontWeight: 700, color: C.textPill,
-                    whiteSpace: "nowrap", display: "flex", alignItems: "center",
+                    fontSize: 22, fontWeight: 700, color: C.pillText,
+                    whiteSpace: "nowrap", display: "flex",
                   },
                   children: pill,
                 },
@@ -224,122 +224,110 @@ function buildStoryElement(data: CardData) {
     };
   });
 
-  // ── Header ────────────────────────────────────────────────────────────────
-  const headerElement = {
+  // If more than 6 exercises, show a "+N more" line
+  const moreCount = exercises.length - visibleExercises.length;
+  const moreRow = moreCount > 0 ? {
     type: "div",
     props: {
       style: {
-        display: "flex", alignItems: "center",
-        marginBottom: 36,
-        paddingBottom: 32,
-        borderBottom: `1px solid ${C.divider}`,
-      },
-      children: {
-        type: "div",
-        props: {
-          style: { display: "flex", alignItems: "center", gap: 20 },
-          children: [
-            {
-              type: "div",
-              props: {
-                style: {
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  width: 72, height: 72, borderRadius: 18, background: "transparent", flexShrink: 0,
-                },
-                children: {
-                  type: "img",
-                  props: {
-                    src: data.theme === "dark" ? FLEXTAB_ICON_WHITE_B64 : FLEXTAB_ICON_B64,
-                    width: 64, height: 64,
-                    style: { borderRadius: 14 },
-                  },
-                },
-              },
-            },
-            {
-              type: "div",
-              props: {
-                style: { display: "flex", flexDirection: "column", gap: 4 },
-                children: [
-                  {
-                    type: "div",
-                    props: {
-                      style: { fontSize: 28, fontWeight: 800, color: C.textPrimary, display: "flex" },
-                      children: "FlexTab",
-                    },
-                  },
-                  {
-                    type: "div",
-                    props: {
-                      style: { fontSize: 22, color: C.textMuted, display: "flex" },
-                      children: date,
-                    },
-                  },
-                ],
-              },
-            },
-          ],
-        },
-      },
-    },
-  };
-
-  // ── Footer ────────────────────────────────────────────────────────────────
-  const footerText = userName
-    ? `@${userName.toLowerCase().replace(/\s+/g, "")} · flextab.app`
-    : "flextab.app";
-
-  const footerElement = {
-    type: "div",
-    props: {
-      style: {
-        marginTop: 28, paddingTop: 24,
-        borderTop: `1px solid ${C.divider}`,
         display: "flex", alignItems: "center", justifyContent: "center",
+        paddingTop: 20,
       },
       children: {
         type: "div",
         props: {
-          style: { fontSize: 22, color: C.textFooter, display: "flex" },
-          children: footerText,
+          style: { fontSize: 24, color: C.textMuted, fontWeight: 600, display: "flex" },
+          children: `+${moreCount} more exercise${moreCount > 1 ? "s" : ""}`,
         },
       },
     },
-  };
+  } : null;
 
-  // ── Card (white/dark rounded panel) ──────────────────────────────────────
-  const cardElement = {
+  // ── Full-bleed story canvas ───────────────────────────────────────────────
+  return {
     type: "div",
     props: {
       style: {
-        display: "flex", flexDirection: "column",
-        background: C.cardBg,
-        borderRadius: 40,
-        paddingTop: 48, paddingBottom: 40,
-        paddingLeft: 48, paddingRight: 48,
-        width: CARD_W,
-        boxShadow: C.shadow,
+        display: "flex",
+        flexDirection: "column",
+        width: STORY_W,
+        height: STORY_H,
+        background: C.bg,
+        paddingTop: PAD_TOP,
+        paddingBottom: PAD_BOT,
+        paddingLeft: PAD_H,
+        paddingRight: PAD_H,
       },
       children: [
-        headerElement,
 
-        // Stat tiles 2×2
+        // ── TOP: Logo + date ────────────────────────────────────────────────
         {
           type: "div",
           props: {
-            style: { display: "flex", flexDirection: "column", gap: 16, marginBottom: 32 },
+            style: {
+              display: "flex", alignItems: "center", gap: 24,
+              marginBottom: 64,
+            },
+            children: [
+              {
+                type: "img",
+                props: {
+                  src: isDark ? FLEXTAB_ICON_WHITE_B64 : FLEXTAB_ICON_B64,
+                  width: 72, height: 72,
+                  style: { borderRadius: 16 },
+                },
+              },
+              {
+                type: "div",
+                props: {
+                  style: { display: "flex", flexDirection: "column", gap: 6 },
+                  children: [
+                    {
+                      type: "div",
+                      props: {
+                        style: {
+                          fontSize: 34, fontWeight: 800,
+                          color: C.textPrimary, display: "flex",
+                        },
+                        children: "FlexTab",
+                      },
+                    },
+                    {
+                      type: "div",
+                      props: {
+                        style: {
+                          fontSize: 26, color: C.textMuted, display: "flex",
+                        },
+                        children: date,
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        },
+
+        // ── STAT TILES: 2×2 grid ────────────────────────────────────────────
+        {
+          type: "div",
+          props: {
+            style: {
+              display: "flex", flexDirection: "column", gap: 20,
+              marginBottom: 60,
+            },
             children: [
               {
                 type: "div",
                 props: {
-                  style: { display: "flex", flexDirection: "row", gap: 16 },
+                  style: { display: "flex", flexDirection: "row", gap: 20 },
                   children: statTiles.slice(0, 2).map(makeTile),
                 },
               },
               {
                 type: "div",
                 props: {
-                  style: { display: "flex", flexDirection: "row", gap: 16 },
+                  style: { display: "flex", flexDirection: "row", gap: 20 },
                   children: statTiles.slice(2, 4).map(makeTile),
                 },
               },
@@ -347,58 +335,69 @@ function buildStoryElement(data: CardData) {
           },
         },
 
-        // Divider
-        {
-          type: "div",
-          props: {
-            style: { height: 1, background: C.divider, marginBottom: 28, display: "flex" },
-          },
-        },
-
-        // Exercises heading
+        // ── DIVIDER ─────────────────────────────────────────────────────────
         {
           type: "div",
           props: {
             style: {
-              fontSize: 22, fontWeight: 800, color: C.textPrimary,
-              marginBottom: 4, textTransform: "uppercase",
-              letterSpacing: "0.08em", display: "flex",
+              height: 1, background: C.divider,
+              marginBottom: 40, display: "flex",
+            },
+          },
+        },
+
+        // ── EXERCISES HEADING ───────────────────────────────────────────────
+        {
+          type: "div",
+          props: {
+            style: {
+              fontSize: 24, fontWeight: 800, color: C.textMuted,
+              marginBottom: 8, textTransform: "uppercase",
+              letterSpacing: "0.1em", display: "flex",
             },
             children: "Exercises",
           },
         },
 
-        // Exercise rows
+        // ── EXERCISE ROWS (flex:1 to fill remaining space) ──────────────────
         {
           type: "div",
           props: {
-            style: { display: "flex", flexDirection: "column" },
-            children: exerciseRows,
+            style: {
+              display: "flex", flexDirection: "column",
+              flex: 1,
+            },
+            children: moreCount > 0
+              ? [...exerciseRows, moreRow as any]
+              : exerciseRows,
           },
         },
 
-        footerElement,
-      ],
-    },
-  };
+        // ── FOOTER ──────────────────────────────────────────────────────────
+        {
+          type: "div",
+          props: {
+            style: {
+              display: "flex", alignItems: "center", justifyContent: "center",
+              paddingTop: 32,
+              borderTop: `1px solid ${C.divider}`,
+            },
+            children: {
+              type: "div",
+              props: {
+                style: {
+                  fontSize: 24, color: C.textFooter,
+                  fontWeight: 600, display: "flex",
+                },
+                children: userName
+                  ? `@${userName.toLowerCase().replace(/\s+/g, "")} · flextab.app`
+                  : "flextab.app",
+              },
+            },
+          },
+        },
 
-  // ── Full story canvas — gradient background + centered card ──────────────
-  return {
-    type: "div",
-    props: {
-      style: {
-        display: "flex",
-        width: STORY_W,
-        height: STORY_H,
-        // Simulate a vertical gradient via two nested divs (satori doesn't support CSS gradients)
-        background: C.bgBottom,
-        alignItems: "center",
-        justifyContent: "center",
-        // Pad top/bottom to respect safe zone — card will be vertically centered in safe zone
-        paddingTop: SAFE_TOP,
-        paddingBottom: SAFE_BOTTOM,
-      },
-      children: cardElement,
+      ],
     },
   };
 }
