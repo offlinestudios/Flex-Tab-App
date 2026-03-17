@@ -99,7 +99,46 @@ interface CardData {
   userAvatarUrl?: string;
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Layout constants (must match previewCard.mts) ────────────────────────────
+const USABLE_H = STORY_H - PAD_TOP - PAD_BOT; // 1340px
+
+// Fixed element heights (px)
+const H_HEADER      = 88 + 28;               // logo + marginBottom
+const H_TILE_ROW    = 18 + 58 + 8 + 20 + 14; // padTop + value + gap + label + padBot
+const H_TILE_GAP    = 12;
+const H_TILES       = H_TILE_ROW * 2 + H_TILE_GAP + 28; // 2 rows + gap + marginBottom
+const H_DIVIDER     = 1 + 16;
+const H_SECTION_LBL = 26 + 16;
+const H_FOOTER      = 20 + 10 + 26 + 14;
+
+const DETAIL_FIXED  = H_HEADER + H_DIVIDER + H_SECTION_LBL + H_FOOTER; // 245px
+
+// Per-exercise fixed cost (badge row + padding + border)
+const EX_FIXED = 56 + 10 + 10 + 1; // 77px
+
+/** Total px cost of N sets at a given row height */
+function setsCost(numSets: number, rowH: number): number {
+  return rowH * numSets + 8 + 4 * Math.max(0, numSets - 1);
+}
+
+/** Total px cost of one exercise with N sets at rowH */
+function exCost(numSets: number, rowH: number): number {
+  return EX_FIXED + setsCost(numSets, rowH);
+}
+
+/**
+ * Find the largest rowH (48→32, step 2) that fits all exercises in availPx.
+ * Returns null if even rowH=32 overflows.
+ */
+function computeAdaptiveRowH(exercises: ExerciseRow[], availPx: number): number | null {
+  for (let rowH = 48; rowH >= 32; rowH -= 2) {
+    const total = exercises.reduce((sum, ex) => sum + exCost(ex.sets?.length ?? 0, rowH), 0);
+    if (total <= availPx) return rowH;
+  }
+  return null;
+}
+
+// ── Helpers ─────────────────────────────────────────────────────────────────
 function truncate(s: string, max: number) {
   return s.length > max ? s.slice(0, max - 1) + "…" : s;
 }
@@ -191,29 +230,35 @@ function makeExerciseRow(
   index: number,
   isLast: boolean,
   maxSets: number | null,   // null = show all sets
+  rowH: number = 48,        // adaptive set row height
 ) {
   const visibleSets = ex.sets ? (maxSets !== null ? ex.sets.slice(0, maxSets) : ex.sets) : [];
   const hiddenCount = ex.sets ? ex.sets.length - visibleSets.length : 0;
+
+  // Scale font sizes with rowH
+  const repsFontSize  = Math.round(rowH * 0.65);
+  const labelFontSize = Math.round(rowH * 0.50);
+  const padV          = Math.round((rowH - repsFontSize) / 2);
 
   const setChildren: any[] = visibleSets.map((s, si) => ({
     type: "div",
     props: {
       style: {
         display: "flex", alignItems: "center", gap: 16,
-        paddingTop: 8, paddingBottom: 8,
+        paddingTop: padV, paddingBottom: padV,
         paddingLeft: 14, paddingRight: 14,
         background: C.setRowBg, borderRadius: 12,
         marginTop: si === 0 ? 8 : 4,
       },
       children: [
-        { type: "div", props: { style: { fontSize: 24, fontWeight: 700, color: C.textMuted, width: 90, display: "flex" }, children: `Set ${s.setNumber}` } },
+        { type: "div", props: { style: { fontSize: labelFontSize, fontWeight: 700, color: C.textMuted, width: 90, display: "flex" }, children: `Set ${s.setNumber}` } },
         {
           type: "div",
           props: {
             style: { flex: 1, display: "flex", alignItems: "center", gap: 8 },
             children: [
-              { type: "div", props: { style: { fontSize: 32, fontWeight: 800, color: C.textPrimary, display: "flex" }, children: String(s.reps) } },
-              { type: "div", props: { style: { fontSize: 24, fontWeight: 600, color: C.textMuted, display: "flex" }, children: "reps" } },
+              { type: "div", props: { style: { fontSize: repsFontSize, fontWeight: 800, color: C.textPrimary, display: "flex" }, children: String(s.reps) } },
+              { type: "div", props: { style: { fontSize: labelFontSize, fontWeight: 600, color: C.textMuted, display: "flex" }, children: "reps" } },
             ],
           },
         },
@@ -222,8 +267,8 @@ function makeExerciseRow(
           props: {
             style: { display: "flex", alignItems: "center", gap: 8 },
             children: [
-              { type: "div", props: { style: { fontSize: 32, fontWeight: 800, color: C.textPrimary, display: "flex" }, children: String(s.weight) } },
-              { type: "div", props: { style: { fontSize: 24, fontWeight: 600, color: C.textMuted, display: "flex" }, children: "lbs" } },
+              { type: "div", props: { style: { fontSize: repsFontSize, fontWeight: 800, color: C.textPrimary, display: "flex" }, children: String(s.weight) } },
+              { type: "div", props: { style: { fontSize: labelFontSize, fontWeight: 600, color: C.textMuted, display: "flex" }, children: "lbs" } },
             ],
           },
         }] : []),
@@ -373,13 +418,16 @@ function buildDetailPage(
   globalOffset: number,  // index of first exercise in this slice (for numbering)
   pageNum: number,
   totalPages: number,
+  availPx: number,
 ) {
   const C      = THEMES[data.theme === "dark" ? "dark" : "light"];
   const isDark = data.theme === "dark";
   const { date, userName, userAvatarUrl } = data;
 
+  const rowH = computeAdaptiveRowH(exerciseSlice, availPx) ?? 32;
+
   const exerciseRows = exerciseSlice.map((ex, i) =>
-    makeExerciseRow(C, ex, globalOffset + i, i === exerciseSlice.length - 1, null)
+    makeExerciseRow(C, ex, globalOffset + i, i === exerciseSlice.length - 1, null, rowH)
   );
 
   return {
@@ -398,8 +446,8 @@ function buildDetailPage(
         // Divider
         { type: "div", props: { style: { height: 1, background: C.divider, marginBottom: 16, display: "flex" } } },
 
-        // Section label with page context
-        makeSectionLabel(C, `Exercises — Page ${pageNum} of ${totalPages}`),
+        // Section label
+        makeSectionLabel(C, totalPages > 2 ? `Exercises — Page ${pageNum} of ${totalPages}` : "All Exercises"),
 
         // Exercise rows
         {
@@ -417,15 +465,33 @@ function buildDetailPage(
 }
 
 // ── Paginate exercises into detail pages ──────────────────────────────────────
-// Each detail page holds 3 exercises (with all sets).
-const EXERCISES_PER_DETAIL_PAGE = 3;
-
+/**
+ * Tries to fit ALL exercises onto a single detail page (adaptive row height).
+ * Falls back to chunks of 4, then 3 if needed.
+ */
 function paginateExercises(exercises: ExerciseRow[]): { slice: ExerciseRow[]; offset: number }[] {
-  const pages: { slice: ExerciseRow[]; offset: number }[] = [];
-  for (let i = 0; i < exercises.length; i += EXERCISES_PER_DETAIL_PAGE) {
-    pages.push({ slice: exercises.slice(i, i + EXERCISES_PER_DETAIL_PAGE), offset: i });
+  const availPx = USABLE_H - DETAIL_FIXED;
+
+  // Can all exercises fit on one page?
+  if (computeAdaptiveRowH(exercises, availPx) !== null) {
+    return [{ slice: exercises, offset: 0 }];
   }
-  return pages;
+
+  // Try chunks of 4
+  const chunks4: { slice: ExerciseRow[]; offset: number }[] = [];
+  for (let i = 0; i < exercises.length; i += 4) {
+    chunks4.push({ slice: exercises.slice(i, i + 4), offset: i });
+  }
+  if (chunks4.every(({ slice }) => computeAdaptiveRowH(slice, availPx) !== null)) {
+    return chunks4;
+  }
+
+  // Fall back to chunks of 3
+  const chunks3: { slice: ExerciseRow[]; offset: number }[] = [];
+  for (let i = 0; i < exercises.length; i += 3) {
+    chunks3.push({ slice: exercises.slice(i, i + 3), offset: i });
+  }
+  return chunks3;
 }
 
 // ── HTTP handler ─────────────────────────────────────────────────────────────
@@ -449,13 +515,14 @@ export async function handleGenerateWorkoutCard(req: Request, res: Response) {
     };
 
     // Build page list
+    const availPx    = USABLE_H - DETAIL_FIXED;
     const detailPages = paginateExercises(data.exercises);
     const totalPages  = 1 + detailPages.length;
 
     const pageElements: any[] = [
       buildSummaryPage(data, totalPages),
       ...detailPages.map(({ slice, offset }, i) =>
-        buildDetailPage(data, slice, offset, i + 2, totalPages)
+        buildDetailPage(data, slice, offset, i + 2, totalPages, availPx)
       ),
     ];
 

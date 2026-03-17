@@ -1,5 +1,5 @@
 /**
- * Standalone preview script — renders all pages of the multi-page workout card.
+ * Standalone preview script — renders the 2-page workout card.
  * Run with:  npx tsx server/previewCard.mts
  */
 import { writeFileSync } from "fs";
@@ -12,9 +12,52 @@ const fontBold    = Buffer.from(INTER_BOLD_B64,    "base64");
 const STORY_W = 1080;
 const STORY_H = 1920;
 
-const PAD_H   = 80;
-const PAD_TOP = 200;
-const PAD_BOT = 380;
+const PAD_H   = 80;   // left/right padding
+const PAD_TOP = 200;  // top safe zone (Instagram UI chrome)
+const PAD_BOT = 380;  // bottom safe zone (Instagram caption/buttons)
+
+const USABLE_H = STORY_H - PAD_TOP - PAD_BOT; // 1340px
+
+// ── Fixed element heights (px) ────────────────────────────────────────────────
+const H_HEADER      = 88 + 28;          // logo + marginBottom = 116
+const H_TILE_ROW    = 18 + 58 + 8 + 20 + 14; // padTop + value + gap + label + padBot = 118
+const H_TILE_GAP    = 12;
+const H_TILES       = H_TILE_ROW * 2 + H_TILE_GAP + 28; // 2 rows + gap + marginBottom = 276
+const H_DIVIDER     = 1 + 16;           // line + marginBottom = 17
+const H_SECTION_LBL = 26 + 16;          // text + marginBottom = 42
+const H_FOOTER      = 20 + 10 + 26 + 14; // paddingTop + dots + username + gap = 70
+
+// Fixed overhead for summary page (has tiles)
+const SUMMARY_FIXED = H_HEADER + H_TILES + H_DIVIDER + H_SECTION_LBL + H_FOOTER; // 521
+
+// Fixed overhead for detail page (no tiles)
+const DETAIL_FIXED  = H_HEADER + H_DIVIDER + H_SECTION_LBL + H_FOOTER; // 245
+
+// Per-exercise fixed cost: badge row + paddingTop + paddingBottom + border
+const EX_FIXED = 56 + 10 + 10 + 1; // 77
+
+// Per-set cost at a given rowHeight: rowHeight + marginTop (4 or 8 for first)
+function setsCost(numSets: number, rowH: number): number {
+  return rowH * numSets + 8 + 4 * Math.max(0, numSets - 1);
+}
+
+// Total cost of one exercise with N sets at rowH
+function exCost(numSets: number, rowH: number): number {
+  return EX_FIXED + setsCost(numSets, rowH);
+}
+
+/**
+ * Given a list of exercises and available vertical pixels, compute the
+ * largest integer setRowH (capped at 48, min 32) that fits all exercises.
+ * Returns null if even rowH=32 overflows (caller should split to 3 pages).
+ */
+function computeAdaptiveRowH(exercises: typeof ALL_EXERCISES, availPx: number): number | null {
+  for (let rowH = 48; rowH >= 32; rowH -= 2) {
+    const total = exercises.reduce((sum, ex) => sum + exCost(ex.sets.length, rowH), 0);
+    if (total <= availPx) return rowH;
+  }
+  return null;
+}
 
 // ── Themes ────────────────────────────────────────────────────────────────────
 const THEMES = {
@@ -51,13 +94,13 @@ const THEMES = {
 } as const;
 
 type ThemeKey = keyof typeof THEMES;
-type C = typeof THEMES["light"];
 
 function truncate(s: string, max: number) {
   return s.length > max ? s.slice(0, max - 1) + "…" : s;
 }
 
-// ── Sample data (7 exercises to demonstrate pagination) ───────────────────────
+// ── Sample data ───────────────────────────────────────────────────────────────
+// 7-exercise workout (stress test — above average, shows 3-page fallback)
 const ALL_EXERCISES = [
   {
     exercise: "Chest Dips",       totalSets: 4, bestReps: 5,  bestWeight: 100, category: "Chest",
@@ -118,6 +161,9 @@ const ALL_EXERCISES = [
     ],
   },
 ];
+
+// 5-exercise workout (typical average user)
+const AVG_EXERCISES = ALL_EXERCISES.slice(0, 5);
 
 const TOTAL_SETS   = ALL_EXERCISES.reduce((s, e) => s + e.totalSets, 0);
 const TOTAL_REPS   = ALL_EXERCISES.reduce((s, e) => s + e.totalSets * e.bestReps, 0);
@@ -185,29 +231,35 @@ function makeSectionLabel(C: any, text: string) {
   };
 }
 
-function makeExerciseRow(C: any, ex: any, globalIndex: number, isLast: boolean, maxSets: number | null) {
+function makeExerciseRow(C: any, ex: any, globalIndex: number, isLast: boolean, maxSets: number | null, rowH: number = 48) {
   const visibleSets: any[] = ex.sets ? (maxSets !== null ? ex.sets.slice(0, maxSets) : ex.sets) : [];
   const hiddenCount = ex.sets ? ex.sets.length - visibleSets.length : 0;
+
+  // Compute font sizes that scale with rowH
+  const repsFontSize   = Math.round(rowH * 0.65);  // 31 at rowH=48, 21 at rowH=32
+  const labelFontSize  = Math.round(rowH * 0.50);  // 24 at rowH=48, 16 at rowH=32
+  const setNumFontSize = Math.round(rowH * 0.50);
+  const padV           = Math.round((rowH - repsFontSize) / 2);
 
   const setChildren = visibleSets.map((s: any, si: number) => ({
     type: "div",
     props: {
       style: {
         display: "flex", alignItems: "center", gap: 16,
-        paddingTop: 8, paddingBottom: 8,
+        paddingTop: padV, paddingBottom: padV,
         paddingLeft: 14, paddingRight: 14,
         background: C.setRowBg, borderRadius: 12,
         marginTop: si === 0 ? 8 : 4,
       },
       children: [
-        { type: "div", props: { style: { fontSize: 24, fontWeight: 700, color: C.textMuted, width: 90, display: "flex" }, children: `Set ${s.setNumber}` } },
+        { type: "div", props: { style: { fontSize: setNumFontSize, fontWeight: 700, color: C.textMuted, width: 90, display: "flex" }, children: `Set ${s.setNumber}` } },
         {
           type: "div",
           props: {
             style: { flex: 1, display: "flex", alignItems: "center", gap: 8 },
             children: [
-              { type: "div", props: { style: { fontSize: 32, fontWeight: 800, color: C.textPrimary, display: "flex" }, children: String(s.reps) } },
-              { type: "div", props: { style: { fontSize: 24, fontWeight: 600, color: C.textMuted, display: "flex" }, children: "reps" } },
+              { type: "div", props: { style: { fontSize: repsFontSize, fontWeight: 800, color: C.textPrimary, display: "flex" }, children: String(s.reps) } },
+              { type: "div", props: { style: { fontSize: labelFontSize, fontWeight: 600, color: C.textMuted, display: "flex" }, children: "reps" } },
             ],
           },
         },
@@ -216,8 +268,8 @@ function makeExerciseRow(C: any, ex: any, globalIndex: number, isLast: boolean, 
           props: {
             style: { display: "flex", alignItems: "center", gap: 8 },
             children: [
-              { type: "div", props: { style: { fontSize: 32, fontWeight: 800, color: C.textPrimary, display: "flex" }, children: String(s.weight) } },
-              { type: "div", props: { style: { fontSize: 24, fontWeight: 600, color: C.textMuted, display: "flex" }, children: "lbs" } },
+              { type: "div", props: { style: { fontSize: repsFontSize, fontWeight: 800, color: C.textPrimary, display: "flex" }, children: String(s.weight) } },
+              { type: "div", props: { style: { fontSize: labelFontSize, fontWeight: 600, color: C.textMuted, display: "flex" }, children: "lbs" } },
             ],
           },
         }] : []),
@@ -267,14 +319,18 @@ function makeExerciseRow(C: any, ex: any, globalIndex: number, isLast: boolean, 
 }
 
 // ── Page builders ─────────────────────────────────────────────────────────────
-const EXERCISES_PER_DETAIL_PAGE = 3;
 
-function buildSummaryPage(C: any, isDark: boolean, totalPages: number) {
+function buildSummaryPage(C: any, isDark: boolean, exercises: typeof ALL_EXERCISES, totalPages: number) {
+  const totalSets  = exercises.reduce((s, e) => s + e.totalSets, 0);
+  const totalReps  = exercises.reduce((s, e) => s + e.totalSets * e.bestReps, 0);
+  const totalVol   = exercises.reduce((s, e) => s + e.totalSets * e.bestReps * e.bestWeight, 0);
+  const volDisplay = totalVol >= 10000 ? `${(totalVol / 1000).toFixed(1)}k` : totalVol.toLocaleString();
+
   const statTiles = [
-    { value: DURATION,           label: "DURATION" },
-    { value: String(TOTAL_SETS), label: "SETS"     },
-    { value: String(TOTAL_REPS), label: "REPS"     },
-    { value: VOL_DISPLAY,        label: "VOLUME"   },
+    { value: DURATION,          label: "DURATION" },
+    { value: String(totalSets), label: "SETS"     },
+    { value: String(totalReps), label: "REPS"     },
+    { value: volDisplay,        label: "VOLUME"   },
   ];
 
   const makeTile = ({ value, label }: any) => ({
@@ -288,12 +344,13 @@ function buildSummaryPage(C: any, isDark: boolean, totalPages: number) {
     },
   });
 
-  const previewExercises = ALL_EXERCISES.slice(0, 3);
+  // Summary page shows first 3 exercises with up to 3 sets each
+  const previewExercises = exercises.slice(0, 3);
   const exerciseRows = previewExercises.map((ex, i) =>
     makeExerciseRow(C, ex, i, i === previewExercises.length - 1, 3)
   );
 
-  const moreExCount = ALL_EXERCISES.length - previewExercises.length;
+  const moreExCount = exercises.length - previewExercises.length;
   const moreExHint = moreExCount > 0 ? {
     type: "div",
     props: {
@@ -333,9 +390,22 @@ function buildSummaryPage(C: any, isDark: boolean, totalPages: number) {
   };
 }
 
-function buildDetailPage(C: any, isDark: boolean, exerciseSlice: any[], globalOffset: number, pageNum: number, totalPages: number) {
+/**
+ * Build a detail page that fits ALL exercises in the slice.
+ * Dynamically reduces set row height until everything fits.
+ * If even rowH=32 overflows, the caller should split the slice further.
+ */
+function buildDetailPage(
+  C: any, isDark: boolean,
+  exerciseSlice: typeof ALL_EXERCISES,
+  globalOffset: number,
+  pageNum: number, totalPages: number,
+  availPx: number,
+) {
+  const rowH = computeAdaptiveRowH(exerciseSlice, availPx) ?? 32;
+
   const exerciseRows = exerciseSlice.map((ex, i) =>
-    makeExerciseRow(C, ex, globalOffset + i, i === exerciseSlice.length - 1, null)
+    makeExerciseRow(C, ex, globalOffset + i, i === exerciseSlice.length - 1, null, rowH)
   );
 
   return {
@@ -345,7 +415,7 @@ function buildDetailPage(C: any, isDark: boolean, exerciseSlice: any[], globalOf
       children: [
         makeHeader(C, isDark, DATE),
         { type: "div", props: { style: { height: 1, background: C.divider, marginBottom: 16, display: "flex" } } },
-        makeSectionLabel(C, `Exercises — Page ${pageNum} of ${totalPages}`),
+        makeSectionLabel(C, totalPages > 2 ? `Exercises — Page ${pageNum} of ${totalPages}` : "All Exercises"),
         {
           type: "div",
           props: {
@@ -357,6 +427,36 @@ function buildDetailPage(C: any, isDark: boolean, exerciseSlice: any[], globalOf
       ],
     },
   };
+}
+
+/**
+ * Paginate exercises for detail pages.
+ * Tries to fit ALL exercises on one detail page first.
+ * If that fails, splits into chunks of 4 (then 3 as fallback).
+ */
+function paginateDetailExercises(exercises: typeof ALL_EXERCISES): Array<{ slice: typeof ALL_EXERCISES; offset: number }> {
+  const availPx = USABLE_H - DETAIL_FIXED;
+
+  // Can all exercises fit on one page?
+  const rowH = computeAdaptiveRowH(exercises, availPx);
+  if (rowH !== null) {
+    return [{ slice: exercises, offset: 0 }];
+  }
+
+  // Try chunks of 4
+  const chunks4: Array<{ slice: typeof ALL_EXERCISES; offset: number }> = [];
+  for (let i = 0; i < exercises.length; i += 4) {
+    chunks4.push({ slice: exercises.slice(i, i + 4), offset: i });
+  }
+  const allFit4 = chunks4.every(({ slice }) => computeAdaptiveRowH(slice, availPx) !== null);
+  if (allFit4) return chunks4;
+
+  // Fall back to chunks of 3
+  const chunks3: Array<{ slice: typeof ALL_EXERCISES; offset: number }> = [];
+  for (let i = 0; i < exercises.length; i += 3) {
+    chunks3.push({ slice: exercises.slice(i, i + 3), offset: i });
+  }
+  return chunks3;
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
@@ -373,31 +473,43 @@ async function main() {
     ],
   };
 
-  for (const themeName of ["light", "dark"] as ThemeKey[]) {
-    const C      = THEMES[themeName];
-    const isDark = themeName === "dark";
+  const availPx = USABLE_H - DETAIL_FIXED;
 
-    // Paginate exercises into detail pages
-    const detailSlices: { slice: any[]; offset: number }[] = [];
-    for (let i = 0; i < ALL_EXERCISES.length; i += EXERCISES_PER_DETAIL_PAGE) {
-      detailSlices.push({ slice: ALL_EXERCISES.slice(i, i + EXERCISES_PER_DETAIL_PAGE), offset: i });
-    }
-    const totalPages = 1 + detailSlices.length;
+  // Render both 7-exercise (stress test) and 5-exercise (average user) variants
+  const variants = [
+    { label: "7ex",  exercises: ALL_EXERCISES },
+    { label: "5ex",  exercises: AVG_EXERCISES },
+  ];
 
-    const pages = [
-      buildSummaryPage(C, isDark, totalPages),
-      ...detailSlices.map(({ slice, offset }, i) =>
-        buildDetailPage(C, isDark, slice, offset, i + 2, totalPages)
-      ),
-    ];
+  for (const { label, exercises } of variants) {
+    const detailSlices = paginateDetailExercises(exercises);
+    const totalPages   = 1 + detailSlices.length;
 
-    for (let i = 0; i < pages.length; i++) {
-      const svg   = await satori(pages[i] as any, satoriOpts);
-      const resvg = new Resvg(svg, { fitTo: { mode: "width", value: STORY_W } });
-      const png   = resvg.render().asPng();
-      const out   = `/home/ubuntu/workout-card-${themeName}-p${i + 1}.png`;
-      writeFileSync(out, png);
-      console.log(`✅  Saved ${out}`);
+    console.log(`\n── ${label}: ${exercises.length} exercises → ${totalPages} pages ──`);
+    detailSlices.forEach(({ slice, offset }, i) => {
+      const rowH = computeAdaptiveRowH(slice, availPx);
+      console.log(`  Detail page ${i + 2}: ${slice.length} exercises, rowH=${rowH ?? 32}px`);
+    });
+
+    for (const themeName of ["light", "dark"] as ThemeKey[]) {
+      const C      = THEMES[themeName];
+      const isDark = themeName === "dark";
+
+      const pages = [
+        buildSummaryPage(C, isDark, exercises, totalPages),
+        ...detailSlices.map(({ slice, offset }, i) =>
+          buildDetailPage(C, isDark, slice, offset, i + 2, totalPages, availPx)
+        ),
+      ];
+
+      for (let i = 0; i < pages.length; i++) {
+        const svg   = await satori(pages[i] as any, satoriOpts);
+        const resvg = new Resvg(svg, { fitTo: { mode: "width", value: STORY_W } });
+        const png   = resvg.render().asPng();
+        const out   = `/home/ubuntu/workout-card-${label}-${themeName}-p${i + 1}.png`;
+        writeFileSync(out, png);
+        console.log(`  ✅  ${out}`);
+      }
     }
   }
 }
