@@ -1,43 +1,24 @@
 /**
- * POST /api/generate-workout-card
- *
- * Renders a full 1080×1920 Instagram story PNG using satori + resvg.
- *
- * Redesign v4:
- *   - Gradient backgrounds (dark & light)
- *   - Larger, bolder typography with stronger hierarchy
- *   - Per-exercise set breakdown (shown when ≤5 exercises AND set data present)
- *   - Adaptive sets per exercise: 2 sets for 4-5 exercises, 3 sets for ≤3 exercises
- *   - 6+ exercises fall back to best-set pill
- *   - User avatar circle in the header (when available)
- *   - Instagram safe-zone padding: header/footer clear the top/bottom UI chrome
- *   - White logo on dark theme
- *   - Volume chart removed
- *
- * Satori rule: every <div> with more than one child MUST have display:"flex".
+ * Standalone preview script — renders the redesigned workout card to PNG.
+ * Run with:  npx tsx server/previewCard.mts
  */
-
-import { Request, Response } from "express";
-import { storagePut } from "./storage.js";
+import { writeFileSync } from "fs";
 import { INTER_REGULAR_B64, INTER_BOLD_B64 } from "./fontData.js";
 import { FLEXTAB_ICON_B64, FLEXTAB_ICON_WHITE_B64 } from "../client/src/lib/flextabIconB64.js";
 
-// ── Fonts ─────────────────────────────────────────────────────────────────────
-const fontRegular   = Buffer.from(INTER_REGULAR_B64, "base64");
-const fontBold      = Buffer.from(INTER_BOLD_B64,    "base64");
-const fontExtraBold = fontBold;
+const fontRegular = Buffer.from(INTER_REGULAR_B64, "base64");
+const fontBold    = Buffer.from(INTER_BOLD_B64,    "base64");
 
-// ── Story canvas ──────────────────────────────────────────────────────────────
 const STORY_W = 1080;
 const STORY_H = 1920;
 
 // Instagram Stories safe zone:
 //   Top ~13% (≈250px) and bottom ~18% (≈346px) are covered by UI chrome.
 const PAD_H   = 80;    // horizontal padding
-const PAD_TOP = 200;   // raised — header sits higher on the card
+const PAD_TOP = 200;   // raised — header now sits higher on the card
 const PAD_BOT = 380;   // bottom safe-zone padding
 
-// ── Theme palettes ────────────────────────────────────────────────────────────
+// ── Themes ────────────────────────────────────────────────────────────────────
 const THEMES = {
   light: {
     bg:            "linear-gradient(160deg, #e8edf6 0%, #dce4f0 40%, #cdd8ec 100%)",
@@ -69,69 +50,106 @@ const THEMES = {
   },
 } as const;
 
-type Theme = keyof typeof THEMES;
+type ThemeKey = keyof typeof THEMES;
 
-// ── Data interfaces ───────────────────────────────────────────────────────────
-interface SetDetail {
-  setNumber: number;
-  reps: number;
-  weight: number;
-}
-
-interface ExerciseRow {
-  exercise: string;
-  totalSets: number;
-  bestReps: number;
-  bestWeight: number;
-  category: string;
-  volume: number;
-  sets?: SetDetail[];
-  duration?: number;
-  distance?: number;
-  distanceUnit?: "miles" | "km";
-}
-
-interface CardData {
-  date: string;
-  duration?: string;
-  totalSets: number;
-  totalReps: number;
-  volumeDisplay: string;
-  exercises: ExerciseRow[];
-  theme?: Theme;
-  userName?: string;
-  userAvatarUrl?: string;
-}
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
 function truncate(s: string, max: number) {
   return s.length > max ? s.slice(0, max - 1) + "…" : s;
 }
 
-// ── Build the full story element tree ────────────────────────────────────────
-function buildStoryElement(data: CardData) {
-  const { date, duration, totalSets, totalReps, volumeDisplay, exercises, userName, userAvatarUrl } = data;
-  const C      = THEMES[data.theme === "dark" ? "dark" : "light"];
-  const isDark = data.theme === "dark";
+function buildCard(themeName: ThemeKey) {
+  const C      = THEMES[themeName];
+  const isDark = themeName === "dark";
+
+  // ── Sample data (5 exercises, 3-4 sets each) ─────────────────────────────
+  const allExercises = [
+    {
+      exercise: "Chest Dips",
+      totalSets: 4,
+      bestReps: 5, bestWeight: 100,
+      category: "Chest",
+      sets: [
+        { setNumber: 1, reps: 8,  weight: 80  },
+        { setNumber: 2, reps: 6,  weight: 90  },
+        { setNumber: 3, reps: 5,  weight: 100 },
+        { setNumber: 4, reps: 5,  weight: 100 },
+      ],
+    },
+    {
+      exercise: "Standing Military Press",
+      totalSets: 3,
+      bestReps: 3, bestWeight: 185,
+      category: "Shoulders",
+      sets: [
+        { setNumber: 1, reps: 5, weight: 165 },
+        { setNumber: 2, reps: 4, weight: 175 },
+        { setNumber: 3, reps: 3, weight: 185 },
+      ],
+    },
+    {
+      exercise: "Upright Rows",
+      totalSets: 3,
+      bestReps: 7, bestWeight: 135,
+      category: "Shoulders",
+      sets: [
+        { setNumber: 1, reps: 10, weight: 115 },
+        { setNumber: 2, reps: 8,  weight: 125 },
+        { setNumber: 3, reps: 7,  weight: 135 },
+      ],
+    },
+    {
+      exercise: "Seated Dumbbell Press",
+      totalSets: 3,
+      bestReps: 6, bestWeight: 160,
+      category: "Shoulders",
+      sets: [
+        { setNumber: 1, reps: 8, weight: 140 },
+        { setNumber: 2, reps: 7, weight: 150 },
+        { setNumber: 3, reps: 6, weight: 160 },
+      ],
+    },
+    {
+      exercise: "Lateral Raises",
+      totalSets: 3,
+      bestReps: 10, bestWeight: 40,
+      category: "Shoulders",
+      sets: [
+        { setNumber: 1, reps: 12, weight: 30 },
+        { setNumber: 2, reps: 10, weight: 35 },
+        { setNumber: 3, reps: 10, weight: 40 },
+      ],
+    },
+  ];
+
+  const exercises = allExercises;
+
+  const totalSets   = exercises.reduce((s, e) => s + e.totalSets, 0);
+  const totalReps   = exercises.reduce((s, e) => s + e.totalSets * e.bestReps, 0);
+  const totalVolume = exercises.reduce((s, e) => s + e.totalSets * e.bestReps * e.bestWeight, 0);
+  const volDisplay  = totalVolume >= 10000
+    ? `${(totalVolume / 1000).toFixed(1)}k`
+    : totalVolume.toLocaleString();
+
+  const date     = "Monday, Mar 16, 2026";
+  const duration = "51:45";
+  const userName = "julianross";
 
   // ── Adaptive layout ────────────────────────────────────────────────────────
-  // Available budget for exercises: ~813px (no chart).
-  // 5 exercises × 2 sets ≈ 810px  ✓
-  // 4 exercises × 2 sets = 768px  ✓
-  // 3 exercises × 3 sets = 744px  ✓
-  // 6+ exercises → best-set pill fallback
+  // Budget: ~813px for exercises (no chart).
+  // 5 exercises × 2 sets = ~810px  ✓  (tight but fits)
+  // 4 exercises × 2 sets = 768px   ✓  (comfortable)
+  // 3 exercises × 3 sets = 744px   ✓  (comfortable)
+  // 6+ exercises → show best-set pill (no expanded sets)
   const numEx        = exercises.length;
-  const hasSetData   = exercises.some(e => e.sets && e.sets.length > 0);
-  const expandSets   = hasSetData && numEx <= 5;
-  // 4-5 exercises: cap at 2 sets; ≤3 exercises: cap at 3 sets
+  const expandSets   = numEx <= 5;
+  // 5 exercises: cap at 2 sets; 4 exercises: cap at 2 sets; ≤3: cap at 3 sets
   const maxSetsPerEx = numEx >= 4 ? 2 : 3;
 
   // ── Stat tiles ─────────────────────────────────────────────────────────────
   const statTiles = [
-    { value: duration || "—", label: "DURATION" },
-    { value: String(totalSets),  label: "SETS"     },
-    { value: String(totalReps),  label: "REPS"     },
-    { value: volumeDisplay,      label: "VOLUME"   },
+    { value: duration,          label: "DURATION" },
+    { value: String(totalSets), label: "SETS"     },
+    { value: String(totalReps), label: "REPS"     },
+    { value: volDisplay,        label: "VOLUME"   },
   ];
 
   const makeTile = ({ value, label }: { value: string; label: string }) => ({
@@ -151,28 +169,16 @@ function buildStoryElement(data: CardData) {
   });
 
   // ── Exercise rows ──────────────────────────────────────────────────────────
-  const visibleExercises = exercises.slice(0, expandSets ? 5 : 6);
-  const moreCount        = exercises.length - visibleExercises.length;
+  const exerciseRows = exercises.map((ex, i) => {
+    const isLast = i === exercises.length - 1;
 
-  const exerciseRows = visibleExercises.map((ex, i) => {
-    const isLast = i === visibleExercises.length - 1 && moreCount === 0;
-
-    // Best-set pill text (fallback when not expanding sets)
-    let pillText: string;
-    if (ex.category === "Cardio") {
-      const parts = [
-        ex.duration ? `${ex.duration} min` : "",
-        ex.distance ? `${ex.distance} ${ex.distanceUnit ?? "km"}` : "",
-      ].filter(Boolean);
-      pillText = parts.length ? parts.join(" · ") : `${ex.totalSets} set${ex.totalSets !== 1 ? "s" : ""}`;
-    } else if (ex.bestWeight > 0) {
-      pillText = `Best: ${ex.bestReps} reps @ ${ex.bestWeight} lbs`;
-    } else {
-      pillText = `Best: ${ex.bestReps} reps`;
-    }
+    // Best-set pill text (fallback when not expanding)
+    const pillText = ex.bestWeight > 0
+      ? `Best: ${ex.bestReps} reps @ ${ex.bestWeight} lbs`
+      : `Best: ${ex.bestReps} reps`;
 
     // Expanded set rows
-    const setChildren: any[] = (expandSets && ex.sets && ex.sets.length > 0)
+    const setChildren = expandSets
       ? ex.sets.slice(0, maxSetsPerEx).map((s, si) => ({
           type: "div",
           props: {
@@ -226,7 +232,7 @@ function buildStoryElement(data: CardData) {
               style: { display: "flex", alignItems: "center", gap: 24 },
               children: [
                 { type: "div", props: { style: { width: 56, height: 56, borderRadius: 28, background: C.badgeBg, color: C.badgeText, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, fontWeight: 800, flexShrink: 0 }, children: String(i + 1) } },
-                { type: "div", props: { style: { flex: 1, fontSize: 40, fontWeight: 800, color: C.textPrimary, display: "flex", alignItems: "center" }, children: truncate(ex.exercise, expandSets ? 30 : 24) } },
+                { type: "div", props: { style: { flex: 1, fontSize: 40, fontWeight: 800, color: C.textPrimary, display: "flex", alignItems: "center" }, children: truncate(ex.exercise, 30) } },
                 {
                   type: "div",
                   props: {
@@ -251,21 +257,6 @@ function buildStoryElement(data: CardData) {
       },
     };
   });
-
-  // "+N more" row
-  const moreRow = moreCount > 0 ? {
-    type: "div",
-    props: {
-      style: { display: "flex", alignItems: "center", justifyContent: "center", paddingTop: 24 },
-      children: { type: "div", props: { style: { fontSize: 26, color: C.textMuted, fontWeight: 600, display: "flex" }, children: `+${moreCount} more exercise${moreCount > 1 ? "s" : ""}` } },
-    },
-  } : null;
-
-  // ── Avatar circle ──────────────────────────────────────────────────────────
-  const avatarEl = userAvatarUrl ? {
-    type: "img",
-    props: { src: userAvatarUrl, width: 72, height: 72, style: { borderRadius: 36, objectFit: "cover", flexShrink: 0 } },
-  } : null;
 
   // ── Section label ──────────────────────────────────────────────────────────
   const sectionLabel = (text: string) => ({
@@ -297,16 +288,7 @@ function buildStoryElement(data: CardData) {
           props: {
             style: { display: "flex", alignItems: "center", gap: 24, marginBottom: 28 },
             children: [
-              // Logo — white on dark, coloured on light
-              {
-                type: "img",
-                props: {
-                  src: isDark ? FLEXTAB_ICON_WHITE_B64 : FLEXTAB_ICON_B64,
-                  width: 88, height: 88,
-                  style: { borderRadius: 22, flexShrink: 0 },
-                },
-              },
-              // App name + date
+              { type: "img", props: { src: isDark ? FLEXTAB_ICON_WHITE_B64 : FLEXTAB_ICON_B64, width: 88, height: 88, style: { borderRadius: 22, flexShrink: 0 } } },
               {
                 type: "div",
                 props: {
@@ -317,11 +299,6 @@ function buildStoryElement(data: CardData) {
                   ],
                 },
               },
-              // Optional avatar
-              ...(avatarEl ? [{
-                type: "div",
-                props: { style: { display: "flex", alignItems: "center", flexShrink: 0 }, children: [avatarEl] },
-              }] : []),
             ],
           },
         },
@@ -349,7 +326,7 @@ function buildStoryElement(data: CardData) {
           type: "div",
           props: {
             style: { display: "flex", flexDirection: "column" },
-            children: moreCount > 0 ? [...exerciseRows, moreRow as any] : exerciseRows,
+            children: exerciseRows,
           },
         },
 
@@ -357,20 +334,8 @@ function buildStoryElement(data: CardData) {
         {
           type: "div",
           props: {
-            style: {
-              display: "flex", alignItems: "center", justifyContent: "center",
-              paddingTop: 20, marginTop: "auto",
-              borderTop: `1px solid ${C.divider}`,
-            },
-            children: {
-              type: "div",
-              props: {
-                style: { fontSize: 26, color: C.textFooter, fontWeight: 600, display: "flex" },
-                children: userName
-                  ? `@${userName.toLowerCase().replace(/\s+/g, "")} · flextab.app`
-                  : "flextab.app",
-              },
-            },
+            style: { display: "flex", alignItems: "center", justifyContent: "center", paddingTop: 20, marginTop: "auto", borderTop: `1px solid ${C.divider}` },
+            children: { type: "div", props: { style: { fontSize: 26, color: C.textFooter, fontWeight: 600, display: "flex" }, children: `@${userName} · flextab.app` } },
           },
         },
 
@@ -379,48 +344,29 @@ function buildStoryElement(data: CardData) {
   };
 }
 
-// ── HTTP handler ─────────────────────────────────────────────────────────────
-export async function handleGenerateWorkoutCard(req: Request, res: Response) {
-  try {
-    const data: CardData = req.body;
-    if (!data || !data.exercises || !Array.isArray(data.exercises)) {
-      return res.status(400).json({ error: "Invalid card data" });
-    }
+async function main() {
+  const { default: satori } = await import("satori");
+  const { Resvg }           = await import("@resvg/resvg-js");
 
-    const { default: satori } = await import("satori");
-    const { Resvg }           = await import("@resvg/resvg-js");
+  const renders = [
+    { element: buildCard("light"), out: "/home/ubuntu/workout-card-preview-light.png" },
+    { element: buildCard("dark"),  out: "/home/ubuntu/workout-card-preview-dark.png"  },
+  ];
 
-    const storyElement = buildStoryElement(data);
-
-    const svg = await satori(storyElement as any, {
-      width:  STORY_W,
-      height: STORY_H,
+  for (const { element, out } of renders) {
+    const svg = await satori(element as any, {
+      width: STORY_W, height: STORY_H,
       fonts: [
-        { name: "Inter", data: fontRegular,   weight: 400, style: "normal" },
-        { name: "Inter", data: fontBold,       weight: 700, style: "normal" },
-        { name: "Inter", data: fontExtraBold,  weight: 800, style: "normal" },
+        { name: "Inter", data: fontRegular, weight: 400, style: "normal" },
+        { name: "Inter", data: fontBold,    weight: 700, style: "normal" },
+        { name: "Inter", data: fontBold,    weight: 800, style: "normal" },
       ],
     });
-
-    const resvg     = new Resvg(svg, { fitTo: { mode: "width", value: STORY_W } });
-    const pngBuffer = resvg.render().asPng();
-
-    const dataUri = `data:image/png;base64,${Buffer.from(pngBuffer).toString("base64")}`;
-
-    let url: string | null = null;
-    let key: string | null = null;
-    try {
-      const r2Key = `workout-cards/${Date.now()}-${Math.random().toString(36).slice(2)}.png`;
-      const result = await storagePut(r2Key, pngBuffer, "image/png");
-      url  = result.url;
-      key  = r2Key;
-    } catch (r2Err: any) {
-      console.warn("[workout-card] R2 upload failed (non-fatal):", r2Err?.message);
-    }
-
-    return res.json({ dataUri, url, key });
-  } catch (err: any) {
-    console.error("[workout-card] Error:", err);
-    return res.status(500).json({ error: err?.message ?? "Unknown error" });
+    const resvg = new Resvg(svg, { fitTo: { mode: "width", value: STORY_W } });
+    const png   = resvg.render().asPng();
+    writeFileSync(out, png);
+    console.log(`✅  Saved ${out}`);
   }
 }
+
+main().catch(e => { console.error(e); process.exit(1); });
