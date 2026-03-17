@@ -214,8 +214,8 @@ function AppShell({ children, timerSlot }: { children: React.ReactNode; timerSlo
           transition: 'transform 0.3s cubic-bezier(.4,0,.2,1)',
         }}
       >
-        {/* Sidebar logo strip */}
-        <div style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 20px)', paddingLeft: 20, paddingRight: 16, paddingBottom: 16, flexShrink: 0 }}>
+        {/* Sidebar logo strip — padding mirrors app header exactly so items align */}
+        <div style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 10px)', paddingLeft: 16, paddingRight: 16, paddingBottom: 10, flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               {/* FlexTab symbol logo - switches between dark and white versions based on theme */}
