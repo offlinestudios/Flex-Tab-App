@@ -3,12 +3,20 @@
  *
  * Renders a full 1080×1920 Instagram story/reel PNG using satori + resvg.
  *
- * Design: full-bleed — content fills the entire canvas edge-to-edge.
- * No floating card. Background is a rich dark or light gradient.
- * Content is laid out in three zones:
- *   - Top zone  (header + stat tiles)
- *   - Mid zone  (exercises list — flex:1 to fill remaining space)
- *   - Bottom zone (footer)
+ * Redesign v2:
+ *   - Gradient backgrounds (dark & light)
+ *   - Larger, bolder typography with stronger hierarchy
+ *   - Per-exercise set breakdown (all sets shown when ≤5 exercises; best-set pill for 6+)
+ *   - Per-exercise volume bar chart below the stat tiles
+ *   - User avatar circle in the header
+ *   - Lifter grade badge in the header
+ *
+ * Layout zones:
+ *   - Header  (logo + branding + avatar + grade)
+ *   - Stats   (4 tiles in 2×2 grid)
+ *   - Chart   (horizontal volume bars per exercise)
+ *   - Exercises list (expanded sets or best-set pill)
+ *   - Footer
  *
  * Satori rule: every <div> with more than one child MUST have display:"flex".
  */
@@ -27,48 +35,75 @@ const fontExtraBold = fontBold;
 const STORY_W = 1080;
 const STORY_H = 1920;
 
-// Padding — generous breathing room, not a safe-zone constraint
-const PAD_H   = 72;   // horizontal padding
-const PAD_TOP = 120;  // top padding (below status bar area)
-const PAD_BOT = 160;  // bottom padding (above home indicator)
+const PAD_H   = 60;
+const PAD_TOP = 68;
+const PAD_BOT = 44;
 
 // ── Theme palettes ────────────────────────────────────────────────────────────
 const THEMES = {
   light: {
-    bg:           "#f0f4f8",
-    accentBg:     "#ffffff",
-    tileBg:       "#e8edf4",
-    tileAccent:   "#0f172a",
-    divider:      "#dde3ec",
-    textPrimary:  "#0f172a",
-    textSecondary:"#475569",
-    textMuted:    "#94a3b8",
-    textFooter:   "#b0bec5",
-    badgeBg:      "#0f172a",
-    badgeText:    "#ffffff",
-    pillBg:       "#e8edf4",
-    pillText:     "#475569",
-    logoFilter:   "none",
+    // Gradient expressed as a CSS linear-gradient string (satori supports it)
+    bg:            "linear-gradient(160deg, #e8edf6 0%, #dce4f0 40%, #cdd8ec 100%)",
+    accentBg:      "rgba(255,255,255,0.70)",
+    tileBg:        "rgba(255,255,255,0.80)",
+    tileAccent:    "#0f172a",
+    divider:       "rgba(15,23,42,0.10)",
+    textPrimary:   "#0f172a",
+    textSecondary: "#334155",
+    textMuted:     "#64748b",
+    textFooter:    "#94a3b8",
+    badgeBg:       "#0f172a",
+    badgeText:     "#ffffff",
+    pillBg:        "rgba(15,23,42,0.07)",
+    pillText:      "#334155",
+    setRowBg:      "rgba(15,23,42,0.04)",
+    chartBar:      "#3b82f6",
+    chartBarBg:    "rgba(15,23,42,0.08)",
+    gradeColors: {
+      Novice:       "#6b7280",
+      Intermediate: "#3b82f6",
+      Advanced:     "#8b5cf6",
+      Elite:        "#f59e0b",
+      Legend:       "#ef4444",
+    } as Record<string, string>,
+    logoFilter: "none",
   },
   dark: {
-    bg:           "#080d1a",
-    accentBg:     "#111827",
-    tileBg:       "#1a2236",
-    tileAccent:   "#60a5fa",
-    divider:      "#1e293b",
-    textPrimary:  "#f1f5f9",
-    textSecondary:"#94a3b8",
-    textMuted:    "#475569",
-    textFooter:   "#2d3748",
-    badgeBg:      "#1e293b",
-    badgeText:    "#f1f5f9",
-    pillBg:       "#1a2236",
-    pillText:     "#94a3b8",
-    logoFilter:   "none",
+    bg:            "linear-gradient(160deg, #0a0f1e 0%, #0d1526 50%, #060b16 100%)",
+    accentBg:      "rgba(255,255,255,0.04)",
+    tileBg:        "rgba(255,255,255,0.06)",
+    tileAccent:    "#60a5fa",
+    divider:       "rgba(255,255,255,0.08)",
+    textPrimary:   "#f1f5f9",
+    textSecondary: "#cbd5e1",
+    textMuted:     "#64748b",
+    textFooter:    "#334155",
+    badgeBg:       "rgba(255,255,255,0.12)",
+    badgeText:     "#f1f5f9",
+    pillBg:        "rgba(255,255,255,0.07)",
+    pillText:      "#94a3b8",
+    setRowBg:      "rgba(255,255,255,0.03)",
+    chartBar:      "#60a5fa",
+    chartBarBg:    "rgba(255,255,255,0.07)",
+    gradeColors: {
+      Novice:       "#9ca3af",
+      Intermediate: "#60a5fa",
+      Advanced:     "#a78bfa",
+      Elite:        "#fbbf24",
+      Legend:       "#f87171",
+    } as Record<string, string>,
+    logoFilter: "none",
   },
 } as const;
 
 type Theme = keyof typeof THEMES;
+
+// ── Individual set within an exercise ─────────────────────────────────────────
+interface SetDetail {
+  setNumber: number;
+  reps: number;
+  weight: number;
+}
 
 interface ExerciseRow {
   exercise: string;
@@ -76,6 +111,8 @@ interface ExerciseRow {
   bestReps: number;
   bestWeight: number;
   category: string;
+  volume: number;          // totalSets × bestReps × bestWeight (approx)
+  sets?: SetDetail[];      // individual set breakdown (optional)
   duration?: number;
   distance?: number;
   distanceUnit?: "miles" | "km";
@@ -94,27 +131,37 @@ interface CardData {
   lifterGrade?: string;
 }
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function truncate(s: string, max: number) {
+  return s.length > max ? s.slice(0, max - 1) + "…" : s;
+}
+
 // ── Build the full story element tree ────────────────────────────────────────
 function buildStoryElement(data: CardData) {
-  const { date, duration, totalSets, totalReps, volumeDisplay, exercises, userName } = data;
+  const { date, duration, totalSets, totalReps, volumeDisplay, exercises, userName, userAvatarUrl, lifterGrade } = data;
   const C = THEMES[data.theme === "dark" ? "dark" : "light"];
   const isDark = data.theme === "dark";
 
+  // ── Determine display mode ─────────────────────────────────────────────────
+  // Show expanded sets when ≤5 exercises AND sets data is present
+  const hasSetDetails = exercises.some(e => e.sets && e.sets.length > 0);
+  const expandSets    = hasSetDetails && exercises.length <= 5;
+
+  // ── Stat tiles ─────────────────────────────────────────────────────────────
   const statTiles = [
     { value: duration || "—", label: "DURATION" },
-    { value: String(totalSets),    label: "SETS"     },
-    { value: String(totalReps),    label: "REPS"     },
-    { value: volumeDisplay,        label: "VOLUME"   },
+    { value: String(totalSets),  label: "SETS"     },
+    { value: String(totalReps),  label: "REPS"     },
+    { value: volumeDisplay,      label: "VOLUME"   },
   ];
 
-  // ── Stat tile — large, no border, just fill ──────────────────────────────
   const makeTile = ({ value, label }: { value: string; label: string }) => ({
     type: "div",
     props: {
       style: {
         background: C.tileBg,
         borderRadius: 28,
-        paddingTop: 36, paddingBottom: 28,
+        paddingTop: 40, paddingBottom: 32,
         paddingLeft: 20, paddingRight: 20,
         flex: 1,
         display: "flex", flexDirection: "column", alignItems: "center",
@@ -124,7 +171,7 @@ function buildStoryElement(data: CardData) {
           type: "div",
           props: {
             style: {
-              fontSize: 60, fontWeight: 800, color: C.textPrimary,
+              fontSize: 68, fontWeight: 800, color: C.textPrimary,
               lineHeight: 1, display: "flex",
             },
             children: value,
@@ -134,9 +181,9 @@ function buildStoryElement(data: CardData) {
           type: "div",
           props: {
             style: {
-              fontSize: 20, fontWeight: 700, color: C.textMuted,
-              marginTop: 12, textTransform: "uppercase",
-              letterSpacing: "0.1em", display: "flex",
+              fontSize: 22, fontWeight: 700, color: C.textMuted,
+              marginTop: 14, textTransform: "uppercase",
+              letterSpacing: "0.12em", display: "flex",
             },
             children: label,
           },
@@ -145,76 +192,56 @@ function buildStoryElement(data: CardData) {
     },
   });
 
-  // ── Exercise rows ─────────────────────────────────────────────────────────
-  // Show max 6 exercises to avoid overflow
-  const visibleExercises = exercises.slice(0, 6);
-  const exerciseRows = visibleExercises.map((ex, i) => {
-    let pill: string;
-    if (ex.category === "Cardio") {
-      const parts = [
-        ex.duration ? `${ex.duration} min` : "",
-        ex.distance ? `${ex.distance} ${ex.distanceUnit ?? "km"}` : "",
-      ].filter(Boolean);
-      pill = parts.length ? parts.join(" · ") : `${ex.totalSets} set${ex.totalSets !== 1 ? "s" : ""}`;
-    } else if (ex.bestWeight > 0) {
-      pill = `Best: ${ex.bestReps} reps @ ${ex.bestWeight} lbs`;
-    } else {
-      pill = `Best: ${ex.bestReps} reps`;
-    }
+  // ── Volume bar chart ───────────────────────────────────────────────────────
+  // Show up to 7 exercises; compute volumes
+  const chartExercises = exercises.slice(0, 7);
+  const maxVol = Math.max(...chartExercises.map(e => e.volume || 1), 1);
+  const CHART_W = STORY_W - PAD_H * 2;   // full inner width
+  const BAR_H   = 44;
+  const BAR_GAP = 18;
+  const LABEL_W = 320;
+  const BAR_AREA_W = CHART_W - LABEL_W - 16;
 
-    const isLast = i === visibleExercises.length - 1;
+  const chartRows = chartExercises.map((ex, i) => {
+    const pct   = Math.max((ex.volume || 0) / maxVol, 0.02);
+    const barW  = Math.round(pct * BAR_AREA_W);
+    const isLast = i === chartExercises.length - 1;
 
     return {
       type: "div",
       props: {
         style: {
-          display: "flex", alignItems: "center", gap: 24,
-          paddingTop: 22, paddingBottom: 22,
-          borderBottom: isLast ? "none" : `1px solid ${C.divider}`,
+          display: "flex", alignItems: "center", gap: 16,
+          marginBottom: isLast ? 0 : BAR_GAP,
         },
         children: [
-          // Number badge
+          // Exercise label
           {
             type: "div",
             props: {
               style: {
-                width: 52, height: 52, borderRadius: 26,
-                background: C.badgeBg, color: C.badgeText,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 22, fontWeight: 800, flexShrink: 0,
+                width: LABEL_W, fontSize: 24, fontWeight: 700,
+                color: C.textSecondary, display: "flex", alignItems: "center",
               },
-              children: String(i + 1),
+              children: truncate(ex.exercise, 18),
             },
           },
-          // Exercise name
+          // Bar track
           {
             type: "div",
             props: {
               style: {
-                flex: 1, fontSize: 30, fontWeight: 700, color: C.textPrimary,
-                display: "flex", alignItems: "center",
-              },
-              children: ex.exercise.length > 22 ? ex.exercise.slice(0, 21) + "…" : ex.exercise,
-            },
-          },
-          // Pill
-          {
-            type: "div",
-            props: {
-              style: {
-                background: C.pillBg, borderRadius: 50,
-                paddingTop: 10, paddingBottom: 10,
-                paddingLeft: 24, paddingRight: 24,
-                flexShrink: 0, display: "flex", alignItems: "center",
+                flex: 1, height: BAR_H, borderRadius: BAR_H / 2,
+                background: C.chartBarBg, display: "flex", alignItems: "center",
+                overflow: "hidden",
               },
               children: {
                 type: "div",
                 props: {
                   style: {
-                    fontSize: 22, fontWeight: 700, color: C.pillText,
-                    whiteSpace: "nowrap", display: "flex",
+                    width: barW, height: BAR_H, borderRadius: BAR_H / 2,
+                    background: C.chartBar, display: "flex",
                   },
-                  children: pill,
                 },
               },
             },
@@ -224,26 +251,278 @@ function buildStoryElement(data: CardData) {
     };
   });
 
-  // If more than 6 exercises, show a "+N more" line
+  // ── Exercise rows ──────────────────────────────────────────────────────────
+  const visibleExercises = exercises.slice(0, expandSets ? 5 : 6);
   const moreCount = exercises.length - visibleExercises.length;
+
+  const exerciseRows = visibleExercises.map((ex, i) => {
+    const isLast = i === visibleExercises.length - 1 && moreCount === 0;
+
+    // Pill text (fallback when no expanded sets)
+    let pillText: string;
+    if (ex.category === "Cardio") {
+      const parts = [
+        ex.duration ? `${ex.duration} min` : "",
+        ex.distance ? `${ex.distance} ${ex.distanceUnit ?? "km"}` : "",
+      ].filter(Boolean);
+      pillText = parts.length ? parts.join(" · ") : `${ex.totalSets} set${ex.totalSets !== 1 ? "s" : ""}`;
+    } else if (ex.bestWeight > 0) {
+      pillText = `Best: ${ex.bestReps} reps @ ${ex.bestWeight} lbs`;
+    } else {
+      pillText = `Best: ${ex.bestReps} reps`;
+    }
+
+    // Build individual set rows (only when expandSets is true)
+    const setChildren: any[] = (expandSets && ex.sets && ex.sets.length > 0)
+      ? ex.sets.map((s, si) => ({
+          type: "div",
+          props: {
+            style: {
+              display: "flex", alignItems: "center", gap: 16,
+              paddingTop: 10, paddingBottom: 10,
+              paddingLeft: 16, paddingRight: 16,
+              background: C.setRowBg,
+              borderRadius: 14,
+              marginTop: si === 0 ? 12 : 6,
+            },
+            children: [
+              // Set number chip
+              {
+                type: "div",
+                props: {
+                  style: {
+                    fontSize: 20, fontWeight: 700, color: C.textMuted,
+                    width: 80, display: "flex",
+                  },
+                  children: `Set ${s.setNumber}`,
+                },
+              },
+              // Reps
+              {
+                type: "div",
+                props: {
+                  style: { flex: 1, display: "flex", alignItems: "center", gap: 8 },
+                  children: [
+                    {
+                      type: "div",
+                      props: {
+                        style: { fontSize: 26, fontWeight: 800, color: C.textPrimary, display: "flex" },
+                        children: String(s.reps),
+                      },
+                    },
+                    {
+                      type: "div",
+                      props: {
+                        style: { fontSize: 20, fontWeight: 600, color: C.textMuted, display: "flex" },
+                        children: "reps",
+                      },
+                    },
+                  ],
+                },
+              },
+              // Weight
+              ...(s.weight > 0 ? [{
+                type: "div",
+                props: {
+                  style: { display: "flex", alignItems: "center", gap: 8 },
+                  children: [
+                    {
+                      type: "div",
+                      props: {
+                        style: { fontSize: 26, fontWeight: 800, color: C.textPrimary, display: "flex" },
+                        children: String(s.weight),
+                      },
+                    },
+                    {
+                      type: "div",
+                      props: {
+                        style: { fontSize: 20, fontWeight: 600, color: C.textMuted, display: "flex" },
+                        children: "lbs",
+                      },
+                    },
+                  ],
+                },
+              }] : []),
+            ],
+          },
+        }))
+      : [];
+
+    return {
+      type: "div",
+      props: {
+        style: {
+          display: "flex", flexDirection: "column",
+          paddingTop: 24, paddingBottom: 24,
+          borderBottom: isLast ? "none" : `1px solid ${C.divider}`,
+        },
+        children: [
+          // Header row: badge + name + pill
+          {
+            type: "div",
+            props: {
+              style: { display: "flex", alignItems: "center", gap: 24 },
+              children: [
+                // Number badge
+                {
+                  type: "div",
+                  props: {
+                    style: {
+                      width: 56, height: 56, borderRadius: 28,
+                      background: C.badgeBg, color: C.badgeText,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: 24, fontWeight: 800, flexShrink: 0,
+                    },
+                    children: String(i + 1),
+                  },
+                },
+                // Exercise name
+                {
+                  type: "div",
+                  props: {
+                    style: {
+                      flex: 1, fontSize: 34, fontWeight: 800, color: C.textPrimary,
+                      display: "flex", alignItems: "center",
+                    },
+                    children: truncate(ex.exercise, expandSets ? 28 : 22),
+                  },
+                },
+                // Pill (only when NOT expanding sets)
+                ...(!expandSets ? [{
+                  type: "div",
+                  props: {
+                    style: {
+                      background: C.pillBg, borderRadius: 50,
+                      paddingTop: 12, paddingBottom: 12,
+                      paddingLeft: 28, paddingRight: 28,
+                      flexShrink: 0, display: "flex", alignItems: "center",
+                    },
+                    children: {
+                      type: "div",
+                      props: {
+                        style: {
+                          fontSize: 24, fontWeight: 700, color: C.pillText,
+                          whiteSpace: "nowrap", display: "flex",
+                        },
+                        children: pillText,
+                      },
+                    },
+                  },
+                }] : [
+                  // Sets count badge when expanded
+                  {
+                    type: "div",
+                    props: {
+                      style: {
+                        background: C.pillBg, borderRadius: 50,
+                        paddingTop: 10, paddingBottom: 10,
+                        paddingLeft: 24, paddingRight: 24,
+                        flexShrink: 0, display: "flex", alignItems: "center",
+                      },
+                      children: {
+                        type: "div",
+                        props: {
+                          style: {
+                            fontSize: 22, fontWeight: 700, color: C.pillText,
+                            whiteSpace: "nowrap", display: "flex",
+                          },
+                          children: `${ex.totalSets} set${ex.totalSets !== 1 ? "s" : ""}`,
+                        },
+                      },
+                    },
+                  },
+                ]),
+              ],
+            },
+          },
+          // Expanded set detail rows
+          ...setChildren,
+        ],
+      },
+    };
+  });
+
+  // "+N more" row
   const moreRow = moreCount > 0 ? {
     type: "div",
     props: {
       style: {
         display: "flex", alignItems: "center", justifyContent: "center",
-        paddingTop: 20,
+        paddingTop: 24,
       },
       children: {
         type: "div",
         props: {
-          style: { fontSize: 24, color: C.textMuted, fontWeight: 600, display: "flex" },
+          style: { fontSize: 26, color: C.textMuted, fontWeight: 600, display: "flex" },
           children: `+${moreCount} more exercise${moreCount > 1 ? "s" : ""}`,
         },
       },
     },
   } : null;
 
-  // ── Full-bleed story canvas ───────────────────────────────────────────────
+  // ── Grade badge ────────────────────────────────────────────────────────────
+  const gradeColor = lifterGrade
+    ? (C.gradeColors[lifterGrade] ?? C.textMuted)
+    : null;
+
+  const gradeBadge = lifterGrade && gradeColor ? {
+    type: "div",
+    props: {
+      style: {
+        display: "flex", alignItems: "center", gap: 10,
+        background: C.pillBg, borderRadius: 50,
+        paddingTop: 10, paddingBottom: 10,
+        paddingLeft: 22, paddingRight: 22,
+      },
+      children: [
+        // Colored dot
+        {
+          type: "div",
+          props: {
+            style: {
+              width: 14, height: 14, borderRadius: 7,
+              background: gradeColor, display: "flex", flexShrink: 0,
+            },
+          },
+        },
+        {
+          type: "div",
+          props: {
+            style: {
+              fontSize: 22, fontWeight: 700, color: gradeColor,
+              display: "flex",
+            },
+            children: lifterGrade,
+          },
+        },
+      ],
+    },
+  } : null;
+
+  // ── Avatar circle ──────────────────────────────────────────────────────────
+  const avatarEl = userAvatarUrl ? {
+    type: "img",
+    props: {
+      src: userAvatarUrl,
+      width: 72, height: 72,
+      style: { borderRadius: 36, objectFit: "cover", flexShrink: 0 },
+    },
+  } : null;
+
+  // ── Section label helper ───────────────────────────────────────────────────
+  const sectionLabel = (text: string) => ({
+    type: "div",
+    props: {
+      style: {
+        fontSize: 22, fontWeight: 800, color: C.textMuted,
+        marginBottom: 20, textTransform: "uppercase",
+        letterSpacing: "0.12em", display: "flex",
+      },
+      children: text,
+    },
+  });
+
+  // ── Full-bleed story canvas ────────────────────────────────────────────────
   return {
     type: "div",
     props: {
@@ -260,33 +539,35 @@ function buildStoryElement(data: CardData) {
       },
       children: [
 
-        // ── TOP: Logo + date ────────────────────────────────────────────────
+        // ── HEADER ──────────────────────────────────────────────────────────
         {
           type: "div",
           props: {
             style: {
               display: "flex", alignItems: "center", gap: 24,
-              marginBottom: 64,
+              marginBottom: 56,
             },
             children: [
+              // Logo
               {
                 type: "img",
                 props: {
                   src: isDark ? FLEXTAB_ICON_WHITE_B64 : FLEXTAB_ICON_B64,
-                  width: 72, height: 72,
-                  style: { borderRadius: 16 },
+                  width: 80, height: 80,
+                  style: { borderRadius: 20, flexShrink: 0 },
                 },
               },
+              // App name + date
               {
                 type: "div",
                 props: {
-                  style: { display: "flex", flexDirection: "column", gap: 6 },
+                  style: { display: "flex", flexDirection: "column", gap: 6, flex: 1 },
                   children: [
                     {
                       type: "div",
                       props: {
                         style: {
-                          fontSize: 34, fontWeight: 800,
+                          fontSize: 38, fontWeight: 800,
                           color: C.textPrimary, display: "flex",
                         },
                         children: "FlexTab",
@@ -304,17 +585,28 @@ function buildStoryElement(data: CardData) {
                   ],
                 },
               },
+              // Right side: grade badge + optional avatar
+              {
+                type: "div",
+                props: {
+                  style: { display: "flex", alignItems: "center", gap: 16, flexShrink: 0 },
+                  children: [
+                    ...(gradeBadge ? [gradeBadge] : []),
+                    ...(avatarEl   ? [avatarEl]   : []),
+                  ],
+                },
+              },
             ],
           },
         },
 
-        // ── STAT TILES: 2×2 grid ────────────────────────────────────────────
+        // ── STAT TILES 2×2 ──────────────────────────────────────────────────
         {
           type: "div",
           props: {
             style: {
               display: "flex", flexDirection: "column", gap: 20,
-              marginBottom: 60,
+              marginBottom: 56,
             },
             children: [
               {
@@ -335,31 +627,42 @@ function buildStoryElement(data: CardData) {
           },
         },
 
-        // ── DIVIDER ─────────────────────────────────────────────────────────
+        // ── VOLUME CHART ─────────────────────────────────────────────────────
+        {
+          type: "div",
+          props: {
+            style: {
+              display: "flex", flexDirection: "column",
+              marginBottom: 52,
+            },
+            children: [
+              sectionLabel("Volume by Exercise"),
+              {
+                type: "div",
+                props: {
+                  style: { display: "flex", flexDirection: "column" },
+                  children: chartRows,
+                },
+              },
+            ],
+          },
+        },
+
+        // ── DIVIDER ──────────────────────────────────────────────────────────
         {
           type: "div",
           props: {
             style: {
               height: 1, background: C.divider,
-              marginBottom: 40, display: "flex",
+              marginBottom: 36, display: "flex",
             },
           },
         },
 
-        // ── EXERCISES HEADING ───────────────────────────────────────────────
-        {
-          type: "div",
-          props: {
-            style: {
-              fontSize: 24, fontWeight: 800, color: C.textMuted,
-              marginBottom: 8, textTransform: "uppercase",
-              letterSpacing: "0.1em", display: "flex",
-            },
-            children: "Exercises",
-          },
-        },
+        // ── EXERCISES HEADING ────────────────────────────────────────────────
+        sectionLabel("Exercises"),
 
-        // ── EXERCISE ROWS (flex:1 to fill remaining space) ──────────────────
+        // ── EXERCISE ROWS (flex:1) ───────────────────────────────────────────
         {
           type: "div",
           props: {
@@ -373,13 +676,13 @@ function buildStoryElement(data: CardData) {
           },
         },
 
-        // ── FOOTER ──────────────────────────────────────────────────────────
+        // ── FOOTER ───────────────────────────────────────────────────────────
         {
           type: "div",
           props: {
             style: {
               display: "flex", alignItems: "center", justifyContent: "center",
-              paddingTop: 32,
+              paddingTop: 28,
               borderTop: `1px solid ${C.divider}`,
             },
             children: {
@@ -425,7 +728,6 @@ export async function handleGenerateWorkoutCard(req: Request, res: Response) {
       ],
     });
 
-    // Render at 1× (already 1080px wide — no upscaling needed)
     const resvg     = new Resvg(svg, { fitTo: { mode: "width", value: STORY_W } });
     const pngBuffer = resvg.render().asPng();
 
