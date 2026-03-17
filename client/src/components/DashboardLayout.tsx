@@ -226,9 +226,9 @@ function AppShell({ children, timerSlot }: { children: React.ReactNode; timerSlo
             <button
               onClick={() => setSidebarOpen(false)}
               aria-label="Close menu"
-              style={{ width: 32, height: 32, borderRadius: 10, background: 'var(--secondary)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted-foreground)', flexShrink: 0 }}
+              style={{ width: 36, height: 36, borderRadius: 10, background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted-foreground)', flexShrink: 0 }}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
         </div>
@@ -260,7 +260,7 @@ function AppShell({ children, timerSlot }: { children: React.ReactNode; timerSlo
         </div>
 
         {/* Account footer — height matches bottom nav bar */}
-        <div id="sidebar-account-footer" style={{ borderTop: '1px solid var(--border)', padding: '0 12px', paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 4px)', minHeight: 64, display: 'flex', flexDirection: 'column', justifyContent: 'center', flexShrink: 0 }}>
+        <div id="sidebar-account-footer" style={{ borderTop: '1px solid var(--border)', paddingLeft: 12, paddingRight: 12, paddingTop: 0, paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 4px)', minHeight: 64, display: 'flex', flexDirection: 'column', justifyContent: 'center', flexShrink: 0, boxSizing: 'border-box' }}>
           <div
             id="sidebar-profile-toggle"
             onClick={() => setAccountMenuOpen(!accountMenuOpen)}
