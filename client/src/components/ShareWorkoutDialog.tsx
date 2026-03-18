@@ -130,16 +130,17 @@ export function ShareWorkoutDialog({
   const C = THEMES[theme];
 
   // ── Totals ───────────────────────────────────────────────────────────────────
-  const totalSets   = exercises.reduce((sum, e) => sum + e.sets, 0);
-  const totalReps   = exercises.reduce((sum, e) => sum + e.sets * e.reps, 0);
-  const totalVolume = exercises.reduce((sum, e) => sum + e.sets * e.reps * e.weight, 0);
+  // Each SetLog row represents one set; e.sets is the set number (1, 2, 3…), not a count
+  const totalSets   = exercises.length;
+  const totalReps   = exercises.reduce((sum, e) => sum + e.reps, 0);
+  const totalVolume = exercises.reduce((sum, e) => sum + e.reps * e.weight, 0);
 
   // ── Group exercises ──────────────────────────────────────────────────────────
   const groupedExercises = exercises.reduce((acc, exercise) => {
     const existing = acc.find(e => e.exercise === exercise.exercise);
     if (existing) {
-      existing.totalSets += exercise.sets;
-      existing.volume    += exercise.sets * exercise.reps * exercise.weight;
+      existing.totalSets += 1; // each row = one set
+      existing.volume    += exercise.reps * exercise.weight;
       if (
         exercise.weight > existing.bestWeight ||
         (exercise.weight === existing.bestWeight && exercise.reps > existing.bestReps)
@@ -153,11 +154,11 @@ export function ShareWorkoutDialog({
       const category = presetExercise?.category || exercise.category || 'General';
       acc.push({
         exercise:    exercise.exercise,
-        totalSets:   exercise.sets,
+        totalSets:   1, // first row = one set
         bestReps:    exercise.reps,
         bestWeight:  exercise.weight,
         category,
-        volume:      exercise.sets * exercise.reps * exercise.weight,
+        volume:      exercise.reps * exercise.weight,
         duration:    exercise.duration,
         distance:    exercise.distance,
         distanceUnit: exercise.distanceUnit,

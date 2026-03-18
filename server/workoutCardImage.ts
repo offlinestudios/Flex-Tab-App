@@ -99,8 +99,8 @@ interface CardData {
 }
 
 // ── Layout constants ──────────────────────────────────────────────────────────
-const CHIPS_PER_ROW = 4;
-const CHIP_GAP      = 10;
+const CHIPS_PER_ROW = 3;
+const CHIP_GAP      = 12;
 const H_HEADER      = 88 + 28;   // logo(88) + marginBottom(28)
 const H_STAT_STRIP  = 80;
 const H_STAT_MB     = 20;
@@ -148,13 +148,10 @@ function buildCard(data: CardData) {
 
   const chipH = computeChipH(exercises);
 
-  // Font sizes derived from chip height
-  const chipValueFontSize = Math.round(chipH * 0.42);
-  const chipLabelFontSize = Math.round(chipH * 0.21);
+  // Font sizes derived from chip height — clear hierarchy: numbers bold, units regular
+  const chipValueFontSize = Math.round(chipH * 0.44);
+  const chipLabelFontSize = Math.round(chipH * 0.22);
   const chipUnitFontSize  = Math.round(chipH * 0.22);
-
-  // Fixed chip width so partial rows match full rows
-  const fixedChipW = Math.floor((CONTENT_W - (CHIPS_PER_ROW - 1) * CHIP_GAP) / CHIPS_PER_ROW);
 
   // ── Header ──────────────────────────────────────────────────────────────────
   const avatarEl = userAvatarUrl ? {
@@ -222,6 +219,7 @@ function buildCard(data: CardData) {
       chipRows.push(sets.slice(i, i + CHIPS_PER_ROW));
     }
 
+    const fixedChipW = Math.floor((CONTENT_W - (CHIPS_PER_ROW - 1) * CHIP_GAP) / CHIPS_PER_ROW); // 298px at 3/row
     const chipRowEls = chipRows.map((row, ri) => ({
       type: "div",
       props: {
@@ -249,11 +247,11 @@ function buildCard(data: CardData) {
                   style: { display: "flex", alignItems: "baseline", gap: 4 },
                   children: [
                     { type: "div", props: { style: { fontSize: chipValueFontSize, fontWeight: 800, color: C.textPrimary, display: "flex", lineHeight: 1 }, children: String(s.reps) } },
-                    { type: "div", props: { style: { fontSize: chipUnitFontSize, fontWeight: 600, color: C.textMuted, display: "flex" }, children: " reps" } },
+                    { type: "div", props: { style: { fontSize: chipUnitFontSize, fontWeight: 400, color: C.textMuted, display: "flex" }, children: " reps" } },
                     ...(s.weight > 0 ? [
-                      { type: "div", props: { style: { fontSize: chipUnitFontSize, color: C.textMuted, display: "flex" }, children: " · " } },
+                      { type: "div", props: { style: { fontSize: chipUnitFontSize, fontWeight: 400, color: C.textMuted, display: "flex" }, children: " · " } },
                       { type: "div", props: { style: { fontSize: chipValueFontSize, fontWeight: 800, color: C.textPrimary, display: "flex", lineHeight: 1 }, children: String(s.weight) } },
-                      { type: "div", props: { style: { fontSize: chipUnitFontSize, fontWeight: 600, color: C.textMuted, display: "flex" }, children: " lbs" } },
+                      { type: "div", props: { style: { fontSize: chipUnitFontSize, fontWeight: 400, color: C.textMuted, display: "flex" }, children: " lbs" } },
                     ] : []),
                   ],
                 },

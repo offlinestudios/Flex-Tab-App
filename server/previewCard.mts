@@ -26,8 +26,8 @@ const H_SECTION_LBL = 26 + 16;   // text + marginBottom
 const H_FOOTER      = 1 + 16 + 26 + 14; // border + paddingTop + text + paddingBottom = 57
 const H_EX_HEADER   = 52 + 12;   // badge row + gap below chips
 const H_EX_GAP      = 16;        // gap between exercises
-const CHIPS_PER_ROW = 4;
-const CHIP_GAP      = 10;
+const CHIPS_PER_ROW = 3;
+const CHIP_GAP      = 12;
 
 const H_CHROME = H_HEADER + H_STAT_STRIP + H_STAT_MB + H_DIVIDER + H_SECTION_LBL + H_FOOTER;
 
@@ -116,10 +116,10 @@ function buildCard(data: typeof SAMPLE, isDark: boolean) {
   const iconSrc = isDark ? FLEXTAB_ICON_WHITE_B64 : FLEXTAB_ICON_B64;
   const chipH = computeChipH(data.exercises);
 
-  // Font sizes derived from chip height
-  const chipValueFontSize = Math.round(chipH * 0.42);  // ~39px at chipH=93
-  const chipLabelFontSize = Math.round(chipH * 0.21);  // ~20px at chipH=93
-  const chipUnitFontSize  = Math.round(chipH * 0.22);  // ~20px
+  // Font sizes derived from chip height — clear hierarchy: numbers bold, units regular
+  const chipValueFontSize = Math.round(chipH * 0.44);  // reps/weight number (bold)
+  const chipLabelFontSize = Math.round(chipH * 0.22);  // "Set N" label
+  const chipUnitFontSize  = Math.round(chipH * 0.22);  // "reps" / "lbs" unit
 
   // ── Header ────────────────────────────────────────────────────────────────
   const headerEl = {
@@ -168,8 +168,8 @@ function buildCard(data: typeof SAMPLE, isDark: boolean) {
       chipRows.push(ex.sets.slice(i, i + CHIPS_PER_ROW));
     }
 
+    const fixedChipW = Math.floor((CONTENT_W - (CHIPS_PER_ROW - 1) * CHIP_GAP) / CHIPS_PER_ROW);
     const chipRowEls = chipRows.map((row, ri) => {
-      const fixedChipW = Math.floor((CONTENT_W - (CHIPS_PER_ROW - 1) * CHIP_GAP) / CHIPS_PER_ROW);
       return {
       type: "div", props: {
         style: { display: "flex", flexDirection: "row", gap: CHIP_GAP, marginTop: ri === 0 ? 0 : CHIP_GAP },
@@ -195,11 +195,11 @@ function buildCard(data: typeof SAMPLE, isDark: boolean) {
                 style: { display: "flex", alignItems: "baseline", gap: 4 },
                 children: [
                   { type: "div", props: { style: { fontSize: chipValueFontSize, fontWeight: 800, color: C.textPrimary, display: "flex", lineHeight: 1 }, children: String(s.r) } },
-                  { type: "div", props: { style: { fontSize: chipUnitFontSize, fontWeight: 600, color: C.textMuted, display: "flex" }, children: " reps" } },
+                  { type: "div", props: { style: { fontSize: chipUnitFontSize, fontWeight: 400, color: C.textMuted, display: "flex" }, children: " reps" } },
                   ...(s.w > 0 ? [
-                    { type: "div", props: { style: { fontSize: chipUnitFontSize, color: C.textMuted, display: "flex" }, children: " · " } },
+                    { type: "div", props: { style: { fontSize: chipUnitFontSize, fontWeight: 400, color: C.textMuted, display: "flex" }, children: " · " } },
                     { type: "div", props: { style: { fontSize: chipValueFontSize, fontWeight: 800, color: C.textPrimary, display: "flex", lineHeight: 1 }, children: String(s.w) } },
-                    { type: "div", props: { style: { fontSize: chipUnitFontSize, fontWeight: 600, color: C.textMuted, display: "flex" }, children: " lbs" } },
+                    { type: "div", props: { style: { fontSize: chipUnitFontSize, fontWeight: 400, color: C.textMuted, display: "flex" }, children: " lbs" } },
                   ] : []),
                 ],
               }},
