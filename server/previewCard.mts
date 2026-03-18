@@ -235,7 +235,7 @@ function buildCard(data: typeof SAMPLE, isDark: boolean) {
       type: "div", props: {
         style: { display: "flex", flexDirection: "column", marginTop: ei === 0 ? 0 : H_EX_GAP },
         children: [
-          // ── Exercise header band ───────────────────────────────────────────────────
+          // ── Exercise header — band with 2px accent bottom border ──────────
           { type: "div", props: {
             style: {
               display: "flex", alignItems: "center",
@@ -244,12 +244,12 @@ function buildCard(data: typeof SAMPLE, isDark: boolean) {
               height: 72,
               marginBottom: 12,
               overflow: "hidden",
+              paddingLeft: 20,
+              borderBottom: `2px solid ${C.accentBar}`,
             },
             children: [
-              // Left accent bar
-              { type: "div", props: { style: { width: 6, alignSelf: "stretch", background: C.accentBar, flexShrink: 0, display: "flex" } } },
               // Number badge
-              { type: "div", props: { style: { width: 52, height: 52, borderRadius: 26, background: C.badgeBg, color: C.badgeText, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: 800, flexShrink: 0, marginLeft: 16 }, children: String(ei + 1) } },
+              { type: "div", props: { style: { width: 52, height: 52, borderRadius: 26, background: C.badgeBg, color: C.badgeText, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: 800, flexShrink: 0 }, children: String(ei + 1) } },
               // Exercise name
               { type: "div", props: { style: { flex: 1, fontSize: 40, fontWeight: 800, color: C.textPrimary, display: "flex", marginLeft: 16, letterSpacing: "-0.01em" }, children: ex.name } },
               // Sets badge

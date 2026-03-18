@@ -351,21 +351,16 @@ export function ShareWorkoutDialog({
 
           return (
             <div key={ei}>
-              {/* Exercise header band */}
+              {/* Exercise header — band with 2px accent bottom border */}
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 6,
                 background: C.exHeaderBg,
                 borderRadius: 7,
-                padding: '4px 7px 4px 0',
+                padding: '4px 7px 4px 8px',
                 marginBottom: 4,
                 overflow: 'hidden',
-                position: 'relative',
+                borderBottom: `2px solid ${C.accentBar}`,
               }}>
-                {/* Left accent bar */}
-                <div style={{
-                  width: 3, alignSelf: 'stretch', borderRadius: 2,
-                  background: C.accentBar, flexShrink: 0, marginLeft: 0,
-                }} />
                 {/* Number badge */}
                 <div style={{
                   width: 17, height: 17, borderRadius: 9,
