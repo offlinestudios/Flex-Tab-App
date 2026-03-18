@@ -8,8 +8,6 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { S3Client } from "@aws-sdk/client-s3";
 import { NodeHttpHandler } from "@smithy/node-http-handler";
 import https from "https";
-import crypto from "crypto";
-import tls from "tls";
 import { randomUUID } from "crypto";
 
 function getR2Client() {
@@ -19,23 +17,15 @@ function getR2Client() {
   if (!accountId || !accessKeyId || !secretAccessKey) {
     throw new Error("R2 credentials missing");
   }
-  const r2Hostname = `${accountId}.r2.cloudflarestorage.com`;
-  // Force TLS 1.2+ and disable session reuse to prevent SSL alert 40 in Railway/Docker
-  const r2HttpsAgent = new https.Agent({
-    keepAlive: false,
-    servername: r2Hostname,
-    minVersion: "TLSv1.2" as tls.SecureVersion,
-    sessionTimeout: 0,
-    secureOptions:
-      crypto.constants.SSL_OP_NO_TLSv1 |
-      crypto.constants.SSL_OP_NO_TLSv1_1 |
-      crypto.constants.SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION,
-  });
+  // Virtual-hosted style: bucket in hostname — required by Cloudflare R2
+  // Path-style causes SSL alert 40 because R2 uses SNI to route by bucket
+  const r2Endpoint = `https://${accountId}.r2.cloudflarestorage.com`;
+  const r2HttpsAgent = new https.Agent({ keepAlive: false });
   return new S3Client({
     region: "auto",
-    endpoint: `https://${r2Hostname}`,
+    endpoint: r2Endpoint,
     credentials: { accessKeyId, secretAccessKey },
-    forcePathStyle: true,
+    forcePathStyle: false,
     requestHandler: new NodeHttpHandler({ httpsAgent: r2HttpsAgent }),
     requestChecksumCalculation: 'WHEN_REQUIRED' as any,
     responseChecksumValidation: 'WHEN_REQUIRED' as any,

@@ -2,17 +2,19 @@
  * r2Upload.ts
  *
  * Uploads a buffer to Cloudflare R2 using a raw Node.js HTTPS PUT request
- * signed with AWS Signature Version 4. This completely bypasses the AWS SDK's
- * connection pooling and TLS handling, which causes SSL alert 40 (handshake
- * failure) in Railway/Docker containers.
+ * signed with AWS Signature Version 4.
  *
- * Uses @smithy/signature-v4 (already a transitive dep of @aws-sdk/client-s3)
- * and @smithy/hash-node for SHA-256 hashing.
+ * IMPORTANT: Cloudflare R2 requires VIRTUAL-HOSTED style URLs:
+ *   https://{bucket}.{accountId}.r2.cloudflarestorage.com/{key}
+ *
+ * Path-style (/{bucket}/{key} on the bare account hostname) causes an SSL
+ * alert 40 (handshake_failure) because Cloudflare's TLS layer uses SNI to
+ * route the connection — if the bucket is not in the hostname, the server
+ * rejects the connection after the ClientHello write.
  */
 
 import https from "https";
 import crypto from "crypto";
-import tls from "tls";
 
 // ---------------------------------------------------------------------------
 // Manual AWS Signature V4 implementation using Node crypto (no SDK deps)
@@ -27,15 +29,16 @@ function sha256Hex(data: Buffer | string): string {
 }
 
 function getSigningKey(secretKey: string, dateStamp: string, region: string, service: string): Buffer {
-  const kDate = hmac("AWS4" + secretKey, dateStamp);
-  const kRegion = hmac(kDate, region);
-  const kService = hmac(kRegion, service);
+  const kDate    = hmac("AWS4" + secretKey, dateStamp);
+  const kRegion  = hmac(kDate,    region);
+  const kService = hmac(kRegion,  service);
   const kSigning = hmac(kService, "aws4_request");
   return kSigning;
 }
 
 /**
  * Upload a buffer to Cloudflare R2 using a raw signed HTTPS PUT.
+ * Uses virtual-hosted style: https://{bucket}.{accountId}.r2.cloudflarestorage.com/{key}
  */
 export async function r2PutObject(params: {
   accountId: string;
@@ -48,19 +51,21 @@ export async function r2PutObject(params: {
 }): Promise<void> {
   const { accountId, accessKeyId, secretAccessKey, bucket, key, body, contentType } = params;
 
-  const region = "auto";
+  const region  = "auto";
   const service = "s3";
-  const host = `${accountId}.r2.cloudflarestorage.com`;
-  // forcePathStyle: bucket/key as path
-  const path = `/${bucket}/${key}`;
 
-  const now = new Date();
-  const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, "").slice(0, 15) + "Z"; // 20240101T120000Z
-  const dateStamp = amzDate.slice(0, 8); // 20240101
+  // Virtual-hosted style: bucket is part of the hostname
+  // This is required by Cloudflare R2 — path-style causes SSL alert 40
+  const host = `${bucket}.${accountId}.r2.cloudflarestorage.com`;
+  const path = `/${key}`;
+
+  const now       = new Date();
+  const amzDate   = now.toISOString().replace(/[:-]|\.\d{3}/g, "").slice(0, 15) + "Z";
+  const dateStamp = amzDate.slice(0, 8);
 
   const payloadHash = sha256Hex(body);
 
-  // Build canonical headers (must be sorted)
+  // Canonical headers must be sorted alphabetically by header name
   const canonicalHeaders =
     `content-type:${contentType}\n` +
     `host:${host}\n` +
@@ -72,7 +77,7 @@ export async function r2PutObject(params: {
   const canonicalRequest = [
     "PUT",
     path,
-    "", // query string
+    "", // no query string
     canonicalHeaders,
     signedHeaders,
     payloadHash,
@@ -86,28 +91,13 @@ export async function r2PutObject(params: {
     sha256Hex(Buffer.from(canonicalRequest)),
   ].join("\n");
 
-  const signingKey = getSigningKey(secretAccessKey, dateStamp, region, service);
-  const signature = hmac(signingKey, stringToSign).toString("hex");
+  const signingKey  = getSigningKey(secretAccessKey, dateStamp, region, service);
+  const signature   = hmac(signingKey, stringToSign).toString("hex");
 
   const authorizationHeader =
     `AWS4-HMAC-SHA256 Credential=${accessKeyId}/${credentialScope}, ` +
     `SignedHeaders=${signedHeaders}, ` +
     `Signature=${signature}`;
-
-  // Execute raw HTTPS PUT — fresh connection, explicit SNI, forced TLS 1.2+
-  // SSL alert 40 (handshake_failure) in Railway/Docker is caused by OpenSSL
-  // defaulting to TLS 1.3 session tickets that R2 rejects. Forcing TLS 1.2
-  // minimum and disabling session reuse resolves it.
-  const tlsAgent = new https.Agent({
-    keepAlive: false,
-    servername: host,
-    minVersion: "TLSv1.2" as tls.SecureVersion,
-    sessionTimeout: 0,
-    secureOptions:
-      crypto.constants.SSL_OP_NO_TLSv1 |
-      crypto.constants.SSL_OP_NO_TLSv1_1 |
-      crypto.constants.SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION,
-  });
 
   await new Promise<void>((resolve, reject) => {
     const req = https.request(
@@ -116,17 +106,17 @@ export async function r2PutObject(params: {
         path,
         method: "PUT",
         headers: {
-          "Content-Type": contentType,
-          "Content-Length": body.length,
-          "x-amz-date": amzDate,
-          "x-amz-content-sha256": payloadHash,
-          Authorization: authorizationHeader,
+          "Content-Type":          contentType,
+          "Content-Length":        body.length,
+          "x-amz-date":            amzDate,
+          "x-amz-content-sha256":  payloadHash,
+          Authorization:           authorizationHeader,
         },
+        // Explicit SNI matches the virtual-hosted hostname
         servername: host,
-        agent: tlsAgent,
+        agent: new https.Agent({ keepAlive: false }),
       },
       (res) => {
-        // Drain the response body
         const chunks: Buffer[] = [];
         res.on("data", (c: Buffer) => chunks.push(c));
         res.on("end", () => {
