@@ -34,11 +34,12 @@ const SUMMARY_FIXED = H_HEADER + H_TILES + H_DIVIDER + H_SECTION_LBL + H_FOOTER;
 const DETAIL_FIXED  = H_HEADER + H_DIVIDER + H_SECTION_LBL + H_FOOTER; // 245
 
 // Per-exercise fixed cost: badge row + paddingTop + paddingBottom + border
-const EX_FIXED = 56 + 10 + 10 + 1; // 77
+const EX_FIXED = 62 + 8 + 8 + 1; // 79 (badge 62px + 8+8 padding + 1 border)
 
-// Per-set cost at a given rowHeight: rowHeight + marginTop (4 or 8 for first)
+// Per-set cost at a given rowHeight using 2-column grid (pairs of sets per row)
 function setsCost(numSets: number, rowH: number): number {
-  return rowH * numSets + 8 + 4 * Math.max(0, numSets - 1);
+  const gridRows = Math.ceil(numSets / 2);
+  return rowH * gridRows + 10 + 6 * Math.max(0, gridRows - 1);
 }
 
 // Total cost of one exercise with N sets at rowH
@@ -48,11 +49,11 @@ function exCost(numSets: number, rowH: number): number {
 
 /**
  * Given a list of exercises and available vertical pixels, compute the
- * largest integer setRowH (capped at 48, min 32) that fits all exercises.
+ * largest integer setRowH (capped at 80, min 32) that fits all exercises.
  * Returns null if even rowH=32 overflows (caller should split to 3 pages).
  */
 function computeAdaptiveRowH(exercises: typeof ALL_EXERCISES, availPx: number): number | null {
-  for (let rowH = 48; rowH >= 32; rowH -= 2) {
+  for (let rowH = 80; rowH >= 32; rowH -= 2) {
     const total = exercises.reduce((sum, ex) => sum + exCost(ex.sets.length, rowH), 0);
     if (total <= availPx) return rowH;
   }
@@ -62,34 +63,38 @@ function computeAdaptiveRowH(exercises: typeof ALL_EXERCISES, availPx: number): 
 // ── Themes ────────────────────────────────────────────────────────────────────
 const THEMES = {
   light: {
-    bg:          "linear-gradient(160deg, #e8edf6 0%, #dce4f0 40%, #cdd8ec 100%)",
-    tileBg:      "rgba(255,255,255,0.80)",
-    divider:     "rgba(15,23,42,0.10)",
-    textPrimary: "#0f172a",
-    textMuted:   "#64748b",
-    textFooter:  "#94a3b8",
-    badgeBg:     "#0f172a",
-    badgeText:   "#ffffff",
-    pillBg:      "rgba(15,23,42,0.07)",
-    pillText:    "#334155",
-    setRowBg:    "rgba(15,23,42,0.04)",
-    dotActive:   "#0f172a",
-    dotInactive: "rgba(15,23,42,0.20)",
+    bg:           "linear-gradient(160deg, #e8edf6 0%, #dce4f0 40%, #cdd8ec 100%)",
+    tileBg:       "rgba(255,255,255,0.80)",
+    divider:      "rgba(15,23,42,0.10)",
+    textPrimary:  "#0f172a",
+    textMuted:    "#64748b",
+    textFooter:   "#94a3b8",
+    badgeBg:      "#0f172a",
+    badgeText:    "#ffffff",
+    pillBg:       "rgba(15,23,42,0.07)",
+    pillText:     "#334155",
+    setRowBg:     "rgba(255,255,255,0.55)",  // off-white tile
+    setNumColor:  "#1e3a5f",                 // dark blue for "Set 1" labels
+    setNumWeight: 800,
+    dotActive:    "#0f172a",
+    dotInactive:  "rgba(15,23,42,0.20)",
   },
   dark: {
-    bg:          "linear-gradient(160deg, #0a0f1e 0%, #0d1526 50%, #060b16 100%)",
-    tileBg:      "rgba(255,255,255,0.06)",
-    divider:     "rgba(255,255,255,0.08)",
-    textPrimary: "#f1f5f9",
-    textMuted:   "#64748b",
-    textFooter:  "#334155",
-    badgeBg:     "rgba(255,255,255,0.12)",
-    badgeText:   "#f1f5f9",
-    pillBg:      "rgba(255,255,255,0.07)",
-    pillText:    "#94a3b8",
-    setRowBg:    "rgba(255,255,255,0.03)",
-    dotActive:   "#f1f5f9",
-    dotInactive: "rgba(255,255,255,0.20)",
+    bg:           "linear-gradient(160deg, #0a0f1e 0%, #0d1526 50%, #060b16 100%)",
+    tileBg:       "rgba(255,255,255,0.06)",
+    divider:      "rgba(255,255,255,0.08)",
+    textPrimary:  "#f1f5f9",
+    textMuted:    "#64748b",
+    textFooter:   "#334155",
+    badgeBg:      "rgba(255,255,255,0.12)",
+    badgeText:    "#f1f5f9",
+    pillBg:       "rgba(255,255,255,0.07)",
+    pillText:     "#94a3b8",
+    setRowBg:     "rgba(255,255,255,0.03)",
+    setNumColor:  "#64748b",                 // muted grey for dark theme
+    setNumWeight: 700,
+    dotActive:    "#f1f5f9",
+    dotInactive:  "rgba(255,255,255,0.20)",
   },
 } as const;
 
@@ -186,8 +191,8 @@ function makeHeader(C: any, isDark: boolean, date: string) {
           props: {
             style: { display: "flex", flexDirection: "column", gap: 6, flex: 1 },
             children: [
-              { type: "div", props: { style: { fontSize: 44, fontWeight: 800, color: C.textPrimary, display: "flex" }, children: "FlexTab" } },
-              { type: "div", props: { style: { fontSize: 28, color: C.textMuted, display: "flex" }, children: date } },
+              { type: "div", props: { style: { fontSize: 48, fontWeight: 800, color: C.textPrimary, display: "flex" }, children: "FlexTab" } },
+              { type: "div", props: { style: { fontSize: 30, color: C.textMuted, display: "flex" }, children: date } },
             ],
           },
         },
@@ -231,51 +236,67 @@ function makeSectionLabel(C: any, text: string) {
   };
 }
 
-function makeExerciseRow(C: any, ex: any, globalIndex: number, isLast: boolean, maxSets: number | null, rowH: number = 48) {
+function makeExerciseRow(C: any, ex: any, globalIndex: number, isLast: boolean, maxSets: number | null, rowH: number = 64) {
   const visibleSets: any[] = ex.sets ? (maxSets !== null ? ex.sets.slice(0, maxSets) : ex.sets) : [];
   const hiddenCount = ex.sets ? ex.sets.length - visibleSets.length : 0;
 
   // Compute font sizes that scale with rowH
-  const repsFontSize   = Math.round(rowH * 0.65);  // 31 at rowH=48, 21 at rowH=32
-  const labelFontSize  = Math.round(rowH * 0.50);  // 24 at rowH=48, 16 at rowH=32
-  const setNumFontSize = Math.round(rowH * 0.50);
+  const repsFontSize   = Math.round(rowH * 0.55);
+  const labelFontSize  = Math.round(rowH * 0.38);
+  const setNumFontSize = Math.round(rowH * 0.38);
   const padV           = Math.round((rowH - repsFontSize) / 2);
 
-  const setChildren = visibleSets.map((s: any, si: number) => ({
-    type: "div",
-    props: {
-      style: {
-        display: "flex", alignItems: "center", gap: 16,
-        paddingTop: padV, paddingBottom: padV,
-        paddingLeft: 14, paddingRight: 14,
-        background: C.setRowBg, borderRadius: 12,
-        marginTop: si === 0 ? 8 : 4,
-      },
-      children: [
-        { type: "div", props: { style: { fontSize: setNumFontSize, fontWeight: 700, color: C.textMuted, width: 90, display: "flex" }, children: `Set ${s.setNumber}` } },
-        {
-          type: "div",
-          props: {
-            style: { flex: 1, display: "flex", alignItems: "center", gap: 8 },
-            children: [
-              { type: "div", props: { style: { fontSize: repsFontSize, fontWeight: 800, color: C.textPrimary, display: "flex" }, children: String(s.reps) } },
-              { type: "div", props: { style: { fontSize: labelFontSize, fontWeight: 600, color: C.textMuted, display: "flex" }, children: "reps" } },
-            ],
-          },
+  // Build one set cell (used in the 2-column grid)
+  function makeSetCell(s: any) {
+    return {
+      type: "div",
+      props: {
+        style: {
+          flex: 1, display: "flex", flexDirection: "column",
+          paddingTop: padV, paddingBottom: padV,
+          paddingLeft: 16, paddingRight: 16,
+          background: C.setRowBg, borderRadius: 14,
+          gap: 4,
         },
-        ...(s.weight > 0 ? [{
-          type: "div",
-          props: {
-            style: { display: "flex", alignItems: "center", gap: 8 },
-            children: [
-              { type: "div", props: { style: { fontSize: repsFontSize, fontWeight: 800, color: C.textPrimary, display: "flex" }, children: String(s.weight) } },
-              { type: "div", props: { style: { fontSize: labelFontSize, fontWeight: 600, color: C.textMuted, display: "flex" }, children: "lbs" } },
-            ],
+        children: [
+          // Set number label
+          { type: "div", props: { style: { fontSize: setNumFontSize, fontWeight: C.setNumWeight, color: C.setNumColor, display: "flex" }, children: `Set ${s.setNumber}` } },
+          // Reps + weight on same line
+          {
+            type: "div",
+            props: {
+              style: { display: "flex", alignItems: "baseline", gap: 8, flexWrap: "nowrap" },
+              children: [
+                { type: "div", props: { style: { fontSize: repsFontSize, fontWeight: 800, color: C.textPrimary, display: "flex" }, children: String(s.reps) } },
+                { type: "div", props: { style: { fontSize: labelFontSize, fontWeight: 600, color: C.textMuted, display: "flex" }, children: "reps" } },
+                ...(s.weight > 0 ? [
+                  { type: "div", props: { style: { fontSize: labelFontSize, fontWeight: 400, color: C.textMuted, display: "flex" }, children: "·" } },
+                  { type: "div", props: { style: { fontSize: repsFontSize, fontWeight: 800, color: C.textPrimary, display: "flex" }, children: String(s.weight) } },
+                  { type: "div", props: { style: { fontSize: labelFontSize, fontWeight: 600, color: C.textMuted, display: "flex" }, children: "lbs" } },
+                ] : []),
+              ],
+            },
           },
-        }] : []),
-      ],
-    },
-  }));
+        ],
+      },
+    };
+  }
+
+  // Group sets into pairs for the 2-column grid
+  const setRows: any[] = [];
+  for (let i = 0; i < visibleSets.length; i += 2) {
+    const left  = visibleSets[i];
+    const right = visibleSets[i + 1];
+    setRows.push({
+      type: "div",
+      props: {
+        style: { display: "flex", flexDirection: "row", gap: 10, marginTop: i === 0 ? 10 : 6 },
+        children: right
+          ? [makeSetCell(left), makeSetCell(right)]
+          : [makeSetCell(left), { type: "div", props: { style: { flex: 1, display: "flex" } } }],
+      },
+    });
+  }
 
   const moreHint = hiddenCount > 0 ? {
     type: "div",
@@ -290,7 +311,7 @@ function makeExerciseRow(C: any, ex: any, globalIndex: number, isLast: boolean, 
     props: {
       style: {
         display: "flex", flexDirection: "column",
-        paddingTop: 10, paddingBottom: 10,
+        paddingTop: 8, paddingBottom: 8,
         borderBottom: isLast ? "none" : `1px solid ${C.divider}`,
       },
       children: [
@@ -299,19 +320,19 @@ function makeExerciseRow(C: any, ex: any, globalIndex: number, isLast: boolean, 
           props: {
             style: { display: "flex", alignItems: "center", gap: 24 },
             children: [
-              { type: "div", props: { style: { width: 56, height: 56, borderRadius: 28, background: C.badgeBg, color: C.badgeText, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, fontWeight: 800, flexShrink: 0 }, children: String(globalIndex + 1) } },
-              { type: "div", props: { style: { flex: 1, fontSize: 40, fontWeight: 800, color: C.textPrimary, display: "flex", alignItems: "center" }, children: truncate(ex.exercise, 30) } },
+              { type: "div", props: { style: { width: 62, height: 62, borderRadius: 31, background: C.badgeBg, color: C.badgeText, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 800, flexShrink: 0 }, children: String(globalIndex + 1) } },
+              { type: "div", props: { style: { flex: 1, fontSize: 44, fontWeight: 800, color: C.textPrimary, display: "flex", alignItems: "center" }, children: truncate(ex.exercise, 28) } },
               {
                 type: "div",
                 props: {
-                  style: { background: C.pillBg, borderRadius: 50, paddingTop: 10, paddingBottom: 10, paddingLeft: 24, paddingRight: 24, flexShrink: 0, display: "flex", alignItems: "center" },
-                  children: { type: "div", props: { style: { fontSize: 26, fontWeight: 700, color: C.pillText, whiteSpace: "nowrap", display: "flex" }, children: `${ex.totalSets} set${ex.totalSets !== 1 ? "s" : ""}` } },
+                  style: { background: C.pillBg, borderRadius: 50, paddingTop: 12, paddingBottom: 12, paddingLeft: 28, paddingRight: 28, flexShrink: 0, display: "flex", alignItems: "center" },
+                  children: { type: "div", props: { style: { fontSize: 28, fontWeight: 700, color: C.pillText, whiteSpace: "nowrap", display: "flex" }, children: `${ex.totalSets} set${ex.totalSets !== 1 ? "s" : ""}` } },
                 },
               },
             ],
           },
         },
-        ...setChildren,
+        ...setRows,
         ...(moreHint ? [moreHint] : []),
       ],
     },
@@ -336,10 +357,10 @@ function buildSummaryPage(C: any, isDark: boolean, exercises: typeof ALL_EXERCIS
   const makeTile = ({ value, label }: any) => ({
     type: "div",
     props: {
-      style: { background: C.tileBg, borderRadius: 24, paddingTop: 18, paddingBottom: 14, paddingLeft: 16, paddingRight: 16, flex: 1, display: "flex", flexDirection: "column", alignItems: "center" },
+      style: { background: C.tileBg, borderRadius: 24, paddingTop: 22, paddingBottom: 18, paddingLeft: 16, paddingRight: 16, flex: 1, display: "flex", flexDirection: "column", alignItems: "center" },
       children: [
-        { type: "div", props: { style: { fontSize: 58, fontWeight: 800, color: C.textPrimary, lineHeight: 1, display: "flex" }, children: value } },
-        { type: "div", props: { style: { fontSize: 20, fontWeight: 700, color: C.textMuted, marginTop: 8, textTransform: "uppercase", letterSpacing: "0.12em", display: "flex" }, children: label } },
+        { type: "div", props: { style: { fontSize: 66, fontWeight: 800, color: C.textPrimary, lineHeight: 1, display: "flex" }, children: value } },
+        { type: "div", props: { style: { fontSize: 22, fontWeight: 700, color: C.textMuted, marginTop: 10, textTransform: "uppercase", letterSpacing: "0.12em", display: "flex" }, children: label } },
       ],
     },
   });

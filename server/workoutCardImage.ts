@@ -45,6 +45,8 @@ const THEMES = {
     pillBg:      "rgba(15,23,42,0.07)",
     pillText:    "#334155",
     setRowBg:    "rgba(15,23,42,0.04)",
+    setNumColor: "#1e3a5f",
+    setNumWeight: 700,
     dotActive:   "#0f172a",
     dotInactive: "rgba(15,23,42,0.20)",
   },
@@ -60,6 +62,8 @@ const THEMES = {
     pillBg:      "rgba(255,255,255,0.07)",
     pillText:    "#94a3b8",
     setRowBg:    "rgba(255,255,255,0.03)",
+    setNumColor: "#94a3b8",
+    setNumWeight: 600,
     dotActive:   "#f1f5f9",
     dotInactive: "rgba(255,255,255,0.20)",
   },
@@ -114,11 +118,12 @@ const H_FOOTER      = 20 + 10 + 26 + 14;
 const DETAIL_FIXED  = H_HEADER + H_DIVIDER + H_SECTION_LBL + H_FOOTER; // 245px
 
 // Per-exercise fixed cost (badge row + padding + border)
-const EX_FIXED = 56 + 10 + 10 + 1; // 77px
+const EX_FIXED = 62 + 8 + 8 + 1; // 79px
 
-/** Total px cost of N sets at a given row height */
+/** Total px cost of N sets at a given row height using 2-column grid */
 function setsCost(numSets: number, rowH: number): number {
-  return rowH * numSets + 8 + 4 * Math.max(0, numSets - 1);
+  const gridRows = Math.ceil(numSets / 2);
+  return rowH * gridRows + 10 + 6 * Math.max(0, gridRows - 1);
 }
 
 /** Total px cost of one exercise with N sets at rowH */
@@ -127,11 +132,11 @@ function exCost(numSets: number, rowH: number): number {
 }
 
 /**
- * Find the largest rowH (48→32, step 2) that fits all exercises in availPx.
+ * Find the largest rowH (80→32, step 2) that fits all exercises in availPx.
  * Returns null if even rowH=32 overflows.
  */
 function computeAdaptiveRowH(exercises: ExerciseRow[], availPx: number): number | null {
-  for (let rowH = 48; rowH >= 32; rowH -= 2) {
+  for (let rowH = 80; rowH >= 32; rowH -= 2) {
     const total = exercises.reduce((sum, ex) => sum + exCost(ex.sets?.length ?? 0, rowH), 0);
     if (total <= availPx) return rowH;
   }
@@ -225,56 +230,71 @@ function makeSectionLabel(C: typeof THEMES["light"], text: string) {
 }
 
 function makeExerciseRow(
-  C: typeof THEMES["light"],
+  C: typeof THEMES["light"] & { setNumColor: string; setNumWeight: number },
   ex: ExerciseRow,
   index: number,
   isLast: boolean,
   maxSets: number | null,   // null = show all sets
-  rowH: number = 48,        // adaptive set row height
+  rowH: number = 64,        // adaptive set row height
 ) {
   const visibleSets = ex.sets ? (maxSets !== null ? ex.sets.slice(0, maxSets) : ex.sets) : [];
   const hiddenCount = ex.sets ? ex.sets.length - visibleSets.length : 0;
 
   // Scale font sizes with rowH
-  const repsFontSize  = Math.round(rowH * 0.65);
-  const labelFontSize = Math.round(rowH * 0.50);
-  const padV          = Math.round((rowH - repsFontSize) / 2);
+  const repsFontSize   = Math.round(rowH * 0.55);
+  const labelFontSize  = Math.round(rowH * 0.38);
+  const setNumFontSize = Math.round(rowH * 0.38);
+  const padV           = Math.round((rowH - repsFontSize) / 2);
 
-  const setChildren: any[] = visibleSets.map((s, si) => ({
-    type: "div",
-    props: {
-      style: {
-        display: "flex", alignItems: "center", gap: 16,
-        paddingTop: padV, paddingBottom: padV,
-        paddingLeft: 14, paddingRight: 14,
-        background: C.setRowBg, borderRadius: 12,
-        marginTop: si === 0 ? 8 : 4,
-      },
-      children: [
-        { type: "div", props: { style: { fontSize: labelFontSize, fontWeight: 700, color: C.textMuted, width: 90, display: "flex" }, children: `Set ${s.setNumber}` } },
-        {
-          type: "div",
-          props: {
-            style: { flex: 1, display: "flex", alignItems: "center", gap: 8 },
-            children: [
-              { type: "div", props: { style: { fontSize: repsFontSize, fontWeight: 800, color: C.textPrimary, display: "flex" }, children: String(s.reps) } },
-              { type: "div", props: { style: { fontSize: labelFontSize, fontWeight: 600, color: C.textMuted, display: "flex" }, children: "reps" } },
-            ],
-          },
+  // Build one set cell for the 2-column grid
+  function makeSetCell(s: SetDetail) {
+    return {
+      type: "div",
+      props: {
+        style: {
+          flex: 1, display: "flex", flexDirection: "column",
+          paddingTop: padV, paddingBottom: padV,
+          paddingLeft: 16, paddingRight: 16,
+          background: C.setRowBg, borderRadius: 14,
+          gap: 4,
         },
-        ...(s.weight > 0 ? [{
-          type: "div",
-          props: {
-            style: { display: "flex", alignItems: "center", gap: 8 },
-            children: [
-              { type: "div", props: { style: { fontSize: repsFontSize, fontWeight: 800, color: C.textPrimary, display: "flex" }, children: String(s.weight) } },
-              { type: "div", props: { style: { fontSize: labelFontSize, fontWeight: 600, color: C.textMuted, display: "flex" }, children: "lbs" } },
-            ],
+        children: [
+          { type: "div", props: { style: { fontSize: setNumFontSize, fontWeight: C.setNumWeight, color: C.setNumColor, display: "flex" }, children: `Set ${s.setNumber}` } },
+          {
+            type: "div",
+            props: {
+              style: { display: "flex", alignItems: "baseline", gap: 8, flexWrap: "nowrap" as const },
+              children: [
+                { type: "div", props: { style: { fontSize: repsFontSize, fontWeight: 800, color: C.textPrimary, display: "flex" }, children: String(s.reps) } },
+                { type: "div", props: { style: { fontSize: labelFontSize, fontWeight: 600, color: C.textMuted, display: "flex" }, children: "reps" } },
+                ...(s.weight > 0 ? [
+                  { type: "div", props: { style: { fontSize: labelFontSize, fontWeight: 400, color: C.textMuted, display: "flex" }, children: "·" } },
+                  { type: "div", props: { style: { fontSize: repsFontSize, fontWeight: 800, color: C.textPrimary, display: "flex" }, children: String(s.weight) } },
+                  { type: "div", props: { style: { fontSize: labelFontSize, fontWeight: 600, color: C.textMuted, display: "flex" }, children: "lbs" } },
+                ] : []),
+              ],
+            },
           },
-        }] : []),
-      ],
-    },
-  }));
+        ],
+      },
+    };
+  }
+
+  // Group sets into pairs for the 2-column grid
+  const setRows: any[] = [];
+  for (let i = 0; i < visibleSets.length; i += 2) {
+    const left  = visibleSets[i];
+    const right = visibleSets[i + 1];
+    setRows.push({
+      type: "div",
+      props: {
+        style: { display: "flex", flexDirection: "row", gap: 10, marginTop: i === 0 ? 10 : 6 },
+        children: right
+          ? [makeSetCell(left), makeSetCell(right)]
+          : [makeSetCell(left), { type: "div", props: { style: { flex: 1, display: "flex" } } }],
+      },
+    });
+  }
 
   // "+N more sets" hint
   const moreHint = hiddenCount > 0 ? {
@@ -290,7 +310,7 @@ function makeExerciseRow(
     props: {
       style: {
         display: "flex", flexDirection: "column",
-        paddingTop: 10, paddingBottom: 10,
+        paddingTop: 8, paddingBottom: 8,
         borderBottom: isLast ? "none" : `1px solid ${C.divider}`,
       },
       children: [
@@ -311,7 +331,7 @@ function makeExerciseRow(
             ],
           },
         },
-        ...setChildren,
+        ...setRows,
         ...(moreHint ? [moreHint] : []),
       ],
     },
