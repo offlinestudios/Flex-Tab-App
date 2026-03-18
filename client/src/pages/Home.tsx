@@ -1022,8 +1022,22 @@ export default function Home() {
             {/* Exercise Cards — swipe left/right to navigate between exercises */}
             {selectedExercises.length > 0 && (
               <div
-                onTouchStart={(e) => { setTouchEnd(null); setTouchStart(e.targetTouches[0].clientX); }}
-                onTouchMove={(e) => setTouchEnd(e.targetTouches[0].clientX)}
+                onTouchStart={(e) => {
+                  // Ignore touches that start on interactive elements (sliders, buttons, inputs)
+                  // so that dragging the weight slider is never misread as a card-swipe.
+                  const tag = (e.target as HTMLElement).tagName.toLowerCase();
+                  if (tag === 'input' || tag === 'button' || tag === 'select' || tag === 'textarea') {
+                    setTouchStart(null);
+                    setTouchEnd(null);
+                    return;
+                  }
+                  setTouchEnd(null);
+                  setTouchStart(e.targetTouches[0].clientX);
+                }}
+                onTouchMove={(e) => {
+                  if (touchStart === null) return; // started on an interactive element — ignore
+                  setTouchEnd(e.targetTouches[0].clientX);
+                }}
                 onTouchEnd={() => {
                   if (!touchStart || !touchEnd) return;
                   const dist = touchStart - touchEnd;
