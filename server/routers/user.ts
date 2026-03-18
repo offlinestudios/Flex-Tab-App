@@ -79,4 +79,14 @@ export const userRouter = router({
         .where(eq(users.id, ctx.user.id));
       return { avatarUrl };
     }),
+
+  removeAvatar: protectedProcedure.mutation(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new Error("Database not available");
+    await db
+      .update(users)
+      .set({ avatarUrl: null })
+      .where(eq(users.id, ctx.user.id));
+    return { success: true };
+  }),
 });

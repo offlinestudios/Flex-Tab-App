@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import { formatDateFull } from "@/lib/dateUtils";
 import { useTheme } from "@/contexts/ThemeContext";
 import { trpc } from "@/lib/trpc";
@@ -12,6 +12,193 @@ interface ProfileTabProps {
   workoutSessions: Array<{ date: string; exercises: Array<{ exercise: string; sets: number; reps: number; weight: number }> }>;
   measurements?: any[];
   prMap?: Record<string, { weight: number; reps: number; date: string }>;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Avatar Crop Modal — canvas-based, no external dependency
+───────────────────────────────────────────────────────────────── */
+interface AvatarCropModalProps {
+  src: string;
+  onConfirm: (blob: Blob) => void;
+  onCancel: () => void;
+}
+
+function AvatarCropModal({ src, onConfirm, onCancel }: AvatarCropModalProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
+  // offset = how much the image is shifted relative to the crop circle centre
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [scale, setScale] = useState(1);
+  const dragStart = useRef<{ mx: number; my: number; ox: number; oy: number } | null>(null);
+
+  const CROP_SIZE = 240; // px — the visible circle diameter
+
+  const drawCanvas = useCallback(() => {
+    const canvas = canvasRef.current;
+    const img = imgRef.current;
+    if (!canvas || !img) return;
+    const ctx = canvas.getContext('2d')!;
+    const S = CROP_SIZE;
+    canvas.width = S;
+    canvas.height = S;
+
+    // Natural image dimensions
+    const iw = img.naturalWidth;
+    const ih = img.naturalHeight;
+    // Base scale so the shorter side fills the crop circle
+    const baseScale = S / Math.min(iw, ih);
+    const totalScale = baseScale * scale;
+    const dw = iw * totalScale;
+    const dh = ih * totalScale;
+    const dx = (S - dw) / 2 + offset.x;
+    const dy = (S - dh) / 2 + offset.y;
+
+    ctx.clearRect(0, 0, S, S);
+    // Clip to circle
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(S / 2, S / 2, S / 2, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.drawImage(img, dx, dy, dw, dh);
+    ctx.restore();
+  }, [offset, scale]);
+
+  // Redraw whenever offset/scale changes
+  React.useEffect(() => { drawCanvas(); }, [drawCanvas]);
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    dragStart.current = { mx: e.clientX, my: e.clientY, ox: offset.x, oy: offset.y };
+  };
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!dragStart.current) return;
+    const dx = e.clientX - dragStart.current.mx;
+    const dy = e.clientY - dragStart.current.my;
+    setOffset({ x: dragStart.current.ox + dx, y: dragStart.current.oy + dy });
+  };
+  const handlePointerUp = () => { dragStart.current = null; };
+
+  const handleConfirm = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    canvas.toBlob(blob => { if (blob) onConfirm(blob); }, 'image/jpeg', 0.92);
+  };
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 300, backdropFilter: 'blur(4px)' }} />
+      {/* Modal */}
+      <div style={{
+        position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
+        width: 'calc(100% - 40px)', maxWidth: 360,
+        background: 'var(--card)', borderRadius: 24, padding: '24px 20px 20px',
+        zIndex: 301, boxShadow: '0 8px 48px rgba(0,0,0,0.4)',
+      }}>
+        <h3 style={{ fontSize: 17, fontWeight: 800, color: 'var(--foreground)', margin: '0 0 6px', textAlign: 'center' }}>Adjust Photo</h3>
+        <p style={{ fontSize: 12, color: '#9ca3af', textAlign: 'center', margin: '0 0 16px' }}>Drag to reposition · Pinch or slide to zoom</p>
+
+        {/* Hidden img used for drawing */}
+        <img ref={imgRef} src={src} onLoad={drawCanvas} style={{ display: 'none' }} alt="" />
+
+        {/* Canvas crop area */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+          <canvas
+            ref={canvasRef}
+            width={CROP_SIZE}
+            height={CROP_SIZE}
+            style={{ borderRadius: '50%', cursor: 'grab', touchAction: 'none', border: '3px solid var(--border)' }}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+          />
+        </div>
+
+        {/* Zoom slider */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+          <input
+            type="range" min={0.5} max={3} step={0.01} value={scale}
+            onChange={e => setScale(Number(e.target.value))}
+            style={{ flex: 1, accentColor: 'var(--foreground)' }}
+          />
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/><line x1="11" y1="8" x2="11" y2="14"/></svg>
+        </div>
+
+        {/* Actions */}
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button
+            onClick={onCancel}
+            style={{ flex: 1, padding: 12, background: 'var(--secondary)', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 600, color: '#6b7280', cursor: 'pointer' }}
+          >Cancel</button>
+          <button
+            onClick={handleConfirm}
+            style={{ flex: 2, padding: 12, background: 'var(--foreground)', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 700, color: 'var(--background)', cursor: 'pointer' }}
+          >Use Photo</button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Avatar Action Sheet — shown when user taps existing photo
+───────────────────────────────────────────────────────────────── */
+interface AvatarActionSheetProps {
+  onChangePhoto: () => void;
+  onRemovePhoto: () => void;
+  onClose: () => void;
+}
+
+function AvatarActionSheet({ onChangePhoto, onRemovePhoto, onClose }: AvatarActionSheetProps) {
+  return (
+    <>
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 200, backdropFilter: 'blur(2px)' }} />
+      <div style={{
+        position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
+        width: '100%', maxWidth: 480,
+        background: 'var(--card)', borderRadius: '20px 20px 0 0',
+        paddingBottom: 'calc(16px + env(safe-area-inset-bottom))',
+        zIndex: 201, boxShadow: '0 -4px 32px rgba(0,0,0,0.18)',
+      }}>
+        <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border)', margin: '14px auto 8px' }} />
+        <div style={{ padding: '8px 20px 4px' }}>
+          <p style={{ fontSize: 13, fontWeight: 700, color: '#9ca3af', textAlign: 'center', margin: 0 }}>Profile Photo</p>
+        </div>
+        {/* Change */}
+        <button
+          onClick={() => { onChangePhoto(); onClose(); }}
+          style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 14, padding: '14px 20px', background: 'none', border: 'none', borderTop: '1px solid var(--border)', cursor: 'pointer', textAlign: 'left' }}
+        >
+          <div style={{ width: 38, height: 38, borderRadius: 10, background: 'var(--secondary)', border: '1.5px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--foreground)" strokeWidth="2" strokeLinecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          </div>
+          <div>
+            <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--foreground)', margin: '0 0 1px' }}>Change Photo</p>
+            <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>Choose a new profile picture</p>
+          </div>
+        </button>
+        {/* Remove */}
+        <button
+          onClick={() => { onRemovePhoto(); onClose(); }}
+          style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 14, padding: '14px 20px', background: 'none', border: 'none', borderTop: '1px solid var(--border)', cursor: 'pointer', textAlign: 'left' }}
+        >
+          <div style={{ width: 38, height: 38, borderRadius: 10, background: '#fee2e2', border: '1.5px solid #fca5a5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+          </div>
+          <div>
+            <p style={{ fontSize: 14, fontWeight: 600, color: '#ef4444', margin: '0 0 1px' }}>Remove Photo</p>
+            <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>Revert to initials avatar</p>
+          </div>
+        </button>
+        {/* Cancel */}
+        <button
+          onClick={onClose}
+          style={{ width: '100%', padding: '14px 20px', background: 'none', border: 'none', borderTop: '1px solid var(--border)', cursor: 'pointer', fontSize: 14, fontWeight: 600, color: '#6b7280' }}
+        >Cancel</button>
+      </div>
+    </>
+  );
 }
 
 /* ─────────────────────────────────────────────────────────────────
@@ -642,6 +829,9 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
   const [showShareSheet, setShowShareSheet] = useState(false);
   const [showTierDetails, setShowTierDetails] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const [showAvatarActionSheet, setShowAvatarActionSheet] = useState(false);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const avatarFileInputRef = useRef<HTMLInputElement>(null);
 
   // Load persisted avatar — errors are silently ignored so the app never redirects
   const { data: myProfile, refetch: refetchProfile } = (trpc as any).user.getProfile.useQuery(undefined, {
@@ -663,6 +853,10 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
   const getAvatarUploadUrl = (trpc as any).user.getAvatarUploadUrl.useMutation();
   const updateAvatar = (trpc as any).user.updateAvatar.useMutation({
     onSuccess: () => { refetchProfile(); },
+  });
+  const removeAvatarMutation = (trpc as any).user.removeAvatar.useMutation({
+    onSuccess: () => { refetchProfile(); toast.success('Profile photo removed.'); },
+    onError: () => { toast.error('Failed to remove photo. Please try again.'); },
   });
 
   // Editable profile fields
@@ -716,20 +910,28 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
     return fmtVol(vol) + ' lbs';
   })();
 
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Step 1: file picker selected — open crop modal
+  const handleAvatarFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => { if (ev.target?.result) setCropSrc(ev.target.result as string); };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  // Step 2: crop confirmed — upload the cropped blob
+  const handleCropConfirm = async (blob: Blob) => {
+    setCropSrc(null);
     setAvatarUploading(true);
     try {
-      // Get the Supabase session token to authenticate the upload
       const { supabase } = await import('@/lib/supabase');
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
       if (!token) throw new Error('Not authenticated');
 
-      // POST the file to the server-side endpoint — avoids browser-to-R2 CORS/SSL issues
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', blob, 'avatar.jpg');
       const res = await fetch('/api/upload-avatar', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
@@ -740,16 +942,12 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
         throw new Error(errBody.error ?? 'Upload failed');
       }
       const { avatarUrl: newUrl } = await res.json();
-      if (newUrl) {
-        refetchProfile();
-        toast.success('Profile picture updated!');
-      }
+      if (newUrl) { refetchProfile(); toast.success('Profile picture updated!'); }
     } catch (err: any) {
       console.error('Avatar upload error:', err);
       toast.error(err?.message ?? 'Failed to upload profile picture. Please try again.');
     } finally {
       setAvatarUploading(false);
-      e.target.value = '';
     }
   };
 
@@ -780,17 +978,33 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
             {/* Row 1: Avatar + real stats */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
               <div style={{ position: 'relative', flexShrink: 0 }}>
-                <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'var(--foreground)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 12px rgba(0,0,0,0.15)', overflow: 'hidden' }}>
-                  {avatarUrl ? (
+                {/* Tapping the avatar opens the action sheet if a photo exists, or the file picker if not */}
+                <button
+                  onClick={() => avatarUrl ? setShowAvatarActionSheet(true) : avatarFileInputRef.current?.click()}
+                  disabled={avatarUploading}
+                  style={{ width: 80, height: 80, borderRadius: '50%', background: 'var(--foreground)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 12px rgba(0,0,0,0.15)', overflow: 'hidden', border: 'none', cursor: avatarUploading ? 'wait' : 'pointer', padding: 0 }}
+                >
+                  {avatarUploading ? (
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                  ) : avatarUrl ? (
                     <img src={avatarUrl} alt={profileName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
                     <span style={{ fontSize: 26, fontWeight: 800, color: 'var(--background)' }}>{initials}</span>
                   )}
-                </div>
-                <label htmlFor="profile-avatar-upload" style={{ position: 'absolute', bottom: 2, right: 2, width: 24, height: 24, borderRadius: '50%', background: avatarUploading ? '#6b7280' : '#9ca3af', border: '2.5px solid var(--card)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: avatarUploading ? 'wait' : 'pointer' }}>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                </label>
-                <input id="profile-avatar-upload" type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarUpload} />
+                </button>
+                {/* Badge — + when no photo, pencil when photo exists */}
+                <button
+                  onClick={() => avatarUrl ? setShowAvatarActionSheet(true) : avatarFileInputRef.current?.click()}
+                  disabled={avatarUploading}
+                  style={{ position: 'absolute', bottom: 2, right: 2, width: 24, height: 24, borderRadius: '50%', background: avatarUploading ? '#6b7280' : '#9ca3af', border: '2.5px solid var(--card)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: avatarUploading ? 'wait' : 'pointer', padding: 0 }}
+                >
+                  {avatarUrl
+                    ? <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    : <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  }
+                </button>
+                {/* Hidden file input — triggered programmatically */}
+                <input ref={avatarFileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarFileSelected} />
               </div>
 
               {/* Workouts (real) + Followers / Following (live from social graph) */}
@@ -1070,6 +1284,24 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
       )}
       {showSettingsMenu && <SettingsMenu onClose={() => setShowSettingsMenu(false)} />}
       {showShareSheet && <ShareSheet profileName={profileName} onClose={() => setShowShareSheet(false)} />}
+      {/* Avatar crop modal — shown after file is selected */}
+      {cropSrc && (
+        <AvatarCropModal
+          src={cropSrc}
+          onConfirm={handleCropConfirm}
+          onCancel={() => setCropSrc(null)}
+        />
+      )}
+
+      {/* Avatar action sheet — shown when user taps existing photo */}
+      {showAvatarActionSheet && (
+        <AvatarActionSheet
+          onChangePhoto={() => avatarFileInputRef.current?.click()}
+          onRemovePhoto={() => removeAvatarMutation.mutate()}
+          onClose={() => setShowAvatarActionSheet(false)}
+        />
+      )}
+
       {showTierDetails && (
         <>
           <div onClick={() => setShowTierDetails(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 200, backdropFilter: 'blur(2px)' }} />
