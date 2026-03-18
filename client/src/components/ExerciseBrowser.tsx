@@ -203,7 +203,7 @@ export function ExerciseBrowser({ open, onClose, onSelectExercise, selectedExerc
                   return (
                     <div
                       key={ex.id}
-                      onClick={() => { onSelectExercise(ex); onClose(); }}
+                      onClick={() => { onSelectExercise(ex); }}
                       style={{
                         display: "flex", alignItems: "center", gap: 14,
                         padding: "14px 16px", cursor: "pointer",

@@ -1027,15 +1027,24 @@ export default function Home() {
                 onTouchEnd={() => {
                   if (!touchStart || !touchEnd) return;
                   const dist = touchStart - touchEnd;
+                  setCurrentExerciseIndex(prev => {
+                    const safeIdx2 = Math.min(prev, selectedExercises.length - 1);
+                    if (dist > 60) {
+                      // Swipe left → next exercise
+                      const nextIdx = safeIdx2 + 1;
+                      if (nextIdx < selectedExercises.length) return nextIdx;
+                      // Open browser for adding next exercise (side-effect outside setState, handled below)
+                      return safeIdx2;
+                    } else if (dist < -60 && safeIdx2 > 0) {
+                      // Swipe right → previous exercise
+                      return safeIdx2 - 1;
+                    }
+                    return safeIdx2;
+                  });
+                  // Handle the "add exercise" swipe case separately
                   const safeIdx2 = Math.min(currentExerciseIndex, selectedExercises.length - 1);
-                  if (dist > 60) {
-                    // Swipe left → next exercise
-                    const nextIdx = safeIdx2 + 1;
-                    if (nextIdx < selectedExercises.length) setCurrentExerciseIndex(nextIdx);
-                    else setShowExerciseBrowser(true);
-                  } else if (dist < -60 && safeIdx2 > 0) {
-                    // Swipe right → previous exercise
-                    setCurrentExerciseIndex(safeIdx2 - 1);
+                  if (touchStart - touchEnd > 60 && safeIdx2 + 1 >= selectedExercises.length) {
+                    setShowExerciseBrowser(true);
                   }
                 }}
                 style={{ touchAction: 'pan-y' }}
@@ -1063,7 +1072,7 @@ export default function Home() {
                       setCurrentExerciseIndex(Math.min(safeIdx, updated.length - 1));
                     }}
                     onNext={() => {
-                      const nextIdx = currentExerciseIndex + 1;
+                      const nextIdx = safeIdx + 1;
                       if (nextIdx < selectedExercises.length) {
                         setCurrentExerciseIndex(nextIdx);
                       } else {
@@ -1098,7 +1107,7 @@ export default function Home() {
                   totalExercises={selectedExercises.length}
                   currentIndex={safeIdx}
                   onNext={() => {
-                    const nextIdx = currentExerciseIndex + 1;
+                    const nextIdx = safeIdx + 1;
                     if (nextIdx < selectedExercises.length) {
                       setCurrentExerciseIndex(nextIdx);
                     } else {
