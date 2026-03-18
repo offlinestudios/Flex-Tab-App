@@ -332,6 +332,7 @@ export const communityRouter = router({
           likeCount: likeCountByPost.get(p.id) ?? 0,
           commentCount: commentCountByPost.get(p.id) ?? 0,
           likedByMe: likedByMe.has(p.id),
+          isMyPost: ctx.user ? p.userId === ctx.user.id : false,
           workout:
             exercises.length > 0
               ? {

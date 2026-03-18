@@ -32,6 +32,7 @@ interface FeedPost {
   likeCount: number;
   commentCount: number;
   likedByMe: boolean;
+  isMyPost?: boolean;
   media: MediaItem[];
   workout: WorkoutSummary | null;
 }
@@ -1089,8 +1090,8 @@ function PostCard({
   const [showOverflow, setShowOverflow] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const isReal = post.id > 0;
-  // Is this post from someone other than the current user?
-  const isOtherUser = isReal && post.userId !== currentUser?.id;
+  // Use server-provided isMyPost flag (avoids client-side ID type mismatch)
+  const isOtherUser = isReal && !post.isMyPost;
   const utils = trpc.useUtils();
 
   const deletePostMutation = (trpc as any).community.deletePost.useMutation({
