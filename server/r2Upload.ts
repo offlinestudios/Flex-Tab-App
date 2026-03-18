@@ -12,6 +12,7 @@
 
 import https from "https";
 import crypto from "crypto";
+import tls from "tls";
 
 // ---------------------------------------------------------------------------
 // Manual AWS Signature V4 implementation using Node crypto (no SDK deps)
@@ -93,7 +94,21 @@ export async function r2PutObject(params: {
     `SignedHeaders=${signedHeaders}, ` +
     `Signature=${signature}`;
 
-  // Execute raw HTTPS PUT — fresh connection, no keep-alive, explicit SNI
+  // Execute raw HTTPS PUT — fresh connection, explicit SNI, forced TLS 1.2+
+  // SSL alert 40 (handshake_failure) in Railway/Docker is caused by OpenSSL
+  // defaulting to TLS 1.3 session tickets that R2 rejects. Forcing TLS 1.2
+  // minimum and disabling session reuse resolves it.
+  const tlsAgent = new https.Agent({
+    keepAlive: false,
+    servername: host,
+    minVersion: "TLSv1.2" as tls.SecureVersion,
+    sessionTimeout: 0,
+    secureOptions:
+      crypto.constants.SSL_OP_NO_TLSv1 |
+      crypto.constants.SSL_OP_NO_TLSv1_1 |
+      crypto.constants.SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION,
+  });
+
   await new Promise<void>((resolve, reject) => {
     const req = https.request(
       {
@@ -107,9 +122,8 @@ export async function r2PutObject(params: {
           "x-amz-content-sha256": payloadHash,
           Authorization: authorizationHeader,
         },
-        // Explicit SNI + no keep-alive to prevent TLS handshake failures in Docker/Railway
         servername: host,
-        agent: new https.Agent({ keepAlive: false }),
+        agent: tlsAgent,
       },
       (res) => {
         // Drain the response body

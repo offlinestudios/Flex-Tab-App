@@ -8,6 +8,8 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { S3Client } from "@aws-sdk/client-s3";
 import { NodeHttpHandler } from "@smithy/node-http-handler";
 import https from "https";
+import crypto from "crypto";
+import tls from "tls";
 import { randomUUID } from "crypto";
 
 function getR2Client() {
@@ -18,8 +20,17 @@ function getR2Client() {
     throw new Error("R2 credentials missing");
   }
   const r2Hostname = `${accountId}.r2.cloudflarestorage.com`;
-  // forcePathStyle:true + custom httpsAgent prevents SSL alert 40 in Railway/Docker
-  const r2HttpsAgent = new https.Agent({ keepAlive: false, servername: r2Hostname });
+  // Force TLS 1.2+ and disable session reuse to prevent SSL alert 40 in Railway/Docker
+  const r2HttpsAgent = new https.Agent({
+    keepAlive: false,
+    servername: r2Hostname,
+    minVersion: "TLSv1.2" as tls.SecureVersion,
+    sessionTimeout: 0,
+    secureOptions:
+      crypto.constants.SSL_OP_NO_TLSv1 |
+      crypto.constants.SSL_OP_NO_TLSv1_1 |
+      crypto.constants.SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION,
+  });
   return new S3Client({
     region: "auto",
     endpoint: `https://${r2Hostname}`,
