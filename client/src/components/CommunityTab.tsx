@@ -1087,10 +1087,21 @@ function PostCard({
   const [liked, setLiked] = useState(post.likedByMe);
   const [likeCount, setLikeCount] = useState(post.likeCount);
   const [showOverflow, setShowOverflow] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const isReal = post.id > 0;
   // Is this post from someone other than the current user?
   const isOtherUser = isReal && post.userId !== currentUser?.id;
   const utils = trpc.useUtils();
+
+  const deletePostMutation = (trpc as any).community.deletePost.useMutation({
+    onSuccess: () => {
+      utils.community.getFeed.invalidate();
+      utils.community.getMyPosts.invalidate();
+    },
+    onError: (err: any) => {
+      console.error('[DeletePost] error:', err);
+    },
+  });
 
   // Social graph state for this post's author
   const { data: rel } = (trpc as any).social.getRelationship.useQuery(
@@ -1303,6 +1314,7 @@ function PostCard({
                   )}
                   {!isOtherUser && (
                     <button
+                      onClick={() => { setShowOverflow(false); setShowDeleteConfirm(true); }}
                       style={{
                         display: "block",
                         width: "100%",
@@ -1519,6 +1531,81 @@ function PostCard({
           currentUser={currentUser}
           onClose={() => setShowComments(false)}
         />
+      )}
+
+      {/* Delete confirmation dialog */}
+      {showDeleteConfirm && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 500,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(0,0,0,0.45)",
+            padding: "0 24px",
+          }}
+          onClick={() => setShowDeleteConfirm(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "var(--card)",
+              borderRadius: 20,
+              padding: "28px 24px 20px",
+              width: "100%",
+              maxWidth: 340,
+              boxShadow: "0 8px 40px rgba(0,0,0,0.25)",
+            }}
+          >
+            <p style={{ margin: "0 0 6px", fontSize: 17, fontWeight: 700, color: "var(--foreground)" }}>
+              Delete post?
+            </p>
+            <p style={{ margin: "0 0 24px", fontSize: 14, color: "var(--muted-foreground)", lineHeight: 1.5 }}>
+              This will permanently remove the post and any attached media. This cannot be undone.
+            </p>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                style={{
+                  flex: 1,
+                  padding: "11px 0",
+                  borderRadius: 50,
+                  border: "1.5px solid var(--border)",
+                  background: "none",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: "var(--foreground)",
+                  cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  deletePostMutation.mutate({ postId: post.id });
+                }}
+                disabled={deletePostMutation.isPending}
+                style={{
+                  flex: 1,
+                  padding: "11px 0",
+                  borderRadius: 50,
+                  border: "none",
+                  background: "#ef4444",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: "#fff",
+                  cursor: deletePostMutation.isPending ? "not-allowed" : "pointer",
+                  opacity: deletePostMutation.isPending ? 0.6 : 1,
+                }}
+              >
+                {deletePostMutation.isPending ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );
