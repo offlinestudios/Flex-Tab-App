@@ -1,11 +1,12 @@
 /**
  * POST /api/generate-workout-card
  *
- * Renders one or more 1080×1920 Instagram story PNGs using satori + resvg.
+ * Renders a single 1080×1920 Instagram story PNG using satori + resvg.
  *
- * Multi-page design (v5):
- *   Page 1 — Summary: stat tiles + first 3 exercises (3 sets each)
- *   Page 2+ — Detail: 3 exercises per page, ALL sets shown, no truncation
+ * Single-page design (v6 — Concept B):
+ *   • Horizontal stat strip (Duration · Sets · Reps · Volume) at the top
+ *   • All exercises with all sets shown as chips in a 4-per-row grid
+ *   • Adaptive chip height fills the full canvas
  *
  * Response: { pages: Array<{ dataUri, url, key }> }
  *
@@ -30,42 +31,36 @@ const STORY_H = 1920;
 const PAD_H   = 80;
 const PAD_TOP = 200;
 const PAD_BOT = 380;
+const USABLE_H   = STORY_H - PAD_TOP - PAD_BOT; // 1340px
+const CONTENT_W  = STORY_W - PAD_H * 2;          // 920px
 
 // ── Theme palettes ────────────────────────────────────────────────────────────
 const THEMES = {
   light: {
-    bg:          "linear-gradient(160deg, #e8edf6 0%, #dce4f0 40%, #cdd8ec 100%)",
-    tileBg:      "rgba(255,255,255,0.80)",
-    divider:     "rgba(15,23,42,0.10)",
-    textPrimary: "#0f172a",
-    textMuted:   "#64748b",
-    textFooter:  "#94a3b8",
-    badgeBg:     "#0f172a",
-    badgeText:   "#ffffff",
-    pillBg:      "rgba(15,23,42,0.07)",
-    pillText:    "#334155",
-    setRowBg:    "rgba(15,23,42,0.04)",
-    setNumColor: "#1e3a5f",
+    bg:           "linear-gradient(160deg, #e8edf6 0%, #dce4f0 40%, #cdd8ec 100%)",
+    tileBg:       "rgba(255,255,255,0.80)",
+    divider:      "rgba(15,23,42,0.10)",
+    textPrimary:  "#0f172a",
+    textMuted:    "#64748b",
+    textFooter:   "#94a3b8",
+    badgeBg:      "#0f172a",
+    badgeText:    "#ffffff",
+    chipBg:       "rgba(15,23,42,0.06)",
+    setNumColor:  "#1e3a5f",
     setNumWeight: 700,
-    dotActive:   "#0f172a",
-    dotInactive: "rgba(15,23,42,0.20)",
   },
   dark: {
-    bg:          "linear-gradient(160deg, #0a0f1e 0%, #0d1526 50%, #060b16 100%)",
-    tileBg:      "rgba(255,255,255,0.06)",
-    divider:     "rgba(255,255,255,0.08)",
-    textPrimary: "#f1f5f9",
-    textMuted:   "#64748b",
-    textFooter:  "#334155",
-    badgeBg:     "rgba(255,255,255,0.12)",
-    badgeText:   "#f1f5f9",
-    pillBg:      "rgba(255,255,255,0.07)",
-    pillText:    "#94a3b8",
-    setRowBg:    "rgba(255,255,255,0.03)",
-    setNumColor: "#94a3b8",
+    bg:           "linear-gradient(160deg, #0a0f1e 0%, #0d1526 50%, #060b16 100%)",
+    tileBg:       "rgba(255,255,255,0.06)",
+    divider:      "rgba(255,255,255,0.08)",
+    textPrimary:  "#f1f5f9",
+    textMuted:    "#64748b",
+    textFooter:   "#334155",
+    badgeBg:      "rgba(255,255,255,0.12)",
+    badgeText:    "#f1f5f9",
+    chipBg:       "rgba(255,255,255,0.06)",
+    setNumColor:  "#94a3b8",
     setNumWeight: 600,
-    dotActive:   "#f1f5f9",
-    dotInactive: "rgba(255,255,255,0.20)",
   },
 } as const;
 
@@ -103,72 +98,83 @@ interface CardData {
   userAvatarUrl?: string;
 }
 
-// ── Layout constants (must match previewCard.mts) ────────────────────────────
-const USABLE_H = STORY_H - PAD_TOP - PAD_BOT; // 1340px
-
-// Fixed element heights (px)
-const H_HEADER      = 88 + 28;               // logo + marginBottom
-const H_TILE_ROW    = 18 + 58 + 8 + 20 + 14; // padTop + value + gap + label + padBot
-const H_TILE_GAP    = 12;
-const H_TILES       = H_TILE_ROW * 2 + H_TILE_GAP + 28; // 2 rows + gap + marginBottom
+// ── Layout constants ──────────────────────────────────────────────────────────
+const CHIPS_PER_ROW = 4;
+const CHIP_GAP      = 10;
+const H_HEADER      = 88 + 28;   // logo(88) + marginBottom(28)
+const H_STAT_STRIP  = 80;
+const H_STAT_MB     = 20;
 const H_DIVIDER     = 1 + 16;
 const H_SECTION_LBL = 26 + 16;
-const H_FOOTER      = 20 + 10 + 26 + 14;
+const H_FOOTER      = 1 + 16 + 26 + 14;  // border + paddingTop + text + paddingBottom
+const H_EX_HEADER   = 52 + 12;   // badge row height + gap below
+const H_EX_GAP      = 16;        // gap between exercises
 
-const DETAIL_FIXED  = H_HEADER + H_DIVIDER + H_SECTION_LBL + H_FOOTER; // 245px
+const H_CHROME = H_HEADER + H_STAT_STRIP + H_STAT_MB + H_DIVIDER + H_SECTION_LBL + H_FOOTER;
 
-// Per-exercise fixed cost (badge row + padding + border)
-const EX_FIXED = 62 + 8 + 8 + 1; // 79px
-
-/** Total px cost of N sets at a given row height using 2-column grid */
-function setsCost(numSets: number, rowH: number): number {
-  const gridRows = Math.ceil(numSets / 2);
-  return rowH * gridRows + 10 + 6 * Math.max(0, gridRows - 1);
-}
-
-/** Total px cost of one exercise with N sets at rowH */
-function exCost(numSets: number, rowH: number): number {
-  return EX_FIXED + setsCost(numSets, rowH);
-}
-
+// ── Adaptive chip height ──────────────────────────────────────────────────────
 /**
- * Find the largest rowH (80→32, step 2) that fits all exercises in availPx.
- * Returns null if even rowH=32 overflows.
+ * Calculates the chip height that fills the available canvas.
+ * Each exercise contributes: H_EX_HEADER + ceil(sets/CHIPS_PER_ROW) chip rows.
  */
-function computeAdaptiveRowH(exercises: ExerciseRow[], availPx: number): number | null {
-  for (let rowH = 80; rowH >= 32; rowH -= 2) {
-    const total = exercises.reduce((sum, ex) => sum + exCost(ex.sets?.length ?? 0, rowH), 0);
-    if (total <= availPx) return rowH;
-  }
-  return null;
+function computeChipH(exercises: ExerciseRow[]): number {
+  const numEx = exercises.length;
+  const totalChipRows = exercises.reduce((sum, ex) => {
+    const n = ex.sets?.length ?? ex.totalSets;
+    return sum + Math.ceil(n / CHIPS_PER_ROW);
+  }, 0);
+  const extraChipGaps = exercises.reduce((sum, ex) => {
+    const n = ex.sets?.length ?? ex.totalSets;
+    const rows = Math.ceil(n / CHIPS_PER_ROW);
+    return sum + Math.max(0, rows - 1) * CHIP_GAP;
+  }, 0);
+  const fixedExercise = numEx * H_EX_HEADER + (numEx - 1) * H_EX_GAP + extraChipGaps;
+  const available = USABLE_H - H_CHROME - fixedExercise;
+  const chipH = Math.floor(available / totalChipRows);
+  // Clamp: min 70px (readable), max 150px (aesthetic)
+  return Math.max(70, Math.min(150, chipH));
 }
 
-// ── Helpers ─────────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 function truncate(s: string, max: number) {
   return s.length > max ? s.slice(0, max - 1) + "…" : s;
 }
 
-// ── Shared sub-builders ───────────────────────────────────────────────────────
+// ── Card builder ──────────────────────────────────────────────────────────────
+function buildCard(data: CardData) {
+  const C      = THEMES[data.theme === "dark" ? "dark" : "light"];
+  const isDark = data.theme === "dark";
+  const { date, duration, totalSets, totalReps, volumeDisplay, exercises, userName, userAvatarUrl } = data;
 
-function makeHeader(C: typeof THEMES["light"], isDark: boolean, date: string, userAvatarUrl?: string) {
+  const chipH = computeChipH(exercises);
+
+  // Font sizes derived from chip height
+  const chipValueFontSize = Math.round(chipH * 0.42);
+  const chipLabelFontSize = Math.round(chipH * 0.21);
+  const chipUnitFontSize  = Math.round(chipH * 0.22);
+
+  // Fixed chip width so partial rows match full rows
+  const fixedChipW = Math.floor((CONTENT_W - (CHIPS_PER_ROW - 1) * CHIP_GAP) / CHIPS_PER_ROW);
+
+  // ── Header ──────────────────────────────────────────────────────────────────
   const avatarEl = userAvatarUrl ? {
     type: "img",
     props: { src: userAvatarUrl, width: 72, height: 72, style: { borderRadius: 36, objectFit: "cover", flexShrink: 0 } },
   } : null;
 
-  return {
+  const headerEl = {
     type: "div",
     props: {
-      style: { display: "flex", alignItems: "center", gap: 24, marginBottom: 28 },
+      style: { display: "flex", alignItems: "center", gap: 20, marginBottom: 28 },
       children: [
-        { type: "img", props: { src: isDark ? FLEXTAB_ICON_WHITE_B64 : FLEXTAB_ICON_B64, width: 88, height: 88, style: { borderRadius: 22, flexShrink: 0 } } },
+        { type: "img", props: { src: isDark ? FLEXTAB_ICON_WHITE_B64 : FLEXTAB_ICON_B64, width: 72, height: 72, style: { borderRadius: 18, flexShrink: 0 } } },
         {
           type: "div",
           props: {
-            style: { display: "flex", flexDirection: "column", gap: 6, flex: 1 },
+            style: { display: "flex", flexDirection: "column", gap: 4, flex: 1 },
             children: [
-              { type: "div", props: { style: { fontSize: 44, fontWeight: 800, color: C.textPrimary, display: "flex" }, children: "FlexTab" } },
-              { type: "div", props: { style: { fontSize: 28, color: C.textMuted, display: "flex" }, children: date } },
+              { type: "div", props: { style: { fontSize: 42, fontWeight: 800, color: C.textPrimary, display: "flex" }, children: "FlexTab" } },
+              { type: "div", props: { style: { fontSize: 26, color: C.textMuted, display: "flex" }, children: date } },
             ],
           },
         },
@@ -176,215 +182,129 @@ function makeHeader(C: typeof THEMES["light"], isDark: boolean, date: string, us
       ],
     },
   };
-}
 
-function makeFooter(C: typeof THEMES["light"], userName: string | undefined, pageNum: number, totalPages: number) {
-  const footerText = userName
-    ? `@${userName.toLowerCase().replace(/\s+/g, "")} · flextab.app`
-    : "flextab.app";
+  // ── Stat strip ───────────────────────────────────────────────────────────────
+  const stats = [
+    { v: duration || "—",       l: "DURATION" },
+    { v: String(totalSets),     l: "SETS"     },
+    { v: String(totalReps),     l: "REPS"     },
+    { v: volumeDisplay,         l: "VOLUME"   },
+  ];
 
-  // Page indicator dots
-  const dots = Array.from({ length: totalPages }, (_, i) => ({
+  const statStripEl = {
     type: "div",
     props: {
-      style: {
-        width: i === pageNum - 1 ? 24 : 10,
-        height: 10,
-        borderRadius: 5,
-        background: i === pageNum - 1 ? C.dotActive : C.dotInactive,
-        display: "flex",
-      },
-    },
-  }));
-
-  return {
-    type: "div",
-    props: {
-      style: {
-        display: "flex", flexDirection: "column", alignItems: "center",
-        paddingTop: 20, marginTop: "auto",
-        borderTop: `1px solid ${C.divider}`,
-        gap: 14,
-      },
-      children: [
-        // Dots
-        ...(totalPages > 1 ? [{
-          type: "div",
-          props: { style: { display: "flex", flexDirection: "row", gap: 8, alignItems: "center" }, children: dots },
-        }] : []),
-        // Username
-        { type: "div", props: { style: { fontSize: 26, color: C.textFooter, fontWeight: 600, display: "flex" }, children: footerText } },
-      ],
-    },
-  };
-}
-
-function makeSectionLabel(C: typeof THEMES["light"], text: string) {
-  return {
-    type: "div",
-    props: {
-      style: { display: "flex", marginBottom: 16 },
-      children: { type: "div", props: { style: { fontSize: 26, fontWeight: 800, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.12em", display: "flex" }, children: text } },
-    },
-  };
-}
-
-function makeExerciseRow(
-  C: typeof THEMES["light"] & { setNumColor: string; setNumWeight: number },
-  ex: ExerciseRow,
-  index: number,
-  isLast: boolean,
-  maxSets: number | null,   // null = show all sets
-  rowH: number = 64,        // adaptive set row height
-) {
-  const visibleSets = ex.sets ? (maxSets !== null ? ex.sets.slice(0, maxSets) : ex.sets) : [];
-  const hiddenCount = ex.sets ? ex.sets.length - visibleSets.length : 0;
-
-  // Scale font sizes with rowH
-  const repsFontSize   = Math.round(rowH * 0.55);
-  const labelFontSize  = Math.round(rowH * 0.38);
-  const setNumFontSize = Math.round(rowH * 0.38);
-  const padV           = Math.round((rowH - repsFontSize) / 2);
-
-  // Build one set cell for the 2-column grid
-  function makeSetCell(s: SetDetail) {
-    return {
-      type: "div",
-      props: {
-        style: {
-          flex: 1, display: "flex", flexDirection: "column",
-          paddingTop: padV, paddingBottom: padV,
-          paddingLeft: 16, paddingRight: 16,
-          background: C.setRowBg, borderRadius: 14,
-          gap: 4,
-        },
-        children: [
-          { type: "div", props: { style: { fontSize: setNumFontSize, fontWeight: C.setNumWeight, color: C.setNumColor, display: "flex" }, children: `Set ${s.setNumber}` } },
-          {
-            type: "div",
-            props: {
-              style: { display: "flex", alignItems: "baseline", gap: 8, flexWrap: "nowrap" as const },
-              children: [
-                { type: "div", props: { style: { fontSize: repsFontSize, fontWeight: 800, color: C.textPrimary, display: "flex" }, children: String(s.reps) } },
-                { type: "div", props: { style: { fontSize: labelFontSize, fontWeight: 600, color: C.textMuted, display: "flex" }, children: "reps" } },
-                ...(s.weight > 0 ? [
-                  { type: "div", props: { style: { fontSize: labelFontSize, fontWeight: 400, color: C.textMuted, display: "flex" }, children: "·" } },
-                  { type: "div", props: { style: { fontSize: repsFontSize, fontWeight: 800, color: C.textPrimary, display: "flex" }, children: String(s.weight) } },
-                  { type: "div", props: { style: { fontSize: labelFontSize, fontWeight: 600, color: C.textMuted, display: "flex" }, children: "lbs" } },
-                ] : []),
-              ],
-            },
+      style: { display: "flex", flexDirection: "row", background: C.tileBg, borderRadius: 20, overflow: "hidden", marginBottom: H_STAT_MB },
+      children: stats.map((s, i) => ({
+        type: "div",
+        props: {
+          style: {
+            flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
+            paddingTop: 16, paddingBottom: 14,
+            borderRight: i < 3 ? `1px solid ${C.divider}` : "none",
           },
-        ],
-      },
-    };
-  }
+          children: [
+            { type: "div", props: { style: { fontSize: 38, fontWeight: 800, color: C.textPrimary, lineHeight: 1, display: "flex" }, children: s.v } },
+            { type: "div", props: { style: { fontSize: 17, fontWeight: 700, color: C.textMuted, marginTop: 5, letterSpacing: "0.08em", display: "flex" }, children: s.l } },
+          ],
+        },
+      })),
+    },
+  };
 
-  // Group sets into pairs for the 2-column grid
-  const setRows: any[] = [];
-  for (let i = 0; i < visibleSets.length; i += 2) {
-    const left  = visibleSets[i];
-    const right = visibleSets[i + 1];
-    setRows.push({
+  // ── Exercises ────────────────────────────────────────────────────────────────
+  const exerciseEls = exercises.map((ex, ei) => {
+    const sets = ex.sets ?? [];
+
+    // Group sets into rows of CHIPS_PER_ROW
+    const chipRows: SetDetail[][] = [];
+    for (let i = 0; i < sets.length; i += CHIPS_PER_ROW) {
+      chipRows.push(sets.slice(i, i + CHIPS_PER_ROW));
+    }
+
+    const chipRowEls = chipRows.map((row, ri) => ({
       type: "div",
       props: {
-        style: { display: "flex", flexDirection: "row", gap: 10, marginTop: i === 0 ? 10 : 6 },
-        children: right
-          ? [makeSetCell(left), makeSetCell(right)]
-          : [makeSetCell(left), { type: "div", props: { style: { flex: 1, display: "flex" } } }],
-      },
-    });
-  }
-
-  // "+N more sets" hint
-  const moreHint = hiddenCount > 0 ? {
-    type: "div",
-    props: {
-      style: { display: "flex", marginTop: 6, paddingLeft: 14 },
-      children: { type: "div", props: { style: { fontSize: 22, color: C.textMuted, fontWeight: 600, display: "flex" }, children: `+${hiddenCount} more set${hiddenCount > 1 ? "s" : ""} — see next page` } },
-    },
-  } : null;
-
-  return {
-    type: "div",
-    props: {
-      style: {
-        display: "flex", flexDirection: "column",
-        paddingTop: 8, paddingBottom: 8,
-        borderBottom: isLast ? "none" : `1px solid ${C.divider}`,
-      },
-      children: [
-        {
+        style: { display: "flex", flexDirection: "row", gap: CHIP_GAP, marginTop: ri === 0 ? 0 : CHIP_GAP },
+        children: row.map(s => ({
           type: "div",
           props: {
-            style: { display: "flex", alignItems: "center", gap: 24 },
+            style: {
+              width: fixedChipW,
+              height: chipH,
+              background: C.chipBg,
+              borderRadius: 14,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              paddingLeft: 14,
+              paddingRight: 10,
+              gap: 2,
+            },
             children: [
-              { type: "div", props: { style: { width: 56, height: 56, borderRadius: 28, background: C.badgeBg, color: C.badgeText, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, fontWeight: 800, flexShrink: 0 }, children: String(index + 1) } },
-              { type: "div", props: { style: { flex: 1, fontSize: 40, fontWeight: 800, color: C.textPrimary, display: "flex", alignItems: "center" }, children: truncate(ex.exercise, 30) } },
+              { type: "div", props: { style: { fontSize: chipLabelFontSize, fontWeight: C.setNumWeight, color: C.setNumColor, display: "flex" }, children: `Set ${s.setNumber}` } },
               {
                 type: "div",
                 props: {
-                  style: { background: C.pillBg, borderRadius: 50, paddingTop: 10, paddingBottom: 10, paddingLeft: 24, paddingRight: 24, flexShrink: 0, display: "flex", alignItems: "center" },
-                  children: { type: "div", props: { style: { fontSize: 26, fontWeight: 700, color: C.pillText, whiteSpace: "nowrap", display: "flex" }, children: `${ex.totalSets} set${ex.totalSets !== 1 ? "s" : ""}` } },
+                  style: { display: "flex", alignItems: "baseline", gap: 4 },
+                  children: [
+                    { type: "div", props: { style: { fontSize: chipValueFontSize, fontWeight: 800, color: C.textPrimary, display: "flex", lineHeight: 1 }, children: String(s.reps) } },
+                    { type: "div", props: { style: { fontSize: chipUnitFontSize, fontWeight: 600, color: C.textMuted, display: "flex" }, children: " reps" } },
+                    ...(s.weight > 0 ? [
+                      { type: "div", props: { style: { fontSize: chipUnitFontSize, color: C.textMuted, display: "flex" }, children: " · " } },
+                      { type: "div", props: { style: { fontSize: chipValueFontSize, fontWeight: 800, color: C.textPrimary, display: "flex", lineHeight: 1 }, children: String(s.weight) } },
+                      { type: "div", props: { style: { fontSize: chipUnitFontSize, fontWeight: 600, color: C.textMuted, display: "flex" }, children: " lbs" } },
+                    ] : []),
+                  ],
                 },
               },
             ],
           },
-        },
-        ...setRows,
-        ...(moreHint ? [moreHint] : []),
-      ],
-    },
-  };
-}
-
-// ── Page builders ─────────────────────────────────────────────────────────────
-
-/** Page 1: stat tiles + first 3 exercises (3 sets each) */
-function buildSummaryPage(data: CardData, totalPages: number) {
-  const C      = THEMES[data.theme === "dark" ? "dark" : "light"];
-  const isDark = data.theme === "dark";
-  const { date, duration, totalSets, totalReps, volumeDisplay, exercises, userName, userAvatarUrl } = data;
-
-  const statTiles = [
-    { value: duration || "—", label: "DURATION" },
-    { value: String(totalSets),  label: "SETS"     },
-    { value: String(totalReps),  label: "REPS"     },
-    { value: volumeDisplay,      label: "VOLUME"   },
-  ];
-
-  const makeTile = ({ value, label }: { value: string; label: string }) => ({
-    type: "div",
-    props: {
-      style: {
-        background: C.tileBg, borderRadius: 24,
-        paddingTop: 18, paddingBottom: 14,
-        paddingLeft: 16, paddingRight: 16,
-        flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
+        })),
       },
-      children: [
-        { type: "div", props: { style: { fontSize: 58, fontWeight: 800, color: C.textPrimary, lineHeight: 1, display: "flex" }, children: value } },
-        { type: "div", props: { style: { fontSize: 20, fontWeight: 700, color: C.textMuted, marginTop: 8, textTransform: "uppercase", letterSpacing: "0.12em", display: "flex" }, children: label } },
-      ],
-    },
+    }));
+
+    return {
+      type: "div",
+      props: {
+        style: { display: "flex", flexDirection: "column", marginTop: ei === 0 ? 0 : H_EX_GAP },
+        children: [
+          // Exercise header row
+          {
+            type: "div",
+            props: {
+              style: { display: "flex", alignItems: "center", gap: 18, marginBottom: 12 },
+              children: [
+                { type: "div", props: { style: { width: 52, height: 52, borderRadius: 26, background: C.badgeBg, color: C.badgeText, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: 800, flexShrink: 0 }, children: String(ei + 1) } },
+                { type: "div", props: { style: { flex: 1, fontSize: 38, fontWeight: 800, color: C.textPrimary, display: "flex" }, children: truncate(ex.exercise, 28) } },
+              ],
+            },
+          },
+          // Chip rows
+          ...chipRowEls,
+        ],
+      },
+    };
   });
 
-  // Show first 3 exercises, 3 sets each, with "+N more sets" hint if truncated
-  const previewExercises = exercises.slice(0, 3);
-  const exerciseRows = previewExercises.map((ex, i) =>
-    makeExerciseRow(C, ex, i, i === previewExercises.length - 1, 3)
-  );
+  // ── Footer ───────────────────────────────────────────────────────────────────
+  const footerText = userName
+    ? `@${userName.toLowerCase().replace(/\s+/g, "")} · flextab.app`
+    : "flextab.app";
 
-  // "+N more exercises" hint
-  const moreExCount = exercises.length - previewExercises.length;
-  const moreExHint = moreExCount > 0 ? {
+  const footerEl = {
     type: "div",
     props: {
-      style: { display: "flex", alignItems: "center", justifyContent: "center", paddingTop: 20 },
-      children: { type: "div", props: { style: { fontSize: 28, color: C.textMuted, fontWeight: 600, display: "flex" }, children: `+${moreExCount} more exercise${moreExCount > 1 ? "s" : ""} — swipe for details →` } },
+      style: {
+        display: "flex", alignItems: "center", justifyContent: "center",
+        marginTop: "auto", paddingTop: 16,
+        borderTop: `1px solid ${C.divider}`,
+      },
+      children: { type: "div", props: { style: { fontSize: 26, color: C.textFooter, fontWeight: 600, display: "flex" }, children: footerText } },
     },
-  } : null;
+  };
 
+  // ── Root ─────────────────────────────────────────────────────────────────────
   return {
     type: "div",
     props: {
@@ -396,122 +316,15 @@ function buildSummaryPage(data: CardData, totalPages: number) {
         paddingLeft: PAD_H, paddingRight: PAD_H,
       },
       children: [
-        makeHeader(C, isDark, date, userAvatarUrl),
-
-        // Stat tiles 2×2
-        {
-          type: "div",
-          props: {
-            style: { display: "flex", flexDirection: "column", gap: 12, marginBottom: 28 },
-            children: [
-              { type: "div", props: { style: { display: "flex", flexDirection: "row", gap: 20 }, children: statTiles.slice(0, 2).map(makeTile) } },
-              { type: "div", props: { style: { display: "flex", flexDirection: "row", gap: 20 }, children: statTiles.slice(2, 4).map(makeTile) } },
-            ],
-          },
-        },
-
-        // Divider
+        headerEl,
+        statStripEl,
         { type: "div", props: { style: { height: 1, background: C.divider, marginBottom: 16, display: "flex" } } },
-
-        // Exercises heading
-        makeSectionLabel(C, "Exercises"),
-
-        // Exercise rows
-        {
-          type: "div",
-          props: {
-            style: { display: "flex", flexDirection: "column" },
-            children: moreExHint ? [...exerciseRows, moreExHint] : exerciseRows,
-          },
-        },
-
-        makeFooter(C, userName, 1, totalPages),
+        { type: "div", props: { style: { fontSize: 22, fontWeight: 800, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 12, display: "flex" }, children: "EXERCISES" } },
+        { type: "div", props: { style: { display: "flex", flexDirection: "column" }, children: exerciseEls } },
+        footerEl,
       ],
     },
   };
-}
-
-/** Detail page: shows a slice of exercises with ALL sets expanded */
-function buildDetailPage(
-  data: CardData,
-  exerciseSlice: ExerciseRow[],
-  globalOffset: number,  // index of first exercise in this slice (for numbering)
-  pageNum: number,
-  totalPages: number,
-  availPx: number,
-) {
-  const C      = THEMES[data.theme === "dark" ? "dark" : "light"];
-  const isDark = data.theme === "dark";
-  const { date, userName, userAvatarUrl } = data;
-
-  const rowH = computeAdaptiveRowH(exerciseSlice, availPx) ?? 32;
-
-  const exerciseRows = exerciseSlice.map((ex, i) =>
-    makeExerciseRow(C, ex, globalOffset + i, i === exerciseSlice.length - 1, null, rowH)
-  );
-
-  return {
-    type: "div",
-    props: {
-      style: {
-        display: "flex", flexDirection: "column",
-        width: STORY_W, height: STORY_H,
-        background: C.bg,
-        paddingTop: PAD_TOP, paddingBottom: PAD_BOT,
-        paddingLeft: PAD_H, paddingRight: PAD_H,
-      },
-      children: [
-        makeHeader(C, isDark, date, userAvatarUrl),
-
-        // Divider
-        { type: "div", props: { style: { height: 1, background: C.divider, marginBottom: 16, display: "flex" } } },
-
-        // Section label
-        makeSectionLabel(C, totalPages > 2 ? `Exercises — Page ${pageNum} of ${totalPages}` : "All Exercises"),
-
-        // Exercise rows
-        {
-          type: "div",
-          props: {
-            style: { display: "flex", flexDirection: "column" },
-            children: exerciseRows,
-          },
-        },
-
-        makeFooter(C, userName, pageNum, totalPages),
-      ],
-    },
-  };
-}
-
-// ── Paginate exercises into detail pages ──────────────────────────────────────
-/**
- * Tries to fit ALL exercises onto a single detail page (adaptive row height).
- * Falls back to chunks of 4, then 3 if needed.
- */
-function paginateExercises(exercises: ExerciseRow[]): { slice: ExerciseRow[]; offset: number }[] {
-  const availPx = USABLE_H - DETAIL_FIXED;
-
-  // Can all exercises fit on one page?
-  if (computeAdaptiveRowH(exercises, availPx) !== null) {
-    return [{ slice: exercises, offset: 0 }];
-  }
-
-  // Try chunks of 4
-  const chunks4: { slice: ExerciseRow[]; offset: number }[] = [];
-  for (let i = 0; i < exercises.length; i += 4) {
-    chunks4.push({ slice: exercises.slice(i, i + 4), offset: i });
-  }
-  if (chunks4.every(({ slice }) => computeAdaptiveRowH(slice, availPx) !== null)) {
-    return chunks4;
-  }
-
-  // Fall back to chunks of 3
-  const chunks3: { slice: ExerciseRow[]; offset: number }[] = [];
-  for (let i = 0; i < exercises.length; i += 3) {
-    chunks3.push({ slice: exercises.slice(i, i + 3), offset: i });
-  }
-  return chunks3;
 }
 
 // ── HTTP handler ─────────────────────────────────────────────────────────────
@@ -534,42 +347,26 @@ export async function handleGenerateWorkoutCard(req: Request, res: Response) {
       ],
     };
 
-    // Build page list
-    const availPx    = USABLE_H - DETAIL_FIXED;
-    const detailPages = paginateExercises(data.exercises);
-    const totalPages  = 1 + detailPages.length;
+    const pageElement = buildCard(data);
 
-    const pageElements: any[] = [
-      buildSummaryPage(data, totalPages),
-      ...detailPages.map(({ slice, offset }, i) =>
-        buildDetailPage(data, slice, offset, i + 2, totalPages, availPx)
-      ),
-    ];
+    const svg       = await satori(pageElement as any, satoriOpts);
+    const resvg     = new Resvg(svg, { fitTo: { mode: "width", value: STORY_W } });
+    const pngBuffer = resvg.render().asPng();
+    const dataUri   = `data:image/png;base64,${Buffer.from(pngBuffer).toString("base64")}`;
 
-    // Render each page
-    const results: Array<{ dataUri: string; url: string | null; key: string | null }> = [];
-
-    for (let i = 0; i < pageElements.length; i++) {
-      const svg       = await satori(pageElements[i] as any, satoriOpts);
-      const resvg     = new Resvg(svg, { fitTo: { mode: "width", value: STORY_W } });
-      const pngBuffer = resvg.render().asPng();
-      const dataUri   = `data:image/png;base64,${Buffer.from(pngBuffer).toString("base64")}`;
-
-      let url: string | null = null;
-      let key: string | null = null;
-      try {
-        const r2Key = `workout-cards/${Date.now()}-p${i + 1}-${Math.random().toString(36).slice(2)}.png`;
-        const result = await storagePut(r2Key, pngBuffer, "image/png");
-        url = result.url;
-        key = r2Key;
-      } catch (r2Err: any) {
-        console.warn(`[workout-card] R2 upload failed for page ${i + 1} (non-fatal):`, r2Err?.message);
-      }
-
-      results.push({ dataUri, url, key });
+    let url: string | null = null;
+    let key: string | null = null;
+    try {
+      const r2Key = `workout-cards/${Date.now()}-${Math.random().toString(36).slice(2)}.png`;
+      const result = await storagePut(r2Key, pngBuffer, "image/png");
+      url = result.url;
+      key = r2Key;
+    } catch (r2Err: any) {
+      console.warn("[workout-card] R2 upload failed (non-fatal):", r2Err?.message);
     }
 
-    return res.json({ pages: results });
+    // Return as pages array for backward compatibility with client
+    return res.json({ pages: [{ dataUri, url, key }] });
   } catch (err: any) {
     console.error("[workout-card] Error:", err);
     return res.status(500).json({ error: err?.message ?? "Unknown error" });

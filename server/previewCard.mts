@@ -1,5 +1,5 @@
 /**
- * Standalone preview script — renders the 2-page workout card.
+ * Standalone preview script — renders the single-page workout card (Concept B).
  * Run with:  npx tsx server/previewCard.mts
  */
 import { writeFileSync } from "fs";
@@ -11,528 +11,260 @@ const fontBold    = Buffer.from(INTER_BOLD_B64,    "base64");
 
 const STORY_W = 1080;
 const STORY_H = 1920;
-
 const PAD_H   = 80;   // left/right padding
-const PAD_TOP = 200;  // top safe zone (Instagram UI chrome)
-const PAD_BOT = 380;  // bottom safe zone (Instagram caption/buttons)
-
+const PAD_TOP = 200;  // top safe zone
+const PAD_BOT = 380;  // bottom safe zone
 const USABLE_H = STORY_H - PAD_TOP - PAD_BOT; // 1340px
+const CONTENT_W = STORY_W - PAD_H * 2;        // 920px
 
-// ── Fixed element heights (px) ────────────────────────────────────────────────
-const H_HEADER      = 88 + 28;          // logo + marginBottom = 116
-const H_TILE_ROW    = 18 + 58 + 8 + 20 + 14; // padTop + value + gap + label + padBot = 118
-const H_TILE_GAP    = 12;
-const H_TILES       = H_TILE_ROW * 2 + H_TILE_GAP + 28; // 2 rows + gap + marginBottom = 276
-const H_DIVIDER     = 1 + 16;           // line + marginBottom = 17
-const H_SECTION_LBL = 26 + 16;          // text + marginBottom = 42
-const H_FOOTER      = 20 + 10 + 26 + 14; // paddingTop + dots + username + gap = 70
+// ── Fixed element heights ─────────────────────────────────────────────────────
+const H_HEADER      = 88 + 28;   // logo(72) + text + marginBottom = 116
+const H_STAT_STRIP  = 80;        // single-row stat bar
+const H_STAT_MB     = 20;
+const H_DIVIDER     = 1 + 16;    // line + marginBottom
+const H_SECTION_LBL = 26 + 16;   // text + marginBottom
+const H_FOOTER      = 1 + 16 + 26 + 14; // border + paddingTop + text + paddingBottom = 57
+const H_EX_HEADER   = 52 + 12;   // badge row + gap below chips
+const H_EX_GAP      = 16;        // gap between exercises
+const CHIPS_PER_ROW = 4;
+const CHIP_GAP      = 10;
 
-// Fixed overhead for summary page (has tiles)
-const SUMMARY_FIXED = H_HEADER + H_TILES + H_DIVIDER + H_SECTION_LBL + H_FOOTER; // 521
-
-// Fixed overhead for detail page (no tiles)
-const DETAIL_FIXED  = H_HEADER + H_DIVIDER + H_SECTION_LBL + H_FOOTER; // 245
-
-// Per-exercise fixed cost: badge row + paddingTop + paddingBottom + border
-const EX_FIXED = 62 + 8 + 8 + 1; // 79 (badge 62px + 8+8 padding + 1 border)
-
-// Per-set cost at a given rowHeight using 2-column grid (pairs of sets per row)
-function setsCost(numSets: number, rowH: number): number {
-  const gridRows = Math.ceil(numSets / 2);
-  return rowH * gridRows + 10 + 6 * Math.max(0, gridRows - 1);
-}
-
-// Total cost of one exercise with N sets at rowH
-function exCost(numSets: number, rowH: number): number {
-  return EX_FIXED + setsCost(numSets, rowH);
-}
-
-/**
- * Given a list of exercises and available vertical pixels, compute the
- * largest integer setRowH (capped at 80, min 32) that fits all exercises.
- * Returns null if even rowH=32 overflows (caller should split to 3 pages).
- */
-function computeAdaptiveRowH(exercises: typeof ALL_EXERCISES, availPx: number): number | null {
-  for (let rowH = 80; rowH >= 32; rowH -= 2) {
-    const total = exercises.reduce((sum, ex) => sum + exCost(ex.sets.length, rowH), 0);
-    if (total <= availPx) return rowH;
-  }
-  return null;
-}
-
-// ── Themes ────────────────────────────────────────────────────────────────────
-const THEMES = {
-  light: {
-    bg:           "linear-gradient(160deg, #e8edf6 0%, #dce4f0 40%, #cdd8ec 100%)",
-    tileBg:       "rgba(255,255,255,0.80)",
-    divider:      "rgba(15,23,42,0.10)",
-    textPrimary:  "#0f172a",
-    textMuted:    "#64748b",
-    textFooter:   "#94a3b8",
-    badgeBg:      "#0f172a",
-    badgeText:    "#ffffff",
-    pillBg:       "rgba(15,23,42,0.07)",
-    pillText:     "#334155",
-    setRowBg:     "rgba(255,255,255,0.55)",  // off-white tile
-    setNumColor:  "#1e3a5f",                 // dark blue for "Set 1" labels
-    setNumWeight: 800,
-    dotActive:    "#0f172a",
-    dotInactive:  "rgba(15,23,42,0.20)",
-  },
-  dark: {
-    bg:           "linear-gradient(160deg, #0a0f1e 0%, #0d1526 50%, #060b16 100%)",
-    tileBg:       "rgba(255,255,255,0.06)",
-    divider:      "rgba(255,255,255,0.08)",
-    textPrimary:  "#f1f5f9",
-    textMuted:    "#64748b",
-    textFooter:   "#334155",
-    badgeBg:      "rgba(255,255,255,0.12)",
-    badgeText:    "#f1f5f9",
-    pillBg:       "rgba(255,255,255,0.07)",
-    pillText:     "#94a3b8",
-    setRowBg:     "rgba(255,255,255,0.03)",
-    setNumColor:  "#64748b",                 // muted grey for dark theme
-    setNumWeight: 700,
-    dotActive:    "#f1f5f9",
-    dotInactive:  "rgba(255,255,255,0.20)",
-  },
-} as const;
-
-type ThemeKey = keyof typeof THEMES;
-
-function truncate(s: string, max: number) {
-  return s.length > max ? s.slice(0, max - 1) + "…" : s;
-}
+const H_CHROME = H_HEADER + H_STAT_STRIP + H_STAT_MB + H_DIVIDER + H_SECTION_LBL + H_FOOTER;
 
 // ── Sample data ───────────────────────────────────────────────────────────────
-// 7-exercise workout (stress test — above average, shows 3-page fallback)
-const ALL_EXERCISES = [
-  {
-    exercise: "Chest Dips",       totalSets: 4, bestReps: 5,  bestWeight: 100, category: "Chest",
-    sets: [
-      { setNumber: 1, reps: 8,  weight: 80  },
-      { setNumber: 2, reps: 6,  weight: 90  },
-      { setNumber: 3, reps: 5,  weight: 100 },
-      { setNumber: 4, reps: 5,  weight: 100 },
-    ],
-  },
-  {
-    exercise: "Standing Military Press", totalSets: 3, bestReps: 3, bestWeight: 185, category: "Shoulders",
-    sets: [
-      { setNumber: 1, reps: 5, weight: 165 },
-      { setNumber: 2, reps: 4, weight: 175 },
-      { setNumber: 3, reps: 3, weight: 185 },
-    ],
-  },
-  {
-    exercise: "Upright Rows",     totalSets: 3, bestReps: 7,  bestWeight: 135, category: "Shoulders",
-    sets: [
-      { setNumber: 1, reps: 10, weight: 115 },
-      { setNumber: 2, reps: 8,  weight: 125 },
-      { setNumber: 3, reps: 7,  weight: 135 },
-    ],
-  },
-  {
-    exercise: "Seated Dumbbell Press", totalSets: 3, bestReps: 6, bestWeight: 160, category: "Shoulders",
-    sets: [
-      { setNumber: 1, reps: 8, weight: 140 },
-      { setNumber: 2, reps: 7, weight: 150 },
-      { setNumber: 3, reps: 6, weight: 160 },
-    ],
-  },
-  {
-    exercise: "Lateral Raises",   totalSets: 3, bestReps: 10, bestWeight: 40,  category: "Shoulders",
-    sets: [
-      { setNumber: 1, reps: 12, weight: 30 },
-      { setNumber: 2, reps: 10, weight: 35 },
-      { setNumber: 3, reps: 10, weight: 40 },
-    ],
-  },
-  {
-    exercise: "Rear Delt Fly",    totalSets: 3, bestReps: 12, bestWeight: 30,  category: "Shoulders",
-    sets: [
-      { setNumber: 1, reps: 15, weight: 20 },
-      { setNumber: 2, reps: 12, weight: 25 },
-      { setNumber: 3, reps: 12, weight: 30 },
-    ],
-  },
-  {
-    exercise: "Triceps Pushdown", totalSets: 4, bestReps: 10, bestWeight: 70,  category: "Triceps",
-    sets: [
-      { setNumber: 1, reps: 12, weight: 55 },
-      { setNumber: 2, reps: 10, weight: 65 },
-      { setNumber: 3, reps: 10, weight: 70 },
-      { setNumber: 4, reps: 8,  weight: 70 },
-    ],
-  },
-];
+const SAMPLE = {
+  date: "Tuesday, Mar 18, 2026",
+  duration: "88:35",
+  totalSets: 18,
+  totalReps: 188,
+  volumeDisplay: "52.0k",
+  userName: "julianross",
+  exercises: [
+    { name: "Hip Thrusts",          totalSets: 5, sets: [{n:1,r:10,w:135},{n:2,r:10,w:225},{n:3,r:10,w:315},{n:4,r:5,w:405},{n:5,r:5,w:405}] },
+    { name: "Squats",               totalSets: 4, sets: [{n:1,r:10,w:225},{n:2,r:8,w:275},{n:3,r:5,w:315},{n:4,r:5,w:315}] },
+    { name: "Good Mornings",        totalSets: 3, sets: [{n:1,r:10,w:135},{n:2,r:10,w:135},{n:3,r:8,w:155}] },
+    { name: "Standing Calf Raises", totalSets: 3, sets: [{n:1,r:20,w:385},{n:2,r:20,w:385},{n:3,r:20,w:385}] },
+    { name: "Hip Abductor",         totalSets: 3, sets: [{n:1,r:10,w:215},{n:2,r:10,w:215},{n:3,r:10,w:215}] },
+  ],
+};
 
-// 5-exercise workout (typical average user)
-const AVG_EXERCISES = ALL_EXERCISES.slice(0, 5);
+// ── Compute adaptive chip height ──────────────────────────────────────────────
+function computeChipH(exercises: typeof SAMPLE.exercises): number {
+  const numEx = exercises.length;
+  // Total chip rows across all exercises
+  const totalChipRows = exercises.reduce((sum, ex) => sum + Math.ceil(ex.sets.length / CHIPS_PER_ROW), 0);
+  // Extra chip-row gaps (within exercises that have >1 chip row)
+  const extraChipGaps = exercises.reduce((sum, ex) => {
+    const rows = Math.ceil(ex.sets.length / CHIPS_PER_ROW);
+    return sum + Math.max(0, rows - 1) * CHIP_GAP;
+  }, 0);
+  const fixedExercise = numEx * H_EX_HEADER + (numEx - 1) * H_EX_GAP + extraChipGaps;
+  const available = USABLE_H - H_CHROME - fixedExercise;
+  const chipH = Math.floor(available / totalChipRows);
+  // Clamp between min readable (70px) and max aesthetic (120px)
+  return Math.max(70, Math.min(150, chipH));
+}
 
-const TOTAL_SETS   = ALL_EXERCISES.reduce((s, e) => s + e.totalSets, 0);
-const TOTAL_REPS   = ALL_EXERCISES.reduce((s, e) => s + e.totalSets * e.bestReps, 0);
-const TOTAL_VOL    = ALL_EXERCISES.reduce((s, e) => s + e.totalSets * e.bestReps * e.bestWeight, 0);
-const VOL_DISPLAY  = `${(TOTAL_VOL / 1000).toFixed(1)}k`;
-const DATE         = "Monday, Mar 16, 2026";
-const DURATION     = "51:45";
-const USER_NAME    = "julianross";
+// ── Render helper ─────────────────────────────────────────────────────────────
+async function render(tree: any, outPath: string) {
+  const satori    = (await import("satori")).default;
+  const { Resvg } = await import("@resvg/resvg-js");
+  const svg = await satori(tree, {
+    width: STORY_W, height: STORY_H,
+    fonts: [
+      { name: "Inter", data: fontRegular, weight: 400, style: "normal" },
+      { name: "Inter", data: fontBold,    weight: 800, style: "normal" },
+    ],
+  });
+  const resvg = new Resvg(svg, { fitTo: { mode: "width", value: STORY_W } });
+  writeFileSync(outPath, resvg.render().asPng());
+  console.log("  ✅ ", outPath);
+}
 
-// ── Shared builders ───────────────────────────────────────────────────────────
-function makeHeader(C: any, isDark: boolean, date: string) {
-  return {
-    type: "div",
-    props: {
-      style: { display: "flex", alignItems: "center", gap: 24, marginBottom: 28 },
+// ── Theme ─────────────────────────────────────────────────────────────────────
+const LIGHT = {
+  bg:          "linear-gradient(160deg, #e8edf6 0%, #dce4f0 40%, #cdd8ec 100%)",
+  tileBg:      "rgba(255,255,255,0.80)",
+  divider:     "rgba(15,23,42,0.10)",
+  textPrimary: "#0f172a",
+  textMuted:   "#64748b",
+  textFooter:  "#94a3b8",
+  badgeBg:     "#0f172a",
+  badgeText:   "#ffffff",
+  chipBg:      "rgba(15,23,42,0.06)",
+  setNumColor: "#1e3a5f",
+  setNumWeight: 700 as const,
+};
+
+const DARK = {
+  bg:          "linear-gradient(160deg, #0a0f1e 0%, #0d1526 50%, #060b16 100%)",
+  tileBg:      "rgba(255,255,255,0.06)",
+  divider:     "rgba(255,255,255,0.08)",
+  textPrimary: "#f1f5f9",
+  textMuted:   "#64748b",
+  textFooter:  "#334155",
+  badgeBg:     "rgba(255,255,255,0.12)",
+  badgeText:   "#f1f5f9",
+  chipBg:      "rgba(255,255,255,0.06)",
+  setNumColor: "#94a3b8",
+  setNumWeight: 600 as const,
+};
+
+// ── Build card ────────────────────────────────────────────────────────────────
+function buildCard(data: typeof SAMPLE, isDark: boolean) {
+  const C = isDark ? DARK : LIGHT;
+  const iconSrc = isDark ? FLEXTAB_ICON_WHITE_B64 : FLEXTAB_ICON_B64;
+  const chipH = computeChipH(data.exercises);
+
+  // Font sizes derived from chip height
+  const chipValueFontSize = Math.round(chipH * 0.42);  // ~39px at chipH=93
+  const chipLabelFontSize = Math.round(chipH * 0.21);  // ~20px at chipH=93
+  const chipUnitFontSize  = Math.round(chipH * 0.22);  // ~20px
+
+  // ── Header ────────────────────────────────────────────────────────────────
+  const headerEl = {
+    type: "div", props: {
+      style: { display: "flex", alignItems: "center", gap: 20, marginBottom: 28 },
       children: [
-        { type: "img", props: { src: isDark ? FLEXTAB_ICON_WHITE_B64 : FLEXTAB_ICON_B64, width: 88, height: 88, style: { borderRadius: 22, flexShrink: 0 } } },
-        {
-          type: "div",
-          props: {
-            style: { display: "flex", flexDirection: "column", gap: 6, flex: 1 },
+        { type: "img", props: { src: iconSrc, width: 72, height: 72, style: { borderRadius: 18, flexShrink: 0 } } },
+        { type: "div", props: {
+          style: { display: "flex", flexDirection: "column", gap: 4 },
+          children: [
+            { type: "div", props: { style: { fontSize: 42, fontWeight: 800, color: C.textPrimary, display: "flex" }, children: "FlexTab" } },
+            { type: "div", props: { style: { fontSize: 26, color: C.textMuted, display: "flex" }, children: data.date } },
+          ],
+        }},
+      ],
+    },
+  };
+
+  // ── Stat strip ────────────────────────────────────────────────────────────
+  const stats = [
+    { v: data.duration,              l: "DURATION" },
+    { v: String(data.totalSets),     l: "SETS"     },
+    { v: String(data.totalReps),     l: "REPS"     },
+    { v: data.volumeDisplay,         l: "VOLUME"   },
+  ];
+  const statStripEl = {
+    type: "div", props: {
+      style: { display: "flex", flexDirection: "row", background: C.tileBg, borderRadius: 20, overflow: "hidden", marginBottom: H_STAT_MB },
+      children: stats.map((s, i) => ({
+        type: "div", props: {
+          style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 16, paddingBottom: 14, borderRight: i < 3 ? `1px solid ${C.divider}` : "none" },
+          children: [
+            { type: "div", props: { style: { fontSize: 38, fontWeight: 800, color: C.textPrimary, lineHeight: 1, display: "flex" }, children: s.v } },
+            { type: "div", props: { style: { fontSize: 17, fontWeight: 700, color: C.textMuted, marginTop: 5, letterSpacing: "0.08em", display: "flex" }, children: s.l } },
+          ],
+        },
+      })),
+    },
+  };
+
+  // ── Exercises ─────────────────────────────────────────────────────────────
+  const exerciseEls = data.exercises.map((ex, ei) => {
+    // Group sets into rows of CHIPS_PER_ROW
+    const chipRows: (typeof ex.sets[0])[][] = [];
+    for (let i = 0; i < ex.sets.length; i += CHIPS_PER_ROW) {
+      chipRows.push(ex.sets.slice(i, i + CHIPS_PER_ROW));
+    }
+
+    const chipRowEls = chipRows.map((row, ri) => {
+      const fixedChipW = Math.floor((CONTENT_W - (CHIPS_PER_ROW - 1) * CHIP_GAP) / CHIPS_PER_ROW);
+      return {
+      type: "div", props: {
+        style: { display: "flex", flexDirection: "row", gap: CHIP_GAP, marginTop: ri === 0 ? 0 : CHIP_GAP },
+        children: row.map(s => ({
+          type: "div", props: {
+            style: {
+              width: fixedChipW,
+              height: chipH,
+              background: C.chipBg,
+              borderRadius: 14,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              paddingLeft: 14,
+              paddingRight: 10,
+              gap: 2,
+            },
             children: [
-              { type: "div", props: { style: { fontSize: 48, fontWeight: 800, color: C.textPrimary, display: "flex" }, children: "FlexTab" } },
-              { type: "div", props: { style: { fontSize: 30, color: C.textMuted, display: "flex" }, children: date } },
+              // Set label
+              { type: "div", props: { style: { fontSize: chipLabelFontSize, fontWeight: C.setNumWeight, color: C.setNumColor, display: "flex" }, children: `Set ${s.n}` } },
+              // Reps row
+              { type: "div", props: {
+                style: { display: "flex", alignItems: "baseline", gap: 4 },
+                children: [
+                  { type: "div", props: { style: { fontSize: chipValueFontSize, fontWeight: 800, color: C.textPrimary, display: "flex", lineHeight: 1 }, children: String(s.r) } },
+                  { type: "div", props: { style: { fontSize: chipUnitFontSize, fontWeight: 600, color: C.textMuted, display: "flex" }, children: " reps" } },
+                  ...(s.w > 0 ? [
+                    { type: "div", props: { style: { fontSize: chipUnitFontSize, color: C.textMuted, display: "flex" }, children: " · " } },
+                    { type: "div", props: { style: { fontSize: chipValueFontSize, fontWeight: 800, color: C.textPrimary, display: "flex", lineHeight: 1 }, children: String(s.w) } },
+                    { type: "div", props: { style: { fontSize: chipUnitFontSize, fontWeight: 600, color: C.textMuted, display: "flex" }, children: " lbs" } },
+                  ] : []),
+                ],
+              }},
             ],
           },
-        },
-      ],
-    },
-  };
-}
-
-function makeFooter(C: any, userName: string, pageNum: number, totalPages: number) {
-  const dots = Array.from({ length: totalPages }, (_, i) => ({
-    type: "div",
-    props: {
-      style: {
-        width: i === pageNum - 1 ? 24 : 10,
-        height: 10, borderRadius: 5,
-        background: i === pageNum - 1 ? C.dotActive : C.dotInactive,
-        display: "flex",
+        })),
       },
-    },
-  }));
+    };
+    });
 
-  return {
-    type: "div",
-    props: {
-      style: { display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 20, marginTop: "auto", borderTop: `1px solid ${C.divider}`, gap: 14 },
-      children: [
-        ...(totalPages > 1 ? [{ type: "div", props: { style: { display: "flex", flexDirection: "row", gap: 8, alignItems: "center" }, children: dots } }] : []),
-        { type: "div", props: { style: { fontSize: 26, color: C.textFooter, fontWeight: 600, display: "flex" }, children: `@${userName} · flextab.app` } },
-      ],
-    },
-  };
-}
-
-function makeSectionLabel(C: any, text: string) {
-  return {
-    type: "div",
-    props: {
-      style: { display: "flex", marginBottom: 16 },
-      children: { type: "div", props: { style: { fontSize: 26, fontWeight: 800, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.12em", display: "flex" }, children: text } },
-    },
-  };
-}
-
-function makeExerciseRow(C: any, ex: any, globalIndex: number, isLast: boolean, maxSets: number | null, rowH: number = 64) {
-  const visibleSets: any[] = ex.sets ? (maxSets !== null ? ex.sets.slice(0, maxSets) : ex.sets) : [];
-  const hiddenCount = ex.sets ? ex.sets.length - visibleSets.length : 0;
-
-  // Compute font sizes that scale with rowH
-  const repsFontSize   = Math.round(rowH * 0.55);
-  const labelFontSize  = Math.round(rowH * 0.38);
-  const setNumFontSize = Math.round(rowH * 0.38);
-  const padV           = Math.round((rowH - repsFontSize) / 2);
-
-  // Build one set cell (used in the 2-column grid)
-  function makeSetCell(s: any) {
     return {
-      type: "div",
-      props: {
-        style: {
-          flex: 1, display: "flex", flexDirection: "column",
-          paddingTop: padV, paddingBottom: padV,
-          paddingLeft: 16, paddingRight: 16,
-          background: C.setRowBg, borderRadius: 14,
-          gap: 4,
-        },
+      type: "div", props: {
+        style: { display: "flex", flexDirection: "column", marginTop: ei === 0 ? 0 : H_EX_GAP },
         children: [
-          // Set number label
-          { type: "div", props: { style: { fontSize: setNumFontSize, fontWeight: C.setNumWeight, color: C.setNumColor, display: "flex" }, children: `Set ${s.setNumber}` } },
-          // Reps + weight on same line
-          {
-            type: "div",
-            props: {
-              style: { display: "flex", alignItems: "baseline", gap: 8, flexWrap: "nowrap" },
-              children: [
-                { type: "div", props: { style: { fontSize: repsFontSize, fontWeight: 800, color: C.textPrimary, display: "flex" }, children: String(s.reps) } },
-                { type: "div", props: { style: { fontSize: labelFontSize, fontWeight: 600, color: C.textMuted, display: "flex" }, children: "reps" } },
-                ...(s.weight > 0 ? [
-                  { type: "div", props: { style: { fontSize: labelFontSize, fontWeight: 400, color: C.textMuted, display: "flex" }, children: "·" } },
-                  { type: "div", props: { style: { fontSize: repsFontSize, fontWeight: 800, color: C.textPrimary, display: "flex" }, children: String(s.weight) } },
-                  { type: "div", props: { style: { fontSize: labelFontSize, fontWeight: 600, color: C.textMuted, display: "flex" }, children: "lbs" } },
-                ] : []),
-              ],
-            },
-          },
+          // Exercise header row
+          { type: "div", props: {
+            style: { display: "flex", alignItems: "center", gap: 18, marginBottom: 12 },
+            children: [
+              { type: "div", props: { style: { width: 52, height: 52, borderRadius: 26, background: C.badgeBg, color: C.badgeText, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: 800, flexShrink: 0 }, children: String(ei + 1) } },
+              { type: "div", props: { style: { flex: 1, fontSize: 38, fontWeight: 800, color: C.textPrimary, display: "flex" }, children: ex.name } },
+            ],
+          }},
+          // Chip rows
+          ...chipRowEls,
         ],
       },
     };
-  }
-
-  // Group sets into pairs for the 2-column grid
-  const setRows: any[] = [];
-  for (let i = 0; i < visibleSets.length; i += 2) {
-    const left  = visibleSets[i];
-    const right = visibleSets[i + 1];
-    setRows.push({
-      type: "div",
-      props: {
-        style: { display: "flex", flexDirection: "row", gap: 10, marginTop: i === 0 ? 10 : 6 },
-        children: right
-          ? [makeSetCell(left), makeSetCell(right)]
-          : [makeSetCell(left), { type: "div", props: { style: { flex: 1, display: "flex" } } }],
-      },
-    });
-  }
-
-  const moreHint = hiddenCount > 0 ? {
-    type: "div",
-    props: {
-      style: { display: "flex", marginTop: 6, paddingLeft: 14 },
-      children: { type: "div", props: { style: { fontSize: 22, color: C.textMuted, fontWeight: 600, display: "flex" }, children: `+${hiddenCount} more set${hiddenCount > 1 ? "s" : ""} — see next page` } },
-    },
-  } : null;
-
-  return {
-    type: "div",
-    props: {
-      style: {
-        display: "flex", flexDirection: "column",
-        paddingTop: 8, paddingBottom: 8,
-        borderBottom: isLast ? "none" : `1px solid ${C.divider}`,
-      },
-      children: [
-        {
-          type: "div",
-          props: {
-            style: { display: "flex", alignItems: "center", gap: 24 },
-            children: [
-              { type: "div", props: { style: { width: 62, height: 62, borderRadius: 31, background: C.badgeBg, color: C.badgeText, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 800, flexShrink: 0 }, children: String(globalIndex + 1) } },
-              { type: "div", props: { style: { flex: 1, fontSize: 44, fontWeight: 800, color: C.textPrimary, display: "flex", alignItems: "center" }, children: truncate(ex.exercise, 28) } },
-              {
-                type: "div",
-                props: {
-                  style: { background: C.pillBg, borderRadius: 50, paddingTop: 12, paddingBottom: 12, paddingLeft: 28, paddingRight: 28, flexShrink: 0, display: "flex", alignItems: "center" },
-                  children: { type: "div", props: { style: { fontSize: 28, fontWeight: 700, color: C.pillText, whiteSpace: "nowrap", display: "flex" }, children: `${ex.totalSets} set${ex.totalSets !== 1 ? "s" : ""}` } },
-                },
-              },
-            ],
-          },
-        },
-        ...setRows,
-        ...(moreHint ? [moreHint] : []),
-      ],
-    },
-  };
-}
-
-// ── Page builders ─────────────────────────────────────────────────────────────
-
-function buildSummaryPage(C: any, isDark: boolean, exercises: typeof ALL_EXERCISES, totalPages: number) {
-  const totalSets  = exercises.reduce((s, e) => s + e.totalSets, 0);
-  const totalReps  = exercises.reduce((s, e) => s + e.totalSets * e.bestReps, 0);
-  const totalVol   = exercises.reduce((s, e) => s + e.totalSets * e.bestReps * e.bestWeight, 0);
-  const volDisplay = totalVol >= 10000 ? `${(totalVol / 1000).toFixed(1)}k` : totalVol.toLocaleString();
-
-  const statTiles = [
-    { value: DURATION,          label: "DURATION" },
-    { value: String(totalSets), label: "SETS"     },
-    { value: String(totalReps), label: "REPS"     },
-    { value: volDisplay,        label: "VOLUME"   },
-  ];
-
-  const makeTile = ({ value, label }: any) => ({
-    type: "div",
-    props: {
-      style: { background: C.tileBg, borderRadius: 24, paddingTop: 22, paddingBottom: 18, paddingLeft: 16, paddingRight: 16, flex: 1, display: "flex", flexDirection: "column", alignItems: "center" },
-      children: [
-        { type: "div", props: { style: { fontSize: 66, fontWeight: 800, color: C.textPrimary, lineHeight: 1, display: "flex" }, children: value } },
-        { type: "div", props: { style: { fontSize: 22, fontWeight: 700, color: C.textMuted, marginTop: 10, textTransform: "uppercase", letterSpacing: "0.12em", display: "flex" }, children: label } },
-      ],
-    },
   });
 
-  // Summary page shows first 3 exercises with up to 3 sets each
-  const previewExercises = exercises.slice(0, 3);
-  const exerciseRows = previewExercises.map((ex, i) =>
-    makeExerciseRow(C, ex, i, i === previewExercises.length - 1, 3)
-  );
-
-  const moreExCount = exercises.length - previewExercises.length;
-  const moreExHint = moreExCount > 0 ? {
-    type: "div",
-    props: {
-      style: { display: "flex", alignItems: "center", justifyContent: "center", paddingTop: 20 },
-      children: { type: "div", props: { style: { fontSize: 28, color: C.textMuted, fontWeight: 600, display: "flex" }, children: `+${moreExCount} more exercise${moreExCount > 1 ? "s" : ""} — swipe for details →` } },
+  // ── Footer ────────────────────────────────────────────────────────────────
+  const footerEl = {
+    type: "div", props: {
+      style: { display: "flex", alignItems: "center", justifyContent: "center", marginTop: "auto", paddingTop: 16, borderTop: `1px solid ${C.divider}` },
+      children: { type: "div", props: { style: { fontSize: 26, color: C.textFooter, fontWeight: 600, display: "flex" }, children: `@${data.userName} · flextab.app` } },
     },
-  } : null;
+  };
 
   return {
-    type: "div",
-    props: {
-      style: { display: "flex", flexDirection: "column", width: STORY_W, height: STORY_H, background: C.bg, paddingTop: PAD_TOP, paddingBottom: PAD_BOT, paddingLeft: PAD_H, paddingRight: PAD_H },
+    type: "div", props: {
+      style: {
+        display: "flex", flexDirection: "column",
+        width: STORY_W, height: STORY_H,
+        background: C.bg,
+        paddingTop: PAD_TOP, paddingBottom: PAD_BOT,
+        paddingLeft: PAD_H, paddingRight: PAD_H,
+      },
       children: [
-        makeHeader(C, isDark, DATE),
-        {
-          type: "div",
-          props: {
-            style: { display: "flex", flexDirection: "column", gap: 12, marginBottom: 28 },
-            children: [
-              { type: "div", props: { style: { display: "flex", flexDirection: "row", gap: 20 }, children: statTiles.slice(0, 2).map(makeTile) } },
-              { type: "div", props: { style: { display: "flex", flexDirection: "row", gap: 20 }, children: statTiles.slice(2, 4).map(makeTile) } },
-            ],
-          },
-        },
+        headerEl,
+        statStripEl,
         { type: "div", props: { style: { height: 1, background: C.divider, marginBottom: 16, display: "flex" } } },
-        makeSectionLabel(C, "Exercises"),
-        {
-          type: "div",
-          props: {
-            style: { display: "flex", flexDirection: "column" },
-            children: moreExHint ? [...exerciseRows, moreExHint] : exerciseRows,
-          },
-        },
-        makeFooter(C, USER_NAME, 1, totalPages),
+        { type: "div", props: { style: { fontSize: 22, fontWeight: 800, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 12, display: "flex" }, children: "EXERCISES" } },
+        { type: "div", props: { style: { display: "flex", flexDirection: "column", flex: 1, justifyContent: "space-between" }, children: exerciseEls } },
+        footerEl,
       ],
     },
   };
-}
-
-/**
- * Build a detail page that fits ALL exercises in the slice.
- * Dynamically reduces set row height until everything fits.
- * If even rowH=32 overflows, the caller should split the slice further.
- */
-function buildDetailPage(
-  C: any, isDark: boolean,
-  exerciseSlice: typeof ALL_EXERCISES,
-  globalOffset: number,
-  pageNum: number, totalPages: number,
-  availPx: number,
-) {
-  const rowH = computeAdaptiveRowH(exerciseSlice, availPx) ?? 32;
-
-  const exerciseRows = exerciseSlice.map((ex, i) =>
-    makeExerciseRow(C, ex, globalOffset + i, i === exerciseSlice.length - 1, null, rowH)
-  );
-
-  return {
-    type: "div",
-    props: {
-      style: { display: "flex", flexDirection: "column", width: STORY_W, height: STORY_H, background: C.bg, paddingTop: PAD_TOP, paddingBottom: PAD_BOT, paddingLeft: PAD_H, paddingRight: PAD_H },
-      children: [
-        makeHeader(C, isDark, DATE),
-        { type: "div", props: { style: { height: 1, background: C.divider, marginBottom: 16, display: "flex" } } },
-        makeSectionLabel(C, totalPages > 2 ? `Exercises — Page ${pageNum} of ${totalPages}` : "All Exercises"),
-        {
-          type: "div",
-          props: {
-            style: { display: "flex", flexDirection: "column" },
-            children: exerciseRows,
-          },
-        },
-        makeFooter(C, USER_NAME, pageNum, totalPages),
-      ],
-    },
-  };
-}
-
-/**
- * Paginate exercises for detail pages.
- * Tries to fit ALL exercises on one detail page first.
- * If that fails, splits into chunks of 4 (then 3 as fallback).
- */
-function paginateDetailExercises(exercises: typeof ALL_EXERCISES): Array<{ slice: typeof ALL_EXERCISES; offset: number }> {
-  const availPx = USABLE_H - DETAIL_FIXED;
-
-  // Can all exercises fit on one page?
-  const rowH = computeAdaptiveRowH(exercises, availPx);
-  if (rowH !== null) {
-    return [{ slice: exercises, offset: 0 }];
-  }
-
-  // Try chunks of 4
-  const chunks4: Array<{ slice: typeof ALL_EXERCISES; offset: number }> = [];
-  for (let i = 0; i < exercises.length; i += 4) {
-    chunks4.push({ slice: exercises.slice(i, i + 4), offset: i });
-  }
-  const allFit4 = chunks4.every(({ slice }) => computeAdaptiveRowH(slice, availPx) !== null);
-  if (allFit4) return chunks4;
-
-  // Fall back to chunks of 3
-  const chunks3: Array<{ slice: typeof ALL_EXERCISES; offset: number }> = [];
-  for (let i = 0; i < exercises.length; i += 3) {
-    chunks3.push({ slice: exercises.slice(i, i + 3), offset: i });
-  }
-  return chunks3;
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 async function main() {
-  const { default: satori } = await import("satori");
-  const { Resvg }           = await import("@resvg/resvg-js");
+  const chipH = computeChipH(SAMPLE.exercises);
+  console.log(`Adaptive chip height: ${chipH}px`);
 
-  const satoriOpts = {
-    width: STORY_W, height: STORY_H,
-    fonts: [
-      { name: "Inter", data: fontRegular, weight: 400, style: "normal" as const },
-      { name: "Inter", data: fontBold,    weight: 700, style: "normal" as const },
-      { name: "Inter", data: fontBold,    weight: 800, style: "normal" as const },
-    ],
-  };
-
-  const availPx = USABLE_H - DETAIL_FIXED;
-
-  // Render both 7-exercise (stress test) and 5-exercise (average user) variants
-  const variants = [
-    { label: "7ex",  exercises: ALL_EXERCISES },
-    { label: "5ex",  exercises: AVG_EXERCISES },
-  ];
-
-  for (const { label, exercises } of variants) {
-    const detailSlices = paginateDetailExercises(exercises);
-    const totalPages   = 1 + detailSlices.length;
-
-    console.log(`\n── ${label}: ${exercises.length} exercises → ${totalPages} pages ──`);
-    detailSlices.forEach(({ slice, offset }, i) => {
-      const rowH = computeAdaptiveRowH(slice, availPx);
-      console.log(`  Detail page ${i + 2}: ${slice.length} exercises, rowH=${rowH ?? 32}px`);
-    });
-
-    for (const themeName of ["light", "dark"] as ThemeKey[]) {
-      const C      = THEMES[themeName];
-      const isDark = themeName === "dark";
-
-      const pages = [
-        buildSummaryPage(C, isDark, exercises, totalPages),
-        ...detailSlices.map(({ slice, offset }, i) =>
-          buildDetailPage(C, isDark, slice, offset, i + 2, totalPages, availPx)
-        ),
-      ];
-
-      for (let i = 0; i < pages.length; i++) {
-        const svg   = await satori(pages[i] as any, satoriOpts);
-        const resvg = new Resvg(svg, { fitTo: { mode: "width", value: STORY_W } });
-        const png   = resvg.render().asPng();
-        const out   = `/home/ubuntu/workout-card-${label}-${themeName}-p${i + 1}.png`;
-        writeFileSync(out, png);
-        console.log(`  ✅  ${out}`);
-      }
-    }
-  }
+  await render(buildCard(SAMPLE, false), "/home/ubuntu/workout-card-final-light.png");
+  await render(buildCard(SAMPLE, true),  "/home/ubuntu/workout-card-final-dark.png");
 }
 
-main().catch(e => { console.error(e); process.exit(1); });
+main().catch(console.error);
