@@ -19,8 +19,10 @@ const CONTENT_W = STORY_W - PAD_H * 2;        // 920px
 
 // ── Fixed element heights ─────────────────────────────────────────────────────
 const H_HEADER      = 88 + 28;   // logo(72) + text + marginBottom = 116
-const H_STAT_STRIP  = 80;        // single-row stat bar
-const H_STAT_MB     = 20;
+const H_TILE_ROW    = 120;       // height of each tile row in the 2x2 grid
+const H_TILE_GAP    = 12;        // gap between the two tile rows
+const H_STAT_STRIP  = H_TILE_ROW * 2 + H_TILE_GAP; // 252px total for 2x2 grid
+const H_STAT_MB     = 24;
 const H_DIVIDER     = 1 + 16;    // line + marginBottom
 const H_SECTION_LBL = 26 + 16;   // text + marginBottom
 const H_FOOTER      = 1 + 16 + 26 + 14; // border + paddingTop + text + paddingBottom = 57
@@ -145,18 +147,31 @@ function buildCard(data: typeof SAMPLE, isDark: boolean) {
     { v: String(data.totalReps),     l: "REPS"     },
     { v: data.volumeDisplay,         l: "VOLUME"   },
   ];
+  // 2×2 tile grid — two rows of two tiles each
+  const tileEl = (s: { v: string; l: string }, isRight: boolean) => ({
+    type: "div", props: {
+      style: {
+        flex: 1,
+        display: "flex", flexDirection: "column",
+        alignItems: "center", justifyContent: "center",
+        background: C.tileBg,
+        borderRadius: 20,
+        height: H_TILE_ROW,
+        marginLeft: isRight ? H_TILE_GAP : 0,
+      },
+      children: [
+        { type: "div", props: { style: { fontSize: 58, fontWeight: 800, color: C.textPrimary, lineHeight: 1, display: "flex" }, children: s.v } },
+        { type: "div", props: { style: { fontSize: 20, fontWeight: 700, color: C.textMuted, marginTop: 8, letterSpacing: "0.10em", display: "flex" }, children: s.l } },
+      ],
+    },
+  });
   const statStripEl = {
     type: "div", props: {
-      style: { display: "flex", flexDirection: "row", background: C.tileBg, borderRadius: 20, overflow: "hidden", marginBottom: H_STAT_MB },
-      children: stats.map((s, i) => ({
-        type: "div", props: {
-          style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 16, paddingBottom: 14, borderRight: i < 3 ? `1px solid ${C.divider}` : "none" },
-          children: [
-            { type: "div", props: { style: { fontSize: 38, fontWeight: 800, color: C.textPrimary, lineHeight: 1, display: "flex" }, children: s.v } },
-            { type: "div", props: { style: { fontSize: 17, fontWeight: 700, color: C.textMuted, marginTop: 5, letterSpacing: "0.08em", display: "flex" }, children: s.l } },
-          ],
-        },
-      })),
+      style: { display: "flex", flexDirection: "column", gap: H_TILE_GAP, marginBottom: H_STAT_MB },
+      children: [
+        { type: "div", props: { style: { display: "flex", flexDirection: "row" }, children: [tileEl(stats[0], false), tileEl(stats[1], true)] } },
+        { type: "div", props: { style: { display: "flex", flexDirection: "row" }, children: [tileEl(stats[2], false), tileEl(stats[3], true)] } },
+      ],
     },
   };
 
