@@ -2,7 +2,7 @@
  * POST /api/upload-media
  *
  * Accepts a multipart/form-data POST with a single "file" field,
- * uploads it to R2 using a raw signed HTTPS PUT (bypasses AWS SDK TLS issues),
+ * uploads it to Supabase Storage (bypasses R2 TLS issues in Railway/Docker),
  * and returns { key, url, mediaType, mimeType }.
  *
  * Used by the community post composer for photos and videos.
@@ -14,23 +14,21 @@ import { users } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import Busboy from "busboy";
-import { r2PutObject } from "./r2Upload";
 
-function r2PublicUrl(key: string): string {
-  const base = process.env.R2_PUBLIC_URL
-    ? process.env.R2_PUBLIC_URL.replace(/\/$/, "")
-    : `https://pub-${process.env.R2_ACCOUNT_ID}.r2.dev`;
-  return `${base}/${key}`;
+const MEDIA_BUCKET = "media";
+
+function getSupabaseAdmin() {
+  const supabaseUrl = process.env.VITE_SUPABASE_URL!;
+  const supabaseKey =
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY!;
+  return createClient(supabaseUrl, supabaseKey);
 }
 
 async function getUserFromRequest(req: Request) {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith("Bearer ")) return null;
   const token = authHeader.substring(7);
-  const supabaseUrl = process.env.VITE_SUPABASE_URL!;
-  const supabaseKey =
-    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY!;
-  const supabase = createClient(supabaseUrl, supabaseKey);
+  const supabase = getSupabaseAdmin();
   const {
     data: { user: supabaseUser },
     error,
@@ -70,13 +68,6 @@ export async function handleMediaUpload(req: Request, res: Response) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const accountId = process.env.R2_ACCOUNT_ID;
-    const accessKeyId = process.env.R2_ACCESS_KEY_ID;
-    const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
-    if (!accountId || !accessKeyId || !secretAccessKey) {
-      return res.status(500).json({ error: "R2 credentials not configured" });
-    }
-
     const fileData = await new Promise<{
       buffer: Buffer;
       mimeType: string;
@@ -109,24 +100,33 @@ export async function handleMediaUpload(req: Request, res: Response) {
       ? "video"
       : "photo";
 
-    const key = `posts/${user.id}/media/${randomUUID()}.${fileData.ext}`;
-    const bucket = process.env.R2_BUCKET_NAME || "flextab-storage";
+    const path = `${user.id}/${randomUUID()}.${fileData.ext}`;
+    const supabase = getSupabaseAdmin();
 
-    console.log("[MediaUpload] Uploading to R2 via raw HTTPS PUT:", key);
-    await r2PutObject({
-      accountId,
-      accessKeyId,
-      secretAccessKey,
-      bucket,
-      key,
-      body: fileData.buffer,
-      contentType: fileData.mimeType,
-    });
-    console.log("[MediaUpload] R2 upload success");
+    console.log("[MediaUpload] Uploading to Supabase Storage:", path);
 
-    const url = r2PublicUrl(key);
+    // Ensure the bucket exists (idempotent)
+    await supabase.storage.createBucket(MEDIA_BUCKET, { public: true }).catch(() => {});
 
-    return res.json({ key, url, mediaType, mimeType: fileData.mimeType });
+    const { error: uploadError } = await supabase.storage
+      .from(MEDIA_BUCKET)
+      .upload(path, fileData.buffer, {
+        contentType: fileData.mimeType,
+        upsert: true,
+      });
+
+    if (uploadError) {
+      console.error("[MediaUpload] Supabase Storage upload error:", uploadError);
+      throw new Error(uploadError.message);
+    }
+
+    const {
+      data: { publicUrl: url },
+    } = supabase.storage.from(MEDIA_BUCKET).getPublicUrl(path);
+
+    console.log("[MediaUpload] Upload success:", url);
+
+    return res.json({ key: path, url, mediaType, mimeType: fileData.mimeType });
   } catch (err: any) {
     console.error("[MediaUpload] Error:", err);
     return res.status(500).json({ error: err.message ?? "Upload failed" });

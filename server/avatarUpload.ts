@@ -1,7 +1,7 @@
 /**
  * Avatar upload REST endpoint.
  * Accepts a multipart/form-data POST with a single "file" field,
- * uploads it to R2 using a raw signed HTTPS PUT (bypasses AWS SDK TLS issues),
+ * uploads it to Supabase Storage (bypasses R2 TLS issues in Railway/Docker),
  * saves the public URL to the users table, and returns { avatarUrl }.
  */
 import { Request, Response } from "express";
@@ -11,28 +11,34 @@ import { users } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import Busboy from "busboy";
-import { r2PutObject } from "./r2Upload";
 
-function r2PublicUrl(key: string): string {
-  const base = process.env.R2_PUBLIC_URL
-    ? process.env.R2_PUBLIC_URL.replace(/\/$/, "")
-    : `https://pub-${process.env.R2_ACCOUNT_ID}.r2.dev`;
-  return `${base}/${key}`;
+const AVATAR_BUCKET = "avatars";
+
+function getSupabaseAdmin() {
+  const supabaseUrl = process.env.VITE_SUPABASE_URL!;
+  const supabaseKey =
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY!;
+  return createClient(supabaseUrl, supabaseKey);
 }
 
 async function getUserFromRequest(req: Request) {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith("Bearer ")) return null;
   const token = authHeader.substring(7);
-  const supabaseUrl = process.env.VITE_SUPABASE_URL!;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY!;
-  const supabase = createClient(supabaseUrl, supabaseKey);
-  const { data: { user: supabaseUser }, error } = await supabase.auth.getUser(token);
+  const supabase = getSupabaseAdmin();
+  const {
+    data: { user: supabaseUser },
+    error,
+  } = await supabase.auth.getUser(token);
   if (!supabaseUser || error) return null;
   const db = await getDb();
   if (!db) return null;
 
-  const existingUsers = await db.select().from(users).where(eq(users.openId, supabaseUser.id)).limit(1);
+  const existingUsers = await db
+    .select()
+    .from(users)
+    .where(eq(users.openId, supabaseUser.id))
+    .limit(1);
   if (existingUsers.length > 0) return existingUsers[0];
 
   try {
@@ -59,14 +65,11 @@ export async function handleAvatarUpload(req: Request, res: Response) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const accountId = process.env.R2_ACCOUNT_ID;
-    const accessKeyId = process.env.R2_ACCESS_KEY_ID;
-    const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
-    if (!accountId || !accessKeyId || !secretAccessKey) {
-      return res.status(500).json({ error: "R2 credentials not configured" });
-    }
-
-    const fileBuffer = await new Promise<{ buffer: Buffer; mimeType: string; ext: string }>((resolve, reject) => {
+    const fileBuffer = await new Promise<{
+      buffer: Buffer;
+      mimeType: string;
+      ext: string;
+    }>((resolve, reject) => {
       const bb = Busboy({ headers: req.headers });
       let resolved = false;
 
@@ -90,28 +93,38 @@ export async function handleAvatarUpload(req: Request, res: Response) {
       req.pipe(bb);
     });
 
-    const key = `avatars/${user.id}/${randomUUID()}.${fileBuffer.ext}`;
-    const bucket = process.env.R2_BUCKET_NAME || "flextab-storage";
+    const path = `${user.id}/${randomUUID()}.${fileBuffer.ext}`;
+    const supabase = getSupabaseAdmin();
 
-    console.log("[AvatarUpload] Uploading to R2 via raw HTTPS PUT:", key);
-    await r2PutObject({
-      accountId,
-      accessKeyId,
-      secretAccessKey,
-      bucket,
-      key,
-      body: fileBuffer.buffer,
-      contentType: fileBuffer.mimeType,
-    });
-    console.log("[AvatarUpload] R2 upload success");
+    console.log("[AvatarUpload] Uploading to Supabase Storage:", path);
 
-    const avatarUrl = r2PublicUrl(key);
+    // Ensure the bucket exists (idempotent — ignores "already exists" error)
+    await supabase.storage.createBucket(AVATAR_BUCKET, { public: true }).catch(() => {});
+
+    const { error: uploadError } = await supabase.storage
+      .from(AVATAR_BUCKET)
+      .upload(path, fileBuffer.buffer, {
+        contentType: fileBuffer.mimeType,
+        upsert: true,
+      });
+
+    if (uploadError) {
+      console.error("[AvatarUpload] Supabase Storage upload error:", uploadError);
+      throw new Error(uploadError.message);
+    }
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from(AVATAR_BUCKET).getPublicUrl(path);
+
+    console.log("[AvatarUpload] Upload success:", publicUrl);
+
     const db = await getDb();
     if (!db) return res.status(500).json({ error: "Database not available" });
 
-    await db.update(users).set({ avatarUrl }).where(eq(users.id, user.id));
+    await db.update(users).set({ avatarUrl: publicUrl }).where(eq(users.id, user.id));
 
-    return res.json({ avatarUrl });
+    return res.json({ avatarUrl: publicUrl });
   } catch (err: any) {
     console.error("[AvatarUpload] Error:", err);
     return res.status(500).json({ error: err.message ?? "Upload failed" });
