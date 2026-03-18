@@ -3,10 +3,11 @@
  *
  * Renders a single 1080×1920 Instagram story PNG using satori + resvg.
  *
- * Single-page design (v6 — Concept B):
- *   • Horizontal stat strip (Duration · Sets · Reps · Volume) at the top
- *   • All exercises with all sets shown as chips in a 4-per-row grid
- *   • Adaptive chip height fills the full canvas
+ * Design (v7 — cardio-aware):
+ *   • Stat strip adapts for pure-cardio sessions (Duration · Distance · Avg Pace · Activities)
+ *   • Cardio exercises render a 3-slot info block (Duration / Distance / Pace) instead of set chips
+ *   • Pure-cardio cards show a decorative runner graphic in the empty lower space
+ *   • Mixed sessions keep the strength stat strip; cardio exercises use the info block
  *
  * Response: { pages: Array<{ dataUri, url, key }> }
  *
@@ -17,6 +18,7 @@ import { Request, Response } from "express";
 import { storagePut } from "./storage.js";
 import { INTER_REGULAR_B64, INTER_BOLD_B64 } from "./fontData.js";
 import { FLEXTAB_ICON_B64, FLEXTAB_ICON_WHITE_B64 } from "../client/src/lib/flextabIconB64.js";
+import { CARDIO_GRAPHIC_B64 } from "../client/src/lib/cardioGraphicB64.js";
 
 // ── Fonts ─────────────────────────────────────────────────────────────────────
 const fontRegular = Buffer.from(INTER_REGULAR_B64, "base64");
@@ -51,6 +53,9 @@ const THEMES = {
     exHeaderBg:   "rgba(15,23,42,0.07)",
     accentBar:    "#0f172a",
     setsBadgeBg:  "rgba(15,23,42,0.10)",
+    cardioBg:     "rgba(59,130,246,0.10)",
+    cardioAccent: "#3b82f6",
+    cardioText:   "#1d4ed8",
   },
   dark: {
     bg:           "linear-gradient(160deg, #0a0f1e 0%, #0d1526 50%, #060b16 100%)",
@@ -67,6 +72,9 @@ const THEMES = {
     exHeaderBg:   "rgba(255,255,255,0.06)",
     accentBar:    "#3b82f6",
     setsBadgeBg:  "rgba(255,255,255,0.10)",
+    cardioBg:     "rgba(59,130,246,0.12)",
+    cardioAccent: "#3b82f6",
+    cardioText:   "#60a5fa",
   },
 } as const;
 
@@ -105,47 +113,71 @@ interface CardData {
 }
 
 // ── Layout constants ──────────────────────────────────────────────────────────
-const CHIPS_PER_ROW = 3;
-const CHIP_GAP      = 14;
-const H_HEADER      = 88 + 28;   // logo(88) + marginBottom(28)
-const H_TILE_ROW    = 120;       // height of each tile in the 2×2 grid
-const H_TILE_GAP    = 12;        // gap between tile rows
-const H_STAT_STRIP  = H_TILE_ROW * 2 + H_TILE_GAP; // 252px total
-const H_STAT_MB     = 24;
-const H_DIVIDER     = 1 + 16;
-const H_SECTION_LBL = 26 + 16;
-const H_FOOTER      = 1 + 16 + 26 + 14;  // border + paddingTop + text + paddingBottom
-const H_EX_HEADER   = 72 + 12;   // accent band height + gap below
-const H_EX_GAP      = 20;        // gap between exercises
+const CHIPS_PER_ROW  = 3;
+const CHIP_GAP       = 14;
+const H_CARDIO_CHIP  = 110;   // height of a cardio info block
+const H_HEADER       = 88 + 28;   // logo(88) + marginBottom(28)
+const H_TILE_ROW     = 120;       // height of each tile in the 2×2 grid
+const H_TILE_GAP     = 12;        // gap between tile rows
+const H_STAT_STRIP   = H_TILE_ROW * 2 + H_TILE_GAP; // 252px total
+const H_STAT_MB      = 24;
+const H_DIVIDER      = 1 + 16;
+const H_SECTION_LBL  = 26 + 16;
+const H_FOOTER       = 1 + 16 + 26 + 14;  // border + paddingTop + text + paddingBottom
+const H_EX_HEADER    = 72 + 12;   // accent band height + gap below
+const H_EX_GAP       = 20;        // gap between exercises
 
 const H_CHROME = H_HEADER + H_STAT_STRIP + H_STAT_MB + H_DIVIDER + H_SECTION_LBL + H_FOOTER;
 
+// ── Cardio detection ──────────────────────────────────────────────────────────
+const CARDIO_CATEGORIES = new Set(["cardio", "running", "cycling", "swimming", "rowing", "walking"]);
+
+function isCardio(ex: ExerciseRow): boolean {
+  if (CARDIO_CATEGORIES.has((ex.category ?? "").toLowerCase())) return true;
+  // Fallback: if the exercise has duration/distance but no meaningful sets/reps
+  if ((ex.duration ?? 0) > 0 && (ex.sets?.length ?? ex.totalSets) <= 1 && (ex.bestReps ?? 0) === 0) return true;
+  return false;
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function truncate(s: string, max: number) {
+  return s.length > max ? s.slice(0, max - 1) + "…" : s;
+}
+
+function formatDuration(totalSec: number): string {
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+function formatPace(totalSec: number, distance: number, unit: string): string {
+  if (!distance || !totalSec) return "—";
+  const secPerUnit = totalSec / distance;
+  const m = Math.floor(secPerUnit / 60);
+  const s = Math.round(secPerUnit % 60);
+  return `${m}:${String(s).padStart(2, "0")}/${unit}`;
+}
+
 // ── Adaptive chip height ──────────────────────────────────────────────────────
-/**
- * Calculates the chip height that fills the available canvas.
- * Each exercise contributes: H_EX_HEADER + ceil(sets/CHIPS_PER_ROW) chip rows.
- */
 function computeChipH(exercises: ExerciseRow[]): number {
   const numEx = exercises.length;
   const totalChipRows = exercises.reduce((sum, ex) => {
+    if (isCardio(ex)) return sum + 1; // cardio = 1 row (the info block)
     const n = ex.sets?.length ?? ex.totalSets;
     return sum + Math.ceil(n / CHIPS_PER_ROW);
   }, 0);
   const extraChipGaps = exercises.reduce((sum, ex) => {
+    if (isCardio(ex)) return sum;
     const n = ex.sets?.length ?? ex.totalSets;
     const rows = Math.ceil(n / CHIPS_PER_ROW);
     return sum + Math.max(0, rows - 1) * CHIP_GAP;
   }, 0);
   const fixedExercise = numEx * H_EX_HEADER + (numEx - 1) * H_EX_GAP + extraChipGaps;
   const available = USABLE_H - H_CHROME - fixedExercise;
-  const chipH = Math.floor(available / totalChipRows);
-  // Clamp: min 70px (readable), max 150px (aesthetic)
+  const chipH = Math.floor(available / Math.max(1, totalChipRows));
   return Math.max(70, Math.min(150, chipH));
-}
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-function truncate(s: string, max: number) {
-  return s.length > max ? s.slice(0, max - 1) + "…" : s;
 }
 
 // ── Card builder ──────────────────────────────────────────────────────────────
@@ -155,11 +187,12 @@ function buildCard(data: CardData) {
   const { date, duration, totalSets, totalReps, volumeDisplay, exercises, userName, userAvatarUrl } = data;
 
   const chipH = computeChipH(exercises);
-
-  // Font sizes derived from chip height — clear hierarchy: numbers bold, units regular
   const chipValueFontSize = Math.round(chipH * 0.44);
   const chipLabelFontSize = Math.round(chipH * 0.22);
   const chipUnitFontSize  = Math.round(chipH * 0.22);
+
+  // ── Cardio session detection ─────────────────────────────────────────────────
+  const pureCardio = exercises.length > 0 && exercises.every(isCardio);
 
   // ── Header ──────────────────────────────────────────────────────────────────
   const avatarEl = userAvatarUrl ? {
@@ -189,14 +222,35 @@ function buildCard(data: CardData) {
   };
 
   // ── Stat strip ───────────────────────────────────────────────────────────────
-  const stats = [
-    { v: duration || "—",       l: "DURATION" },
-    { v: String(totalSets),     l: "SETS"     },
-    { v: String(totalReps),     l: "REPS"     },
-    { v: volumeDisplay,         l: "VOLUME"   },
-  ];
+  let stats: Array<{ v: string; l: string }>;
 
-  // 2×2 tile grid
+  if (pureCardio) {
+    // Cardio-specific stat strip
+    const totalDistKm = exercises.reduce((s, ex) => {
+      if (!ex.distance) return s;
+      const km = (ex.distanceUnit ?? "km") === "miles" ? ex.distance * 1.60934 : ex.distance;
+      return s + km;
+    }, 0);
+    const totalDurSec = exercises.reduce((s, ex) => s + (ex.duration ?? 0), 0);
+    const distDisplay = totalDistKm > 0 ? `${totalDistKm.toFixed(1)} km` : "—";
+    const paceDisplay = totalDurSec > 0 && totalDistKm > 0
+      ? formatPace(totalDurSec, totalDistKm, "km")
+      : "—";
+    stats = [
+      { v: duration || "—",                  l: "DURATION"   },
+      { v: distDisplay,                       l: "DISTANCE"   },
+      { v: paceDisplay,                       l: "AVG PACE"   },
+      { v: String(exercises.length),          l: "ACTIVITIES" },
+    ];
+  } else {
+    stats = [
+      { v: duration || "—",   l: "DURATION" },
+      { v: String(totalSets), l: "SETS"     },
+      { v: String(totalReps), l: "REPS"     },
+      { v: volumeDisplay,     l: "VOLUME"   },
+    ];
+  }
+
   const tileEl = (s: { v: string; l: string }, isRight: boolean) => ({
     type: "div",
     props: {
@@ -213,6 +267,7 @@ function buildCard(data: CardData) {
       ],
     },
   });
+
   const statStripEl = {
     type: "div",
     props: {
@@ -224,17 +279,57 @@ function buildCard(data: CardData) {
     },
   };
 
+  // ── Cardio info block builder ─────────────────────────────────────────────────
+  function buildCardioBlock(ex: ExerciseRow) {
+    const distStr = ex.distance ? `${ex.distance} ${ex.distanceUnit ?? "km"}` : null;
+    const durStr  = ex.duration ? formatDuration(ex.duration) : null;
+    const paceStr = ex.duration && ex.distance
+      ? formatPace(ex.duration, ex.distance, ex.distanceUnit ?? "km")
+      : null;
+
+    const statItems: Array<{ v: string; l: string }> = [];
+    if (durStr)  statItems.push({ v: durStr,  l: "DURATION" });
+    if (distStr) statItems.push({ v: distStr, l: "DISTANCE" });
+    if (paceStr) statItems.push({ v: paceStr, l: "PACE" });
+    while (statItems.length < 3) statItems.push({ v: "—", l: "" });
+
+    const slotW = Math.floor((CONTENT_W - 2 * CHIP_GAP) / 3);
+
+    return {
+      type: "div",
+      props: {
+        style: { display: "flex", flexDirection: "row", gap: CHIP_GAP, height: H_CARDIO_CHIP },
+        children: statItems.map(s => ({
+          type: "div",
+          props: {
+            style: {
+              width: slotW, height: H_CARDIO_CHIP,
+              background: C.cardioBg, borderRadius: 14,
+              display: "flex", flexDirection: "column",
+              alignItems: "center", justifyContent: "center", gap: 6,
+            },
+            children: [
+              { type: "div", props: { style: { fontSize: 38, fontWeight: 800, color: C.cardioText, display: "flex", lineHeight: 1 }, children: s.v } },
+              { type: "div", props: { style: { fontSize: 18, fontWeight: 700, color: C.textMuted, letterSpacing: "0.10em", display: "flex" }, children: s.l } },
+            ],
+          },
+        })),
+      },
+    };
+  }
+
   // ── Exercises ────────────────────────────────────────────────────────────────
   const exerciseEls = exercises.map((ex, ei) => {
-    const sets = ex.sets ?? [];
+    const cardio = isCardio(ex);
+    const sets   = ex.sets ?? [];
 
-    // Group sets into rows of CHIPS_PER_ROW
+    // Strength chip rows
     const chipRows: SetDetail[][] = [];
     for (let i = 0; i < sets.length; i += CHIPS_PER_ROW) {
       chipRows.push(sets.slice(i, i + CHIPS_PER_ROW));
     }
 
-    const fixedChipW = Math.floor((CONTENT_W - (CHIPS_PER_ROW - 1) * CHIP_GAP) / CHIPS_PER_ROW); // 298px at 3/row
+    const fixedChipW = Math.floor((CONTENT_W - (CHIPS_PER_ROW - 1) * CHIP_GAP) / CHIPS_PER_ROW);
     const chipRowEls = chipRows.map((row, ri) => ({
       type: "div",
       props: {
@@ -243,16 +338,10 @@ function buildCard(data: CardData) {
           type: "div",
           props: {
             style: {
-              width: fixedChipW,
-              height: chipH,
-              background: C.chipBg,
-              borderRadius: 14,
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              paddingLeft: 14,
-              paddingRight: 10,
-              gap: 2,
+              width: fixedChipW, height: chipH,
+              background: C.chipBg, borderRadius: 14,
+              display: "flex", flexDirection: "column",
+              justifyContent: "center", paddingLeft: 14, paddingRight: 10, gap: 2,
             },
             children: [
               { type: "div", props: { style: { fontSize: chipLabelFontSize, fontWeight: C.setNumWeight, color: C.setNumColor, display: "flex" }, children: `Set ${s.setNumber}` } },
@@ -277,43 +366,40 @@ function buildCard(data: CardData) {
       },
     }));
 
+    // Right badge — only for strength exercises
+    const rightBadge = cardio ? null : {
+      type: "div",
+      props: {
+        style: { background: C.setsBadgeBg, borderRadius: 50, paddingLeft: 20, paddingRight: 20, paddingTop: 8, paddingBottom: 8, marginRight: 16, display: "flex", flexShrink: 0 },
+        children: { type: "div", props: { style: { fontSize: 22, fontWeight: 700, color: C.textMuted, display: "flex", whiteSpace: "nowrap" }, children: `${ex.totalSets} sets` } },
+      },
+    };
+
     return {
       type: "div",
       props: {
         style: { display: "flex", flexDirection: "column", marginTop: ei === 0 ? 0 : H_EX_GAP },
         children: [
-          // ── Exercise header — band with 2px accent bottom border ──────────
+          // Exercise header band
           {
             type: "div",
             props: {
               style: {
                 display: "flex", alignItems: "center",
-                background: C.exHeaderBg,
-                borderRadius: 16,
-                height: 72,
-                marginBottom: 12,
-                overflow: "hidden",
-                paddingLeft: 20,
-                borderBottom: `2px solid ${C.accentBar}`,
+                background: cardio ? C.cardioBg : C.exHeaderBg,
+                borderRadius: 16, height: 72, marginBottom: 12,
+                overflow: "hidden", paddingLeft: 20,
+                borderBottom: `2px solid ${cardio ? C.cardioAccent : C.accentBar}`,
               },
               children: [
-                // Number badge
                 { type: "div", props: { style: { width: 52, height: 52, borderRadius: 26, background: C.badgeBg, color: C.badgeText, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: 800, flexShrink: 0 }, children: String(ei + 1) } },
-                // Exercise name
                 { type: "div", props: { style: { flex: 1, fontSize: 40, fontWeight: 800, color: C.textPrimary, display: "flex", marginLeft: 16, letterSpacing: "-0.01em" }, children: truncate(ex.exercise, 26) } },
-                // Sets badge
-                {
-                  type: "div",
-                  props: {
-                    style: { background: C.setsBadgeBg, borderRadius: 50, paddingLeft: 20, paddingRight: 20, paddingTop: 8, paddingBottom: 8, marginRight: 16, display: "flex", flexShrink: 0 },
-                    children: { type: "div", props: { style: { fontSize: 22, fontWeight: 700, color: C.textMuted, display: "flex", whiteSpace: "nowrap" }, children: `${ex.totalSets} sets` } },
-                  },
-                },
+                ...(rightBadge ? [rightBadge] : []),
               ],
             },
           },
-          // Chip rows
-          ...chipRowEls,
+          // Cardio info block OR strength chip rows
+          ...(cardio ? [buildCardioBlock(ex)] : chipRowEls),
         ],
       },
     };
@@ -336,6 +422,23 @@ function buildCard(data: CardData) {
     },
   };
 
+  // ── Cardio graphic filler (pure-cardio only) ──────────────────────────────
+  const cardioGraphicEl = pureCardio ? {
+    type: "div",
+    props: {
+      style: { display: "flex", flex: 1, alignItems: "center", justifyContent: "center", marginTop: 24 },
+      children: [{
+        type: "img",
+        props: {
+          src: CARDIO_GRAPHIC_B64,
+          width: CONTENT_W,
+          height: Math.round(CONTENT_W * 640 / 920),
+          style: { opacity: 0.92 },
+        },
+      }],
+    },
+  } : null;
+
   // ── Root ─────────────────────────────────────────────────────────────────────
   return {
     type: "div",
@@ -353,6 +456,7 @@ function buildCard(data: CardData) {
         { type: "div", props: { style: { height: 1, background: C.divider, marginBottom: 16, display: "flex" } } },
         { type: "div", props: { style: { fontSize: 22, fontWeight: 800, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 12, display: "flex" }, children: "EXERCISES" } },
         { type: "div", props: { style: { display: "flex", flexDirection: "column" }, children: exerciseEls } },
+        ...(cardioGraphicEl ? [cardioGraphicEl] : []),
         footerEl,
       ],
     },
@@ -367,17 +471,11 @@ export async function handleGenerateWorkoutCard(req: Request, res: Response) {
       return res.status(400).json({ error: "Invalid card data" });
     }
 
-    // ── Expand bulk-logged sets ────────────────────────────────────────────────
-    // A SetLog row may have sets > 1 when the user logs "3 sets × 10 reps" as one
-    // entry rather than individual set rows. Expand into N identical set details.
+    // Expand bulk-logged sets
     data.exercises = data.exercises.map(ex => {
       if (!ex.sets || ex.sets.length === 0) return ex;
       const expanded: SetDetail[] = [];
-      ex.sets.forEach(s => {
-        // If a set detail has been duplicated (same setNumber repeated), skip;
-        // otherwise expand if the set count implies multiple identical rows.
-        expanded.push(s);
-      });
+      ex.sets.forEach(s => { expanded.push(s); });
       return { ...ex, sets: expanded, totalSets: expanded.length };
     });
 
@@ -387,9 +485,9 @@ export async function handleGenerateWorkoutCard(req: Request, res: Response) {
     const satoriOpts = {
       width: STORY_W, height: STORY_H,
       fonts: [
-        { name: "Inter", data: fontRegular, weight: 400, style: "normal" as const },
-        { name: "Inter", data: fontBold,    weight: 700, style: "normal" as const },
-        { name: "Inter", data: fontBold,    weight: 800, style: "normal" as const },
+        { name: "Inter", data: fontRegular, weight: 400 as const, style: "normal" as const },
+        { name: "Inter", data: fontBold,    weight: 700 as const, style: "normal" as const },
+        { name: "Inter", data: fontBold,    weight: 800 as const, style: "normal" as const },
       ],
     };
 
@@ -411,7 +509,6 @@ export async function handleGenerateWorkoutCard(req: Request, res: Response) {
       console.warn("[workout-card] R2 upload failed (non-fatal):", r2Err?.message);
     }
 
-    // Return as pages array for backward compatibility with client
     return res.json({ pages: [{ dataUri, url, key }] });
   } catch (err: any) {
     console.error("[workout-card] Error:", err);

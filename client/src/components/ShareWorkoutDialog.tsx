@@ -167,13 +167,49 @@ export function ShareWorkoutDialog({
     ? `${(totalVolume / 1000).toFixed(1)}k`
     : totalVolume.toLocaleString();
 
+  // ── Cardio helpers ─────────────────────────────────────────────────────────
+  const CARDIO_CATEGORIES = new Set(['cardio', 'running', 'cycling', 'swimming', 'rowing', 'walking']);
+  const isCardio = (ex: typeof groupedExercises[0]) =>
+    CARDIO_CATEGORIES.has((ex.category ?? '').toLowerCase()) ||
+    ((ex.duration ?? 0) > 0 && ex.totalSets <= 1 && ex.bestReps === 0);
+
+  const pureCardio = groupedExercises.length > 0 && groupedExercises.every(isCardio);
+
+  const formatDur = (sec: number) => {
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    const s = sec % 60;
+    return h > 0 ? `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}` : `${m}:${String(s).padStart(2,'0')}`;
+  };
+  const formatPace = (sec: number, dist: number, unit: string) => {
+    if (!dist || !sec) return '—';
+    const spu = sec / dist;
+    return `${Math.floor(spu/60)}:${String(Math.round(spu%60)).padStart(2,'0')}/${unit}`;
+  };
+
   // ── Stat tiles ───────────────────────────────────────────────────────────────
-  const statTiles = [
-    { value: duration || '—', label: 'DURATION' },
-    { value: String(totalSets),   label: 'SETS'     },
-    { value: String(totalReps),   label: 'REPS'     },
-    { value: volumeDisplay,       label: 'VOLUME'   },
-  ];
+  let statTiles: Array<{ value: string; label: string }>;
+  if (pureCardio) {
+    const totalDistKm = groupedExercises.reduce((s, ex) => {
+      if (!ex.distance) return s;
+      const km = (ex.distanceUnit ?? 'km') === 'miles' ? ex.distance * 1.60934 : ex.distance;
+      return s + km;
+    }, 0);
+    const totalDurSec = groupedExercises.reduce((s, ex) => s + (ex.duration ?? 0), 0);
+    statTiles = [
+      { value: duration || '—',                                            label: 'DURATION'   },
+      { value: totalDistKm > 0 ? `${totalDistKm.toFixed(1)} km` : '—',    label: 'DISTANCE'   },
+      { value: formatPace(totalDurSec, totalDistKm, 'km'),                 label: 'AVG PACE'   },
+      { value: String(groupedExercises.length),                            label: 'ACTIVITIES' },
+    ];
+  } else {
+    statTiles = [
+      { value: duration || '—', label: 'DURATION' },
+      { value: String(totalSets),   label: 'SETS'     },
+      { value: String(totalReps),   label: 'REPS'     },
+      { value: volumeDisplay,       label: 'VOLUME'   },
+    ];
+  }
 
   // ── Call server to generate card ─────────────────────────────────────────────
   const generateCards = async (): Promise<Array<{ dataUri: string; url: string | null; key: string | null }>> => {
@@ -340,9 +376,14 @@ export function ShareWorkoutDialog({
         Exercises
       </p>
 
-      {/* ── Exercise list with chip grid ── */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+      {/* ── Exercise list with chip grid or cardio info blocks ── */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         {groupedExercises.map((exercise, ei) => {
+          const cardio = isCardio(exercise);
+          const cardioBg = theme === 'dark' ? 'rgba(59,130,246,0.12)' : 'rgba(59,130,246,0.10)';
+          const cardioAccent = '#3b82f6';
+          const cardioText = theme === 'dark' ? '#60a5fa' : '#1d4ed8';
+
           const sets = exercise.setDetails;
           const chipRows: typeof sets[] = [];
           for (let i = 0; i < sets.length; i += CHIPS_PER_ROW) {
@@ -351,17 +392,16 @@ export function ShareWorkoutDialog({
 
           return (
             <div key={ei}>
-              {/* Exercise header — band with 2px accent bottom border */}
+              {/* Exercise header */}
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 6,
-                background: C.exHeaderBg,
+                background: cardio ? cardioBg : C.exHeaderBg,
                 borderRadius: 7,
                 padding: '4px 7px 4px 8px',
                 marginBottom: 4,
                 overflow: 'hidden',
-                borderBottom: `2px solid ${C.accentBar}`,
+                borderBottom: `2px solid ${cardio ? cardioAccent : C.accentBar}`,
               }}>
-                {/* Number badge */}
                 <div style={{
                   width: 17, height: 17, borderRadius: 9,
                   background: C.badgeBg, color: C.badgeText,
@@ -370,7 +410,6 @@ export function ShareWorkoutDialog({
                 }}>
                   {ei + 1}
                 </div>
-                {/* Exercise name — larger, heavier */}
                 <p style={{
                   flex: 1, fontSize: 12, fontWeight: 800,
                   color: C.textPrimary, margin: 0,
@@ -379,51 +418,82 @@ export function ShareWorkoutDialog({
                 }}>
                   {exercise.exercise}
                 </p>
-                {/* Sets pill */}
-                <div style={{
-                  background: theme === 'dark' ? 'rgba(255,255,255,0.10)' : 'rgba(15,23,42,0.08)',
-                  borderRadius: 50, padding: '2px 7px',
-                }}>
-                  <span style={{ fontSize: 8, fontWeight: 700, color: C.textMuted, whiteSpace: 'nowrap' }}>
-                    {exercise.totalSets} sets
-                  </span>
-                </div>
+                {!cardio && (
+                  <div style={{
+                    background: theme === 'dark' ? 'rgba(255,255,255,0.10)' : 'rgba(15,23,42,0.08)',
+                    borderRadius: 50, padding: '2px 7px',
+                  }}>
+                    <span style={{ fontSize: 8, fontWeight: 700, color: C.textMuted, whiteSpace: 'nowrap' }}>
+                      {exercise.totalSets} sets
+                    </span>
+                  </div>
+                )}
               </div>
 
-              {/* Chip rows */}
-              {chipRows.map((row, ri) => (
-                <div key={ri} style={{ display: 'flex', gap: 4, marginBottom: ri < chipRows.length - 1 ? 4 : 0 }}>
-                  {row.map((s, ci) => (
-                    <div key={ci} style={{
-                      flex: 1, background: C.chipBg, borderRadius: 7,
-                      padding: '4px 5px 5px',
-                      display: 'flex', flexDirection: 'column', gap: 1,
+              {cardio ? (
+                /* Cardio info block */
+                <div style={{ display: 'flex', gap: 4 }}>
+                  {[
+                    { v: exercise.duration ? formatDur(exercise.duration) : '—', l: 'DURATION' },
+                    { v: exercise.distance ? `${exercise.distance} ${exercise.distanceUnit ?? 'km'}` : '—', l: 'DISTANCE' },
+                    { v: exercise.duration && exercise.distance ? formatPace(exercise.duration, exercise.distance, exercise.distanceUnit ?? 'km') : '—', l: 'PACE' },
+                  ].map(({ v, l }) => (
+                    <div key={l} style={{
+                      flex: 1, background: cardioBg, borderRadius: 7,
+                      padding: '5px 4px',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
                     }}>
-                      <span style={{ fontSize: 7, fontWeight: 700, color: C.setNumColor, lineHeight: 1 }}>
-                        Set {s.setNumber}
-                      </span>
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
-                        <span style={{ fontSize: 11, fontWeight: 800, color: C.textPrimary, lineHeight: 1 }}>{s.reps}</span>
-                        <span style={{ fontSize: 7, fontWeight: 400, color: C.textMuted }}>reps</span>
-                      </div>
-                      {s.weight > 0 && (
-                        <div style={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
-                          <span style={{ fontSize: 11, fontWeight: 800, color: C.textPrimary, lineHeight: 1 }}>{s.weight}</span>
-                          <span style={{ fontSize: 7, fontWeight: 400, color: C.textMuted }}>lbs</span>
-                        </div>
-                      )}
+                      <span style={{ fontSize: 11, fontWeight: 800, color: cardioText, lineHeight: 1 }}>{v}</span>
+                      <span style={{ fontSize: 6, fontWeight: 700, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{l}</span>
                     </div>
                   ))}
-                  {/* Fill empty slots in last row */}
-                  {row.length < CHIPS_PER_ROW && Array.from({ length: CHIPS_PER_ROW - row.length }, (_, i) => (
-                    <div key={`empty-${i}`} style={{ flex: 1 }} />
-                  ))}
                 </div>
-              ))}
+              ) : (
+                /* Strength chip rows */
+                chipRows.map((row, ri) => (
+                  <div key={ri} style={{ display: 'flex', gap: 4, marginBottom: ri < chipRows.length - 1 ? 4 : 0 }}>
+                    {row.map((s, ci) => (
+                      <div key={ci} style={{
+                        flex: 1, background: C.chipBg, borderRadius: 7,
+                        padding: '4px 5px 5px',
+                        display: 'flex', flexDirection: 'column', gap: 1,
+                      }}>
+                        <span style={{ fontSize: 7, fontWeight: 700, color: C.setNumColor, lineHeight: 1 }}>
+                          Set {s.setNumber}
+                        </span>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
+                          <span style={{ fontSize: 11, fontWeight: 800, color: C.textPrimary, lineHeight: 1 }}>{s.reps}</span>
+                          <span style={{ fontSize: 7, fontWeight: 400, color: C.textMuted }}>reps</span>
+                        </div>
+                        {s.weight > 0 && (
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
+                            <span style={{ fontSize: 11, fontWeight: 800, color: C.textPrimary, lineHeight: 1 }}>{s.weight}</span>
+                            <span style={{ fontSize: 7, fontWeight: 400, color: C.textMuted }}>lbs</span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    {row.length < CHIPS_PER_ROW && Array.from({ length: CHIPS_PER_ROW - row.length }, (_, i) => (
+                      <div key={`empty-${i}`} style={{ flex: 1 }} />
+                    ))}
+                  </div>
+                ))
+              )}
             </div>
           );
         })}
       </div>
+
+      {/* ── Cardio graphic filler (pure-cardio only) ── */}
+      {pureCardio && (
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 8 }}>
+          <img
+            src={`/cardio-graphic.png`}
+            alt=""
+            style={{ width: '100%', opacity: 0.92, objectFit: 'contain' }}
+          />
+        </div>
+      )}
 
       {/* ── Footer ── */}
       <div style={{ marginTop: 'auto', paddingTop: 5, borderTop: `1px solid ${C.divider}` }}>
