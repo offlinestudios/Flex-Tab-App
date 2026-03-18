@@ -26,7 +26,7 @@ const H_STAT_MB     = 24;
 const H_DIVIDER     = 1 + 16;    // line + marginBottom
 const H_SECTION_LBL = 26 + 16;   // text + marginBottom
 const H_FOOTER      = 1 + 16 + 26 + 14; // border + paddingTop + text + paddingBottom = 57
-const H_EX_HEADER   = 56 + 12;   // badge row + gap below chips
+const H_EX_HEADER   = 72 + 12;   // accent band height + gap below chips
 const H_EX_GAP      = 20;        // gap between exercises
 const CHIPS_PER_ROW = 3;
 const CHIP_GAP      = 14;
@@ -96,6 +96,9 @@ const LIGHT = {
   chipBg:      "rgba(15,23,42,0.06)",
   setNumColor: "#1e3a5f",
   setNumWeight: 700 as const,
+  exHeaderBg:  "rgba(15,23,42,0.07)",
+  accentBar:   "#0f172a",
+  setsBadgeBg: "rgba(15,23,42,0.10)",
 };
 
 const DARK = {
@@ -110,6 +113,9 @@ const DARK = {
   chipBg:      "rgba(255,255,255,0.06)",
   setNumColor: "#94a3b8",
   setNumWeight: 600 as const,
+  exHeaderBg:  "rgba(255,255,255,0.06)",
+  accentBar:   "#3b82f6",
+  setsBadgeBg: "rgba(255,255,255,0.10)",
 };
 
 // ── Build card ────────────────────────────────────────────────────────────────
@@ -229,12 +235,28 @@ function buildCard(data: typeof SAMPLE, isDark: boolean) {
       type: "div", props: {
         style: { display: "flex", flexDirection: "column", marginTop: ei === 0 ? 0 : H_EX_GAP },
         children: [
-          // Exercise header row
+          // ── Exercise header band ───────────────────────────────────────────────────
           { type: "div", props: {
-            style: { display: "flex", alignItems: "center", gap: 18, marginBottom: 12 },
+            style: {
+              display: "flex", alignItems: "center",
+              background: C.exHeaderBg,
+              borderRadius: 16,
+              height: 72,
+              marginBottom: 12,
+              overflow: "hidden",
+            },
             children: [
-              { type: "div", props: { style: { width: 52, height: 52, borderRadius: 26, background: C.badgeBg, color: C.badgeText, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: 800, flexShrink: 0 }, children: String(ei + 1) } },
-              { type: "div", props: { style: { flex: 1, fontSize: 38, fontWeight: 800, color: C.textPrimary, display: "flex" }, children: ex.name } },
+              // Left accent bar
+              { type: "div", props: { style: { width: 6, alignSelf: "stretch", background: C.accentBar, flexShrink: 0, display: "flex" } } },
+              // Number badge
+              { type: "div", props: { style: { width: 52, height: 52, borderRadius: 26, background: C.badgeBg, color: C.badgeText, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: 800, flexShrink: 0, marginLeft: 16 }, children: String(ei + 1) } },
+              // Exercise name
+              { type: "div", props: { style: { flex: 1, fontSize: 40, fontWeight: 800, color: C.textPrimary, display: "flex", marginLeft: 16, letterSpacing: "-0.01em" }, children: ex.name } },
+              // Sets badge
+              { type: "div", props: {
+                style: { background: C.setsBadgeBg, borderRadius: 50, paddingLeft: 20, paddingRight: 20, paddingTop: 8, paddingBottom: 8, marginRight: 16, display: "flex", flexShrink: 0 },
+                children: { type: "div", props: { style: { fontSize: 22, fontWeight: 700, color: C.textMuted, display: "flex", whiteSpace: "nowrap" }, children: `${ex.totalSets} sets` } },
+              }},
             ],
           }},
           // Chip rows

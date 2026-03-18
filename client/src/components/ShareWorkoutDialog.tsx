@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Share2, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Share2, X } from "lucide-react";
 import { toast } from "sonner";
 import { PRESET_EXERCISES } from "@/lib/exercises";
 import { useState, useEffect } from "react";
@@ -26,76 +26,46 @@ interface ShareWorkoutDialogProps {
   date: string;
   duration?: string;
   workoutSessionId?: number | null;
-  /** Display name shown on the card (e.g. "Alex Johnson") */
   userName?: string;
-  /** URL of the user's profile photo for the card avatar circle */
   userAvatarUrl?: string;
-  /** Lifter grade shown on the card (e.g. "Advanced") — kept for API compat but not rendered */
   lifterGrade?: string;
 }
 
 // ── Theme palette (mirrors server/workoutCardImage.ts) ───────────────────────
 const THEMES = {
   light: {
-    cardBg:       '#e8edf2',
-    tileBg:       'rgba(255,255,255,0.80)',
-    pillBg:       'rgba(15,23,42,0.07)',
-    setRowBg:     'rgba(15,23,42,0.04)',
-    divider:      'rgba(15,23,42,0.10)',
-    textPrimary:  '#0f172a',
-    textSecondary:'#334155',
-    textMuted:    '#64748b',
-    textPill:     '#334155',
-    textFooter:   '#94a3b8',
-    badgeBg:      '#0f172a',
-    badgeText:    '#ffffff',
-    dotActive:    '#0f172a',
-    dotInactive:  'rgba(15,23,42,0.20)',
-    shadow:       '0 2px 16px rgba(0,0,0,0.08)',
+    cardBg:        '#e8edf2',
+    tileBg:        'rgba(255,255,255,0.80)',
+    chipBg:        'rgba(255,255,255,0.72)',
+    divider:       'rgba(15,23,42,0.10)',
+    textPrimary:   '#0f172a',
+    textSecondary: '#334155',
+    textMuted:     '#64748b',
+    textFooter:    '#94a3b8',
+    badgeBg:       '#0f172a',
+    badgeText:     '#ffffff',
+    exHeaderBg:    'rgba(15,23,42,0.06)',   // subtle band behind exercise name
+    accentBar:     '#0f172a',               // left accent bar colour
+    setNumColor:   '#1e3a5f',               // bold dark-blue set number
   },
   dark: {
-    cardBg:       '#0a0f1e',
-    tileBg:       'rgba(255,255,255,0.06)',
-    pillBg:       'rgba(255,255,255,0.07)',
-    setRowBg:     'rgba(255,255,255,0.03)',
-    divider:      'rgba(255,255,255,0.08)',
-    textPrimary:  '#f1f5f9',
-    textSecondary:'#cbd5e1',
-    textMuted:    '#64748b',
-    textPill:     '#94a3b8',
-    textFooter:   '#334155',
-    badgeBg:      'rgba(255,255,255,0.12)',
-    badgeText:    '#f1f5f9',
-    dotActive:    '#f1f5f9',
-    dotInactive:  'rgba(255,255,255,0.20)',
-    shadow:       '0 2px 24px rgba(0,0,0,0.4)',
+    cardBg:        '#0a0f1e',
+    tileBg:        'rgba(255,255,255,0.06)',
+    chipBg:        'rgba(255,255,255,0.07)',
+    divider:       'rgba(255,255,255,0.08)',
+    textPrimary:   '#f1f5f9',
+    textSecondary: '#cbd5e1',
+    textMuted:     '#64748b',
+    textFooter:    '#334155',
+    badgeBg:       'rgba(255,255,255,0.12)',
+    badgeText:     '#f1f5f9',
+    exHeaderBg:    'rgba(255,255,255,0.05)',
+    accentBar:     '#3b82f6',
+    setNumColor:   '#93c5fd',
   },
 } as const;
 
 type ThemeKey = keyof typeof THEMES;
-
-// ── Page types for the in-app preview ────────────────────────────────────────
-interface PreviewPage {
-  type: 'summary' | 'detail';
-  exercises: Array<{
-    exercise: string;
-    totalSets: number;
-    bestReps: number;
-    bestWeight: number;
-    category: string;
-    volume: number;
-    duration?: number;
-    distance?: number;
-    distanceUnit?: 'miles' | 'km';
-    setDetails: Array<{ setNumber: number; reps: number; weight: number }>;
-  }>;
-  globalOffset: number; // index of first exercise in this page
-  pageNum: number;
-  totalPages: number;
-}
-
-const EXERCISES_PER_DETAIL_PAGE = 3;
-const SETS_ON_SUMMARY = 3; // sets shown per exercise on the summary page
 
 export function ShareWorkoutDialog({
   open,
@@ -106,17 +76,14 @@ export function ShareWorkoutDialog({
   workoutSessionId,
   userName,
   userAvatarUrl,
-  lifterGrade,
 }: ShareWorkoutDialogProps) {
   const [loading, setLoading] = useState<null | 'share'>(null);
-  const [previewPage, setPreviewPage] = useState(0);
 
   // ── Detect current app theme ─────────────────────────────────────────────────
   const [theme, setTheme] = useState<ThemeKey>('light');
   useEffect(() => {
     const isDark = document.documentElement.classList.contains('dark');
     setTheme(isDark ? 'dark' : 'light');
-
     const observer = new MutationObserver(() => {
       setTheme(document.documentElement.classList.contains('dark') ? 'dark' : 'light');
     });
@@ -124,22 +91,26 @@ export function ShareWorkoutDialog({
     return () => observer.disconnect();
   }, []);
 
-  // Reset to page 0 when dialog opens
-  useEffect(() => { if (open) setPreviewPage(0); }, [open]);
-
   const C = THEMES[theme];
 
-  // ── Totals ───────────────────────────────────────────────────────────────────
-  // Each SetLog row represents one set; e.sets is the set number (1, 2, 3…), not a count
-  const totalSets   = exercises.length;
-  const totalReps   = exercises.reduce((sum, e) => sum + e.reps, 0);
-  const totalVolume = exercises.reduce((sum, e) => sum + e.reps * e.weight, 0);
+  // ── Expand bulk-logged sets ──────────────────────────────────────────────────
+  // A SetLog row may have sets > 1 when the user logs "3 sets × 10 reps" as one entry.
+  // In that case we expand it into N identical individual set rows before grouping.
+  const expandedExercises: SetLog[] = exercises.flatMap(e => {
+    const count = e.sets > 1 ? e.sets : 1;
+    return Array.from({ length: count }, (_, i) => ({ ...e, sets: i + 1 }));
+  });
+
+  // ── Totals (use expanded rows) ───────────────────────────────────────────────
+  const totalSets   = expandedExercises.length;
+  const totalReps   = expandedExercises.reduce((sum, e) => sum + e.reps, 0);
+  const totalVolume = expandedExercises.reduce((sum, e) => sum + e.reps * e.weight, 0);
 
   // ── Group exercises ──────────────────────────────────────────────────────────
-  const groupedExercises = exercises.reduce((acc, exercise) => {
+  const groupedExercises = expandedExercises.reduce((acc, exercise) => {
     const existing = acc.find(e => e.exercise === exercise.exercise);
     if (existing) {
-      existing.totalSets += 1; // each row = one set
+      existing.totalSets += 1;
       existing.volume    += exercise.reps * exercise.weight;
       if (
         exercise.weight > existing.bestWeight ||
@@ -153,49 +124,31 @@ export function ShareWorkoutDialog({
       const presetExercise = PRESET_EXERCISES.find(e => e.name === exercise.exercise);
       const category = presetExercise?.category || exercise.category || 'General';
       acc.push({
-        exercise:    exercise.exercise,
-        totalSets:   1, // first row = one set
-        bestReps:    exercise.reps,
-        bestWeight:  exercise.weight,
+        exercise:     exercise.exercise,
+        totalSets:    1,
+        bestReps:     exercise.reps,
+        bestWeight:   exercise.weight,
         category,
-        volume:      exercise.reps * exercise.weight,
-        duration:    exercise.duration,
-        distance:    exercise.distance,
+        volume:       exercise.reps * exercise.weight,
+        duration:     exercise.duration,
+        distance:     exercise.distance,
         distanceUnit: exercise.distanceUnit,
-        setDetails:  [{ setNumber: 1, reps: exercise.reps, weight: exercise.weight }],
+        setDetails:   [{ setNumber: 1, reps: exercise.reps, weight: exercise.weight }],
       });
     }
     return acc;
   }, [] as Array<{
-    exercise:    string;
-    totalSets:   number;
-    bestReps:    number;
-    bestWeight:  number;
-    category:    string;
-    volume:      number;
-    duration?:   number;
-    distance?:   number;
+    exercise:     string;
+    totalSets:    number;
+    bestReps:     number;
+    bestWeight:   number;
+    category:     string;
+    volume:       number;
+    duration?:    number;
+    distance?:    number;
     distanceUnit?: 'miles' | 'km';
-    setDetails:  Array<{ setNumber: number; reps: number; weight: number }>;
+    setDetails:   Array<{ setNumber: number; reps: number; weight: number }>;
   }>);
-
-  // ── Build preview pages ──────────────────────────────────────────────────────
-  const detailSlices: { slice: typeof groupedExercises; offset: number }[] = [];
-  for (let i = 0; i < groupedExercises.length; i += EXERCISES_PER_DETAIL_PAGE) {
-    detailSlices.push({ slice: groupedExercises.slice(i, i + EXERCISES_PER_DETAIL_PAGE), offset: i });
-  }
-  const totalPages = 1 + detailSlices.length;
-
-  const previewPages: PreviewPage[] = [
-    { type: 'summary', exercises: groupedExercises.slice(0, 3), globalOffset: 0, pageNum: 1, totalPages },
-    ...detailSlices.map(({ slice, offset }, i) => ({
-      type: 'detail' as const,
-      exercises: slice,
-      globalOffset: offset,
-      pageNum: i + 2,
-      totalPages,
-    })),
-  ];
 
   // ── Date formatting ──────────────────────────────────────────────────────────
   const [year, month, day] = date.includes('-')
@@ -214,7 +167,15 @@ export function ShareWorkoutDialog({
     ? `${(totalVolume / 1000).toFixed(1)}k`
     : totalVolume.toLocaleString();
 
-  // ── Call server to generate all pages ───────────────────────────────────────
+  // ── Stat tiles ───────────────────────────────────────────────────────────────
+  const statTiles = [
+    { value: duration || '—', label: 'DURATION' },
+    { value: String(totalSets),   label: 'SETS'     },
+    { value: String(totalReps),   label: 'REPS'     },
+    { value: volumeDisplay,       label: 'VOLUME'   },
+  ];
+
+  // ── Call server to generate card ─────────────────────────────────────────────
   const generateCards = async (): Promise<Array<{ dataUri: string; url: string | null; key: string | null }>> => {
     const payload = {
       date: formattedDate,
@@ -263,235 +224,220 @@ export function ShareWorkoutDialog({
     try {
       const pages = await generateCards();
 
-      if (navigator.share) {
-        // Build File objects for all pages
-        const files = pages.map((page, i) => {
-          const byteString = atob(page.dataUri.split(',')[1]);
-          const ab = new ArrayBuffer(byteString.length);
-          const ia = new Uint8Array(ab);
-          for (let j = 0; j < byteString.length; j++) ia[j] = byteString.charCodeAt(j);
-          const blob = new Blob([ab], { type: 'image/png' });
-          return new File([blob], `flextab-workout-${shortDate.replace(/\s/g, '-')}-p${i + 1}.png`, { type: 'image/png' });
-        });
-
-        try {
-          if (navigator.canShare && navigator.canShare({ files })) {
-            await navigator.share({ files, title: `FlexTab Workout — ${shortDate}` });
-            toast.success('Shared successfully!');
-            return;
-          }
-        } catch {
-          // Multi-file share not supported — try single file
-        }
-
-        // Fallback: share first page only
-        try {
-          if (navigator.canShare && navigator.canShare({ files: [files[0]] })) {
-            await navigator.share({ files: [files[0]], title: `FlexTab Workout — ${shortDate}` });
-            toast.success('Shared successfully! (tip: multi-image sharing may not be supported on this device)');
-            return;
-          }
-        } catch {
-          // Fall through to URL share
-        }
-
-        const firstUrl = pages[0].url ?? pages[0].dataUri;
-        await navigator.share({
-          title: `FlexTab Workout — ${shortDate}`,
-          url: firstUrl,
-          text: `💪 ${shortDate} · ${totalSets} sets · ${totalReps} reps`,
-        });
-        toast.success('Shared successfully!');
-      } else {
-        // Desktop fallback: copy first page URL
+      if (!navigator.share) {
+        // Desktop fallback: copy URL
         const firstUrl = pages[0].url ?? pages[0].dataUri;
         await navigator.clipboard.writeText(firstUrl);
         toast.success('Image URL copied to clipboard!');
+        return;
       }
+
+      // Build File objects
+      const files = pages.map((page, i) => {
+        const byteString = atob(page.dataUri.split(',')[1]);
+        const ab = new ArrayBuffer(byteString.length);
+        const ia = new Uint8Array(ab);
+        for (let j = 0; j < byteString.length; j++) ia[j] = byteString.charCodeAt(j);
+        const blob = new Blob([ab], { type: 'image/png' });
+        return new File([blob], `flextab-workout-${shortDate.replace(/\s/g, '-')}-p${i + 1}.png`, { type: 'image/png' });
+      });
+
+      // Try multi-file share first
+      const canShareMulti = navigator.canShare && navigator.canShare({ files });
+      if (canShareMulti) {
+        try {
+          await navigator.share({ files, title: `FlexTab Workout — ${shortDate}` });
+          toast.success('Shared successfully!');
+          return;
+        } catch (e: any) {
+          if (e?.name === 'AbortError') return; // user dismissed — not an error
+          // Multi-file failed — fall through to single-file
+        }
+      }
+
+      // Single-file fallback
+      const canShareSingle = navigator.canShare && navigator.canShare({ files: [files[0]] });
+      if (canShareSingle) {
+        try {
+          await navigator.share({ files: [files[0]], title: `FlexTab Workout — ${shortDate}` });
+          toast.success('Shared successfully!');
+          return;
+        } catch (e: any) {
+          if (e?.name === 'AbortError') return;
+          // Fall through to URL share
+        }
+      }
+
+      // URL/text fallback
+      const firstUrl = pages[0].url ?? pages[0].dataUri;
+      await navigator.share({
+        title: `FlexTab Workout — ${shortDate}`,
+        url: firstUrl,
+        text: `💪 ${shortDate} · ${totalSets} sets · ${totalReps} reps`,
+      });
+      toast.success('Shared successfully!');
     } catch (error: any) {
-      if (error?.name !== 'AbortError') toast.error('Failed to share');
+      if (error?.name !== 'AbortError') {
+        toast.error('Could not share — try saving the image instead');
+      }
     } finally {
       setLoading(null);
     }
   };
 
-  // ── Stat tiles ───────────────────────────────────────────────────────────────
-  const statTiles = [
-    { value: duration || '—', label: 'DURATION' },
-    { value: String(totalSets),   label: 'SETS'     },
-    { value: String(totalReps),   label: 'REPS'     },
-    { value: volumeDisplay,       label: 'VOLUME'   },
-  ];
+  // ── In-app preview (single-page chip grid, mirrors workoutCardImage.ts) ──────
+  const CHIPS_PER_ROW = 3;
 
-  // ── Render a single preview page ─────────────────────────────────────────────
-  const renderPreviewPage = (page: PreviewPage) => {
-    const isSummary = page.type === 'summary';
-
-    return (
-      <div
-        style={{
-          position: 'relative',
-          width: '100%',
-          aspectRatio: '9 / 16',
-          background: theme === 'dark'
-            ? 'linear-gradient(160deg, #0a0f1e 0%, #0d1526 50%, #060b16 100%)'
-            : 'linear-gradient(160deg, #e8edf6 0%, #dce4f0 40%, #cdd8ec 100%)',
-          borderRadius: 20,
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-          padding: '5% 5% 3%',
-        }}
-      >
-        {/* ── Header ── */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '3.5%' }}>
-          <img
-            src={theme === 'dark' ? '/flextab-icon-white.png' : '/flextab-icon.png'}
-            alt="FlexTab"
-            style={{ width: 36, height: 36, borderRadius: 9, objectFit: 'cover', flexShrink: 0 }}
-          />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 1, flex: 1 }}>
-            <p style={{ fontSize: 14, fontWeight: 800, color: C.textPrimary, margin: 0, lineHeight: 1 }}>FlexTab</p>
-            <p style={{ fontSize: 10, color: C.textMuted, margin: 0 }}>{formattedDate}</p>
-          </div>
-          {userAvatarUrl && (
-            <img
-              src={userAvatarUrl}
-              alt="avatar"
-              style={{ width: 32, height: 32, borderRadius: 16, objectFit: 'cover', flexShrink: 0 }}
-            />
-          )}
+  const renderPreview = () => (
+    <div
+      style={{
+        position: 'relative',
+        width: '100%',
+        aspectRatio: '9 / 16',
+        background: theme === 'dark'
+          ? 'linear-gradient(160deg, #0a0f1e 0%, #0d1526 50%, #060b16 100%)'
+          : 'linear-gradient(160deg, #e8edf6 0%, #dce4f0 40%, #cdd8ec 100%)',
+        borderRadius: 20,
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '5% 5% 3%',
+      }}
+    >
+      {/* ── Header ── */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '3%' }}>
+        <img
+          src={theme === 'dark' ? '/flextab-icon-white.png' : '/flextab-icon.png'}
+          alt="FlexTab"
+          style={{ width: 34, height: 34, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }}
+        />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 1, flex: 1 }}>
+          <p style={{ fontSize: 13, fontWeight: 800, color: C.textPrimary, margin: 0, lineHeight: 1 }}>FlexTab</p>
+          <p style={{ fontSize: 9, color: C.textMuted, margin: 0 }}>{formattedDate}</p>
         </div>
-
-        {/* ── Stat tiles (summary page only) ── */}
-        {isSummary && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 5, marginBottom: '3%' }}>
-            {statTiles.map(({ value, label }) => (
-              <div
-                key={label}
-                style={{ background: C.tileBg, borderRadius: 10, padding: '8px 6px 6px', textAlign: 'center' }}
-              >
-                <p style={{ fontSize: 20, fontWeight: 800, color: C.textPrimary, margin: 0, lineHeight: 1 }}>{value}</p>
-                <p style={{ fontSize: 8, fontWeight: 700, color: C.textMuted, margin: '3px 0 0', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</p>
-              </div>
-            ))}
-          </div>
+        {userAvatarUrl && (
+          <img src={userAvatarUrl} alt="avatar"
+            style={{ width: 30, height: 30, borderRadius: 15, objectFit: 'cover', flexShrink: 0 }} />
         )}
+      </div>
 
-        {/* ── Divider ── */}
-        <div style={{ height: 1, background: C.divider, marginBottom: '2%' }} />
+      {/* ── 2×2 Stat tiles ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 5, marginBottom: '3%' }}>
+        {statTiles.map(({ value, label }) => (
+          <div key={label} style={{
+            background: C.tileBg, borderRadius: 10,
+            padding: '9px 6px 7px', textAlign: 'center',
+          }}>
+            <p style={{ fontSize: 19, fontWeight: 800, color: C.textPrimary, margin: 0, lineHeight: 1 }}>{value}</p>
+            <p style={{ fontSize: 7, fontWeight: 700, color: C.textMuted, margin: '3px 0 0', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</p>
+          </div>
+        ))}
+      </div>
 
-        {/* ── Section label ── */}
-        <p style={{ fontSize: 8, fontWeight: 800, color: C.textMuted, margin: '0 0 6px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-          {isSummary ? 'Exercises' : `Exercises — Page ${page.pageNum} of ${page.totalPages}`}
-        </p>
+      {/* ── Divider + section label ── */}
+      <div style={{ height: 1, background: C.divider, marginBottom: '1.5%' }} />
+      <p style={{ fontSize: 7, fontWeight: 800, color: C.textMuted, margin: '0 0 5px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+        Exercises
+      </p>
 
-        {/* ── Exercise rows ── */}
-        <div style={{ flex: 1 }}>
-          {page.exercises.map((exercise, index) => {
-            const globalIndex = page.globalOffset + index;
-            const visibleSets = isSummary
-              ? exercise.setDetails.slice(0, SETS_ON_SUMMARY)
-              : exercise.setDetails; // all sets on detail pages
-            const hiddenCount = exercise.setDetails.length - visibleSets.length;
+      {/* ── Exercise list with chip grid ── */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {groupedExercises.map((exercise, ei) => {
+          const sets = exercise.setDetails;
+          const chipRows: typeof sets[] = [];
+          for (let i = 0; i < sets.length; i += CHIPS_PER_ROW) {
+            chipRows.push(sets.slice(i, i + CHIPS_PER_ROW));
+          }
 
-            return (
-              <div
-                key={index}
-                style={{
-                  paddingTop: 6, paddingBottom: 6,
-                  borderBottom: index < page.exercises.length - 1 ? `1px solid ${C.divider}` : 'none',
-                }}
-              >
-                {/* Exercise header row */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                  <div style={{
-                    width: 20, height: 20, borderRadius: 10,
-                    background: C.badgeBg, color: C.badgeText,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 9, fontWeight: 800, flexShrink: 0,
-                  }}>
-                    {globalIndex + 1}
-                  </div>
-                  <p style={{ flex: 1, fontSize: 12, fontWeight: 800, color: C.textPrimary, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {exercise.exercise}
-                  </p>
-                  <div style={{ background: C.pillBg, borderRadius: 50, padding: '2px 8px' }}>
-                    <span style={{ fontSize: 9, fontWeight: 700, color: C.textPill, whiteSpace: 'nowrap' }}>
-                      {exercise.totalSets} sets
-                    </span>
-                  </div>
+          return (
+            <div key={ei}>
+              {/* Exercise header band */}
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                background: C.exHeaderBg,
+                borderRadius: 7,
+                padding: '4px 7px 4px 0',
+                marginBottom: 4,
+                overflow: 'hidden',
+                position: 'relative',
+              }}>
+                {/* Left accent bar */}
+                <div style={{
+                  width: 3, alignSelf: 'stretch', borderRadius: 2,
+                  background: C.accentBar, flexShrink: 0, marginLeft: 0,
+                }} />
+                {/* Number badge */}
+                <div style={{
+                  width: 17, height: 17, borderRadius: 9,
+                  background: C.badgeBg, color: C.badgeText,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 8, fontWeight: 800, flexShrink: 0,
+                }}>
+                  {ei + 1}
                 </div>
-
-                {/* Set rows */}
-                {visibleSets.map((s, si) => (
-                  <div
-                    key={si}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 8,
-                      marginTop: si === 0 ? 4 : 2,
-                      padding: '3px 6px',
-                      background: C.setRowBg, borderRadius: 6,
-                    }}
-                  >
-                    <span style={{ fontSize: 9, fontWeight: 700, color: C.textMuted, width: 32 }}>Set {s.setNumber}</span>
-                    <span style={{ fontSize: 11, fontWeight: 800, color: C.textPrimary }}>{s.reps}</span>
-                    <span style={{ fontSize: 9, fontWeight: 600, color: C.textMuted }}>reps</span>
-                    {s.weight > 0 && (
-                      <>
-                        <span style={{ flex: 1 }} />
-                        <span style={{ fontSize: 11, fontWeight: 800, color: C.textPrimary }}>{s.weight}</span>
-                        <span style={{ fontSize: 9, fontWeight: 600, color: C.textMuted }}>lbs</span>
-                      </>
-                    )}
-                  </div>
-                ))}
-
-                {/* "+N more sets" hint */}
-                {hiddenCount > 0 && (
-                  <p style={{ fontSize: 8, color: C.textMuted, margin: '3px 0 0 6px', fontStyle: 'italic' }}>
-                    +{hiddenCount} more set{hiddenCount > 1 ? 's' : ''} — see next page
-                  </p>
-                )}
+                {/* Exercise name — larger, heavier */}
+                <p style={{
+                  flex: 1, fontSize: 12, fontWeight: 800,
+                  color: C.textPrimary, margin: 0,
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  letterSpacing: '-0.01em',
+                }}>
+                  {exercise.exercise}
+                </p>
+                {/* Sets pill */}
+                <div style={{
+                  background: theme === 'dark' ? 'rgba(255,255,255,0.10)' : 'rgba(15,23,42,0.08)',
+                  borderRadius: 50, padding: '2px 7px',
+                }}>
+                  <span style={{ fontSize: 8, fontWeight: 700, color: C.textMuted, whiteSpace: 'nowrap' }}>
+                    {exercise.totalSets} sets
+                  </span>
+                </div>
               </div>
-            );
-          })}
 
-          {/* "+N more exercises" hint on summary */}
-          {isSummary && groupedExercises.length > 3 && (
-            <p style={{ fontSize: 9, color: C.textMuted, margin: '8px 0 0', textAlign: 'center', fontWeight: 600 }}>
-              +{groupedExercises.length - 3} more exercise{groupedExercises.length - 3 > 1 ? 's' : ''} — swipe for details →
-            </p>
-          )}
-        </div>
-
-        {/* ── Footer ── */}
-        <div style={{ marginTop: 'auto', paddingTop: 6, borderTop: `1px solid ${C.divider}`, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
-          {/* Page dots */}
-          {totalPages > 1 && (
-            <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-              {Array.from({ length: totalPages }, (_, i) => (
-                <div
-                  key={i}
-                  style={{
-                    width: i === page.pageNum - 1 ? 12 : 5,
-                    height: 5, borderRadius: 3,
-                    background: i === page.pageNum - 1 ? C.dotActive : C.dotInactive,
-                    transition: 'width 0.2s',
-                  }}
-                />
+              {/* Chip rows */}
+              {chipRows.map((row, ri) => (
+                <div key={ri} style={{ display: 'flex', gap: 4, marginBottom: ri < chipRows.length - 1 ? 4 : 0 }}>
+                  {row.map((s, ci) => (
+                    <div key={ci} style={{
+                      flex: 1, background: C.chipBg, borderRadius: 7,
+                      padding: '4px 5px 5px',
+                      display: 'flex', flexDirection: 'column', gap: 1,
+                    }}>
+                      <span style={{ fontSize: 7, fontWeight: 700, color: C.setNumColor, lineHeight: 1 }}>
+                        Set {s.setNumber}
+                      </span>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
+                        <span style={{ fontSize: 11, fontWeight: 800, color: C.textPrimary, lineHeight: 1 }}>{s.reps}</span>
+                        <span style={{ fontSize: 7, fontWeight: 400, color: C.textMuted }}>reps</span>
+                      </div>
+                      {s.weight > 0 && (
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
+                          <span style={{ fontSize: 11, fontWeight: 800, color: C.textPrimary, lineHeight: 1 }}>{s.weight}</span>
+                          <span style={{ fontSize: 7, fontWeight: 400, color: C.textMuted }}>lbs</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {/* Fill empty slots in last row */}
+                  {row.length < CHIPS_PER_ROW && Array.from({ length: CHIPS_PER_ROW - row.length }, (_, i) => (
+                    <div key={`empty-${i}`} style={{ flex: 1 }} />
+                  ))}
+                </div>
               ))}
             </div>
-          )}
-          <p style={{ fontSize: 9, color: C.textFooter, margin: 0, fontWeight: 600 }}>
-            {userName ? `@${userName.toLowerCase().replace(/\s+/g, '')} · flextab.app` : 'flextab.app'}
-          </p>
-        </div>
+          );
+        })}
       </div>
-    );
-  };
 
-  const currentPage = previewPages[previewPage] ?? previewPages[0];
+      {/* ── Footer ── */}
+      <div style={{ marginTop: 'auto', paddingTop: 5, borderTop: `1px solid ${C.divider}` }}>
+        <p style={{ fontSize: 8, color: C.textFooter, margin: 0, fontWeight: 600, textAlign: 'center' }}>
+          {userName ? `@${userName.toLowerCase().replace(/\s+/g, '')} · flextab.app` : 'flextab.app'}
+        </p>
+      </div>
+    </div>
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -514,63 +460,18 @@ export function ShareWorkoutDialog({
               Share Workout
             </DialogTitle>
             <p className="text-sm mt-0.5" style={{ color: 'var(--muted-foreground)' }}>
-              {totalPages > 1
-                ? `${totalPages} slides — swipe through all exercises`
-                : 'Share your workout progress with friends'}
+              Share your workout progress with friends
             </p>
           </div>
         </DialogHeader>
 
-        {/* Story-format card preview with page navigation */}
+        {/* Card preview */}
         <div className="flex-1 overflow-y-auto px-4 pb-2">
-          <div style={{ position: 'relative' }}>
-            {renderPreviewPage(currentPage)}
-
-            {/* Prev / Next buttons */}
-            {totalPages > 1 && (
-              <>
-                {previewPage > 0 && (
-                  <button
-                    onClick={() => setPreviewPage(p => p - 1)}
-                    style={{
-                      position: 'absolute', left: -8, top: '50%', transform: 'translateY(-50%)',
-                      background: 'var(--background)', border: '1px solid var(--border)',
-                      borderRadius: '50%', width: 32, height: 32,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                    }}
-                  >
-                    <ChevronLeft className="w-4 h-4" style={{ color: 'var(--foreground)' }} />
-                  </button>
-                )}
-                {previewPage < totalPages - 1 && (
-                  <button
-                    onClick={() => setPreviewPage(p => p + 1)}
-                    style={{
-                      position: 'absolute', right: -8, top: '50%', transform: 'translateY(-50%)',
-                      background: 'var(--background)', border: '1px solid var(--border)',
-                      borderRadius: '50%', width: 32, height: 32,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                    }}
-                  >
-                    <ChevronRight className="w-4 h-4" style={{ color: 'var(--foreground)' }} />
-                  </button>
-                )}
-              </>
-            )}
-          </div>
-
-          {/* Page counter below preview */}
-          {totalPages > 1 && (
-            <p className="text-center text-xs mt-2" style={{ color: 'var(--muted-foreground)' }}>
-              Page {previewPage + 1} of {totalPages}
-            </p>
-          )}
+          {renderPreview()}
         </div>
 
-        {/* Action buttons */}
-        <div style={{ padding: '8px 16px calc(16px + env(safe-area-inset-bottom))', background: 'var(--background)', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {/* Share button */}
+        <div style={{ padding: '8px 16px calc(16px + env(safe-area-inset-bottom))', background: 'var(--background)', flexShrink: 0 }}>
           <Button
             onClick={handleShare}
             disabled={loading !== null}
@@ -578,11 +479,7 @@ export function ShareWorkoutDialog({
             style={{ background: 'var(--foreground)', color: 'var(--background)', border: 'none' }}
           >
             <Share2 className="w-4 h-4 mr-2" />
-            {loading === 'share'
-              ? 'Preparing…'
-              : totalPages > 1
-                ? `Share ${totalPages} slides via…`
-                : 'Share via…'}
+            {loading === 'share' ? 'Preparing…' : 'Share via…'}
           </Button>
         </div>
       </DialogContent>
