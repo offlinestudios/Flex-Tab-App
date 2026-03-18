@@ -48,6 +48,9 @@ function getR2Client() {
 }
 
 function r2PublicUrl(key: string): string {
+  // If the stored value is already a full URL (Supabase Storage or CDN), return as-is
+  if (key.startsWith("https://") || key.startsWith("http://")) return key;
+  // Legacy R2 path-style key
   const base = process.env.R2_PUBLIC_URL
     ? process.env.R2_PUBLIC_URL.replace(/\/$/, "")
     : `https://pub-${process.env.R2_ACCOUNT_ID}.r2.dev`;
@@ -100,6 +103,7 @@ export const communityRouter = router({
           .array(
             z.object({
               key: z.string(),
+              url: z.string().optional(),   // full public URL (Supabase Storage)
               mediaType: z.enum(["photo", "video"]),
               mimeType: z.string(),
             })
@@ -122,13 +126,13 @@ export const communityRouter = router({
         })
         .returning({ id: posts.id });
 
-      // Insert media rows
+      // Insert media rows — store the full URL in r2Key so r2PublicUrl() passes it through
       if (input.mediaItems && input.mediaItems.length > 0) {
         await db.insert(postMedia).values(
           input.mediaItems.map((m) => ({
             postId: post.id,
             userId: ctx.user.id,
-            r2Key: m.key,
+            r2Key: m.url ?? m.key,   // prefer full URL if provided, fall back to path key
             mediaType: m.mediaType,
             mimeType: m.mimeType,
           }))

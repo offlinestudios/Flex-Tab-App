@@ -33,6 +33,8 @@ function getR2Client() {
 }
 
 function r2PublicUrl(key: string): string {
+  // If the stored value is already a full URL (Supabase Storage or CDN), return as-is
+  if (key.startsWith("https://") || key.startsWith("http://")) return key;
   const base = process.env.R2_PUBLIC_URL
     ? process.env.R2_PUBLIC_URL.replace(/\/$/, "")
     : `https://pub-${process.env.R2_ACCOUNT_ID}.r2.dev`;

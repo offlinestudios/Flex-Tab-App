@@ -619,6 +619,7 @@ export function NewPostComposer({
 
       const mediaItems: {
         key: string;
+        url?: string;
         mediaType: "photo" | "video";
         mimeType: string;
       }[] = [];
@@ -636,8 +637,9 @@ export function NewPostComposer({
           const errBody = await res.json().catch(() => ({ error: "Upload failed" }));
           throw new Error(errBody.error ?? "Media upload failed");
         }
-        const { key, mediaType, mimeType } = await res.json();
-        mediaItems.push({ key, mediaType, mimeType });
+        // url is the full Supabase Storage public URL; key is the storage path
+        const { key, url, mediaType, mimeType } = await res.json();
+        mediaItems.push({ key, url, mediaType, mimeType });
       }
 
       await createPost.mutateAsync({
