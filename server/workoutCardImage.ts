@@ -29,9 +29,9 @@ const STORY_H = 1920;
 // Instagram Stories safe zone:
 //   Top ~13% (≈250px) and bottom ~18% (≈346px) are covered by UI chrome.
 const PAD_H   = 80;
-const PAD_TOP = 200;
-const PAD_BOT = 380;
-const USABLE_H   = STORY_H - PAD_TOP - PAD_BOT; // 1340px
+const PAD_TOP = 120;  // just below Instagram profile bar
+const PAD_BOT = 260;  // just above Instagram caption/share area
+const USABLE_H   = STORY_H - PAD_TOP - PAD_BOT; // 1540px
 const CONTENT_W  = STORY_W - PAD_H * 2;          // 920px
 
 // ── Theme palettes ────────────────────────────────────────────────────────────
@@ -100,15 +100,15 @@ interface CardData {
 
 // ── Layout constants ──────────────────────────────────────────────────────────
 const CHIPS_PER_ROW = 3;
-const CHIP_GAP      = 12;
+const CHIP_GAP      = 14;
 const H_HEADER      = 88 + 28;   // logo(88) + marginBottom(28)
 const H_STAT_STRIP  = 80;
 const H_STAT_MB     = 20;
 const H_DIVIDER     = 1 + 16;
 const H_SECTION_LBL = 26 + 16;
 const H_FOOTER      = 1 + 16 + 26 + 14;  // border + paddingTop + text + paddingBottom
-const H_EX_HEADER   = 52 + 12;   // badge row height + gap below
-const H_EX_GAP      = 16;        // gap between exercises
+const H_EX_HEADER   = 56 + 12;   // badge row height + gap below
+const H_EX_GAP      = 20;        // gap between exercises
 
 const H_CHROME = H_HEADER + H_STAT_STRIP + H_STAT_MB + H_DIVIDER + H_SECTION_LBL + H_FOOTER;
 

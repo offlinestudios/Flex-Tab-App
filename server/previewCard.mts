@@ -12,9 +12,9 @@ const fontBold    = Buffer.from(INTER_BOLD_B64,    "base64");
 const STORY_W = 1080;
 const STORY_H = 1920;
 const PAD_H   = 80;   // left/right padding
-const PAD_TOP = 200;  // top safe zone
-const PAD_BOT = 380;  // bottom safe zone
-const USABLE_H = STORY_H - PAD_TOP - PAD_BOT; // 1340px
+const PAD_TOP = 120;  // just below Instagram profile bar
+const PAD_BOT = 260;  // just above Instagram caption/share area
+const USABLE_H = STORY_H - PAD_TOP - PAD_BOT; // 1540px
 const CONTENT_W = STORY_W - PAD_H * 2;        // 920px
 
 // ── Fixed element heights ─────────────────────────────────────────────────────
@@ -24,10 +24,10 @@ const H_STAT_MB     = 20;
 const H_DIVIDER     = 1 + 16;    // line + marginBottom
 const H_SECTION_LBL = 26 + 16;   // text + marginBottom
 const H_FOOTER      = 1 + 16 + 26 + 14; // border + paddingTop + text + paddingBottom = 57
-const H_EX_HEADER   = 52 + 12;   // badge row + gap below chips
-const H_EX_GAP      = 16;        // gap between exercises
+const H_EX_HEADER   = 56 + 12;   // badge row + gap below chips
+const H_EX_GAP      = 20;        // gap between exercises
 const CHIPS_PER_ROW = 3;
-const CHIP_GAP      = 12;
+const CHIP_GAP      = 14;
 
 const H_CHROME = H_HEADER + H_STAT_STRIP + H_STAT_MB + H_DIVIDER + H_SECTION_LBL + H_FOOTER;
 
