@@ -93,7 +93,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Overhead Press": {
     name: "Overhead Press",
     category: "Shoulders",
-    image: "/exercises/overhead_press.png",
+    image: "/exercises/overhead_press.webp",
     description: "The standing barbell overhead press is the primary compound shoulder exercise, building deltoid mass and overhead pressing strength while challenging core stability.",
     primaryMuscles: ["Anterior Deltoids", "Lateral Deltoids"],
     secondaryMuscles: ["Triceps", "Upper Trapezius", "Core"],
@@ -157,7 +157,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Leg Press": {
     name: "Leg Press",
     category: "Legs",
-    image: "/exercises/leg_press.png",
+    image: "/exercises/leg_press.webp",
     description: "The leg press machine allows heavy quad-dominant loading with reduced spinal stress, making it an excellent complement to free-weight squatting.",
     primaryMuscles: ["Quadriceps"],
     secondaryMuscles: ["Glutes", "Hamstrings"],
@@ -189,7 +189,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Incline Bench Press": {
     name: "Incline Bench Press",
     category: "Chest",
-    image: "/exercises/incline_bench_press.png",
+    image: "/exercises/incline_bench_press.webp",
     description: "The incline barbell bench press targets the upper portion of the pectorals and anterior deltoids, building a fuller, more developed upper chest.",
     primaryMuscles: ["Upper Pectorals"],
     secondaryMuscles: ["Anterior Deltoids", "Triceps"],
@@ -301,7 +301,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Chest Flyes": {
     name: "Chest Flyes",
     category: "Chest",
-    image: "/exercises/chest_fly.png",
+    image: "/exercises/chest_fly.webp",
     description: "Dumbbell chest flyes isolate the pectorals through a wide arc of shoulder horizontal adduction, providing a deep stretch and strong peak contraction.",
     primaryMuscles: ["Pectorals"],
     secondaryMuscles: ["Anterior Deltoids"],
@@ -445,7 +445,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Hip Thrusts": {
     name: "Hip Thrusts",
     category: "Legs",
-    image: "/exercises/hip_thrust.png",
+    image: "/exercises/hip_thrust.webp",
     description: "The barbell hip thrust is the most effective glute isolation exercise, providing peak glute activation at the top of the movement through hip extension.",
     primaryMuscles: ["Glutes"],
     secondaryMuscles: ["Hamstrings", "Core"],
@@ -509,7 +509,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Dumbbell Press": {
     name: "Dumbbell Press",
     category: "Chest",
-    image: "/exercises/dumbbell_press.png",
+    image: "/exercises/dumbbell_press.webp",
     description: "The flat dumbbell press allows a greater range of motion than the barbell bench press and helps correct strength imbalances between sides.",
     primaryMuscles: ["Pectorals"],
     secondaryMuscles: ["Anterior Deltoids", "Triceps"],
@@ -598,7 +598,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Hanging Leg Raises": {
     name: "Hanging Leg Raises",
     category: "Core",
-    image: "/exercises/hanging_leg_raise.png",
+    image: "/exercises/hanging_leg_raise.webp",
     description: "Hanging leg raises build lower abdominal strength and hip flexor endurance through a full range of hip flexion while hanging from a bar.",
     primaryMuscles: ["Lower Rectus Abdominis", "Hip Flexors"],
     secondaryMuscles: ["Obliques", "Grip Strength"],
@@ -613,7 +613,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Ab Wheel": {
     name: "Ab Wheel",
     category: "Core",
-    image: "/exercises/ab_wheel.png",
+    image: "/exercises/ab_wheel.webp",
     description: "The ab wheel rollout is one of the most demanding core exercises, building anti-extension core strength through a long lever arm.",
     primaryMuscles: ["Rectus Abdominis", "Transverse Abdominis"],
     secondaryMuscles: ["Obliques", "Lats", "Shoulders"],
@@ -628,7 +628,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Arnold Press": {
     name: "Arnold Press",
     category: "Shoulders",
-    image: "/exercises/arnold_press.png",
+    image: "/exercises/arnold_press.webp",
     description: "The Arnold Press is a dumbbell shoulder press variation that rotates through a full range of motion, hitting all three heads of the deltoid.",
     primaryMuscles: ["Anterior Deltoids", "Lateral Deltoids"],
     secondaryMuscles: ["Posterior Deltoids", "Triceps", "Upper Traps"],
@@ -688,7 +688,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Burpees": {
     name: "Burpees",
     category: "Cardio",
-    image: "/exercises/burpee.png",
+    image: "/exercises/burpee.webp",
     description: "Burpees are a full-body calisthenics exercise combining a squat, plank, push-up, and jump for maximum cardiovascular and muscular conditioning.",
     primaryMuscles: ["Cardiovascular System"],
     secondaryMuscles: ["Chest", "Shoulders", "Quadriceps", "Core"],
@@ -748,7 +748,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Cable Fly (Low-to-High)": {
     name: "Cable Fly (Low-to-High)",
     category: "Chest",
-    image: "/exercises/cable_fly_low_to_high.png",
+    image: "/exercises/cable_fly_low_to_high.webp",
     description: "Low-to-high cable flyes target the upper pectoral fibres through an upward sweeping arc with constant cable tension.",
     primaryMuscles: ["Pectorals (upper)"],
     secondaryMuscles: ["Anterior Deltoids", "Biceps"],
@@ -763,7 +763,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Cable Kickbacks": {
     name: "Cable Kickbacks",
     category: "Arms",
-    image: "/exercises/cable_kickback.png",
+    image: "/exercises/cable_kickback.webp",
     description: "Cable kickbacks isolate the triceps through elbow extension with constant cable tension, particularly effective for the long head.",
     primaryMuscles: ["Triceps Brachii"],
     secondaryMuscles: [],
@@ -778,7 +778,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Cable Lateral Raises": {
     name: "Cable Lateral Raises",
     category: "Shoulders",
-    image: "/exercises/cable_lateral_raise.png",
+    image: "/exercises/cable_lateral_raise.webp",
     description: "Cable lateral raises provide constant tension on the lateral deltoid throughout the full range of motion, unlike dumbbells which lose tension at the bottom.",
     primaryMuscles: ["Lateral Deltoids"],
     secondaryMuscles: ["Anterior Deltoids", "Traps"],
@@ -809,7 +809,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Chest-Supported Row": {
     name: "Chest-Supported Row",
     category: "Back",
-    image: "/exercises/chest_supported_row.png",
+    image: "/exercises/chest_supported_row.webp",
     description: "The chest-supported row eliminates lower back involvement by bracing the chest against a bench, allowing full focus on the back muscles.",
     primaryMuscles: ["Rhomboids", "Middle Trapezius"],
     secondaryMuscles: ["Latissimus Dorsi", "Rear Deltoids", "Biceps"],
@@ -884,7 +884,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Decline Bench Press": {
     name: "Decline Bench Press",
     category: "Chest",
-    image: "/exercises/decline_bench_press.png",
+    image: "/exercises/decline_bench_press.webp",
     description: "The decline bench press targets the lower pectoral fibres through a pressing motion on a downward-angled bench.",
     primaryMuscles: ["Pectorals (lower)"],
     secondaryMuscles: ["Anterior Deltoids", "Triceps"],
@@ -975,7 +975,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "HIIT Training": {
     name: "HIIT Training",
     category: "Cardio",
-    image: "/exercises/hiit_training.png",
+    image: "/exercises/hiit_training.webp",
     description: "High-Intensity Interval Training alternates between short bursts of maximum effort and recovery periods, maximising caloric burn and cardiovascular adaptation.",
     primaryMuscles: ["Cardiovascular System"],
     secondaryMuscles: ["Full Body"],
@@ -1144,7 +1144,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Pec Deck": {
     name: "Pec Deck",
     category: "Chest",
-    image: "/exercises/pec_deck.png",
+    image: "/exercises/pec_deck.webp",
     description: "The pec deck machine isolates the pectorals through horizontal adduction with a fixed movement path, providing constant tension throughout the range of motion.",
     primaryMuscles: ["Pectorals"],
     secondaryMuscles: ["Anterior Deltoids"],
@@ -1189,7 +1189,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Rack Pulls": {
     name: "Rack Pulls",
     category: "Back",
-    image: "/exercises/rack_pull.png",
+    image: "/exercises/rack_pull.webp",
     description: "Rack pulls are a partial-range deadlift variation starting from knee height, allowing heavier loads to be used to overload the lockout portion of the deadlift.",
     primaryMuscles: ["Spinal Erectors", "Traps"],
     secondaryMuscles: ["Glutes", "Hamstrings", "Forearms"],
@@ -1220,7 +1220,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Reverse Fly": {
     name: "Reverse Fly",
     category: "Shoulders",
-    image: "/exercises/reverse_fly.png",
+    image: "/exercises/reverse_fly.webp",
     description: "The reverse fly targets the posterior deltoids and rhomboids, helping to counterbalance the overdevelopment of the front deltoids from pressing exercises.",
     primaryMuscles: ["Posterior Deltoids", "Rhomboids"],
     secondaryMuscles: ["Middle Trapezius", "Infraspinatus"],
@@ -1527,7 +1527,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Running": {
     name: "Running",
     category: "Cardio",
-    image: "/exercises/running.png",
+    image: "/exercises/running.webp",
     description: "Running is the most accessible cardio exercise, improving cardiovascular fitness, endurance, and caloric expenditure.",
     primaryMuscles: ["Cardiovascular System"],
     secondaryMuscles: ["Quadriceps", "Hamstrings", "Glutes", "Calves"],
