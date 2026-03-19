@@ -13,7 +13,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Bench Press": {
     name: "Bench Press",
     category: "Chest",
-    image: "/exercises/bench_press.png",
+    image: "/exercises/bench_press.webp",
     description: "The flat barbell bench press is the gold-standard compound chest exercise, building mass and strength across the pectorals, anterior deltoids, and triceps.",
     primaryMuscles: ["Pectorals (mid)"],
     secondaryMuscles: ["Anterior Deltoids", "Triceps"],
@@ -45,7 +45,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Deadlifts": {
     name: "Deadlifts",
     category: "Legs",
-    image: "/exercises/deadlift.png",
+    image: "/exercises/deadlift.webp",
     description: "The conventional deadlift is a full-body hinge movement that develops posterior chain strength — hamstrings, glutes, and spinal erectors — along with grip and upper back.",
     primaryMuscles: ["Hamstrings", "Glutes", "Spinal Erectors"],
     secondaryMuscles: ["Quadriceps", "Lats", "Traps", "Forearms"],
@@ -61,7 +61,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Pull-Ups": {
     name: "Pull-Ups",
     category: "Back",
-    image: "/exercises/pull_up.png",
+    image: "/exercises/pull_up.webp",
     description: "Pull-ups are a fundamental bodyweight vertical pulling exercise that builds lat width, bicep strength, and overall upper-body pulling power.",
     primaryMuscles: ["Latissimus Dorsi"],
     secondaryMuscles: ["Biceps", "Rear Deltoids", "Core"],
@@ -77,7 +77,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Barbell Rows": {
     name: "Barbell Rows",
     category: "Back",
-    image: "/exercises/barbell_row.png",
+    image: "/exercises/barbell_row.webp",
     description: "The bent-over barbell row is a heavy compound back exercise that builds thickness across the mid-back, lats, and rear deltoids.",
     primaryMuscles: ["Latissimus Dorsi", "Mid Trapezius", "Rhomboids"],
     secondaryMuscles: ["Biceps", "Rear Deltoids", "Spinal Erectors"],
@@ -109,7 +109,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Bicep Curls": {
     name: "Bicep Curls",
     category: "Arms",
-    image: "/exercises/bicep_curl.png",
+    image: "/exercises/bicep_curl.webp",
     description: "The standing dumbbell curl is the classic bicep isolation exercise, building peak and overall arm size through a full range of supinated elbow flexion.",
     primaryMuscles: ["Biceps Brachii"],
     secondaryMuscles: ["Brachialis", "Brachioradialis"],
@@ -141,7 +141,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Lat Pulldowns": {
     name: "Lat Pulldowns",
     category: "Back",
-    image: "/exercises/lat_pulldown.png",
+    image: "/exercises/lat_pulldown.webp",
     description: "The lat pulldown is a cable-based vertical pulling exercise that builds lat width and is an excellent progression tool toward unassisted pull-ups.",
     primaryMuscles: ["Latissimus Dorsi"],
     secondaryMuscles: ["Biceps", "Rear Deltoids", "Teres Major"],
@@ -173,7 +173,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Romanian Deadlifts": {
     name: "Romanian Deadlifts",
     category: "Legs",
-    image: "/exercises/romanian_deadlift.png",
+    image: "/exercises/romanian_deadlift.webp",
     description: "The Romanian deadlift is a hip-hinge movement that targets the hamstrings and glutes through a long range of motion, building posterior chain strength and flexibility.",
     primaryMuscles: ["Hamstrings", "Glutes"],
     secondaryMuscles: ["Spinal Erectors", "Adductors"],
@@ -205,7 +205,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Dumbbell Rows": {
     name: "Dumbbell Rows",
     category: "Back",
-    image: "/exercises/dumbbell_row.png",
+    image: "/exercises/dumbbell_row.webp",
     description: "The single-arm dumbbell row allows a greater range of motion than barbell rows and helps correct left-right strength imbalances in the back.",
     primaryMuscles: ["Latissimus Dorsi", "Rhomboids"],
     secondaryMuscles: ["Biceps", "Rear Deltoids", "Teres Major"],
@@ -237,7 +237,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Lunges": {
     name: "Lunges",
     category: "Legs",
-    image: "/exercises/lunges.png",
+    image: "/exercises/lunges.webp",
     description: "Dumbbell lunges are a unilateral leg exercise that builds quad and glute strength while improving balance, coordination, and hip flexibility.",
     primaryMuscles: ["Quadriceps", "Glutes"],
     secondaryMuscles: ["Hamstrings", "Core", "Hip Flexors"],
@@ -253,7 +253,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Leg Curls": {
     name: "Leg Curls",
     category: "Legs",
-    image: "/exercises/leg_curl.png",
+    image: "/exercises/leg_curl.webp",
     description: "The lying leg curl is the primary hamstring isolation exercise, targeting the biceps femoris, semitendinosus, and semimembranosus through knee flexion.",
     primaryMuscles: ["Hamstrings"],
     secondaryMuscles: ["Gastrocnemius"],
@@ -269,7 +269,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Leg Extensions": {
     name: "Leg Extensions",
     category: "Legs",
-    image: "/exercises/leg_extension.png",
+    image: "/exercises/leg_extension.webp",
     description: "The leg extension is a quad isolation exercise performed on a machine, targeting the rectus femoris and vastus muscles through knee extension.",
     primaryMuscles: ["Quadriceps"],
     secondaryMuscles: [],
@@ -285,7 +285,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Calf Raises": {
     name: "Calf Raises",
     category: "Legs",
-    image: "/exercises/calf_raise.png",
+    image: "/exercises/calf_raise.webp",
     description: "Standing calf raises target the gastrocnemius through plantar flexion, building calf size and lower-leg strength.",
     primaryMuscles: ["Gastrocnemius"],
     secondaryMuscles: ["Soleus"],
@@ -317,7 +317,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Lateral Raises": {
     name: "Lateral Raises",
     category: "Shoulders",
-    image: "/exercises/lateral_raise.png",
+    image: "/exercises/lateral_raise.webp",
     description: "Dumbbell lateral raises isolate the lateral deltoid head, which is primarily responsible for shoulder width and the coveted 'capped' shoulder look.",
     primaryMuscles: ["Lateral Deltoids"],
     secondaryMuscles: ["Anterior Deltoids", "Upper Trapezius"],
@@ -333,7 +333,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Front Raises": {
     name: "Front Raises",
     category: "Shoulders",
-    image: "/exercises/front_raise.png",
+    image: "/exercises/front_raise.webp",
     description: "Dumbbell front raises isolate the anterior deltoid head through shoulder flexion, complementing pressing movements for complete front delt development.",
     primaryMuscles: ["Anterior Deltoids"],
     secondaryMuscles: ["Lateral Deltoids", "Upper Pectorals"],
@@ -349,7 +349,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Hammer Curls": {
     name: "Hammer Curls",
     category: "Arms",
-    image: "/exercises/hammer_curl.png",
+    image: "/exercises/hammer_curl.webp",
     description: "Hammer curls use a neutral (thumbs-up) grip to emphasise the brachialis and brachioradialis alongside the biceps, building arm thickness and forearm strength.",
     primaryMuscles: ["Brachialis", "Brachioradialis"],
     secondaryMuscles: ["Biceps Brachii"],
@@ -365,7 +365,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Tricep Extensions": {
     name: "Tricep Extensions",
     category: "Arms",
-    image: "/exercises/tricep_extension.png",
+    image: "/exercises/tricep_extension.webp",
     description: "The overhead dumbbell tricep extension targets the long head of the triceps — the largest portion — through a full overhead range of motion.",
     primaryMuscles: ["Triceps Brachii (long head)"],
     secondaryMuscles: ["Triceps Brachii (lateral & medial heads)"],
@@ -381,7 +381,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Face Pulls": {
     name: "Face Pulls",
     category: "Shoulders",
-    image: "/exercises/face_pull.png",
+    image: "/exercises/face_pull.webp",
     description: "Face pulls target the rear deltoids and external rotators of the shoulder, improving posture, shoulder health, and posterior delt development.",
     primaryMuscles: ["Rear Deltoids"],
     secondaryMuscles: ["External Rotators", "Mid Trapezius", "Rhomboids"],
@@ -397,7 +397,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Cable Rows": {
     name: "Cable Rows",
     category: "Back",
-    image: "/exercises/cable_row.png",
+    image: "/exercises/cable_row.webp",
     description: "The seated cable row provides constant tension throughout the range of motion, building mid-back thickness and improving posture through horizontal pulling.",
     primaryMuscles: ["Mid Trapezius", "Rhomboids", "Latissimus Dorsi"],
     secondaryMuscles: ["Biceps", "Rear Deltoids"],
@@ -413,7 +413,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Preacher Curls": {
     name: "Preacher Curls",
     category: "Arms",
-    image: "/exercises/preacher_curl.png",
+    image: "/exercises/preacher_curl.webp",
     description: "The preacher curl isolates the biceps by eliminating shoulder flexion cheating, providing a unique stretch at the bottom and peak contraction at the top.",
     primaryMuscles: ["Biceps Brachii"],
     secondaryMuscles: ["Brachialis"],
@@ -461,7 +461,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Planks": {
     name: "Planks",
     category: "Core",
-    image: "/exercises/plank.png",
+    image: "/exercises/plank.webp",
     description: "The forearm plank is a fundamental core stability exercise that builds isometric strength in the abs, obliques, and spinal stabilisers.",
     primaryMuscles: ["Rectus Abdominis", "Transverse Abdominis"],
     secondaryMuscles: ["Obliques", "Spinal Erectors", "Glutes", "Shoulders"],
@@ -477,7 +477,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Russian Twists": {
     name: "Russian Twists",
     category: "Core",
-    image: "/exercises/russian_twist.png",
+    image: "/exercises/russian_twist.webp",
     description: "Russian twists are a rotational core exercise that targets the obliques and builds rotational strength and stability.",
     primaryMuscles: ["Obliques"],
     secondaryMuscles: ["Rectus Abdominis", "Hip Flexors"],
@@ -568,7 +568,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Rope Pushdowns": {
     name: "Rope Pushdowns",
     category: "Arms",
-    image: "/exercises/rope_pushdown.png",
+    image: "/exercises/rope_pushdown.webp",
     description: "Cable rope pushdowns isolate the triceps with constant tension, and the rope allows a wider range of motion at the bottom.",
     primaryMuscles: ["Triceps Brachii"],
     secondaryMuscles: [],
@@ -1053,7 +1053,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Machine Fly": {
     name: "Machine Fly",
     category: "Chest",
-    image: "/exercises/machine_fly.png",
+    image: "/exercises/machine_fly.webp",
     description: "The machine fly (pec deck) isolates the pectorals through a horizontal adduction movement with constant resistance throughout the range of motion.",
     primaryMuscles: ["Pectorals"],
     secondaryMuscles: ["Anterior Deltoids"],
