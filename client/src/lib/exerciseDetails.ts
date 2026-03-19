@@ -29,7 +29,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Squats": {
     name: "Squats",
     category: "Legs",
-    image: "/exercises/squat.png",
+    image: "/exercises/squat.webp",
     description: "The barbell back squat is the king of lower-body exercises, building quad, glute, and hamstring strength while also developing core stability.",
     primaryMuscles: ["Quadriceps", "Glutes"],
     secondaryMuscles: ["Hamstrings", "Core", "Spinal Erectors"],
@@ -524,7 +524,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Dumbbell Fly": {
     name: "Dumbbell Fly",
     category: "Chest",
-    image: "/exercises/dumbbell_fly.png",
+    image: "/exercises/dumbbell_fly.webp",
     description: "The dumbbell fly isolates the pectorals through a wide arc of shoulder horizontal adduction, providing a deep stretch.",
     primaryMuscles: ["Pectorals"],
     secondaryMuscles: ["Anterior Deltoids"],
@@ -539,7 +539,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Cable Fly (High-to-Low)": {
     name: "Cable Fly (High-to-Low)",
     category: "Chest",
-    image: "/exercises/cable_fly.png",
+    image: "/exercises/cable_fly.webp",
     description: "The high-to-low cable fly targets the lower pectorals with constant cable tension throughout the movement.",
     primaryMuscles: ["Lower Pectorals"],
     secondaryMuscles: ["Anterior Deltoids"],
@@ -583,7 +583,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Bulgarian Split Squats": {
     name: "Bulgarian Split Squats",
     category: "Legs",
-    image: "/exercises/bulgarian_split_squat.png",
+    image: "/exercises/bulgarian_split_squat.webp",
     description: "The Bulgarian split squat is a demanding unilateral leg exercise that builds quad and glute strength while improving hip mobility.",
     primaryMuscles: ["Quadriceps", "Glutes"],
     secondaryMuscles: ["Hamstrings", "Core"],
@@ -643,7 +643,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Back Extensions": {
     name: "Back Extensions",
     category: "Back",
-    image: "/exercises/back_extension.png",
+    image: "/exercises/back_extension.webp",
     description: "Back extensions on a hyperextension bench strengthen the spinal erectors, glutes, and hamstrings through a controlled hip hinge movement.",
     primaryMuscles: ["Spinal Erectors"],
     secondaryMuscles: ["Glutes", "Hamstrings"],
@@ -658,7 +658,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Battle Ropes": {
     name: "Battle Ropes",
     category: "Cardio",
-    image: "/exercises/battle_ropes.png",
+    image: "/exercises/battle_ropes.webp",
     description: "Battle ropes are a high-intensity conditioning tool that builds cardiovascular fitness, upper-body endurance, and core stability simultaneously.",
     primaryMuscles: ["Cardiovascular System", "Shoulders"],
     secondaryMuscles: ["Core", "Arms", "Back"],
@@ -673,7 +673,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Box Jumps": {
     name: "Box Jumps",
     category: "Cardio",
-    image: "/exercises/box_jump.png",
+    image: "/exercises/box_jump.webp",
     description: "Box jumps are a plyometric exercise that develops explosive lower-body power, coordination, and cardiovascular conditioning.",
     primaryMuscles: ["Quadriceps", "Glutes"],
     secondaryMuscles: ["Hamstrings", "Calves", "Core"],
@@ -703,7 +703,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Cable Crunches": {
     name: "Cable Crunches",
     category: "Core",
-    image: "/exercises/cable_crunch.png",
+    image: "/exercises/cable_crunch.webp",
     description: "Cable crunches provide constant tension throughout the range of motion, making them one of the most effective weighted abdominal exercises.",
     primaryMuscles: ["Rectus Abdominis"],
     secondaryMuscles: ["Obliques"],
@@ -718,7 +718,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Cable Curls": {
     name: "Cable Curls",
     category: "Arms",
-    image: "/exercises/cable_curl.png",
+    image: "/exercises/cable_curl.webp",
     description: "Cable curls provide constant tension on the biceps throughout the entire range of motion, unlike free weights which have a strength curve.",
     primaryMuscles: ["Biceps Brachii"],
     secondaryMuscles: ["Brachialis", "Brachioradialis"],
@@ -733,7 +733,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Cable Fly (High-to-Low)": {
     name: "Cable Fly (High-to-Low)",
     category: "Chest",
-    image: "/exercises/cable_fly_high_to_low.png",
+    image: "/exercises/cable_fly_high_to_low.webp",
     description: "High-to-low cable flyes target the lower pectoral fibres through a sweeping arc motion with constant cable tension.",
     primaryMuscles: ["Pectorals (lower)"],
     secondaryMuscles: ["Anterior Deltoids", "Biceps"],
@@ -793,7 +793,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Chest Dips": {
     name: "Chest Dips",
     category: "Chest",
-    image: "/exercises/chest_dip.png",
+    image: "/exercises/chest_dip.webp",
     description: "Chest dips are a bodyweight compound exercise that heavily loads the lower pectorals, anterior deltoids, and triceps through a deep range of motion.",
     primaryMuscles: ["Pectorals (lower)"],
     secondaryMuscles: ["Anterior Deltoids", "Triceps"],
@@ -824,7 +824,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Close-Grip Bench": {
     name: "Close-Grip Bench",
     category: "Arms",
-    image: "/exercises/close_grip_bench.png",
+    image: "/exercises/close_grip_bench.webp",
     description: "The close-grip bench press is a compound tricep exercise that also works the chest and shoulders, allowing heavy loading of the triceps.",
     primaryMuscles: ["Triceps Brachii"],
     secondaryMuscles: ["Pectorals", "Anterior Deltoids"],
@@ -839,7 +839,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Concentration Curls": {
     name: "Concentration Curls",
     category: "Arms",
-    image: "/exercises/concentration_curl.png",
+    image: "/exercises/concentration_curl.webp",
     description: "Concentration curls isolate the biceps by bracing the elbow against the inner thigh, eliminating momentum and maximising the mind-muscle connection.",
     primaryMuscles: ["Biceps Brachii"],
     secondaryMuscles: ["Brachialis"],
@@ -854,7 +854,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Cuban Rotations": {
     name: "Cuban Rotations",
     category: "Shoulders",
-    image: "/exercises/cuban_rotation.png",
+    image: "/exercises/cuban_rotation.webp",
     description: "Cuban rotations are a shoulder health and rotator cuff strengthening exercise that trains external rotation under load.",
     primaryMuscles: ["Rotator Cuff", "Posterior Deltoids"],
     secondaryMuscles: ["Lateral Deltoids", "Traps"],
@@ -869,7 +869,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Cycling": {
     name: "Cycling",
     category: "Cardio",
-    image: "/exercises/cycling.png",
+    image: "/exercises/cycling.webp",
     description: "Stationary cycling is a low-impact cardiovascular exercise that builds aerobic fitness and lower-body endurance with minimal joint stress.",
     primaryMuscles: ["Cardiovascular System"],
     secondaryMuscles: ["Quadriceps", "Hamstrings", "Glutes", "Calves"],
@@ -899,7 +899,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Elliptical": {
     name: "Elliptical",
     category: "Cardio",
-    image: "/exercises/elliptical.png",
+    image: "/exercises/elliptical.webp",
     description: "The elliptical machine provides a low-impact full-body cardio workout that mimics running without the joint stress.",
     primaryMuscles: ["Cardiovascular System"],
     secondaryMuscles: ["Quadriceps", "Hamstrings", "Glutes", "Shoulders"],
@@ -914,7 +914,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Frog Pumps": {
     name: "Frog Pumps",
     category: "Legs",
-    image: "/exercises/frog_pump.png",
+    image: "/exercises/frog_pump.webp",
     description: "Frog pumps are a glute isolation exercise performed lying on your back with feet together, providing a unique hip extension angle that maximises glute activation.",
     primaryMuscles: ["Glutes"],
     secondaryMuscles: ["Hamstrings"],
@@ -929,7 +929,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Front Squats": {
     name: "Front Squats",
     category: "Legs",
-    image: "/exercises/front_squat.png",
+    image: "/exercises/front_squat.webp",
     description: "The front squat places the barbell on the front of the shoulders, shifting emphasis to the quadriceps and requiring greater core and upper back strength.",
     primaryMuscles: ["Quadriceps"],
     secondaryMuscles: ["Glutes", "Core", "Upper Back"],
@@ -944,7 +944,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Good Mornings": {
     name: "Good Mornings",
     category: "Back",
-    image: "/exercises/good_morning.png",
+    image: "/exercises/good_morning.webp",
     description: "Good mornings are a barbell hip hinge exercise that strengthens the spinal erectors, hamstrings, and glutes through a controlled forward lean.",
     primaryMuscles: ["Spinal Erectors", "Hamstrings"],
     secondaryMuscles: ["Glutes", "Core"],
@@ -960,7 +960,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Guillotine Press": {
     name: "Guillotine Press",
     category: "Chest",
-    image: "/exercises/guillotine_press.png",
+    image: "/exercises/guillotine_press.webp",
     description: "The guillotine press (neck press) lowers the bar to the neck/upper chest with wide elbows, maximising upper pectoral stretch and activation.",
     primaryMuscles: ["Pectorals (upper)"],
     secondaryMuscles: ["Anterior Deltoids", "Triceps"],
@@ -991,7 +991,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Hack Squat": {
     name: "Hack Squat",
     category: "Legs",
-    image: "/exercises/hack_squat.png",
+    image: "/exercises/hack_squat.webp",
     description: "The hack squat machine allows heavy quad loading in a guided movement pattern, reducing lower back stress compared to free barbell squats.",
     primaryMuscles: ["Quadriceps"],
     secondaryMuscles: ["Glutes", "Hamstrings"],
@@ -1007,7 +1007,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Incline Dumbbell Curls": {
     name: "Incline Dumbbell Curls",
     category: "Arms",
-    image: "/exercises/incline_dumbbell_curl.png",
+    image: "/exercises/incline_dumbbell_curl.webp",
     description: "Incline dumbbell curls place the biceps in a stretched position at the bottom, maximising the long head of the bicep and creating a superior peak contraction.",
     primaryMuscles: ["Biceps Brachii (long head)"],
     secondaryMuscles: ["Brachialis", "Brachioradialis"],
@@ -1022,7 +1022,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "JM Press": {
     name: "JM Press",
     category: "Arms",
-    image: "/exercises/jm_press.png",
+    image: "/exercises/jm_press.webp",
     description: "The JM Press is a hybrid between a close-grip bench press and a skull crusher, providing heavy tricep loading through a unique elbow path.",
     primaryMuscles: ["Triceps Brachii"],
     secondaryMuscles: ["Pectorals", "Anterior Deltoids"],
@@ -1038,7 +1038,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Landmine Press": {
     name: "Landmine Press",
     category: "Shoulders",
-    image: "/exercises/landmine_press.png",
+    image: "/exercises/landmine_press.webp",
     description: "The landmine press is a shoulder-friendly pressing variation that follows an arc path, reducing shoulder impingement risk while building pressing strength.",
     primaryMuscles: ["Anterior Deltoids", "Pectorals (upper)"],
     secondaryMuscles: ["Triceps", "Core", "Serratus Anterior"],
@@ -1068,7 +1068,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Meadows Row": {
     name: "Meadows Row",
     category: "Back",
-    image: "/exercises/meadows_row.png",
+    image: "/exercises/meadows_row.webp",
     description: "The Meadows Row is a landmine-based single-arm row that allows a unique grip and range of motion, heavily targeting the lats and teres major.",
     primaryMuscles: ["Latissimus Dorsi", "Teres Major"],
     secondaryMuscles: ["Rhomboids", "Biceps", "Rear Deltoids"],
@@ -1083,7 +1083,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Mountain Climbers": {
     name: "Mountain Climbers",
     category: "Cardio",
-    image: "/exercises/mountain_climber.png",
+    image: "/exercises/mountain_climber.webp",
     description: "Mountain climbers are a dynamic full-body exercise combining core stability with cardiovascular conditioning through rapid alternating knee drives.",
     primaryMuscles: ["Core", "Hip Flexors"],
     secondaryMuscles: ["Shoulders", "Chest", "Cardiovascular System"],
@@ -1098,7 +1098,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Nordic Curls": {
     name: "Nordic Curls",
     category: "Legs",
-    image: "/exercises/nordic_curl.png",
+    image: "/exercises/nordic_curl.webp",
     description: "Nordic curls are one of the most effective hamstring exercises, training the hamstrings eccentrically under extreme load to build strength and prevent injury.",
     primaryMuscles: ["Hamstrings"],
     secondaryMuscles: ["Glutes", "Calves"],
@@ -1113,7 +1113,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Overhead Cable Extensions": {
     name: "Overhead Cable Extensions",
     category: "Arms",
-    image: "/exercises/overhead_cable_extension.png",
+    image: "/exercises/overhead_cable_extension.webp",
     description: "Overhead cable extensions place the triceps in a fully stretched position, maximising the long head activation through a large range of motion.",
     primaryMuscles: ["Triceps Brachii (long head)"],
     secondaryMuscles: ["Triceps (lateral and medial heads)"],
@@ -1129,7 +1129,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Pallof Press": {
     name: "Pallof Press",
     category: "Core",
-    image: "/exercises/pallof_press.png",
+    image: "/exercises/pallof_press.webp",
     description: "The Pallof Press is an anti-rotation core exercise that trains the core to resist rotational forces, building functional stability.",
     primaryMuscles: ["Transverse Abdominis", "Obliques"],
     secondaryMuscles: ["Rectus Abdominis", "Glutes"],
@@ -1159,7 +1159,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Push-Ups (Deficit)": {
     name: "Push-Ups (Deficit)",
     category: "Chest",
-    image: "/exercises/push_up_deficit.png",
+    image: "/exercises/push_up_deficit.webp",
     description: "Deficit push-ups elevate the hands to allow the chest to descend below hand level, increasing the range of motion and pectoral stretch.",
     primaryMuscles: ["Pectorals"],
     secondaryMuscles: ["Anterior Deltoids", "Triceps", "Core"],
@@ -1174,7 +1174,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Push-Ups (Weighted)": {
     name: "Push-Ups (Weighted)",
     category: "Chest",
-    image: "/exercises/push_up_weighted.png",
+    image: "/exercises/push_up_weighted.webp",
     description: "Weighted push-ups add external load to the standard push-up pattern, allowing progressive overload without equipment beyond a weight plate.",
     primaryMuscles: ["Pectorals"],
     secondaryMuscles: ["Anterior Deltoids", "Triceps", "Core"],
@@ -1205,7 +1205,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Rear Delt Fly": {
     name: "Rear Delt Fly",
     category: "Shoulders",
-    image: "/exercises/rear_delt_fly.png",
+    image: "/exercises/rear_delt_fly.webp",
     description: "Rear delt flyes target the posterior deltoids and upper back muscles through a horizontal abduction movement, improving shoulder balance and posture.",
     primaryMuscles: ["Posterior Deltoids"],
     secondaryMuscles: ["Rhomboids", "Middle Trapezius", "Infraspinatus"],
@@ -1235,7 +1235,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Reverse Lunges": {
     name: "Reverse Lunges",
     category: "Legs",
-    image: "/exercises/reverse_lunge.png",
+    image: "/exercises/reverse_lunge.webp",
     description: "Reverse lunges are a knee-friendly lunge variation that places less stress on the front knee while effectively targeting the quads, glutes, and hamstrings.",
     primaryMuscles: ["Quadriceps", "Glutes"],
     secondaryMuscles: ["Hamstrings", "Core", "Calves"],
@@ -1251,7 +1251,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Rowing Machine": {
     name: "Rowing Machine",
     category: "Cardio",
-    image: "/exercises/rowing_machine.png",
+    image: "/exercises/rowing_machine.webp",
     description: "The rowing machine (ergometer) provides a full-body cardiovascular workout, engaging the legs, core, and upper body in a coordinated pulling movement.",
     primaryMuscles: ["Cardiovascular System"],
     secondaryMuscles: ["Quadriceps", "Hamstrings", "Back", "Shoulders", "Core"],
@@ -1266,7 +1266,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Seated Cable Row": {
     name: "Seated Cable Row",
     category: "Back",
-    image: "/exercises/seated_cable_row.png",
+    image: "/exercises/seated_cable_row.webp",
     description: "The seated cable row is a horizontal pulling exercise that builds mid-back thickness through a full range of motion with constant cable tension.",
     primaryMuscles: ["Rhomboids", "Middle Trapezius", "Latissimus Dorsi"],
     secondaryMuscles: ["Biceps", "Rear Deltoids", "Spinal Erectors"],
@@ -1282,7 +1282,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Seated Calf Raises": {
     name: "Seated Calf Raises",
     category: "Legs",
-    image: "/exercises/seated_calf_raise.png",
+    image: "/exercises/seated_calf_raise.webp",
     description: "Seated calf raises target the soleus muscle (the deeper calf muscle) which is better activated when the knee is bent, unlike standing calf raises which emphasise the gastrocnemius.",
     primaryMuscles: ["Soleus"],
     secondaryMuscles: ["Gastrocnemius"],
@@ -1298,7 +1298,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Seated Leg Curl": {
     name: "Seated Leg Curl",
     category: "Legs",
-    image: "/exercises/seated_leg_curl.png",
+    image: "/exercises/seated_leg_curl.webp",
     description: "The seated leg curl machine trains the hamstrings in a lengthened position with the hip flexed, which research shows produces greater hamstring hypertrophy than lying leg curls.",
     primaryMuscles: ["Hamstrings"],
     secondaryMuscles: ["Gastrocnemius"],
@@ -1313,7 +1313,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Single-Arm Cable Row": {
     name: "Single-Arm Cable Row",
     category: "Back",
-    image: "/exercises/single_arm_cable_row.png",
+    image: "/exercises/single_arm_cable_row.webp",
     description: "The single-arm cable row allows a greater range of motion and rotation than bilateral rows, improving lat activation and correcting left-right imbalances.",
     primaryMuscles: ["Latissimus Dorsi"],
     secondaryMuscles: ["Rhomboids", "Biceps", "Rear Deltoids"],
@@ -1328,7 +1328,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Sissy Squats": {
     name: "Sissy Squats",
     category: "Legs",
-    image: "/exercises/sissy_squat.png",
+    image: "/exercises/sissy_squat.webp",
     description: "Sissy squats are an advanced quad isolation exercise that trains the rectus femoris in a lengthened position through a unique knee-dominant movement.",
     primaryMuscles: ["Quadriceps (rectus femoris)"],
     secondaryMuscles: ["Hip Flexors"],
@@ -1344,7 +1344,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Spider Curls": {
     name: "Spider Curls",
     category: "Arms",
-    image: "/exercises/spider_curl.png",
+    image: "/exercises/spider_curl.webp",
     description: "Spider curls are performed lying face down on an incline bench, placing the biceps in a shortened position at the top for a unique stimulus and peak contraction.",
     primaryMuscles: ["Biceps Brachii"],
     secondaryMuscles: ["Brachialis"],
@@ -1359,7 +1359,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Stair Climber": {
     name: "Stair Climber",
     category: "Cardio",
-    image: "/exercises/stair_climber.png",
+    image: "/exercises/stair_climber.webp",
     description: "The stair climber provides a low-impact cardiovascular workout that also builds lower-body muscular endurance, particularly in the glutes and quads.",
     primaryMuscles: ["Cardiovascular System", "Glutes"],
     secondaryMuscles: ["Quadriceps", "Hamstrings", "Calves"],
@@ -1374,7 +1374,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Standing Calf Raises": {
     name: "Standing Calf Raises",
     category: "Legs",
-    image: "/exercises/standing_calf_raise.png",
+    image: "/exercises/standing_calf_raise.webp",
     description: "Standing calf raises target the gastrocnemius muscle (the larger, visible calf muscle) through plantarflexion with the knee extended.",
     primaryMuscles: ["Gastrocnemius"],
     secondaryMuscles: ["Soleus"],
@@ -1390,7 +1390,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Step-Ups": {
     name: "Step-Ups",
     category: "Legs",
-    image: "/exercises/step_up.png",
+    image: "/exercises/step_up.webp",
     description: "Step-ups are a unilateral lower-body exercise that builds quad and glute strength while improving balance and correcting left-right imbalances.",
     primaryMuscles: ["Quadriceps", "Glutes"],
     secondaryMuscles: ["Hamstrings", "Core"],
@@ -1406,7 +1406,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Stiff-Leg Deadlifts": {
     name: "Stiff-Leg Deadlifts",
     category: "Back",
-    image: "/exercises/stiff_leg_deadlift.png",
+    image: "/exercises/stiff_leg_deadlift.webp",
     description: "Stiff-leg deadlifts are a hamstring and lower back exercise that maintains near-straight legs throughout, maximising the hip hinge range of motion.",
     primaryMuscles: ["Hamstrings", "Spinal Erectors"],
     secondaryMuscles: ["Glutes", "Traps", "Forearms"],
@@ -1422,7 +1422,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Straight-Arm Pulldown": {
     name: "Straight-Arm Pulldown",
     category: "Back",
-    image: "/exercises/straight_arm_pulldown.png",
+    image: "/exercises/straight_arm_pulldown.webp",
     description: "The straight-arm pulldown isolates the lats through shoulder extension with straight arms, eliminating bicep involvement for a pure lat contraction.",
     primaryMuscles: ["Latissimus Dorsi"],
     secondaryMuscles: ["Teres Major", "Posterior Deltoids", "Core"],
@@ -1437,7 +1437,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Swimming": {
     name: "Swimming",
     category: "Cardio",
-    image: "/exercises/swimming.png",
+    image: "/exercises/swimming.webp",
     description: "Swimming is a full-body, zero-impact cardiovascular exercise that builds endurance, upper-body strength, and flexibility simultaneously.",
     primaryMuscles: ["Cardiovascular System"],
     secondaryMuscles: ["Shoulders", "Back", "Core", "Legs"],
@@ -1452,7 +1452,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "T-Bar Row": {
     name: "T-Bar Row",
     category: "Back",
-    image: "/exercises/t_bar_row.png",
+    image: "/exercises/t_bar_row.webp",
     description: "The T-bar row is a heavy compound back exercise that allows significant loading of the mid-back muscles through a supported rowing motion.",
     primaryMuscles: ["Latissimus Dorsi", "Rhomboids", "Middle Trapezius"],
     secondaryMuscles: ["Biceps", "Rear Deltoids", "Spinal Erectors"],
@@ -1497,7 +1497,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Upright Rows": {
     name: "Upright Rows",
     category: "Shoulders",
-    image: "/exercises/upright_row.png",
+    image: "/exercises/upright_row.webp",
     description: "Upright rows build the lateral deltoids and upper traps through a vertical pulling motion, though they require careful technique to avoid shoulder impingement.",
     primaryMuscles: ["Lateral Deltoids", "Upper Trapezius"],
     secondaryMuscles: ["Anterior Deltoids", "Biceps"],
@@ -1512,7 +1512,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Y-Raises": {
     name: "Y-Raises",
     category: "Shoulders",
-    image: "/exercises/y_raise.png",
+    image: "/exercises/y_raise.webp",
     description: "Y-raises target the lower trapezius and posterior deltoids, which are crucial for shoulder health, posture, and scapular stability.",
     primaryMuscles: ["Lower Trapezius", "Posterior Deltoids"],
     secondaryMuscles: ["Rhomboids", "Infraspinatus"],
@@ -1543,7 +1543,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Jump Rope": {
     name: "Jump Rope",
     category: "Cardio",
-    image: "/exercises/jump_rope.png",
+    image: "/exercises/jump_rope.webp",
     description: "Jump rope is a high-intensity cardio exercise that builds coordination, footwork, and cardiovascular fitness.",
     primaryMuscles: ["Cardiovascular System"],
     secondaryMuscles: ["Calves", "Shoulders", "Core"],
