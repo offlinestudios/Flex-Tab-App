@@ -80,15 +80,11 @@ export function ExerciseCardNew({
       marginBottom: 16,
       animation: 'slideIn .3s ease',
     }}>
-      {/* Header: name + category badge + three-dot menu */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px 12px' }}>
-        <h3 style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', margin: 0 }}>{exercise.name}</h3>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ padding: '4px 12px', background: 'var(--foreground)', color: 'var(--background)', fontSize: 11, fontWeight: 700, borderRadius: 20 }}>
-            {partLabel}
-          </span>
-          {/* Three-dot overflow menu */}
-          {onRemove && (
+      {/* Header: name row (with three-dot top-right) + badge row below */}
+      <div style={{ padding: '18px 20px 12px', position: 'relative' }}>
+        {/* Three-dot menu anchored top-right */}
+        {onRemove && (
+          <div style={{ position: 'absolute', top: 14, right: 14 }}>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
@@ -105,7 +101,6 @@ export function ExerciseCardNew({
                   }}
                   aria-label="Exercise options"
                 >
-                  {/* Vertical three dots */}
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                     <circle cx="12" cy="5" r="1.5"/>
                     <circle cx="12" cy="12" r="1.5"/>
@@ -122,8 +117,16 @@ export function ExerciseCardNew({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          )}
-        </div>
+          </div>
+        )}
+        {/* Exercise name — padded right so it never overlaps the three-dot button */}
+        <h3 style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', margin: '0 0 8px', paddingRight: 32 }}>
+          {exercise.name}
+        </h3>
+        {/* Category badge on its own row */}
+        <span style={{ padding: '4px 12px', background: 'var(--foreground)', color: 'var(--background)', fontSize: 11, fontWeight: 700, borderRadius: 20, display: 'inline-block' }}>
+          {partLabel}
+        </span>
       </div>
 
       {/* Stat card */}

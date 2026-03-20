@@ -250,19 +250,10 @@ export function CardioExerciseCard({
       marginBottom: 12,
     }}>
       {/* ── Header ── */}
-      <div style={{ padding: '16px 16px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <h3 style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', margin: 0, letterSpacing: -0.5 }}>
-          {exercise.name}
-        </h3>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{
-            padding: '4px 12px', borderRadius: 20,
-            background: 'var(--foreground)', color: 'var(--background)',
-            fontSize: 12, fontWeight: 700,
-          }}>
-            {exercise.category}
-          </span>
-          {onRemove && (
+      <div style={{ padding: '16px 16px 8px', position: 'relative' }}>
+        {/* Three-dot menu anchored top-right */}
+        {onRemove && (
+          <div style={{ position: 'absolute', top: 12, right: 10 }}>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
@@ -290,8 +281,20 @@ export function CardioExerciseCard({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          )}
-        </div>
+          </div>
+        )}
+        {/* Exercise name — padded right so it never overlaps the three-dot button */}
+        <h3 style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', margin: '0 0 8px', letterSpacing: -0.5, paddingRight: 32 }}>
+          {exercise.name}
+        </h3>
+        {/* Category badge on its own row */}
+        <span style={{
+          padding: '4px 12px', borderRadius: 20, display: 'inline-block',
+          background: 'var(--foreground)', color: 'var(--background)',
+          fontSize: 12, fontWeight: 700,
+        }}>
+          {exercise.category}
+        </span>
       </div>
 
       {/* ── Pagination dots ── */}
