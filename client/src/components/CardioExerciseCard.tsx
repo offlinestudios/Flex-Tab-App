@@ -250,18 +250,23 @@ export function CardioExerciseCard({
       marginBottom: 12,
     }}>
       {/* ── Header ── */}
-      <div style={{ padding: '16px 16px 8px', position: 'relative' }}>
-        {/* Three-dot menu anchored top-right */}
-        {onRemove && (
-          <div style={{ position: 'absolute', top: 12, right: 10 }}>
+      <div style={{ padding: '16px 16px 8px' }}>
+        {/* Top row: name left, three-dot right — aligned to same baseline */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+          <h3 style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', margin: 0, letterSpacing: -0.5, lineHeight: 1.2 }}>
+            {exercise.name}
+          </h3>
+          {onRemove && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
                   style={{
                     background: 'none', border: 'none', cursor: 'pointer',
-                    padding: '4px 6px', borderRadius: 8,
+                    padding: '2px 4px', borderRadius: 8,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     color: 'var(--muted-foreground)',
+                    flexShrink: 0,
+                    marginTop: 2,
                   }}
                   aria-label="Exercise options"
                 >
@@ -281,15 +286,11 @@ export function CardioExerciseCard({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
-        )}
-        {/* Exercise name — padded right so it never overlaps the three-dot button */}
-        <h3 style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', margin: '0 0 8px', letterSpacing: -0.5, paddingRight: 32 }}>
-          {exercise.name}
-        </h3>
-        {/* Category badge on its own row */}
+          )}
+        </div>
+        {/* Category badge — tight gap below name */}
         <span style={{
-          padding: '4px 12px', borderRadius: 20, display: 'inline-block',
+          marginTop: 6, padding: '4px 12px', borderRadius: 20, display: 'inline-block',
           background: 'var(--foreground)', color: 'var(--background)',
           fontSize: 12, fontWeight: 700,
         }}>

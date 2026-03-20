@@ -80,11 +80,14 @@ export function ExerciseCardNew({
       marginBottom: 16,
       animation: 'slideIn .3s ease',
     }}>
-      {/* Header: name row (with three-dot top-right) + badge row below */}
-      <div style={{ padding: '18px 20px 12px', position: 'relative' }}>
-        {/* Three-dot menu anchored top-right */}
-        {onRemove && (
-          <div style={{ position: 'absolute', top: 14, right: 14 }}>
+      {/* Header: name + three-dot on top row, badge tightly below */}
+      <div style={{ padding: '18px 20px 12px' }}>
+        {/* Top row: name left, three-dot right — aligned to same baseline */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+          <h3 style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', margin: 0, lineHeight: 1.2 }}>
+            {exercise.name}
+          </h3>
+          {onRemove && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
@@ -92,12 +95,14 @@ export function ExerciseCardNew({
                     background: 'none',
                     border: 'none',
                     cursor: 'pointer',
-                    padding: '4px 6px',
+                    padding: '2px 4px',
                     borderRadius: 8,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     color: 'var(--muted-foreground)',
+                    flexShrink: 0,
+                    marginTop: 2,
                   }}
                   aria-label="Exercise options"
                 >
@@ -117,14 +122,10 @@ export function ExerciseCardNew({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
-        )}
-        {/* Exercise name — padded right so it never overlaps the three-dot button */}
-        <h3 style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', margin: '0 0 8px', paddingRight: 32 }}>
-          {exercise.name}
-        </h3>
-        {/* Category badge on its own row */}
-        <span style={{ padding: '4px 12px', background: 'var(--foreground)', color: 'var(--background)', fontSize: 11, fontWeight: 700, borderRadius: 20, display: 'inline-block' }}>
+          )}
+        </div>
+        {/* Category badge — tight gap below name */}
+        <span style={{ marginTop: 6, padding: '4px 12px', background: 'var(--foreground)', color: 'var(--background)', fontSize: 11, fontWeight: 700, borderRadius: 20, display: 'inline-block' }}>
           {partLabel}
         </span>
       </div>
