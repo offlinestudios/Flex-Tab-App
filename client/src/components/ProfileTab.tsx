@@ -1151,6 +1151,7 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
         {showPostComposer && (
           <NewPostComposer
             currentUser={user}
+            userAvatarUrl={avatarUrl}
             workoutSessions={workoutSessions}
             onClose={() => setShowPostComposer(false)}
           />
