@@ -816,7 +816,7 @@ export function NewPostComposer({
             onClick={handleSubmit}
             disabled={uploading || (!caption.trim() && mediaFiles.length === 0)}
             style={{
-              background: uploading || (!caption.trim() && mediaFiles.length === 0) ? "var(--muted)" : "var(--foreground)",
+              background: "var(--foreground)",
               color: "var(--background)",
               border: "none",
               borderRadius: 20,
@@ -824,7 +824,7 @@ export function NewPostComposer({
               fontSize: 14,
               fontWeight: 700,
               cursor: uploading || (!caption.trim() && mediaFiles.length === 0) ? "default" : "pointer",
-              opacity: uploading || (!caption.trim() && mediaFiles.length === 0) ? 0.4 : 1,
+              opacity: uploading || (!caption.trim() && mediaFiles.length === 0) ? 0.35 : 1,
               transition: "opacity 0.15s",
             }}
           >
@@ -1422,24 +1422,10 @@ export function CommunityTab({ user, userAvatarUrl, workoutSessions = [] }: Comm
         <span style={{ fontSize: 14, color: "#9ca3af", fontWeight: 500, flex: 1 }}>
           Share your workout…
         </span>
-        <button
-          style={{
-            background: "var(--foreground)",
-            color: "var(--background)",
-            border: "none",
-            borderRadius: 16,
-            padding: "6px 14px",
-            fontSize: 13,
-            fontWeight: 700,
-            cursor: "pointer",
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowComposer(true);
-          }}
-        >
-          Post
-        </button>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"/>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
       </div>
 
       {/* Loading */}
