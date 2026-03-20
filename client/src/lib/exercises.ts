@@ -45,13 +45,11 @@ export const PRESET_EXERCISES: Exercise[] = [
   { id: "33", name: "Spider Curls", category: "Arms" },
   { id: "34", name: "Concentration Curls", category: "Arms" },
   // TRICEPS
-  { id: "35", name: "Tricep Dips", category: "Arms" },
   { id: "36", name: "Skullcrushers", category: "Arms" },
   { id: "37", name: "Rope Pushdowns", category: "Arms" },
   { id: "38", name: "Overhead Cable Extensions", category: "Arms" },
   { id: "39", name: "Close-Grip Bench", category: "Arms" },
   { id: "40", name: "JM Press", category: "Arms" },
-  { id: "41", name: "Tate Press", category: "Arms" },
   // SHOULDERS - Front & Press
   { id: "42", name: "Shoulder Press", category: "Shoulders" },
   { id: "43", name: "Arnold Press", category: "Shoulders" },
@@ -89,7 +87,6 @@ export const PRESET_EXERCISES: Exercise[] = [
   // LEGS - Calves
   { id: "70", name: "Standing Calf Raises", category: "Legs" },
   { id: "71", name: "Seated Calf Raises", category: "Legs" },
-  { id: "72", name: "Tibialis Raises", category: "Legs" },
   // CORE
   { id: "73", name: "Hanging Leg Raises", category: "Core" },
   { id: "74", name: "Cable Crunches", category: "Core" },

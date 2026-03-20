@@ -122,22 +122,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
     ],
     tips: "Avoid swinging your torso to lift the weight — this transfers the load away from the biceps. Slow down the lowering phase (eccentric) for greater muscle stimulus. Supinate your wrists fully at the top for maximum bicep contraction.",
   },
-  "Tricep Dips": {
-    name: "Tricep Dips",
-    category: "Arms",
-    image: "/exercises/tricep_dip.png",
-    description: "Parallel bar dips are a compound upper-body exercise that heavily loads the triceps while also engaging the chest and anterior deltoids.",
-    primaryMuscles: ["Triceps Brachii"],
-    secondaryMuscles: ["Pectorals", "Anterior Deltoids"],
-    instructions: [
-      "Grip the parallel bars and push yourself up to a straight-arm support position.",
-      "Lean your torso slightly forward to shift emphasis toward the triceps.",
-      "Lower your body by bending your elbows, keeping them close to your sides.",
-      "Descend until your upper arms are roughly parallel to the floor.",
-      "Press back up to the starting position by extending your elbows fully.",
-    ],
-    tips: "Keeping your torso more upright and elbows tucked close to your sides maximises tricep activation. Leaning forward too much shifts the load to the chest. Add weight with a dip belt once bodyweight becomes easy.",
-  },
+
   "Lat Pulldowns": {
     name: "Lat Pulldowns",
     category: "Back",
@@ -426,22 +411,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
     ],
     tips: "The bottom position (full extension) is where the biceps are most stretched and most vulnerable. Control the lowering phase carefully. Avoid locking out aggressively at the bottom as this can stress the elbow joint.",
   },
-  "Skull Crushers": {
-    name: "Skull Crushers",
-    category: "Arms",
-    image: "/exercises/skull_crusher.png",
-    description: "Skull crushers (lying tricep extensions) are a compound tricep exercise that loads all three heads of the triceps through elbow extension.",
-    primaryMuscles: ["Triceps Brachii"],
-    secondaryMuscles: [],
-    instructions: [
-      "Lie flat on a bench and hold a barbell or EZ-bar with arms extended straight up above your chest.",
-      "Keep your upper arms perpendicular to the floor and stationary throughout.",
-      "Lower the bar toward your forehead by bending your elbows.",
-      "Stop just before the bar reaches your forehead, then extend your elbows to press back up.",
-      "Keep the movement slow and controlled, especially on the lowering phase.",
-    ],
-    tips: "Despite the name, the bar should travel toward your forehead, not your skull. Some lifters find lowering slightly behind the head (to the forehead/top of head) provides a better stretch. Use an EZ-bar to reduce wrist strain.",
-  },
+
   "Hip Thrusts": {
     name: "Hip Thrusts",
     category: "Legs",
@@ -554,7 +524,7 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
   "Skullcrushers": {
     name: "Skullcrushers",
     category: "Arms",
-    image: "/exercises/skullcrusher.png",
+    image: "/exercises/skullcrusher.webp",
     description: "Skullcrushers are a lying tricep extension that loads all three heads of the triceps through elbow extension.",
     primaryMuscles: ["Triceps Brachii"],
     secondaryMuscles: [],
@@ -1464,36 +1434,8 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
     ],
     tips: "Use a chest-supported T-bar row if lower back fatigue is an issue. Drive your elbows back rather than just pulling with your arms. A close grip targets the mid-back; a wider grip hits more of the outer lats.",
   },
-  "Tate Press": {
-    name: "Tate Press",
-    category: "Arms",
-    image: "/exercises/tate_press.png",
-    description: "The Tate Press is a dumbbell tricep exercise performed lying on a bench, where the elbows flare outward as the dumbbells lower toward the chest.",
-    primaryMuscles: ["Triceps Brachii"],
-    secondaryMuscles: ["Pectorals"],
-    instructions: [
-      "Lie on a flat bench holding dumbbells above your chest, palms facing your feet.",
-      "Keeping your upper arms stationary, lower the dumbbells by bending your elbows outward.",
-      "Lower until the dumbbells nearly touch your chest.",
-      "Extend your elbows to press back up to the starting position.",
-    ],
-    tips: "The outward elbow flare is what distinguishes this from a close-grip press. Use moderate weight and focus on the tricep contraction. Great as an accessory exercise for powerlifters.",
-  },
-  "Tibialis Raises": {
-    name: "Tibialis Raises",
-    category: "Legs",
-    image: "/exercises/tibialis_raise.png",
-    description: "Tibialis raises strengthen the tibialis anterior muscle on the front of the shin, improving ankle stability and helping prevent shin splints.",
-    primaryMuscles: ["Tibialis Anterior"],
-    secondaryMuscles: ["Ankle Stabilisers"],
-    instructions: [
-      "Stand with your back against a wall and heels about 6 inches from the wall.",
-      "Keep your legs straight and raise your toes and forefoot as high as possible.",
-      "Hold briefly at the top, then lower slowly back to the floor.",
-      "Perform 15–25 reps per set.",
-    ],
-    tips: "This is a preventive and rehabilitation exercise often overlooked in training. Strengthening the tibialis anterior helps prevent shin splints and improves running economy. Can be loaded with a weight on the foot.",
-  },
+
+
   "Upright Rows": {
     name: "Upright Rows",
     category: "Shoulders",
@@ -1569,7 +1511,7 @@ const EXERCISE_ALIASES: Record<string, string> = {
   "Chest Flyes": "Chest Flyes",
   "Incline Bench Press": "Incline Bench Press",
   // Arms
-  "Skull Crushers": "Skull Crushers",
+  "Skull Crushers": "Skullcrushers",
   "Tricep Extensions": "Tricep Extensions",
   // Legs
   "Leg Extensions": "Leg Extensions",
