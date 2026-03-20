@@ -1,9 +1,11 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Share2, X } from "lucide-react";
+import { Share2, X, Users } from "lucide-react";
 import { toast } from "sonner";
 import { PRESET_EXERCISES } from "@/lib/exercises";
 import { useState, useEffect } from "react";
+import { trpc } from "@/lib/trpc";
+import { supabase } from "@/lib/supabase";
 
 interface SetLog {
   id: string;
@@ -77,7 +79,17 @@ export function ShareWorkoutDialog({
   userName,
   userAvatarUrl,
 }: ShareWorkoutDialogProps) {
-  const [loading, setLoading] = useState<null | 'share'>(null);
+  const [loading, setLoading] = useState<null | 'share' | 'community'>(null);
+  const utils = trpc.useUtils();
+  const createPost = trpc.community.createPost.useMutation({
+    onSuccess: () => {
+      utils.community.getFeed.invalidate();
+      (utils as any).community.getMyPosts?.invalidate();
+      toast.success('Posted to community!');
+      onOpenChange(false);
+    },
+    onError: (e) => toast.error(e.message ?? 'Failed to post'),
+  });
 
   // ── Detect current app theme ─────────────────────────────────────────────────
   const [theme, setTheme] = useState<ThemeKey>('light');
@@ -254,7 +266,56 @@ export function ShareWorkoutDialog({
     return data.pages;
   };
 
-  // ── Share via native share sheet ─────────────────────────────────────────────
+  // ── Post to Community feed ───────────────────────────────────────────────────
+  const handlePostToCommunity = async () => {
+    setLoading('community');
+    try {
+      // 1. Generate the card image
+      const pages = await generateCards();
+      const firstPage = pages[0];
+
+      // 2. Convert data URI → File
+      const byteString = atob(firstPage.dataUri.split(',')[1]);
+      const ab = new ArrayBuffer(byteString.length);
+      const ia = new Uint8Array(ab);
+      for (let j = 0; j < byteString.length; j++) ia[j] = byteString.charCodeAt(j);
+      const blob = new Blob([ab], { type: 'image/png' });
+      const file = new File([blob], `flextab-workout-${shortDate.replace(/\s/g, '-')}.png`, { type: 'image/png' });
+
+      // 3. Upload via server media endpoint
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error('Not authenticated');
+
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/upload-media', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({ error: 'Upload failed' }));
+        throw new Error(errBody.error ?? 'Media upload failed');
+      }
+      const { key, url, mediaType, mimeType } = await res.json();
+
+      // 4. Create the community post
+      await createPost.mutateAsync({
+        caption: undefined,
+        mediaItems: [{ key, url, mediaType, mimeType }],
+        workoutSessionId: workoutSessionId ?? undefined,
+      });
+    } catch (error: any) {
+      if (error?.name !== 'AbortError') {
+        toast.error(error?.message ?? 'Could not post to community');
+      }
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  // ── Share via native share sheet ──────────────────────────────────────────────────────────────
   const handleShare = async () => {
     setLoading('share');
     try {
@@ -535,8 +596,8 @@ export function ShareWorkoutDialog({
           {renderPreview()}
         </div>
 
-        {/* Share button */}
-        <div style={{ padding: '8px 16px calc(16px + env(safe-area-inset-bottom))', background: 'var(--background)', flexShrink: 0 }}>
+        {/* Action buttons */}
+        <div style={{ padding: '8px 16px calc(16px + env(safe-area-inset-bottom))', background: 'var(--background)', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
           <Button
             onClick={handleShare}
             disabled={loading !== null}
@@ -545,6 +606,15 @@ export function ShareWorkoutDialog({
           >
             <Share2 className="w-4 h-4 mr-2" />
             {loading === 'share' ? 'Preparing…' : 'Share via…'}
+          </Button>
+          <Button
+            onClick={handlePostToCommunity}
+            disabled={loading !== null}
+            className="w-full rounded-2xl h-12 text-sm font-bold"
+            style={{ background: 'transparent', color: 'var(--foreground)', border: '1.5px solid var(--border)' }}
+          >
+            <Users className="w-4 h-4 mr-2" />
+            {loading === 'community' ? 'Posting…' : 'Post to Community'}
           </Button>
         </div>
       </DialogContent>
