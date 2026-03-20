@@ -1019,50 +1019,9 @@ export default function Home() {
               </div>
             )}
 
-            {/* Exercise Cards — swipe left/right to navigate between exercises */}
+            {/* Exercise Cards */}
             {selectedExercises.length > 0 && (
-              <div
-                onTouchStart={(e) => {
-                  // Ignore touches that start on interactive elements (sliders, buttons, inputs)
-                  // so that dragging the weight slider is never misread as a card-swipe.
-                  const tag = (e.target as HTMLElement).tagName.toLowerCase();
-                  if (tag === 'input' || tag === 'button' || tag === 'select' || tag === 'textarea') {
-                    setTouchStart(null);
-                    setTouchEnd(null);
-                    return;
-                  }
-                  setTouchEnd(null);
-                  setTouchStart(e.targetTouches[0].clientX);
-                }}
-                onTouchMove={(e) => {
-                  if (touchStart === null) return; // started on an interactive element — ignore
-                  setTouchEnd(e.targetTouches[0].clientX);
-                }}
-                onTouchEnd={() => {
-                  if (!touchStart || !touchEnd) return;
-                  const dist = touchStart - touchEnd;
-                  setCurrentExerciseIndex(prev => {
-                    const safeIdx2 = Math.min(prev, selectedExercises.length - 1);
-                    if (dist > 60) {
-                      // Swipe left → next exercise
-                      const nextIdx = safeIdx2 + 1;
-                      if (nextIdx < selectedExercises.length) return nextIdx;
-                      // Open browser for adding next exercise (side-effect outside setState, handled below)
-                      return safeIdx2;
-                    } else if (dist < -60 && safeIdx2 > 0) {
-                      // Swipe right → previous exercise
-                      return safeIdx2 - 1;
-                    }
-                    return safeIdx2;
-                  });
-                  // Handle the "add exercise" swipe case separately
-                  const safeIdx2 = Math.min(currentExerciseIndex, selectedExercises.length - 1);
-                  if (touchStart - touchEnd > 60 && safeIdx2 + 1 >= selectedExercises.length) {
-                    setShowExerciseBrowser(true);
-                  }
-                }}
-                style={{ touchAction: 'pan-y' }}
-              >
+              <div>
             {(() => {
               const safeIdx = Math.min(currentExerciseIndex, selectedExercises.length - 1);
               const exercise = selectedExercises[safeIdx];
@@ -1092,6 +1051,9 @@ export default function Home() {
                       } else {
                         setShowExerciseBrowser(true);
                       }
+                    }}
+                    onPrev={() => {
+                      if (safeIdx > 0) setCurrentExerciseIndex(safeIdx - 1);
                     }}
                     totalExercises={selectedExercises.length}
                     currentIndex={safeIdx}
@@ -1127,6 +1089,9 @@ export default function Home() {
                     } else {
                       setShowExerciseBrowser(true);
                     }
+                  }}
+                  onPrev={() => {
+                    if (safeIdx > 0) setCurrentExerciseIndex(safeIdx - 1);
                   }}
                   lastWeight={lastEntry?.weight ?? 0}
                   lastReps={lastEntry?.reps ?? 0}

@@ -1,5 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { Play, Pause, Square, RotateCcw } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 import { calculateCalories } from "@/utils/calorieCalculations";
 
 interface Exercise {
@@ -24,6 +30,7 @@ interface CardioExerciseCardProps {
   ) => Promise<void>;
   onRemove?: (exerciseId: string) => void;
   onNext?: () => void;
+  onPrev?: () => void;
   totalExercises?: number;
   currentIndex?: number;
   userWeightLbs?: number;
@@ -133,6 +140,7 @@ export function CardioExerciseCard({
   onLogSet,
   onRemove,
   onNext,
+  onPrev,
   totalExercises,
   currentIndex,
   userWeightLbs,
@@ -246,13 +254,44 @@ export function CardioExerciseCard({
         <h3 style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', margin: 0, letterSpacing: -0.5 }}>
           {exercise.name}
         </h3>
-        <span style={{
-          padding: '4px 12px', borderRadius: 20,
-          background: 'var(--foreground)', color: 'var(--background)',
-          fontSize: 12, fontWeight: 700,
-        }}>
-          {exercise.category}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{
+            padding: '4px 12px', borderRadius: 20,
+            background: 'var(--foreground)', color: 'var(--background)',
+            fontSize: 12, fontWeight: 700,
+          }}>
+            {exercise.category}
+          </span>
+          {onRemove && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  style={{
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    padding: '4px 6px', borderRadius: 8,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: 'var(--muted-foreground)',
+                  }}
+                  aria-label="Exercise options"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="12" cy="5" r="1.5"/>
+                    <circle cx="12" cy="12" r="1.5"/>
+                    <circle cx="12" cy="19" r="1.5"/>
+                  </svg>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onSelect={() => onRemove(exercise.id)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  Remove Exercise
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
       </div>
 
       {/* ── Pagination dots ── */}
@@ -439,13 +478,13 @@ export function CardioExerciseCard({
         </button>
       </div>
 
-      {/* ── Prev / ⋯ menu / Next navigation ── */}
+      {/* ── Prev / Next navigation ── */}
       <CardioNavRow
         exerciseId={exercise.id}
         currentIndex={currentIndex}
         totalExercises={totalExercises}
         onNext={onNext}
-        onRemove={onRemove}
+        onPrev={onPrev}
       />
     </div>
   );
@@ -457,21 +496,25 @@ interface CardioNavRowProps {
   currentIndex?: number;
   totalExercises?: number;
   onNext?: () => void;
-  onRemove?: (id: string) => void;
+  onPrev?: () => void;
 }
 
-function CardioNavRow({ exerciseId, currentIndex = 0, totalExercises = 1, onNext, onRemove }: CardioNavRowProps) {
+function CardioNavRow({ exerciseId, currentIndex = 0, totalExercises = 1, onNext, onPrev }: CardioNavRowProps) {
   const nextLabel = currentIndex < totalExercises - 1 ? 'Next Exercise' : 'Add Exercise';
+  const showPrev = currentIndex > 0;
 
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 20px 16px' }}>
-      {/* Left: Remove Exercise */}
-      {onRemove ? (
+      {/* Left: Previous Exercise (only when not on first card) */}
+      {showPrev && onPrev ? (
         <button
-          onClick={() => onRemove(exerciseId)}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: '#ef4444', fontFamily: 'inherit', padding: '6px 0' }}
+          onClick={onPrev}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: 'var(--foreground)', fontFamily: 'inherit', padding: '6px 0', display: 'flex', alignItems: 'center', gap: 4 }}
         >
-          Remove Exercise
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+          Previous Exercise
         </button>
       ) : <div />}
 
