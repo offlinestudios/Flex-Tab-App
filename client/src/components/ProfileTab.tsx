@@ -818,7 +818,7 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
   const [activePanel, setActivePanel] = useState<ProfilePanel>('posts');
   const [showPostComposer, setShowPostComposer] = useState(false);
   // Real posts from the database (replaces the old fake local-only state)
-  const { data: myPostsData = [], refetch: refetchMyPosts } = (trpc as any).community.getMyPosts.useQuery(undefined, {
+  const { data: myPostsData = [], refetch: refetchMyPosts } = (trpc as any).community.getMyPosts.useQuery({ limit: 50, offset: 0 }, {
     staleTime: 0,
     refetchOnMount: true,
     retry: false,
