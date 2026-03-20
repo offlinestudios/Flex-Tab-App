@@ -1354,8 +1354,8 @@ function PostCard({
           </div>
         )}
 
-        {/* Workout log block */}
-        {post.workout && <WorkoutLogBlock workout={post.workout} />}
+        {/* Workout log block — only shown when there is no media (media posts use the card image instead) */}
+        {post.workout && post.media.length === 0 && <WorkoutLogBlock workout={post.workout} />}
 
         {/* Media */}
         {post.media.length > 0 && (
@@ -1384,8 +1384,8 @@ function PostCard({
                 alt=""
                 style={{
                   width: "100%",
-                  maxHeight: 320,
-                  objectFit: "cover",
+                  display: "block",
+                  objectFit: "contain",
                 }}
               />
             )}
