@@ -1681,7 +1681,7 @@ export default function Home() {
         )}
         {/* ══ COMMUNITY TAB ══ */}
         {activeTab === 'community' && (
-          <CommunityTab user={user} workoutSessions={workoutSessions} />
+          <CommunityTab user={user} userAvatarUrl={userProfile?.avatarUrl ?? null} workoutSessions={workoutSessions} />
         )}
 
         {/* ══ PROFILE TAB ══ */}

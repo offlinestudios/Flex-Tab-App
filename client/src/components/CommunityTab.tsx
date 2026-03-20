@@ -564,10 +564,12 @@ function CommentsSheet({
 ───────────────────────────────────────────────────────────────── */
 export function NewPostComposer({
   currentUser,
+  userAvatarUrl,
   workoutSessions = [],
   onClose,
 }: {
   currentUser: any;
+  userAvatarUrl?: string | null;
   workoutSessions?: any[];
   onClose: () => void;
 }) {
@@ -721,7 +723,7 @@ export function NewPostComposer({
 
         {/* Composer body: avatar + text area */}
         <div style={{ display: "flex", gap: 12, padding: "16px 20px 12px", alignItems: "flex-start" }}>
-          <Avatar name={currentUser?.name ?? "Me"} size={40} />
+          <Avatar name={currentUser?.name ?? "Me"} avatarUrl={userAvatarUrl} size={40} />
           <textarea
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
@@ -1377,10 +1379,11 @@ function PostCard({
 ───────────────────────────────────────────────────────────────── */
 interface CommunityTabProps {
   user: any;
+  userAvatarUrl?: string | null;
   workoutSessions?: any[];
 }
 
-export function CommunityTab({ user, workoutSessions = [] }: CommunityTabProps) {
+export function CommunityTab({ user, userAvatarUrl, workoutSessions = [] }: CommunityTabProps) {
   const [showComposer, setShowComposer] = useState(false);
 
   const {
@@ -1415,7 +1418,7 @@ export function CommunityTab({ user, workoutSessions = [] }: CommunityTabProps) 
           cursor: "pointer",
         }}
       >
-        <Avatar name={user?.name ?? "Me"} size={36} />
+        <Avatar name={user?.name ?? "Me"} avatarUrl={userAvatarUrl} size={36} />
         <span style={{ fontSize: 14, color: "#9ca3af", fontWeight: 500, flex: 1 }}>
           Share your workout…
         </span>
@@ -1508,6 +1511,7 @@ export function CommunityTab({ user, workoutSessions = [] }: CommunityTabProps) 
       {showComposer && (
         <NewPostComposer
           currentUser={user}
+          userAvatarUrl={userAvatarUrl}
           workoutSessions={workoutSessions}
           onClose={() => setShowComposer(false)}
         />
