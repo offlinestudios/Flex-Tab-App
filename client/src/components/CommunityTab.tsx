@@ -21,7 +21,7 @@ interface WorkoutSummary {
   totalVolume: number;
 }
 
-interface FeedPost {
+export interface FeedPost {
   id: number;
   userId: number;
   authorName: string;
@@ -309,7 +309,7 @@ function WorkoutLogBlock({ workout }: { workout: WorkoutSummary }) {
 /* ─────────────────────────────────────────────────────────────────
    Comments sheet
 ───────────────────────────────────────────────────────────────── */
-function CommentsSheet({
+export function CommentsSheet({
   post,
   currentUser,
   onClose,

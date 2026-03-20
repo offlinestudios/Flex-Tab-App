@@ -143,6 +143,70 @@ export const communityRouter = router({
     }),
 
   /**
+   * Get a single post by ID with full media, like count, and comment count.
+   */
+  getPost: protectedProcedure
+    .input(z.object({ postId: z.number().int().positive() }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return null;
+
+      const [post] = await db
+        .select({
+          id: posts.id,
+          userId: posts.userId,
+          caption: posts.caption,
+          workoutSessionId: posts.workoutSessionId,
+          createdAt: posts.createdAt,
+          authorName: users.name,
+          authorAvatarUrl: users.avatarUrl,
+        })
+        .from(posts)
+        .leftJoin(users, eq(posts.userId, users.id))
+        .where(eq(posts.id, input.postId))
+        .limit(1);
+
+      if (!post) return null;
+
+      const mediaRows = await db
+        .select()
+        .from(postMedia)
+        .where(eq(postMedia.postId, input.postId));
+
+      const likeRows = await db
+        .select({ userId: postLikes.userId })
+        .from(postLikes)
+        .where(eq(postLikes.postId, input.postId));
+
+      const [commentCountRow] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(postComments)
+        .where(eq(postComments.postId, input.postId));
+
+      const media = mediaRows.map((m) => ({
+        id: m.id,
+        r2Key: m.r2Key,
+        mediaType: m.mediaType,
+        mimeType: m.mimeType,
+        url: r2PublicUrl(m.r2Key),
+      }));
+
+      return {
+        id: post.id,
+        userId: post.userId,
+        caption: post.caption,
+        createdAt: post.createdAt.toISOString(),
+        authorName: post.authorName ?? "FlexTab User",
+        authorAvatarUrl: post.authorAvatarUrl ?? null,
+        media,
+        likeCount: likeRows.length,
+        commentCount: commentCountRow?.count ?? 0,
+        likedByMe: likeRows.some((l) => l.userId === ctx.user.id),
+        isMyPost: post.userId === ctx.user.id,
+      };
+    }),
+
+  /**
    * Delete a post (author only). Also removes associated media rows.
    */
   deletePost: protectedProcedure

@@ -3,7 +3,7 @@ import { formatDateFull } from "@/lib/dateUtils";
 import { useTheme } from "@/contexts/ThemeContext";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { NewPostComposer } from "./CommunityTab";
+import { NewPostComposer, CommentsSheet, FeedPost } from "./CommunityTab";
 
 type ProfilePanel = 'posts' | 'logs' | 'prs';
 
@@ -812,11 +812,206 @@ function ShareSheet({ profileName, onClose }: ShareSheetProps) {
 }
 
 /* ─────────────────────────────────────────────────────────────────
+   Post detail sheet — opens when a profile grid tile is tapped
+───────────────────────────────────────────────────────────────── */
+function ProfilePostDetail({
+  postId,
+  currentUser,
+  avatarUrl,
+  onClose,
+  onDeleted,
+}: {
+  postId: number;
+  currentUser: any;
+  avatarUrl?: string | null;
+  onClose: () => void;
+  onDeleted: () => void;
+}) {
+  const utils = trpc.useUtils();
+  const [showComments, setShowComments] = useState(false);
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+
+  const { data: post, isLoading } = (trpc as any).community.getPost.useQuery(
+    { postId },
+    { staleTime: 0, retry: false, throwOnError: false }
+  );
+
+  // Sync like state from server
+  React.useEffect(() => {
+    if (post) {
+      setLiked(post.likedByMe);
+      setLikeCount(post.likeCount);
+    }
+  }, [post]);
+
+  const likePost = trpc.community.likePost.useMutation({
+    onSuccess: () => { utils.community.getFeed.invalidate(); },
+  });
+  const unlikePost = trpc.community.unlikePost.useMutation({
+    onSuccess: () => { utils.community.getFeed.invalidate(); },
+  });
+  const deletePost = trpc.community.deletePost.useMutation({
+    onSuccess: () => {
+      utils.community.getFeed.invalidate();
+      (utils as any).community.getMyPosts.invalidate();
+      onDeleted();
+    },
+  });
+
+  const toggleLike = () => {
+    if (liked) {
+      setLiked(false);
+      setLikeCount((c) => Math.max(0, c - 1));
+      unlikePost.mutate({ postId });
+    } else {
+      setLiked(true);
+      setLikeCount((c) => c + 1);
+      likePost.mutate({ postId });
+    }
+  };
+
+  const handleDelete = () => {
+    if (window.confirm('Delete this post?')) {
+      deletePost.mutate({ postId });
+    }
+  };
+
+  // Build a FeedPost-compatible object for CommentsSheet
+  const feedPost: FeedPost | null = post
+    ? {
+        id: post.id,
+        userId: post.userId,
+        authorName: post.authorName,
+        authorHandle: '@' + (post.authorName ?? 'user').toLowerCase().replace(/\s+/g, '').slice(0, 20),
+        authorAvatarUrl: post.authorAvatarUrl,
+        caption: post.caption,
+        createdAt: post.createdAt,
+        likeCount,
+        commentCount: post.commentCount,
+        likedByMe: liked,
+        isMyPost: post.isMyPost,
+        media: post.media,
+        workout: null,
+      }
+    : null;
+
+  const firstMedia = post?.media?.[0];
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+          zIndex: 200, display: 'flex', alignItems: 'flex-end',
+        }}
+      />
+      {/* Sheet */}
+      <div
+        style={{
+          position: 'fixed', left: 0, right: 0, bottom: 0,
+          background: 'var(--card)', borderRadius: '20px 20px 0 0',
+          zIndex: 201, maxHeight: '92vh', overflowY: 'auto',
+          boxShadow: '0 -4px 32px rgba(0,0,0,0.18)',
+        }}
+      >
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px 12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {/* Author avatar */}
+            <div style={{ width: 36, height: 36, borderRadius: '50%', overflow: 'hidden', background: 'var(--secondary)', flexShrink: 0 }}>
+              {avatarUrl
+                ? <img src={avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--foreground)' }}>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--background)' }}>
+                      {(currentUser?.name ?? 'U').charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+              }
+            </div>
+            <div>
+              <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>{currentUser?.name ?? 'You'}</p>
+              {post && <p style={{ fontSize: 11, color: '#9ca3af', margin: 0 }}>{new Date(post.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>}
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {post?.isMyPost && (
+              <button
+                onClick={handleDelete}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, color: '#ef4444' }}
+                title="Delete post"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                  <path d="M10 11v6M14 11v6"/>
+                  <path d="M9 6V4h6v2"/>
+                </svg>
+              </button>
+            )}
+            <button onClick={onClose} style={{ background: 'var(--secondary)', border: 'none', borderRadius: '50%', width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Media */}
+        {isLoading && (
+          <div style={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <p style={{ color: '#9ca3af', fontSize: 14 }}>Loading…</p>
+          </div>
+        )}
+        {firstMedia && (
+          firstMedia.mediaType === 'video'
+            ? <video src={firstMedia.url} controls style={{ width: '100%', maxHeight: 480, objectFit: 'contain', background: '#000' }} />
+            : <img src={firstMedia.url} alt={post?.caption ?? ''} style={{ width: '100%', maxHeight: 520, objectFit: 'contain', background: 'var(--secondary)' }} />
+        )}
+
+        {/* Caption */}
+        {post?.caption && (
+          <p style={{ fontSize: 14, color: 'var(--foreground)', margin: '12px 20px 0', lineHeight: 1.5 }}>{post.caption}</p>
+        )}
+
+        {/* Actions bar */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20, padding: '14px 20px 20px' }}>
+          {/* Like */}
+          <button onClick={toggleLike} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill={liked ? '#ef4444' : 'none'} stroke={liked ? '#ef4444' : 'var(--foreground)'} strokeWidth="2" strokeLinecap="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            </svg>
+            <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--foreground)' }}>{likeCount}</span>
+          </button>
+          {/* Comment */}
+          <button onClick={() => setShowComments(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--foreground)" strokeWidth="2" strokeLinecap="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--foreground)' }}>{post?.commentCount ?? 0}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Comments sheet */}
+      {showComments && feedPost && (
+        <CommentsSheet
+          post={feedPost}
+          currentUser={currentUser}
+          onClose={() => setShowComments(false)}
+        />
+      )}
+    </>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────
    Main component
 ───────────────────────────────────────────────────────────────── */
 export function ProfileTab({ user, workoutSessions, measurements, prMap: externalPrMap }: ProfileTabProps) {
   const [activePanel, setActivePanel] = useState<ProfilePanel>('posts');
   const [showPostComposer, setShowPostComposer] = useState(false);
+  const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
   // Real posts from the database (replaces the old fake local-only state)
   const { data: myPostsData = [], refetch: refetchMyPosts } = (trpc as any).community.getMyPosts.useQuery({ limit: 50, offset: 0 }, {
     staleTime: 0,
@@ -1103,7 +1298,7 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
                   <span style={{ fontSize: 10, color: '#9ca3af', fontWeight: 600 }}>New Post</span>
                 </button>
                 {myPosts.map((post) => (
-                  <div key={post.id} style={{ aspectRatio: '1', overflow: 'hidden', position: 'relative', background: 'var(--secondary)' }}>
+                  <button key={post.id} onClick={() => setSelectedPostId(post.id)} style={{ aspectRatio: '1', overflow: 'hidden', position: 'relative', background: 'var(--secondary)', border: 'none', padding: 0, cursor: 'pointer', display: 'block' }}>
                     {post.thumbnailUrl ? (
                       post.mediaType === 'video' ? (
                         <>
@@ -1130,7 +1325,7 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
                         </p>
                       </div>
                     )}
-                  </div>
+                  </button>
                 ))}
               </div>
             ) : (
@@ -1154,6 +1349,17 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
             userAvatarUrl={avatarUrl}
             workoutSessions={workoutSessions}
             onClose={() => setShowPostComposer(false)}
+          />
+        )}
+
+        {/* Post detail sheet — opens when a grid tile is tapped */}
+        {selectedPostId !== null && (
+          <ProfilePostDetail
+            postId={selectedPostId}
+            currentUser={user}
+            avatarUrl={avatarUrl}
+            onClose={() => setSelectedPostId(null)}
+            onDeleted={() => { setSelectedPostId(null); refetchMyPosts(); }}
           />
         )}
 
