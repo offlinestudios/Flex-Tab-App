@@ -8,7 +8,7 @@ export interface Exercise {
 export const PRESET_EXERCISES: Exercise[] = [
   // CHEST - Pressing
   { id: "1", name: "Bench Press", category: "Chest" },
-  { id: "2", name: "Incline Press", category: "Chest" },
+  { id: "2", name: "Incline Dumbbell Press", category: "Chest" },
   { id: "3", name: "Decline Bench Press", category: "Chest" },
   { id: "4", name: "Dumbbell Press", category: "Chest" },
   { id: "5", name: "Guillotine Press", category: "Chest" },
@@ -51,7 +51,7 @@ export const PRESET_EXERCISES: Exercise[] = [
   { id: "39", name: "Close-Grip Bench", category: "Arms" },
   { id: "40", name: "JM Press", category: "Arms" },
   // SHOULDERS - Front & Press
-  { id: "42", name: "Shoulder Press", category: "Shoulders" },
+  { id: "42", name: "Dumbbell Shoulder Press", category: "Shoulders" },
   { id: "43", name: "Arnold Press", category: "Shoulders" },
   { id: "44", name: "Landmine Press", category: "Shoulders" },
   // SHOULDERS - Lateral

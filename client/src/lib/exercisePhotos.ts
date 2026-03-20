@@ -18,11 +18,10 @@ export const exercisePhotos: Record<string, string> = {
   "Lat Pulldown": "https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/PVqkoHbHUCqKFCUB.jpg",
   
   // Shoulders exercises
-  "Shoulder Press": "https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/WKiTHBzfQILNpVZb.jpg",
+  "Dumbbell Shoulder Press": "https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/WKiTHBzfQILNpVZb.jpg",
   
   // Arms exercises
   "Bicep Curls": "https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/iTtDtkqHvRFNjYCz.jpg",
-  "Tricep Dips": "https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/rlLjnfCVohpIfjOv.jpg",
   
   // Core exercises
   "Ab Wheel": "https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/EvNwjmVaiARRGJzB.jpg",

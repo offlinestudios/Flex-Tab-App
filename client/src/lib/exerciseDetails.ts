@@ -203,10 +203,10 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
     ],
     tips: "Think about pulling your elbow to the ceiling rather than pulling the dumbbell up. Allow a slight rotation of the torso at the top to get a full contraction. Keep your lower back neutral throughout.",
   },
-  "Shoulder Press": {
-    name: "Shoulder Press",
+  "Dumbbell Shoulder Press": {
+    name: "Dumbbell Shoulder Press",
     category: "Shoulders",
-    image: "/exercises/shoulder_press.png",
+    image: "/exercises/dumbbell_shoulder_press.webp",
     description: "The seated dumbbell shoulder press builds deltoid mass and overhead strength while allowing a more natural wrist and elbow path compared to the barbell version.",
     primaryMuscles: ["Anterior Deltoids", "Lateral Deltoids"],
     secondaryMuscles: ["Triceps", "Upper Trapezius"],
@@ -461,10 +461,10 @@ export const EXERCISE_DETAILS: Record<string, ExerciseDetail> = {
     tips: "The rotation should come from your torso, not just your arms. Keep your chest up and avoid rounding your lower back. Elevating your feet increases the difficulty by removing a base of support. Move slowly and deliberately.",
   },
   // Additional exercises with images from the library
-  "Incline Press": {
-    name: "Incline Press",
+  "Incline Dumbbell Press": {
+    name: "Incline Dumbbell Press",
     category: "Chest",
-    image: "/exercises/incline_press.png",
+    image: "/exercises/incline_dumbbell_press.webp",
     description: "The incline dumbbell press targets the upper chest and anterior deltoids, building a fuller upper pectoral region.",
     primaryMuscles: ["Upper Pectorals"],
     secondaryMuscles: ["Anterior Deltoids", "Triceps"],
