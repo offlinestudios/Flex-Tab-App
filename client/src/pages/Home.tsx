@@ -42,7 +42,6 @@ import { WorkoutTimer } from "@/components/WorkoutTimer";
 import { ProfileTab } from "@/components/ProfileTab";
 import { CommunityTab } from "@/components/CommunityTab";
 import { SettingsTab } from "@/components/SettingsTab";
-import { NotificationsTab } from "@/components/NotificationsTab";
 
 interface Exercise {
   id: string;
@@ -953,7 +952,6 @@ export default function Home() {
               : activeTab === 'routines' ? 'Routines'
               : activeTab === 'exercises' ? 'Exercises'
               : activeTab === 'community' ? 'Community'
-              : activeTab === 'notifications' ? 'Notifications'
               : activeTab === 'profile' ? 'Profile'
               : activeTab === 'settings' ? 'Settings'
               : 'Profile'}
@@ -1735,11 +1733,6 @@ export default function Home() {
             showSearch={showCommunitySearch}
             onToggleSearch={() => setShowCommunitySearch(s => !s)}
           />
-        )}
-
-        {/* ══ NOTIFICATIONS TAB ══ */}
-        {activeTab === 'notifications' && (
-          <NotificationsTab user={user} />
         )}
 
         {/* ══ PROFILE TAB ══ */}

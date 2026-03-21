@@ -7,6 +7,7 @@ import { DashboardLayoutSkeleton } from "./DashboardLayoutSkeleton";
 import { Button } from "./ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
 import { trpc } from "@/lib/trpc";
+import { NotificationsTab } from "./NotificationsTab";
 
 // ─── Sidebar nav items matching prototype ────────────────────────────────────
 const sidebarItems = [
@@ -68,16 +69,6 @@ const bottomNavItems = [
     ),
   },
   {
-    label: "Alerts",
-    path: "/dashboard?tab=notifications",
-    icon: (active: boolean) => (
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={active ? "var(--foreground)" : "#9ca3af"} strokeWidth="2" strokeLinecap="round">
-        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-      </svg>
-    ),
-  },
-  {
     label: "Profile",
     path: "/dashboard?tab=profile",
     icon: (active: boolean) => (
@@ -134,6 +125,7 @@ function AppShell({ children, timerSlot }: { children: React.ReactNode; timerSlo
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   // Unread notifications badge
   const { data: unreadCount = 0 } = (trpc as any).notifications.unreadCount.useQuery(
@@ -172,11 +164,14 @@ function AppShell({ children, timerSlot }: { children: React.ReactNode; timerSlo
   const isBottomNavActive = (path: string) => {
     const pathTab = new URLSearchParams(path.split('?')[1] || '').get('tab');
     if (!pathTab) {
-      // Log tab — active only when not on community, notifications, or profile
-      return currentTab !== 'community' && currentTab !== 'profile' && currentTab !== 'notifications';
+      // Log tab — active only when not on community or profile
+      return currentTab !== 'community' && currentTab !== 'profile';
     }
     return currentTab === pathTab;
   };
+
+  // Close notifications panel when navigating
+  useEffect(() => { setShowNotifications(false); }, [location]);
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -194,9 +189,34 @@ function AppShell({ children, timerSlot }: { children: React.ReactNode; timerSlo
             </button>
             <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', letterSpacing: '-0.5px' }}>FlexTab</span>
           </div>
-          {/* Right: timer slot + dark mode toggle */}
+          {/* Right: timer slot + bell + dark mode toggle */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {timerSlot}
+            {/* Bell icon with unread badge */}
+            <button
+              onClick={() => setShowNotifications(s => !s)}
+              aria-label="Notifications"
+              style={{ position: 'relative', width: 36, height: 36, borderRadius: 10, background: showNotifications ? 'var(--secondary)' : 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted-foreground)' }}
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+              </svg>
+              {unreadCount > 0 && (
+                <span style={{
+                  position: 'absolute', top: 4, right: 4,
+                  minWidth: 16, height: 16, borderRadius: 8,
+                  background: '#ef4444', color: '#fff',
+                  fontSize: 10, fontWeight: 800,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  padding: '0 3px', lineHeight: 1,
+                  border: '1.5px solid var(--card)',
+                  pointerEvents: 'none',
+                }}>
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </button>
             <button
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
               style={{ width: 36, height: 36, borderRadius: 10, background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted-foreground)' }}
@@ -315,6 +335,33 @@ function AppShell({ children, timerSlot }: { children: React.ReactNode; timerSlo
         </div>
       </aside>
 
+      {/* ── Notifications slide-down panel ── */}
+      {showNotifications && (
+        <div
+          style={{
+            position: 'fixed', top: 57, left: 0, right: 0, zIndex: 50,
+            background: 'var(--card)',
+            borderBottom: '1px solid var(--border)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+            maxHeight: 'calc(100dvh - 57px - 64px)',
+            overflowY: 'auto',
+            animation: 'slideDown 0.2s ease',
+          }}
+        >
+          <style>{`@keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }`}</style>
+          <div style={{ maxWidth: 700, margin: '0 auto', padding: '16px 16px 24px' }}>
+            <NotificationsTab user={undefined} />
+          </div>
+        </div>
+      )}
+      {/* Backdrop to close notifications panel */}
+      {showNotifications && (
+        <div
+          onClick={() => setShowNotifications(false)}
+          style={{ position: 'fixed', inset: 0, zIndex: 49, background: 'transparent' }}
+        />
+      )}
+
       {/* ── Page content ── */}
       <main className="flex-1 overflow-y-auto" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 80px)' }}>
         {children}
@@ -324,30 +371,13 @@ function AppShell({ children, timerSlot }: { children: React.ReactNode; timerSlo
       <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40, background: 'var(--card)', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'stretch', justifyContent: 'space-around', paddingLeft: 'env(safe-area-inset-left, 0px)', paddingRight: 'env(safe-area-inset-right, 0px)', minHeight: 64 }}>
         {bottomNavItems.map((item) => {
           const active = isBottomNavActive(item.path);
-          const isNotifications = item.path.includes('notifications');
-          const showBadge = isNotifications && unreadCount > 0;
           return (
             <button
               key={item.path}
               onClick={() => setLocation(item.path)}
               style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, flex: 1, paddingTop: 8, paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 4px)', background: 'none', border: 'none', cursor: 'pointer' }}
             >
-              <div style={{ position: 'relative', display: 'inline-flex' }}>
-                {item.icon(active)}
-                {showBadge && (
-                  <span style={{
-                    position: 'absolute', top: -3, right: -6,
-                    minWidth: 16, height: 16, borderRadius: 8,
-                    background: '#ef4444', color: '#fff',
-                    fontSize: 10, fontWeight: 800,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    padding: '0 3px', lineHeight: 1,
-                    border: '1.5px solid var(--card)',
-                  }}>
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </span>
-                )}
-              </div>
+              {item.icon(active)}
               <span style={{ fontSize: 13, fontWeight: active ? 700 : 500, color: active ? 'var(--foreground)' : '#9ca3af' }}>{item.label}</span>
             </button>
           );
