@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, not, inArray, sql } from "drizzle-orm";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import {
@@ -260,4 +260,84 @@ export const socialRouter = router({
 
     return { followerCount, followingCount };
   }),
+
+  /**
+   * Get all users the current user has blocked.
+   */
+  getBlockedUsers: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return [];
+    return db
+      .select({ id: users.id, name: users.name, avatarUrl: users.avatarUrl })
+      .from(userBlocks)
+      .innerJoin(users, eq(userBlocks.blockedId, users.id))
+      .where(eq(userBlocks.blockerId, ctx.user.id))
+      .orderBy(users.name);
+  }),
+
+  /**
+   * Get all users the current user has muted.
+   */
+  getMutedUsers: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return [];
+    return db
+      .select({ id: users.id, name: users.name, avatarUrl: users.avatarUrl })
+      .from(userMutes)
+      .innerJoin(users, eq(userMutes.mutedId, users.id))
+      .where(eq(userMutes.muterId, ctx.user.id))
+      .orderBy(users.name);
+  }),
+
+  /**
+   * Get suggested users to follow — users not yet followed, ordered by follower count.
+   * Excludes the current user, blocked users, and already-followed users.
+   */
+  getSuggestedUsers: protectedProcedure
+    .input(z.object({ limit: z.number().int().min(1).max(20).default(8) }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return [];
+
+      // IDs of users already followed
+      const alreadyFollowing = await db
+        .select({ id: userFollows.followeeId })
+        .from(userFollows)
+        .where(eq(userFollows.followerId, ctx.user.id));
+      const followingIds = alreadyFollowing.map((r) => r.id);
+
+      // IDs of users blocked by current user
+      const blocked = await db
+        .select({ id: userBlocks.blockedId })
+        .from(userBlocks)
+        .where(eq(userBlocks.blockerId, ctx.user.id));
+      const blockedIds = blocked.map((r) => r.id);
+
+      const excludeIds = [...new Set([ctx.user.id, ...followingIds, ...blockedIds])];
+
+      // Fetch candidates ordered by how many followers they have
+      const candidates = await db
+        .select({
+          id: users.id,
+          name: users.name,
+          avatarUrl: users.avatarUrl,
+          followerCount: sql<number>`(
+            SELECT count(*) FROM user_follows uf
+            WHERE uf.followee_id = ${users.id}
+          )::int`,
+        })
+        .from(users)
+        .where(
+          excludeIds.length > 0
+            ? not(inArray(users.id, excludeIds))
+            : sql`true`
+        )
+        .orderBy(sql`(
+          SELECT count(*) FROM user_follows uf
+          WHERE uf.followee_id = ${users.id}
+        ) DESC`)
+        .limit(input.limit);
+
+      return candidates;
+    }),
 });

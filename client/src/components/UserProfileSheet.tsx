@@ -152,13 +152,112 @@ function PostTile({
 /* ─────────────────────────────────────────────────────────────────
    FollowersFollowingSheet — shown when tapping follower/following counts
 ───────────────────────────────────────────────────────────────── */
+
+/** Single row in the followers/following list with an inline follow-back button */
+function SocialUserRow({
+  u,
+  currentUserId,
+  onViewProfile,
+  onClose,
+}: {
+  u: { id: number; name: string | null; avatarUrl: string | null };
+  currentUserId?: number;
+  onViewProfile: (userId: number, name: string, avatarUrl?: string | null) => void;
+  onClose: () => void;
+}) {
+  const utils = trpc.useUtils();
+  const isMe = currentUserId === u.id;
+  const { data: rel } = (trpc as any).social.getRelationship.useQuery(
+    { userId: u.id },
+    { enabled: !isMe && !!currentUserId, staleTime: 30_000 }
+  );
+  const [localFollowing, setLocalFollowing] = useState<boolean | null>(null);
+  const serverFollowing: boolean = rel?.following ?? false;
+  const effectiveFollowing = localFollowing !== null ? localFollowing : serverFollowing;
+
+  const followMutation = (trpc as any).social.follow.useMutation({
+    onSuccess: () => {
+      setLocalFollowing(true);
+      utils.social.getRelationship.invalidate({ userId: u.id });
+    },
+  });
+  const unfollowMutation = (trpc as any).social.unfollow.useMutation({
+    onSuccess: () => {
+      setLocalFollowing(false);
+      utils.social.getRelationship.invalidate({ userId: u.id });
+    },
+  });
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        padding: "10px 20px",
+      }}
+    >
+      {/* Tappable avatar + name area */}
+      <button
+        onClick={() => { onClose(); onViewProfile(u.id, u.name ?? "FlexTab User", u.avatarUrl); }}
+        style={{
+          display: "flex", alignItems: "center", gap: 12,
+          flex: 1, background: "none", border: "none",
+          cursor: "pointer", textAlign: "left", padding: 0, minWidth: 0,
+        }}
+      >
+        <Avatar name={u.name ?? "FlexTab User"} avatarUrl={u.avatarUrl} size={44} />
+        <div style={{ minWidth: 0 }}>
+          <p style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", margin: "0 0 2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {u.name ?? "FlexTab User"}
+          </p>
+          <p style={{ fontSize: 12, color: "#9ca3af", margin: 0 }}>
+            @{(u.name ?? "user").toLowerCase().replace(/\s+/g, "").slice(0, 20)}
+          </p>
+        </div>
+      </button>
+      {/* Follow / Following button — only for other users */}
+      {!isMe && currentUserId && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            if (effectiveFollowing) {
+              unfollowMutation.mutate({ userId: u.id });
+            } else {
+              followMutation.mutate({ userId: u.id });
+            }
+          }}
+          disabled={followMutation.isPending || unfollowMutation.isPending}
+          style={{
+            padding: "6px 14px",
+            borderRadius: 50,
+            border: effectiveFollowing ? "1.5px solid var(--border)" : "1.5px solid var(--foreground)",
+            background: effectiveFollowing ? "var(--secondary)" : "var(--foreground)",
+            color: effectiveFollowing ? "var(--foreground)" : "var(--background)",
+            fontSize: 12,
+            fontWeight: 700,
+            cursor: "pointer",
+            flexShrink: 0,
+            opacity: followMutation.isPending || unfollowMutation.isPending ? 0.6 : 1,
+            transition: "all 0.15s",
+          }}
+        >
+          {effectiveFollowing ? "Following" : "Follow"}
+        </button>
+      )}
+    </div>
+  );
+}
+
 function FollowersFollowingSheet({
   userId,
+  currentUserId,
   mode,
   onClose,
   onViewProfile,
 }: {
   userId: number;
+  currentUserId?: number;
   mode: "followers" | "following";
   onClose: () => void;
   onViewProfile: (userId: number, name: string, avatarUrl?: string | null) => void;
@@ -199,136 +298,34 @@ function FollowersFollowingSheet({
         }}
       >
         {/* Handle */}
-        <div
-          style={{
-            width: 36,
-            height: 4,
-            borderRadius: 2,
-            background: "var(--border)",
-            margin: "12px auto 0",
-            flexShrink: 0,
-          }}
-        />
+        <div style={{ width: 36, height: 4, borderRadius: 2, background: "var(--border)", margin: "12px auto 0", flexShrink: 0 }} />
         {/* Header */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "14px 20px 12px",
-            borderBottom: "1px solid var(--border)",
-            flexShrink: 0,
-          }}
-        >
-          <h3
-            style={{
-              fontSize: 16,
-              fontWeight: 800,
-              color: "var(--foreground)",
-              margin: 0,
-            }}
-          >
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px 12px", borderBottom: "1px solid var(--border)", flexShrink: 0 }}>
+          <h3 style={{ fontSize: 16, fontWeight: 800, color: "var(--foreground)", margin: 0 }}>
             {mode === "followers" ? "Followers" : "Following"}
           </h3>
-          <button
-            onClick={onClose}
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              color: "#9ca3af",
-              fontSize: 22,
-              lineHeight: 1,
-              padding: 4,
-            }}
-          >
-            ×
-          </button>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#9ca3af", fontSize: 22, lineHeight: 1, padding: 4 }}>×</button>
         </div>
         {/* List */}
         <div style={{ overflowY: "auto", flex: 1, padding: "8px 0" }}>
           {isLoading && (
-            <p
-              style={{
-                textAlign: "center",
-                color: "#9ca3af",
-                fontSize: 14,
-                padding: "24px 0",
-              }}
-            >
-              Loading…
-            </p>
+            <p style={{ textAlign: "center", color: "#9ca3af", fontSize: 14, padding: "24px 0" }}>Loading…</p>
           )}
           {!isLoading && users.length === 0 && (
-            <p
-              style={{
-                textAlign: "center",
-                color: "#9ca3af",
-                fontSize: 14,
-                padding: "24px 0",
-              }}
-            >
+            <p style={{ textAlign: "center", color: "#9ca3af", fontSize: 14, padding: "24px 0" }}>
               {mode === "followers" ? "No followers yet" : "Not following anyone yet"}
             </p>
           )}
-          {users.map(
-            (u: { id: number; name: string | null; avatarUrl: string | null }) => (
-              <button
-                key={u.id}
-                onClick={() => {
-                  onClose();
-                  onViewProfile(u.id, u.name ?? "FlexTab User", u.avatarUrl);
-                }}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  width: "100%",
-                  padding: "10px 20px",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  textAlign: "left",
-                }}
-              >
-                <Avatar
-                  name={u.name ?? "FlexTab User"}
-                  avatarUrl={u.avatarUrl}
-                  size={44}
-                />
-                <div style={{ flex: 1 }}>
-                  <p
-                    style={{
-                      fontSize: 14,
-                      fontWeight: 700,
-                      color: "var(--foreground)",
-                      margin: "0 0 2px",
-                    }}
-                  >
-                    {u.name ?? "FlexTab User"}
-                  </p>
-                  <p style={{ fontSize: 12, color: "#9ca3af", margin: 0 }}>
-                    @
-                    {(u.name ?? "user")
-                      .toLowerCase()
-                      .replace(/\s+/g, "")
-                      .slice(0, 20)}
-                  </p>
-                </div>
-                <svg
-                  width="15"
-                  height="15"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#9ca3af"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                >
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
-              </button>
-            )
-          )}
+          {users.map((u: { id: number; name: string | null; avatarUrl: string | null }) => (
+            <SocialUserRow
+              key={u.id}
+              u={u}
+              currentUserId={currentUserId}
+              onViewProfile={onViewProfile}
+              onClose={onClose}
+            />
+          ))}
+          <div style={{ height: "calc(16px + env(safe-area-inset-bottom))" }} />
         </div>
       </div>
     </>
@@ -754,6 +751,7 @@ export function UserProfileSheet({
       {followingListMode && (
         <FollowersFollowingSheet
           userId={userId}
+          currentUserId={currentUser?.id}
           mode={followingListMode}
           onClose={() => setFollowingListMode(null)}
           onViewProfile={(uid, name, avatarUrl) => {

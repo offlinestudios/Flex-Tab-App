@@ -323,7 +323,7 @@ function EditProfileModal({ name, bio, goal, onSave, onClose }: EditProfileModal
 /* ─────────────────────────────────────────────────────────────────
    Settings Menu — with functional sub-panels
 ───────────────────────────────────────────────────────────────── */
-type SettingsPanel = 'notifications' | 'units' | 'privacy' | 'help' | null;
+type SettingsPanel = 'notifications' | 'units' | 'privacy' | 'help' | 'blocked' | null;
 
 interface SettingsMenuProps {
   onClose: () => void;
@@ -608,6 +608,110 @@ function HelpPanel({ onBack }: { onBack: () => void }) {
   );
 }
 
+/* Blocked & Muted management panel */
+function BlockedMutedPanel({ onBack }: { onBack: () => void }) {
+  const utils = (trpc as any).useUtils();
+  const [tab, setTab] = (useState as any)<'blocked' | 'muted'>('blocked');
+
+  const { data: blockedUsers = [], isLoading: loadingBlocked } = (trpc as any).social.getBlockedUsers.useQuery({}, { staleTime: 30_000 });
+  const { data: mutedUsers = [], isLoading: loadingMuted } = (trpc as any).social.getMutedUsers.useQuery({}, { staleTime: 30_000 });
+
+  const unblockMutation = (trpc as any).social.unblock.useMutation({
+    onSuccess: () => utils.social.getBlockedUsers.invalidate(),
+  });
+  const unmuteMutation = (trpc as any).social.unmute.useMutation({
+    onSuccess: () => utils.social.getMutedUsers.invalidate(),
+  });
+
+  const list = tab === 'blocked' ? blockedUsers : mutedUsers;
+  const isLoading = tab === 'blocked' ? loadingBlocked : loadingMuted;
+
+  return (
+    <SettingsSheet title="Blocked & Muted" onBack={onBack}>
+      {/* Tab switcher */}
+      <div style={{ display: 'flex', gap: 8, padding: '0 0 16px', borderBottom: '1px solid var(--border)', marginBottom: 8 }}>
+        {(['blocked', 'muted'] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            style={{
+              flex: 1, padding: '8px 0', borderRadius: 10,
+              border: '1.5px solid',
+              borderColor: tab === t ? 'var(--foreground)' : 'var(--border)',
+              background: tab === t ? 'var(--foreground)' : 'transparent',
+              color: tab === t ? 'var(--background)' : 'var(--foreground)',
+              fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+            }}
+          >
+            {t === 'blocked' ? `Blocked (${blockedUsers.length})` : `Muted (${mutedUsers.length})`}
+          </button>
+        ))}
+      </div>
+
+      {isLoading && <p style={{ textAlign: 'center', color: '#9ca3af', fontSize: 14, padding: '24px 0' }}>Loading…</p>}
+
+      {!isLoading && list.length === 0 && (
+        <p style={{ textAlign: 'center', color: '#9ca3af', fontSize: 14, padding: '24px 0' }}>
+          {tab === 'blocked' ? 'No blocked users' : 'No muted users'}
+        </p>
+      )}
+
+      {list.map((u: { id: number; name: string | null; avatarUrl: string | null }) => (
+        <div
+          key={u.id}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 12,
+            padding: '10px 0', borderBottom: '1px solid var(--border)',
+          }}
+        >
+          {/* Avatar */}
+          <div style={{
+            width: 42, height: 42, borderRadius: '50%', flexShrink: 0,
+            background: 'var(--secondary)', display: 'flex', alignItems: 'center',
+            justifyContent: 'center', fontSize: 16, fontWeight: 700, color: 'var(--foreground)',
+            overflow: 'hidden',
+          }}>
+            {u.avatarUrl
+              ? <img src={u.avatarUrl} alt={u.name ?? ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              : (u.name ?? 'U').charAt(0).toUpperCase()
+            }
+          </div>
+          {/* Name */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)', margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {u.name ?? 'FlexTab User'}
+            </p>
+            <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>
+              @{(u.name ?? 'user').toLowerCase().replace(/\s+/g, '').slice(0, 20)}
+            </p>
+          </div>
+          {/* Action button */}
+          <button
+            onClick={() => {
+              if (tab === 'blocked') {
+                unblockMutation.mutate({ userId: u.id });
+              } else {
+                unmuteMutation.mutate({ userId: u.id });
+              }
+            }}
+            disabled={unblockMutation.isPending || unmuteMutation.isPending}
+            style={{
+              padding: '6px 14px', borderRadius: 50,
+              border: '1.5px solid var(--border)',
+              background: 'var(--secondary)',
+              color: 'var(--foreground)',
+              fontSize: 12, fontWeight: 700, cursor: 'pointer', flexShrink: 0,
+              fontFamily: 'inherit',
+            }}
+          >
+            {tab === 'blocked' ? 'Unblock' : 'Unmute'}
+          </button>
+        </div>
+      ))}
+    </SettingsSheet>
+  );
+}
+
 /* Main Settings Menu */
 function SettingsMenu({ onClose }: SettingsMenuProps) {
   const [activePanel, setActivePanel] = useState<SettingsPanel>(null);
@@ -616,6 +720,7 @@ function SettingsMenu({ onClose }: SettingsMenuProps) {
   if (activePanel === 'units') return <UnitsPanel onBack={() => setActivePanel(null)} />;
   if (activePanel === 'privacy') return <PrivacyPanel onBack={() => setActivePanel(null)} />;
   if (activePanel === 'help') return <HelpPanel onBack={() => setActivePanel(null)} />;
+  if (activePanel === 'blocked') return <BlockedMutedPanel onBack={() => setActivePanel(null)} />;
 
   const items: Array<{ label: string; panel: SettingsPanel; icon: React.ReactNode }> = [
     {
@@ -637,6 +742,11 @@ function SettingsMenu({ onClose }: SettingsMenuProps) {
       label: 'Help & Support',
       panel: 'help',
       icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
+    },
+    {
+      label: 'Blocked & Muted',
+      panel: 'blocked',
+      icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>,
     },
   ];
 

@@ -1387,6 +1387,127 @@ function PostCard({
 }
 
 /* ─────────────────────────────────────────────────────────────────
+   Suggested Users Section
+───────────────────────────────────────────────────────────────── */
+function SuggestedUsersSection({
+  currentUser,
+  onViewProfile,
+}: {
+  currentUser: any;
+  onViewProfile: (userId: number, name: string, avatarUrl?: string | null) => void;
+}) {
+  const utils = trpc.useUtils();
+  const { data: suggestions = [], isLoading } = (trpc as any).social.getSuggestedUsers.useQuery(
+    { limit: 8 },
+    { staleTime: 60_000 }
+  );
+
+  if (isLoading) return null;
+  if (suggestions.length === 0) return null;
+
+  return (
+    <div
+      style={{
+        background: "var(--card)",
+        borderRadius: 20,
+        border: "1.5px solid var(--border)",
+        overflow: "hidden",
+        marginBottom: 4,
+      }}
+    >
+      <div style={{ padding: "14px 16px 10px", borderBottom: "1px solid var(--border)" }}>
+        <p style={{ fontSize: 14, fontWeight: 800, color: "var(--foreground)", margin: 0 }}>People to Follow</p>
+        <p style={{ fontSize: 12, color: "#9ca3af", margin: "2px 0 0" }}>Discover athletes in the FlexTab community</p>
+      </div>
+      <div style={{ padding: "8px 0" }}>
+        {suggestions.map((u: { id: number; name: string | null; avatarUrl: string | null; followerCount: number }) => (
+          <SuggestedUserRow
+            key={u.id}
+            u={u}
+            currentUser={currentUser}
+            onViewProfile={onViewProfile}
+            utils={utils}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SuggestedUserRow({
+  u,
+  currentUser,
+  onViewProfile,
+  utils,
+}: {
+  u: { id: number; name: string | null; avatarUrl: string | null; followerCount: number };
+  currentUser: any;
+  onViewProfile: (userId: number, name: string, avatarUrl?: string | null) => void;
+  utils: any;
+}) {
+  const [localFollowing, setLocalFollowing] = useState(false);
+  const followMutation = (trpc as any).social.follow.useMutation({
+    onSuccess: () => {
+      setLocalFollowing(true);
+      utils.social.getSuggestedUsers.invalidate();
+      utils.community.getFeed.invalidate();
+    },
+  });
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        padding: "10px 16px",
+        borderBottom: "1px solid var(--border)",
+      }}
+    >
+      {/* Tappable avatar + name */}
+      <button
+        onClick={() => onViewProfile(u.id, u.name ?? "FlexTab User", u.avatarUrl)}
+        style={{
+          display: "flex", alignItems: "center", gap: 10,
+          flex: 1, background: "none", border: "none",
+          cursor: "pointer", textAlign: "left", padding: 0, minWidth: 0,
+        }}
+      >
+        <Avatar name={u.name ?? "FlexTab User"} avatarUrl={u.avatarUrl} size={44} />
+        <div style={{ minWidth: 0 }}>
+          <p style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", margin: "0 0 2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {u.name ?? "FlexTab User"}
+          </p>
+          <p style={{ fontSize: 12, color: "#9ca3af", margin: 0 }}>
+            {u.followerCount > 0 ? `${u.followerCount} follower${u.followerCount !== 1 ? "s" : ""}` : "New member"}
+          </p>
+        </div>
+      </button>
+      {/* Follow button */}
+      {!localFollowing ? (
+        <button
+          onClick={() => followMutation.mutate({ userId: u.id })}
+          disabled={followMutation.isPending}
+          style={{
+            padding: "6px 16px", borderRadius: 50,
+            border: "1.5px solid var(--foreground)",
+            background: "var(--foreground)",
+            color: "var(--background)",
+            fontSize: 12, fontWeight: 700, cursor: "pointer", flexShrink: 0,
+            opacity: followMutation.isPending ? 0.6 : 1,
+            transition: "all 0.15s",
+          }}
+        >
+          Follow
+        </button>
+      ) : (
+        <span style={{ fontSize: 12, fontWeight: 700, color: "#9ca3af", flexShrink: 0 }}>Following</span>
+      )}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────
    Main CommunityTab
 ───────────────────────────────────────────────────────────────── */
 interface CommunityTabProps {
@@ -1631,6 +1752,14 @@ export function CommunityTab({ user, userAvatarUrl, workoutSessions = [] }: Comm
           <p style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", margin: "0 0 6px" }}>No posts from people you follow</p>
           <p style={{ fontSize: 13, color: "#9ca3af", margin: 0 }}>Follow people to see their posts here</p>
         </div>
+      )}
+
+      {/* Suggested Users — shown in the Following tab when feed is empty, or in For You tab below the feed */}
+      {!isLoading && followingOnly && feedPosts.length === 0 && (
+        <SuggestedUsersSection
+          currentUser={user}
+          onViewProfile={(userId, name, avatarUrl) => setViewingUserId({ id: userId, name, avatarUrl })}
+        />
       )}
 
       {/* Feed */}
