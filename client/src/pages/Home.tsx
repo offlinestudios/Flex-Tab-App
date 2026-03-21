@@ -1975,9 +1975,11 @@ export default function Home() {
               {!activeCell && (
                 <button
                   onPointerDown={e => { e.preventDefault(); handleHistoryAddSet(); }}
-                  style={{ width:'100%', padding:11, background:'transparent', color:'var(--foreground)', border:'1.5px dashed var(--border)', borderRadius:14, fontSize:14, fontWeight:600, cursor:'pointer', fontFamily:'inherit', marginTop:8, marginBottom:4, display:'flex', alignItems:'center', justifyContent:'center', gap:6 }}
+                  style={{ width:'100%', padding:'11px 16px', background:'var(--secondary)', color:'var(--muted-foreground)', border:'none', borderRadius:12, fontSize:14, fontWeight:600, cursor:'pointer', fontFamily:'inherit', marginTop:8, marginBottom:4, display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  <div style={{ width:28, height:28, borderRadius:'50%', background:'var(--card)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  </div>
                   Add Set
                 </button>
               )}
