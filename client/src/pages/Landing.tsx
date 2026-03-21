@@ -15,19 +15,19 @@ export default function Landing() {
 
   const screenshots = [
     {
-      url: "/screenshot-active.png",
+      url: "/screenshot-active.webp",
       alt: "Active workout tracking",
       title: "Log every set in real-time.",
       description: "Track sets, reps, and weight with a simple interface. No complex forms—just tap and log."
     },
     {
-      url: "/screenshot-measurements.png",
+      url: "/screenshot-measurements.webp",
       alt: "Body measurements tracking",
       title: "Track body measurements over time.",
       description: "Monitor weight, chest, waist, arms, and thighs. See progress with visual sparklines."
     },
     {
-      url: "/screenshot-progress.png",
+      url: "/screenshot-progress.webp",
       alt: "Exercise progress charts",
       title: "Visualize strength gains with charts.",
       description: "Track weight progression for each exercise. Watch yourself get stronger week after week."
