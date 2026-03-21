@@ -1516,11 +1516,11 @@ interface CommunityTabProps {
   workoutSessions?: any[];
 }
 
-export function CommunityTab({ user, userAvatarUrl, workoutSessions = [] }: CommunityTabProps) {
+export function CommunityTab({ user, userAvatarUrl, workoutSessions = [], showSearch: externalShowSearch, onToggleSearch }: CommunityTabProps & { showSearch?: boolean; onToggleSearch?: () => void }) {
   const [showComposer, setShowComposer] = useState(false);
   const [followingOnly, setFollowingOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [showSearch, setShowSearch] = useState(false);
+  const showSearch = externalShowSearch ?? false;
   const [viewingUserId, setViewingUserId] = useState<{ id: number; name: string; avatarUrl?: string | null } | null>(null);
 
   const {
@@ -1545,75 +1545,30 @@ export function CommunityTab({ user, userAvatarUrl, workoutSessions = [] }: Comm
   const showingSamples = !followingOnly && (!data || data.posts.length === 0);
 
   return (
-    <div className="space-y-3">
-      {/* Compose trigger */}
-      <div
-        onClick={() => setShowComposer(true)}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          background: "var(--card)",
-          border: "1.5px solid var(--border)",
-          borderRadius: 16,
-          padding: "12px 16px",
-          cursor: "pointer",
-        }}
-      >
-        <Avatar name={user?.name ?? "Me"} avatarUrl={userAvatarUrl} size={36} />
-        <span style={{ fontSize: 14, color: "#9ca3af", fontWeight: 500, flex: 1 }}>
-          Share your workout…
-        </span>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <line x1="22" y1="2" x2="11" y2="13"/>
-          <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-        </svg>
-      </div>
-
-      {/* Feed filter + search row */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        {/* For You / Following toggle */}
-        <div style={{ flex: 1, display: "flex", background: "var(--secondary)", borderRadius: 50, padding: 3, border: "1px solid var(--border)" }}>
-          <button
-            onClick={() => setFollowingOnly(false)}
-            style={{
-              flex: 1, padding: "7px 0", borderRadius: 50, border: "none",
-              background: !followingOnly ? "var(--foreground)" : "transparent",
-              color: !followingOnly ? "var(--background)" : "#9ca3af",
-              fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.15s",
-            }}
-          >
-            For You
-          </button>
-          <button
-            onClick={() => setFollowingOnly(true)}
-            style={{
-              flex: 1, padding: "7px 0", borderRadius: 50, border: "none",
-              background: followingOnly ? "var(--foreground)" : "transparent",
-              color: followingOnly ? "var(--background)" : "#9ca3af",
-              fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.15s",
-            }}
-          >
-            Following
-          </button>
-        </div>
-        {/* Search toggle button */}
+    <div className="space-y-3" style={{ position: "relative", paddingBottom: 80 }}>
+      {/* Feed filter toggle — clean, no search icon */}
+      <div style={{ display: "flex", background: "var(--secondary)", borderRadius: 50, padding: 3, border: "1px solid var(--border)" }}>
         <button
-          onClick={() => { setShowSearch(!showSearch); setSearchQuery(""); }}
+          onClick={() => setFollowingOnly(false)}
           style={{
-            width: 38, height: 38, borderRadius: "50%",
-            background: showSearch ? "var(--foreground)" : "var(--secondary)",
-            border: "1px solid var(--border)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            cursor: "pointer", flexShrink: 0,
+            flex: 1, padding: "7px 0", borderRadius: 50, border: "none",
+            background: !followingOnly ? "var(--foreground)" : "transparent",
+            color: !followingOnly ? "var(--background)" : "#9ca3af",
+            fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.15s",
           }}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-            stroke={showSearch ? "var(--background)" : "#9ca3af"}
-            strokeWidth="2" strokeLinecap="round">
-            <circle cx="11" cy="11" r="8"/>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-          </svg>
+          For You
+        </button>
+        <button
+          onClick={() => setFollowingOnly(true)}
+          style={{
+            flex: 1, padding: "7px 0", borderRadius: 50, border: "none",
+            background: followingOnly ? "var(--foreground)" : "transparent",
+            color: followingOnly ? "var(--background)" : "#9ca3af",
+            fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.15s",
+          }}
+        >
+          Following
         </button>
       </div>
 
@@ -1663,7 +1618,7 @@ export function CommunityTab({ user, userAvatarUrl, workoutSessions = [] }: Comm
             searchResults.map((u: { id: number; name: string | null; avatarUrl: string | null }) => (
               <button
                 key={u.id}
-                onClick={() => { setShowSearch(false); setSearchQuery(""); setViewingUserId({ id: u.id, name: u.name ?? "FlexTab User", avatarUrl: u.avatarUrl }); }}
+                onClick={() => { onToggleSearch?.(); setSearchQuery(""); setViewingUserId({ id: u.id, name: u.name ?? "FlexTab User", avatarUrl: u.avatarUrl }); }}
                 style={{
                   display: "flex", alignItems: "center", gap: 12,
                   width: "100%", padding: "12px 16px",
@@ -1772,7 +1727,39 @@ export function CommunityTab({ user, userAvatarUrl, workoutSessions = [] }: Comm
         />
       ))}
 
-      {/* Composer */}
+      {/* FAB — floating compose button */}
+      <button
+        onClick={() => setShowComposer(true)}
+        aria-label="Create post"
+        style={{
+          position: "fixed",
+          bottom: 80,
+          right: "max(16px, calc(50% - 240px + 16px))",
+          width: 56,
+          height: 56,
+          borderRadius: "50%",
+          background: "var(--foreground)",
+          color: "var(--background)",
+          border: "none",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.25)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          cursor: "pointer",
+          zIndex: 200,
+          transition: "transform 0.15s, box-shadow 0.15s",
+        }}
+        onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.08)"; }}
+        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)"; }}
+      >
+        {/* Pencil icon */}
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+      </button>
+
+      {/* Composer bottom sheet */}
       {showComposer && (
         <NewPostComposer
           currentUser={user}

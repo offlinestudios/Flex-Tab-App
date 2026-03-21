@@ -219,6 +219,7 @@ export default function Home() {
     return sessions;
   }, [setLogsData]);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
+  const [showCommunitySearch, setShowCommunitySearch] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [shareWorkoutData, setShareWorkoutData] = useState<{ exercises: SetLog[]; date: string; duration?: string; workoutSessionId?: number | null } | null>(null);
   const [showExerciseBrowser, setShowExerciseBrowser] = useState(false);
@@ -957,6 +958,25 @@ export default function Home() {
               : activeTab === 'settings' ? 'Settings'
               : 'Profile'}
           </h2>
+          {activeTab === 'community' && (
+            <button
+              onClick={() => setShowCommunitySearch(s => !s)}
+              title="Search people"
+              style={{
+                width: 36, height: 36, borderRadius: 10,
+                background: showCommunitySearch ? 'var(--foreground)' : 'var(--secondary)',
+                border: 'none', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+                stroke={showCommunitySearch ? 'var(--background)' : '#9ca3af'}
+                strokeWidth="2" strokeLinecap="round">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+            </button>
+          )}
           {activeTab === 'log' && (
             <div style={{ display:'flex', gap:8, alignItems:'center' }}>
               {/* Indicator pill — tap to reset back to today */}
@@ -1708,7 +1728,13 @@ export default function Home() {
         )}
         {/* ══ COMMUNITY TAB ══ */}
         {activeTab === 'community' && (
-          <CommunityTab user={user} userAvatarUrl={userProfile?.avatarUrl ?? null} workoutSessions={workoutSessions} />
+          <CommunityTab
+            user={user}
+            userAvatarUrl={userProfile?.avatarUrl ?? null}
+            workoutSessions={workoutSessions}
+            showSearch={showCommunitySearch}
+            onToggleSearch={() => setShowCommunitySearch(s => !s)}
+          />
         )}
 
         {/* ══ NOTIFICATIONS TAB ══ */}
