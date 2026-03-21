@@ -2,6 +2,53 @@ import { useState, useEffect, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 
 /* ─────────────────────────────────────────────────────────────────
+   Share Profile Button — copy-to-clipboard + native share
+───────────────────────────────────────────────────────────────── */
+function ShareProfileButton({ userId, displayName }: { userId: number; displayName: string }) {
+  const [copied, setCopied] = useState(false);
+  const profileUrl = `${window.location.origin}/u/${userId}`;
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({ title: `${displayName} on FlexTab`, url: profileUrl }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(profileUrl).catch(() => {});
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleShare}
+      title={copied ? "Link copied!" : "Share profile"}
+      style={{
+        padding: "10px 16px",
+        borderRadius: 50,
+        border: "1.5px solid var(--border)",
+        background: "var(--secondary)",
+        color: copied ? "#22c55e" : "var(--foreground)",
+        fontSize: 14,
+        fontWeight: 700,
+        cursor: "pointer",
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        flexShrink: 0,
+        transition: "color 0.15s",
+      }}
+    >
+      {copied ? (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+      ) : (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+      )}
+      {copied ? "Copied!" : "Share"}
+    </button>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────
    Avatar helper (inline so no external dep)
 ───────────────────────────────────────────────────────────────── */
 function Avatar({
@@ -624,42 +671,48 @@ export function UserProfileSheet({
               </p>
             </div>
 
-            {/* Follow / Unfollow button — only for other users */}
-            {!isMyProfile && (
-              <button
-                onClick={toggleFollow}
-                disabled={
-                  followMutation.isPending || unfollowMutation.isPending
-                }
-                style={{
-                  width: "100%",
-                  padding: "10px 0",
-                  borderRadius: 50,
-                  border: effectiveFollowing
-                    ? "1.5px solid var(--border)"
-                    : "none",
-                  background: effectiveFollowing
-                    ? "var(--secondary)"
-                    : "var(--foreground)",
-                  color: effectiveFollowing
-                    ? "var(--foreground)"
-                    : "var(--background)",
-                  fontSize: 14,
-                  fontWeight: 700,
-                  cursor:
+            {/* Action buttons row */}
+            <div style={{ display: "flex", gap: 8 }}>
+              {/* Follow / Unfollow — only for other users */}
+              {!isMyProfile && (
+                <button
+                  onClick={toggleFollow}
+                  disabled={
                     followMutation.isPending || unfollowMutation.isPending
-                      ? "not-allowed"
-                      : "pointer",
-                  opacity:
-                    followMutation.isPending || unfollowMutation.isPending
-                      ? 0.6
-                      : 1,
-                  transition: "all 0.15s ease",
-                }}
-              >
-                {effectiveFollowing ? "Following" : "Follow"}
-              </button>
-            )}
+                  }
+                  style={{
+                    flex: 1,
+                    padding: "10px 0",
+                    borderRadius: 50,
+                    border: effectiveFollowing
+                      ? "1.5px solid var(--border)"
+                      : "none",
+                    background: effectiveFollowing
+                      ? "var(--secondary)"
+                      : "var(--foreground)",
+                    color: effectiveFollowing
+                      ? "var(--foreground)"
+                      : "var(--background)",
+                    fontSize: 14,
+                    fontWeight: 700,
+                    cursor:
+                      followMutation.isPending || unfollowMutation.isPending
+                        ? "not-allowed"
+                        : "pointer",
+                    opacity:
+                      followMutation.isPending || unfollowMutation.isPending
+                        ? 0.6
+                        : 1,
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  {effectiveFollowing ? "Following" : "Follow"}
+                </button>
+              )}
+
+              {/* Share profile button */}
+              <ShareProfileButton userId={userId} displayName={displayName} />
+            </div>
           </div>
 
           {/* Divider */}

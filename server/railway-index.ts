@@ -119,6 +119,21 @@ async function runMigrations() {
     // 0005: durationSeconds on workout_sessions
     await pool.query(`ALTER TABLE "workout_sessions" ADD COLUMN IF NOT EXISTS "durationSeconds" integer;`);
 
+    // 0006: notifications table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS "notifications" (
+        "id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+        "recipientId" integer NOT NULL,
+        "actorId" integer NOT NULL,
+        "type" varchar(20) NOT NULL,
+        "entityId" integer,
+        "read" boolean DEFAULT false NOT NULL,
+        "createdAt" timestamp DEFAULT now() NOT NULL
+      );
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS "notifications_recipientId_idx" ON "notifications" ("recipientId");`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS "notifications_unread_idx" ON "notifications" ("recipientId") WHERE "read" = false;`);
+
     console.log('[Migrations] All migrations complete.');
   } catch (err) {
     console.error('[Migrations] Migration error (non-fatal):', err);

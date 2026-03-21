@@ -6,6 +6,7 @@ import { useLocation, useSearch } from "wouter";
 import { DashboardLayoutSkeleton } from "./DashboardLayoutSkeleton";
 import { Button } from "./ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
+import { trpc } from "@/lib/trpc";
 
 // ─── Sidebar nav items matching prototype ────────────────────────────────────
 const sidebarItems = [
@@ -67,6 +68,16 @@ const bottomNavItems = [
     ),
   },
   {
+    label: "Alerts",
+    path: "/dashboard?tab=notifications",
+    icon: (active: boolean) => (
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={active ? "var(--foreground)" : "#9ca3af"} strokeWidth="2" strokeLinecap="round">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+      </svg>
+    ),
+  },
+  {
     label: "Profile",
     path: "/dashboard?tab=profile",
     icon: (active: boolean) => (
@@ -123,6 +134,12 @@ function AppShell({ children, timerSlot }: { children: React.ReactNode; timerSlo
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+
+  // Unread notifications badge
+  const { data: unreadCount = 0 } = (trpc as any).notifications.unreadCount.useQuery(
+    undefined,
+    { refetchInterval: 60_000, staleTime: 30_000 }
+  );
   const overlayRef = useRef<HTMLDivElement>(null);
   const { theme, setTheme } = useTheme();
 
@@ -155,8 +172,8 @@ function AppShell({ children, timerSlot }: { children: React.ReactNode; timerSlo
   const isBottomNavActive = (path: string) => {
     const pathTab = new URLSearchParams(path.split('?')[1] || '').get('tab');
     if (!pathTab) {
-      // Log tab — active only when not on community or profile
-      return currentTab !== 'community' && currentTab !== 'profile';
+      // Log tab — active only when not on community, notifications, or profile
+      return currentTab !== 'community' && currentTab !== 'profile' && currentTab !== 'notifications';
     }
     return currentTab === pathTab;
   };
@@ -307,13 +324,30 @@ function AppShell({ children, timerSlot }: { children: React.ReactNode; timerSlo
       <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40, background: 'var(--card)', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'stretch', justifyContent: 'space-around', paddingLeft: 'env(safe-area-inset-left, 0px)', paddingRight: 'env(safe-area-inset-right, 0px)', minHeight: 64 }}>
         {bottomNavItems.map((item) => {
           const active = isBottomNavActive(item.path);
+          const isNotifications = item.path.includes('notifications');
+          const showBadge = isNotifications && unreadCount > 0;
           return (
             <button
               key={item.path}
               onClick={() => setLocation(item.path)}
               style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, flex: 1, paddingTop: 8, paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 4px)', background: 'none', border: 'none', cursor: 'pointer' }}
             >
-              {item.icon(active)}
+              <div style={{ position: 'relative', display: 'inline-flex' }}>
+                {item.icon(active)}
+                {showBadge && (
+                  <span style={{
+                    position: 'absolute', top: -3, right: -6,
+                    minWidth: 16, height: 16, borderRadius: 8,
+                    background: '#ef4444', color: '#fff',
+                    fontSize: 10, fontWeight: 800,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    padding: '0 3px', lineHeight: 1,
+                    border: '1.5px solid var(--card)',
+                  }}>
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
+              </div>
               <span style={{ fontSize: 13, fontWeight: active ? 700 : 500, color: active ? 'var(--foreground)' : '#9ca3af' }}>{item.label}</span>
             </button>
           );

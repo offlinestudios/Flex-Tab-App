@@ -790,12 +790,17 @@ function SettingsMenu({ onClose }: SettingsMenuProps) {
 ───────────────────────────────────────────────────────────────── */
 interface ShareSheetProps {
   profileName: string;
+  userId?: number;
   onClose: () => void;
 }
 
-function ShareSheet({ profileName, onClose }: ShareSheetProps) {
+function ShareSheet({ profileName, userId, onClose }: ShareSheetProps) {
   const [copied, setCopied] = useState(false);
-  const profileUrl = window.location.href;
+  // Build a clean shareable deep-link URL: /u/{userId} if we have an id,
+  // otherwise fall back to the current page URL.
+  const profileUrl = userId
+    ? `${window.location.origin}/u/${userId}`
+    : window.location.href;
 
   const copyLink = () => {
     navigator.clipboard.writeText(profileUrl).catch(() => {});
@@ -1596,7 +1601,7 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
         />
       )}
       {showSettingsMenu && <SettingsMenu onClose={() => setShowSettingsMenu(false)} />}
-      {showShareSheet && <ShareSheet profileName={profileName} onClose={() => setShowShareSheet(false)} />}
+      {showShareSheet && <ShareSheet profileName={profileName} userId={user?.id} onClose={() => setShowShareSheet(false)} />}
       {/* Avatar crop modal — shown after file is selected */}
       {cropSrc && (
         <AvatarCropModal

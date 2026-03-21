@@ -8,6 +8,7 @@ import {
   userMutes,
   users,
 } from "../../drizzle/schema";
+import { createNotification } from "./notifications";
 
 export const socialRouter = router({
   /**
@@ -23,6 +24,12 @@ export const socialRouter = router({
         .insert(userFollows)
         .values({ followerId: ctx.user.id, followeeId: input.userId })
         .onConflictDoNothing();
+      // Fan out follow notification (best-effort, non-blocking)
+      createNotification({
+        recipientId: input.userId,
+        actorId: ctx.user.id,
+        type: "follow",
+      });
       return { success: true };
     }),
 

@@ -1,4 +1,4 @@
-import { decimal, integer, pgEnum, pgTable, text, timestamp, unique, varchar } from "drizzle-orm/pg-core";
+import { boolean, decimal, integer, pgEnum, pgTable, text, timestamp, unique, varchar } from "drizzle-orm/pg-core";
 
 /**
  * Core user table backing auth flow.
@@ -202,3 +202,23 @@ export const userMutes = pgTable(
 export type UserFollow = typeof userFollows.$inferSelect;
 export type UserBlock = typeof userBlocks.$inferSelect;
 export type UserMute = typeof userMutes.$inferSelect;
+
+/**
+ * Notifications table
+ * One row per notification event (follow, like, comment).
+ * actorId = the user who triggered the event.
+ * recipientId = the user who receives the notification.
+ * entityId = the relevant post/comment ID (null for follow notifications).
+ */
+export const notifications = pgTable("notifications", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  recipientId: integer("recipientId").notNull(),
+  actorId: integer("actorId").notNull(),
+  type: varchar("type", { length: 20 }).notNull(), // 'follow' | 'like' | 'comment'
+  entityId: integer("entityId"),                   // postId for like/comment, null for follow
+  read: boolean("read").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = typeof notifications.$inferInsert;

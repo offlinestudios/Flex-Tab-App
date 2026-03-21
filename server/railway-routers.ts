@@ -3,6 +3,7 @@ import { workoutRouter } from "./routers/workout";
 import { communityRouter } from "./routers/community";
 import { userRouter } from "./routers/user";
 import { socialRouter } from "./routers/social";
+import { notificationsRouter } from "./routers/notifications";
 
 export const appRouter = router({
   // Simple health check
@@ -28,6 +29,9 @@ export const appRouter = router({
 
   // Social graph endpoints (follow, unfollow, block, mute)
   social: socialRouter,
+
+  // Notifications endpoints
+  notifications: notificationsRouter,
 });
 
 export type AppRouter = typeof appRouter;

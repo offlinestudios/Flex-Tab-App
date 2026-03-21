@@ -18,6 +18,7 @@ import { S3Client } from "@aws-sdk/client-s3";
 import { NodeHttpHandler } from "@smithy/node-http-handler";
 import https from "https";
 import { randomUUID } from "crypto";
+import { createNotification } from "./notifications";
 
 /* ─────────────────────────────────────────────────────────────────
    R2 helpers (reuse env vars already configured in storage.ts)
@@ -440,6 +441,21 @@ export const communityRouter = router({
         .values({ postId: input.postId, userId: ctx.user.id })
         .onConflictDoNothing();
 
+      // Fan out like notification — look up post owner first
+      const [postRow] = await db
+        .select({ userId: posts.userId })
+        .from(posts)
+        .where(eq(posts.id, input.postId))
+        .limit(1);
+      if (postRow) {
+        createNotification({
+          recipientId: postRow.userId,
+          actorId: ctx.user.id,
+          type: "like",
+          entityId: input.postId,
+        });
+      }
+
       return { success: true };
     }),
 
@@ -486,6 +502,21 @@ export const communityRouter = router({
           body: input.body,
         })
         .returning({ id: postComments.id });
+
+      // Fan out comment notification — look up post owner
+      const [postRow] = await db
+        .select({ userId: posts.userId })
+        .from(posts)
+        .where(eq(posts.id, input.postId))
+        .limit(1);
+      if (postRow) {
+        createNotification({
+          recipientId: postRow.userId,
+          actorId: ctx.user.id,
+          type: "comment",
+          entityId: input.postId,
+        });
+      }
 
       return { commentId: comment.id };
     }),

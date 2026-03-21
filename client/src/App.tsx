@@ -12,6 +12,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import SignInPage from "./pages/SignIn";
 import SignUpPage from "./pages/SignUp";
+import PublicProfile from "./pages/PublicProfile";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -26,6 +27,8 @@ function Router() {
       <Route path={"/privacy"} component={PrivacyPolicy} />
       <Route path={"/terms"} component={TermsOfService} />
       <Route path={"/404"} component={NotFound} />
+      {/* Public profile deep-link: /u/:userId */}
+      <Route path="/u/:userId" component={PublicProfile} />
       {/* Final fallback route */}
       <Route component={NotFound} />
     </Switch>
