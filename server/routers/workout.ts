@@ -40,7 +40,7 @@ export const workoutRouter = router({
       // Automatically find or create session for this date
       const sessionId = await findOrCreateSession(ctx.user.id, input.date);
       
-      await createSetLog({
+      const newRow = await createSetLog({
         sessionId,
         userId: ctx.user.id,
         exercise: input.exercise,
@@ -54,7 +54,7 @@ export const workoutRouter = router({
         distanceUnit: input.distanceUnit,
         calories: input.calories,
       });
-      return { success: true };
+      return { success: true, id: newRow?.id };
     }),
 
   // Save workout duration when the user finishes a workout

@@ -735,6 +735,31 @@ export default function Home() {
       console.error('Failed to delete exercise log:', e);
     }
   };
+  const handleHistoryAddSet = async () => {
+    if (!historyEditSheet) return;
+    // Use the last row's reps/weight as defaults for the new set
+    const lastRow = historyEditForms[historyEditForms.length - 1];
+    const defaultReps = lastRow?.reps ?? 10;
+    const defaultWeight = lastRow?.weight ?? 0;
+    const firstSet = historyEditSheet.sets[0];
+    const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+    try {
+      const result = await logSetMutation.mutateAsync({
+        date: firstSet.date,
+        exercise: firstSet.exercise,
+        sets: 1,
+        reps: defaultReps,
+        weight: defaultWeight,
+        time,
+        category: firstSet.category || 'General',
+      });
+      // Append the new row to the local form state using the returned id
+      const newId = result?.id ? String(result.id) : String(Date.now());
+      setHistoryEditForms(prev => [...prev, { id: newId, reps: defaultReps, weight: defaultWeight }]);
+    } catch (e) {
+      console.error('Failed to add set:', e);
+    }
+  };
 
   const toggleCategory = (category: string) => {
     setExpandedCategories((prev) => ({
@@ -1946,11 +1971,21 @@ export default function Home() {
                   >Done ✓</button>
                 </div>
               )}
+              {/* Add Set button */}
+              {!activeCell && (
+                <button
+                  onPointerDown={e => { e.preventDefault(); handleHistoryAddSet(); }}
+                  style={{ width:'100%', padding:11, background:'transparent', color:'var(--foreground)', border:'1.5px dashed var(--border)', borderRadius:14, fontSize:14, fontWeight:600, cursor:'pointer', fontFamily:'inherit', marginTop:8, marginBottom:4, display:'flex', alignItems:'center', justifyContent:'center', gap:6 }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Add Set
+                </button>
+              )}
               {/* Save button */}
               {!activeCell && (
                 <button
                   onPointerDown={e => { e.preventDefault(); handleHistorySave(); }}
-                  style={{ width:'100%', padding:13, background:'var(--foreground)', color:'var(--background)', border:'none', borderRadius:14, fontSize:15, fontWeight:700, cursor:'pointer', fontFamily:'inherit', marginBottom:10, marginTop:12 }}
+                  style={{ width:'100%', padding:13, background:'var(--foreground)', color:'var(--background)', border:'none', borderRadius:14, fontSize:15, fontWeight:700, cursor:'pointer', fontFamily:'inherit', marginBottom:10, marginTop:8 }}
                 >Save Changes</button>
               )}
               {/* Delete all button */}

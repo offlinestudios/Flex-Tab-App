@@ -145,7 +145,8 @@ export async function findOrCreateSession(userId: number, date: string): Promise
 export async function createSetLog(log: InsertSetLog) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  return await db.insert(setLogs).values(log);
+  const result = await db.insert(setLogs).values(log).returning({ id: setLogs.id });
+  return result[0];
 }
 
 export async function getSetLogsByUser(userId: number) {
