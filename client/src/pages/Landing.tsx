@@ -76,7 +76,7 @@ export default function Landing() {
         <div 
           className="absolute inset-0 bg-cover bg-center"
           style={{
-            backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/JfZFeFNwdWYiOfDR.jpg')`,
+            backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('/black-male-incline-bench.webp')`,
             backgroundPosition: 'center center',
             transform: isLoaded ? 'scale(1.02)' : 'scale(1)',
             transition: 'transform 8s cubic-bezier(0.16, 1, 0.3, 1)'
@@ -242,7 +242,7 @@ export default function Landing() {
           <div 
             className="absolute inset-0 bg-cover bg-center"
             style={{
-              backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/JfZFeFNwdWYiOfDR.jpg')`,
+              backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('/black-male-incline-bench.webp')`,
               backgroundPosition: 'center 30%',
             }}
           />
@@ -390,7 +390,7 @@ export default function Landing() {
             <div className="relative h-[500px] overflow-hidden">
               {/* Athlete Image */}
               <img 
-                src="https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/NAaefWABsVyggQYW.jpg" 
+                src="/athlete-hero.webp" 
                 alt="Athlete performing incline bench press" 
                 className="w-full h-full object-cover rounded-2xl"
               />
@@ -483,7 +483,7 @@ export default function Landing() {
         <section 
           className="relative py-32 overflow-hidden"
           style={{
-            backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('https://files.manuscdn.com/user_upload_by_module/session_file/310419663026754577/irKQQAnhGsKossSs.jpg')`,
+            backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('/athlete-legs.webp')`,
             backgroundSize: 'cover',
             backgroundPosition: 'center'
           }}
