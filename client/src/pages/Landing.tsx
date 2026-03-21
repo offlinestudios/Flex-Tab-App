@@ -76,7 +76,7 @@ export default function Landing() {
         <div 
           className="absolute inset-0 bg-cover bg-center"
           style={{
-            backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('/black-male-incline-bench.webp')`,
+            backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('/athlete-hero.webp')`,
             backgroundPosition: 'center center',
             transform: isLoaded ? 'scale(1.02)' : 'scale(1)',
             transition: 'transform 8s cubic-bezier(0.16, 1, 0.3, 1)'
@@ -242,7 +242,7 @@ export default function Landing() {
           <div 
             className="absolute inset-0 bg-cover bg-center"
             style={{
-              backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('/black-male-incline-bench.webp')`,
+              backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('/athlete-hero.webp')`,
               backgroundPosition: 'center 30%',
             }}
           />
@@ -390,7 +390,7 @@ export default function Landing() {
             <div className="relative h-[500px] overflow-hidden">
               {/* Athlete Image */}
               <img 
-                src="/athlete-hero.webp" 
+                src="/black-male-incline-bench.webp" 
                 alt="Athlete performing incline bench press" 
                 className="w-full h-full object-cover rounded-2xl"
               />
