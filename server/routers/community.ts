@@ -10,6 +10,7 @@ import {
   users,
   workoutSessions,
   setLogs,
+  userFollows,
 } from "../../drizzle/schema";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
@@ -248,14 +249,14 @@ export const communityRouter = router({
       z.object({
         limit: z.number().int().min(1).max(50).default(20),
         offset: z.number().int().nonnegative().default(0),
+        followingOnly: z.boolean().optional().default(false),
       })
     )
     .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) return { posts: [], total: 0 };
 
-      // Fetch posts with author name
-      const feedPosts = await db
+      let query = db
         .select({
           id: posts.id,
           userId: posts.userId,
@@ -266,7 +267,20 @@ export const communityRouter = router({
           authorAvatarUrl: users.avatarUrl,
         })
         .from(posts)
-        .leftJoin(users, eq(posts.userId, users.id))
+        .leftJoin(users, eq(posts.userId, users.id));
+
+      if (input.followingOnly) {
+        // Only show posts from users the current user follows
+        query = query.innerJoin(
+          userFollows,
+          and(
+            eq(userFollows.followerId, ctx.user.id),
+            eq(userFollows.followeeId, posts.userId)
+          )
+        ) as any;
+      }
+
+      const feedPosts = await query
         .orderBy(desc(posts.createdAt))
         .limit(input.limit)
         .offset(input.offset);
@@ -529,6 +543,70 @@ export const communityRouter = router({
    * Get the current user's own posts (for the Profile page grid).
    * Returns posts newest-first with their first media item thumbnail.
    */
+  getUserPosts: protectedProcedure
+    .input(
+      z.object({
+        userId: z.number().int().positive(),
+        limit: z.number().int().min(1).max(50).default(20),
+        offset: z.number().int().nonnegative().default(0),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return [];
+
+      // Fetch this user's posts
+      const userPosts = await db
+        .select({
+          id: posts.id,
+          caption: posts.caption,
+          createdAt: posts.createdAt,
+        })
+        .from(posts)
+        .where(eq(posts.userId, input.userId))
+        .orderBy(desc(posts.createdAt))
+        .limit(input.limit)
+        .offset(input.offset);
+
+      if (userPosts.length === 0) return [];
+
+      const postIds = userPosts.map((p) => p.id);
+
+      // Fetch all media for these posts
+      const mediaRows = await db
+        .select({
+          postId: postMedia.postId,
+          r2Key: postMedia.r2Key,
+          mediaType: postMedia.mediaType,
+          mimeType: postMedia.mimeType,
+        })
+        .from(postMedia)
+        .where(
+          postIds.length === 1
+            ? eq(postMedia.postId, postIds[0])
+            : sql`${postMedia.postId} IN (${sql.join(postIds.map((id) => sql`${id}`), sql`, `)})`
+        )
+        .orderBy(postMedia.postId);
+
+      // Group media by postId (keep first item per post as thumbnail)
+      const mediaByPost = new Map<number, typeof mediaRows[0]>();
+      for (const m of mediaRows) {
+        if (!mediaByPost.has(m.postId)) mediaByPost.set(m.postId, m);
+      }
+
+      return userPosts.map((p) => {
+        const thumb = mediaByPost.get(p.id);
+        return {
+          id: p.id,
+          caption: p.caption,
+          createdAt: p.createdAt.toISOString(),
+          thumbnailUrl: thumb ? r2PublicUrl(thumb.r2Key) : null,
+          mediaType: thumb?.mediaType ?? null,
+          mimeType: thumb?.mimeType ?? null,
+        };
+      });
+    }),
+
   getMyPosts: protectedProcedure
     .input(
       z.object({

@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { UserProfileSheet } from "./UserProfileSheet";
 
 /* ─────────────────────────────────────────────────────────────────
    Types
@@ -842,9 +843,11 @@ export function NewPostComposer({
 function PostCard({
   post,
   currentUser,
+  onAuthorTap,
 }: {
   post: FeedPost;
   currentUser: any;
+  onAuthorTap?: (userId: number, name: string, avatarUrl?: string | null) => void;
 }) {
   const [showComments, setShowComments] = useState(false);
   const [liked, setLiked] = useState(post.likedByMe);
@@ -938,7 +941,16 @@ function PostCard({
             gap: 10,
           }}
         >
-          <Avatar name={post.authorName} avatarUrl={post.authorAvatarUrl} size={42} />
+          <button
+            onClick={() => {
+              if (post.userId > 0 && onAuthorTap) {
+                onAuthorTap(post.userId, post.authorName, post.authorAvatarUrl);
+              }
+            }}
+            style={{ background: "none", border: "none", padding: 0, cursor: post.userId > 0 ? "pointer" : "default", display: "flex", alignItems: "center", gap: 0 }}
+          >
+            <Avatar name={post.authorName} avatarUrl={post.authorAvatarUrl} size={42} />
+          </button>
           <div style={{ flex: 1 }}>
             <p
               style={{
@@ -1385,6 +1397,10 @@ interface CommunityTabProps {
 
 export function CommunityTab({ user, userAvatarUrl, workoutSessions = [] }: CommunityTabProps) {
   const [showComposer, setShowComposer] = useState(false);
+  const [followingOnly, setFollowingOnly] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showSearch, setShowSearch] = useState(false);
+  const [viewingUserId, setViewingUserId] = useState<{ id: number; name: string; avatarUrl?: string | null } | null>(null);
 
   const {
     data,
@@ -1392,15 +1408,20 @@ export function CommunityTab({ user, userAvatarUrl, workoutSessions = [] }: Comm
     error,
     refetch,
   } = trpc.community.getFeed.useQuery(
-    { limit: 20, offset: 0 },
+    { limit: 20, offset: 0, followingOnly },
     { refetchOnWindowFocus: true, staleTime: 30_000 }
+  );
+
+  // User search
+  const { data: searchResults = [] } = (trpc as any).user.searchUsers.useQuery(
+    { query: searchQuery },
+    { enabled: searchQuery.trim().length >= 2, staleTime: 10_000 }
   );
 
   // Use real posts if available, fall back to sample posts for display
   const feedPosts: FeedPost[] =
-    data && data.posts.length > 0 ? (data.posts as FeedPost[]) : SAMPLE_POSTS;
-
-  const showingSamples = !data || data.posts.length === 0;
+    data && data.posts.length > 0 ? (data.posts as FeedPost[]) : (followingOnly ? [] : SAMPLE_POSTS);
+  const showingSamples = !followingOnly && (!data || data.posts.length === 0);
 
   return (
     <div className="space-y-3">
@@ -1427,6 +1448,119 @@ export function CommunityTab({ user, userAvatarUrl, workoutSessions = [] }: Comm
           <polygon points="22 2 15 22 11 13 2 9 22 2"/>
         </svg>
       </div>
+
+      {/* Feed filter + search row */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        {/* For You / Following toggle */}
+        <div style={{ flex: 1, display: "flex", background: "var(--secondary)", borderRadius: 50, padding: 3, border: "1px solid var(--border)" }}>
+          <button
+            onClick={() => setFollowingOnly(false)}
+            style={{
+              flex: 1, padding: "7px 0", borderRadius: 50, border: "none",
+              background: !followingOnly ? "var(--foreground)" : "transparent",
+              color: !followingOnly ? "var(--background)" : "#9ca3af",
+              fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.15s",
+            }}
+          >
+            For You
+          </button>
+          <button
+            onClick={() => setFollowingOnly(true)}
+            style={{
+              flex: 1, padding: "7px 0", borderRadius: 50, border: "none",
+              background: followingOnly ? "var(--foreground)" : "transparent",
+              color: followingOnly ? "var(--background)" : "#9ca3af",
+              fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.15s",
+            }}
+          >
+            Following
+          </button>
+        </div>
+        {/* Search toggle button */}
+        <button
+          onClick={() => { setShowSearch(!showSearch); setSearchQuery(""); }}
+          style={{
+            width: 38, height: 38, borderRadius: "50%",
+            background: showSearch ? "var(--foreground)" : "var(--secondary)",
+            border: "1px solid var(--border)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: "pointer", flexShrink: 0,
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke={showSearch ? "var(--background)" : "#9ca3af"}
+            strokeWidth="2" strokeLinecap="round">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+        </button>
+      </div>
+
+      {/* Search input */}
+      {showSearch && (
+        <div style={{ position: "relative" }}>
+          <input
+            autoFocus
+            type="text"
+            placeholder="Search people…"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{
+              width: "100%", padding: "11px 16px 11px 40px",
+              borderRadius: 50, border: "1.5px solid var(--border)",
+              background: "var(--card)", color: "var(--foreground)",
+              fontSize: 14, outline: "none", boxSizing: "border-box",
+            }}
+          />
+          <svg
+            width="15" height="15" viewBox="0 0 24 24" fill="none"
+            stroke="#9ca3af" strokeWidth="2" strokeLinecap="round"
+            style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)" }}
+          >
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              style={{
+                position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
+                background: "none", border: "none", cursor: "pointer",
+                color: "#9ca3af", fontSize: 18, lineHeight: 1, padding: 2,
+              }}
+            >×</button>
+          )}
+        </div>
+      )}
+
+      {/* Search results */}
+      {showSearch && searchQuery.trim().length >= 2 && (
+        <div style={{ background: "var(--card)", borderRadius: 16, border: "1.5px solid var(--border)", overflow: "hidden" }}>
+          {searchResults.length === 0 ? (
+            <p style={{ fontSize: 13, color: "#9ca3af", textAlign: "center", padding: "20px 16px", margin: 0 }}>No users found for "{searchQuery}"</p>
+          ) : (
+            searchResults.map((u: { id: number; name: string | null; avatarUrl: string | null }) => (
+              <button
+                key={u.id}
+                onClick={() => { setShowSearch(false); setSearchQuery(""); setViewingUserId({ id: u.id, name: u.name ?? "FlexTab User", avatarUrl: u.avatarUrl }); }}
+                style={{
+                  display: "flex", alignItems: "center", gap: 12,
+                  width: "100%", padding: "12px 16px",
+                  background: "none", border: "none", borderTop: "1px solid var(--border)",
+                  cursor: "pointer", textAlign: "left",
+                }}
+              >
+                <Avatar name={u.name ?? "FlexTab User"} avatarUrl={u.avatarUrl} size={42} />
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", margin: "0 0 2px" }}>{u.name ?? "FlexTab User"}</p>
+                  <p style={{ fontSize: 12, color: "#9ca3af", margin: 0 }}>@{(u.name ?? "user").toLowerCase().replace(/\s+/g, "").slice(0, 20)}</p>
+                </div>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+            ))
+          )}
+        </div>
+      )}
 
       {/* Loading */}
       {isLoading && (
@@ -1488,9 +1622,25 @@ export function CommunityTab({ user, userAvatarUrl, workoutSessions = [] }: Comm
         </div>
       )}
 
+      {/* Following-only empty state */}
+      {!isLoading && followingOnly && feedPosts.length === 0 && (
+        <div style={{ textAlign: "center", padding: "40px 24px" }}>
+          <div style={{ width: 52, height: 52, borderRadius: "50%", background: "var(--secondary)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px" }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <p style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)", margin: "0 0 6px" }}>No posts from people you follow</p>
+          <p style={{ fontSize: 13, color: "#9ca3af", margin: 0 }}>Follow people to see their posts here</p>
+        </div>
+      )}
+
       {/* Feed */}
       {feedPosts.map((post) => (
-        <PostCard key={post.id} post={post} currentUser={user} />
+        <PostCard
+          key={post.id}
+          post={post}
+          currentUser={user}
+          onAuthorTap={(userId, name, avatarUrl) => setViewingUserId({ id: userId, name, avatarUrl })}
+        />
       ))}
 
       {/* Composer */}
@@ -1500,6 +1650,17 @@ export function CommunityTab({ user, userAvatarUrl, workoutSessions = [] }: Comm
           userAvatarUrl={userAvatarUrl}
           workoutSessions={workoutSessions}
           onClose={() => setShowComposer(false)}
+        />
+      )}
+
+      {/* User profile sheet — opened from author tap or search result */}
+      {viewingUserId && (
+        <UserProfileSheet
+          userId={viewingUserId.id}
+          initialName={viewingUserId.name}
+          initialAvatarUrl={viewingUserId.avatarUrl}
+          currentUser={user}
+          onClose={() => setViewingUserId(null)}
         />
       )}
     </div>

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { users } from "../../drizzle/schema";
@@ -42,6 +42,33 @@ function r2PublicUrl(key: string): string {
 }
 
 export const userRouter = router({
+  getPublicProfile: protectedProcedure
+    .input(z.object({ userId: z.number().int().positive() }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return null;
+      const [user] = await db
+        .select({ id: users.id, name: users.name, avatarUrl: users.avatarUrl })
+        .from(users)
+        .where(eq(users.id, input.userId))
+        .limit(1);
+      return user ?? null;
+    }),
+
+  searchUsers: protectedProcedure
+    .input(z.object({ query: z.string().min(1).max(50) }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return [];
+      const searchTerm = `%${input.query}%`;
+      const results = await db
+        .select({ id: users.id, name: users.name, avatarUrl: users.avatarUrl })
+        .from(users)
+        .where(sql`${users.name} ILIKE ${searchTerm}`)
+        .limit(20);
+      return results;
+    }),
+
   getProfile: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) return null;

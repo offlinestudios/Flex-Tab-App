@@ -4,6 +4,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { NewPostComposer, CommentsSheet, FeedPost } from "./CommunityTab";
+import { UserProfileSheet } from "./UserProfileSheet";
 
 type ProfilePanel = 'posts' | 'logs' | 'prs';
 
@@ -1024,6 +1025,10 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [showShareSheet, setShowShareSheet] = useState(false);
   const [showTierDetails, setShowTierDetails] = useState(false);
+  // Social list sheet — 'followers' | 'following' | null
+  const [socialListMode, setSocialListMode] = useState<'followers' | 'following' | null>(null);
+  // Viewing another user's profile from followers/following list
+  const [viewingUserId, setViewingUserId] = useState<{ id: number; name: string; avatarUrl?: string | null } | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [showAvatarActionSheet, setShowAvatarActionSheet] = useState(false);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
@@ -1199,14 +1204,14 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
                   <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', margin: '0 0 2px' }}>{workoutSessions.length}</p>
                   <p style={{ fontSize: 12, color: '#6b7280', margin: 0, fontWeight: 500 }}>Workouts</p>
                 </div>
-                <div style={{ textAlign: 'center' }}>
+                <button onClick={() => setSocialListMode('followers')} style={{ textAlign: 'center', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
                   <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', margin: '0 0 2px' }}>{followerCount}</p>
                   <p style={{ fontSize: 12, color: '#6b7280', margin: 0, fontWeight: 500 }}>Followers</p>
-                </div>
-                <div style={{ textAlign: 'center' }}>
+                </button>
+                <button onClick={() => setSocialListMode('following')} style={{ textAlign: 'center', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
                   <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', margin: '0 0 2px' }}>{followingCount}</p>
                   <p style={{ fontSize: 12, color: '#6b7280', margin: 0, fontWeight: 500 }}>Following</p>
-                </div>
+                </button>
               </div>
             </div>
 
@@ -1497,6 +1502,28 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
           onChangePhoto={() => avatarFileInputRef.current?.click()}
           onRemovePhoto={() => removeAvatarMutation.mutate()}
           onClose={() => setShowAvatarActionSheet(false)}
+        />
+      )}
+
+      {/* Followers / Following list sheet */}
+      {socialListMode && user?.id && (
+        <UserProfileSheet
+          userId={user.id}
+          initialName={user.name}
+          currentUser={user}
+          onClose={() => setSocialListMode(null)}
+          initialListMode={socialListMode}
+        />
+      )}
+
+      {/* Viewing another user's profile from list */}
+      {viewingUserId && (
+        <UserProfileSheet
+          userId={viewingUserId.id}
+          initialName={viewingUserId.name}
+          initialAvatarUrl={viewingUserId.avatarUrl}
+          currentUser={user}
+          onClose={() => setViewingUserId(null)}
         />
       )}
 

@@ -202,6 +202,48 @@ export const socialRouter = router({
   /**
    * Get follower and following counts for the current user (for the profile header).
    */
+  /**
+   * Get users following the target user.
+   */
+  getFollowers: protectedProcedure
+    .input(z.object({ userId: z.number().int().positive() }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return [];
+      const followers = await db
+        .select({
+          id: users.id,
+          name: users.name,
+          avatarUrl: users.avatarUrl,
+        })
+        .from(userFollows)
+        .innerJoin(users, eq(userFollows.followerId, users.id))
+        .where(eq(userFollows.followeeId, input.userId))
+        .orderBy(users.name);
+      return followers;
+    }),
+
+  /**
+   * Get users the target user is following.
+   */
+  getFollowing: protectedProcedure
+    .input(z.object({ userId: z.number().int().positive() }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return [];
+      const following = await db
+        .select({
+          id: users.id,
+          name: users.name,
+          avatarUrl: users.avatarUrl,
+        })
+        .from(userFollows)
+        .innerJoin(users, eq(userFollows.followeeId, users.id))
+        .where(eq(userFollows.followerId, input.userId))
+        .orderBy(users.name);
+      return following;
+    }),
+
   getMyStats: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) return { followerCount: 0, followingCount: 0 };
