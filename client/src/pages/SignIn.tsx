@@ -1,6 +1,7 @@
 import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { supabase } from '@/lib/supabase';
+import { publicAppUrl } from '@/lib/api';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 
@@ -63,8 +64,8 @@ export default function SignInPage() {
         <Auth
           supabaseClient={supabase}
           appearance={{ theme: ThemeSupa }}
-          providers={['google', 'github']}
-          redirectTo={`${window.location.origin}/dashboard`}
+          providers={['apple', 'google', 'github']}
+          redirectTo={publicAppUrl('/dashboard')}
           view="sign_in"
           showLinks={true}
           theme="light"

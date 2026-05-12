@@ -6,6 +6,7 @@ import { httpBatchLink, TRPCClientError } from "@trpc/client";
 import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import { supabase } from "@/lib/supabase";
+import { apiUrl, canUseServiceWorker } from "@/lib/api";
 
 import App from "./App";
 import { getLoginUrl } from "./const";
@@ -43,7 +44,7 @@ queryClient.getMutationCache().subscribe(event => {
 const trpcClient = trpc.createClient({
   links: [
     httpBatchLink({
-      url: "/api/trpc",
+      url: apiUrl("/api/trpc"),
       transformer: superjson,
       async fetch(input, init) {
         // Get Supabase session and add token to headers
@@ -63,7 +64,7 @@ const trpcClient = trpc.createClient({
 });
 
 // Register service worker for PWA
-if ('serviceWorker' in navigator) {
+if (canUseServiceWorker()) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
       .register('/sw.js')

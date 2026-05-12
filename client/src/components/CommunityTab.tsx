@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { supabase } from "@/lib/supabase";
+import { apiUrl } from "@/lib/api";
 import { toast } from "sonner";
 import { UserProfileSheet } from "./UserProfileSheet";
 
@@ -632,7 +633,7 @@ export function NewPostComposer({
         // Upload via server-side endpoint to avoid browser-to-R2 CORS issues
         const formData = new FormData();
         formData.append("file", file);
-        const res = await fetch("/api/upload-media", {
+        const res = await fetch(apiUrl("/api/upload-media"), {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
           body: formData,

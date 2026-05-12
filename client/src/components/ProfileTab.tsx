@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback } from "react";
 import { formatDateFull } from "@/lib/dateUtils";
 import { useTheme } from "@/contexts/ThemeContext";
 import { trpc } from "@/lib/trpc";
+import { apiUrl, publicAppUrl } from "@/lib/api";
 import { toast } from "sonner";
 import { NewPostComposer, CommentsSheet, FeedPost } from "./CommunityTab";
 import { UserProfileSheet } from "./UserProfileSheet";
@@ -799,8 +800,8 @@ function ShareSheet({ profileName, userId, onClose }: ShareSheetProps) {
   // Build a clean shareable deep-link URL: /u/{userId} if we have an id,
   // otherwise fall back to the current page URL.
   const profileUrl = userId
-    ? `${window.location.origin}/u/${userId}`
-    : window.location.href;
+    ? publicAppUrl(`/u/${userId}`)
+    : publicAppUrl();
 
   const copyLink = () => {
     navigator.clipboard.writeText(profileUrl).catch(() => {});
@@ -1248,7 +1249,7 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
 
       const formData = new FormData();
       formData.append('file', blob, 'avatar.jpg');
-      const res = await fetch('/api/upload-avatar', {
+      const res = await fetch(apiUrl('/api/upload-avatar'), {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: formData,

@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { trpc } from "@/lib/trpc";
+import { publicAppUrl } from "@/lib/api";
 
 /* ─────────────────────────────────────────────────────────────────
    Share Profile Button — copy-to-clipboard + native share
 ───────────────────────────────────────────────────────────────── */
 function ShareProfileButton({ userId, displayName }: { userId: number; displayName: string }) {
   const [copied, setCopied] = useState(false);
-  const profileUrl = `${window.location.origin}/u/${userId}`;
+  const profileUrl = publicAppUrl(`/u/${userId}`);
 
   const handleShare = () => {
     if (navigator.share) {

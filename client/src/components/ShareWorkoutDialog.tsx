@@ -6,6 +6,7 @@ import { PRESET_EXERCISES } from "@/lib/exercises";
 import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { supabase } from "@/lib/supabase";
+import { apiUrl } from "@/lib/api";
 
 interface SetLog {
   id: string;
@@ -248,7 +249,7 @@ export function ShareWorkoutDialog({
       userAvatarUrl,
     };
 
-    const res = await fetch('/api/generate-workout-card', {
+    const res = await fetch(apiUrl('/api/generate-workout-card'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -289,7 +290,7 @@ export function ShareWorkoutDialog({
 
       const formData = new FormData();
       formData.append('file', file);
-      const res = await fetch('/api/upload-media', {
+      const res = await fetch(apiUrl('/api/upload-media'), {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
