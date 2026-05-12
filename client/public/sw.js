@@ -1,10 +1,11 @@
-const CACHE_NAME = 'flextab-v6-dropdown-fix';
+const CACHE_NAME = 'flextab-v7-mobile-selection-fix';
 const urlsToCache = [
   '/',
   '/app',
   '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png',
+  '/icon-192x192-v2.png',
+  '/icon-512x512-v2.png',
+  '/apple-touch-icon-v2.png',
   '/flextab-logo.png'
 ];
 

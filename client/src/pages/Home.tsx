@@ -109,6 +109,7 @@ export default function Home() {
   // All hooks must be called before any conditional returns
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [selectedExercises, setSelectedExercises] = useState<Exercise[]>([]);
+  const [exerciseDrafts, setExerciseDrafts] = useState<Record<string, { sets: number; reps: number; weight: number }>>({});
   const [customExerciseName, setCustomExerciseName] = useState("");
   const [customExerciseCategory, setCustomExerciseCategory] = useState("");
   const [allExercises, setAllExercises] = useState<Exercise[]>(PRESET_EXERCISES);
@@ -473,6 +474,11 @@ export default function Home() {
   const handleSelectExercise = (exercise: Exercise) => {
     if (selectedExercises.find((e) => e.id === exercise.id)) {
       setSelectedExercises(selectedExercises.filter((e) => e.id !== exercise.id));
+      setExerciseDrafts((prev) => {
+        const next = { ...prev };
+        delete next[exercise.id];
+        return next;
+      });
     } else {
       setSelectedExercises([...selectedExercises, exercise]);
     }
@@ -1123,10 +1129,22 @@ export default function Home() {
                   onRemove={(exerciseId) => {
                     const updated = selectedExercises.filter((e) => e.id !== exerciseId);
                     setSelectedExercises(updated);
+                    setExerciseDrafts((prev) => {
+                      const next = { ...prev };
+                      delete next[exerciseId];
+                      return next;
+                    });
                     setCurrentExerciseIndex(Math.min(safeIdx, updated.length - 1));
                   }}
                   totalExercises={selectedExercises.length}
                   currentIndex={safeIdx}
+                  draft={exerciseDrafts[exercise.id]}
+                  onDraftChange={(draft) => {
+                    setExerciseDrafts((prev) => ({
+                      ...prev,
+                      [exercise.id]: draft,
+                    }));
+                  }}
                   onNext={() => {
                     const nextIdx = safeIdx + 1;
                     if (nextIdx < selectedExercises.length) {

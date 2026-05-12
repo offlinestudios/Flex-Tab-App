@@ -34,7 +34,7 @@ export const PRESET_EXERCISES: Exercise[] = [
   { id: "23", name: "Single-Arm Cable Row", category: "Back" },
   { id: "24", name: "Meadows Row", category: "Back" },
   // BACK - Rear Chain
-  { id: "26", name: "Reverse Fly", category: "Back" },
+  { id: "26", name: "Reverse Fly", category: "Shoulders" },
   { id: "27", name: "Rack Pulls", category: "Back" },
   // BICEPS
   { id: "28", name: "Bicep Curls", category: "Arms" },
@@ -94,7 +94,7 @@ export const PRESET_EXERCISES: Exercise[] = [
   { id: "76", name: "Planks", category: "Core" },
   { id: "77", name: "Pallof Press", category: "Core" },
   { id: "78", name: "Russian Twists", category: "Core" },
-  { id: "79", name: "Back Extensions", category: "Core" },
+  { id: "79", name: "Back Extensions", category: "Back" },
   // CARDIO
   { id: "80", name: "Running", category: "Cardio" },
   { id: "81", name: "Cycling", category: "Cardio" },

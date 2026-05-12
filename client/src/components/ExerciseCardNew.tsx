@@ -17,6 +17,12 @@ interface ExerciseCardNewProps {
   exercise: Exercise;
   onLogSet: (exercise: string, sets: number, reps: number, weight: number, category?: string) => Promise<void>;
   onRemove?: (exerciseId: string) => void;
+  draft?: {
+    sets: number;
+    reps: number;
+    weight: number;
+  };
+  onDraftChange?: (draft: { sets: number; reps: number; weight: number }) => void;
   // Navigation
   totalExercises?: number;
   currentIndex?: number;
@@ -44,18 +50,34 @@ export function ExerciseCardNew({
   currentIndex = 0,
   onNext,
   onPrev,
+  draft,
+  onDraftChange,
   lastWeight = 0,
   lastReps = 0,
   bestWeight = 0,
   totalVolume = 0,
 }: ExerciseCardNewProps) {
-  const [sets, setSets] = useState(1);
-  const [reps, setReps] = useState(1);
-  const [weight, setWeight] = useState(0);
+  const [sets, setSetsState] = useState(draft?.sets ?? 1);
+  const [reps, setRepsState] = useState(draft?.reps ?? 1);
+  const [weight, setWeightState] = useState(draft?.weight ?? 0);
   const [isLogging, setIsLogging] = useState(false);
   const [justLogged, setJustLogged] = useState(false);
 
   const partLabel = PART_LABELS[exercise.category?.toLowerCase()] || exercise.category;
+
+  useEffect(() => {
+    setSetsState(draft?.sets ?? 1);
+    setRepsState(draft?.reps ?? 1);
+    setWeightState(draft?.weight ?? 0);
+  }, [exercise.id, draft?.sets, draft?.reps, draft?.weight]);
+
+  const updateDraft = (next: Partial<{ sets: number; reps: number; weight: number }>) => {
+    const updated = { sets, reps, weight, ...next };
+    if (next.sets !== undefined) setSetsState(next.sets);
+    if (next.reps !== undefined) setRepsState(next.reps);
+    if (next.weight !== undefined) setWeightState(next.weight);
+    onDraftChange?.(updated);
+  };
 
   const handleLogSet = async () => {
     if (sets === 0 || reps === 0) return;
@@ -179,12 +201,12 @@ export function ExerciseCardNew({
           <span style={{ fontSize: 15, color: 'var(--muted-foreground)', fontWeight: 500 }}>Sets</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <button
-              onClick={() => setSets(Math.max(1, sets - 1))}
+              onClick={() => updateDraft({ sets: Math.max(1, sets - 1) })}
               style={{ width: 42, height: 42, borderRadius: '50%', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 22, color: 'var(--foreground)', border: 'none', flexShrink: 0 }}
             >−</button>
             <span style={{ fontSize: 30, fontWeight: 800, color: 'var(--foreground)', minWidth: 64, textAlign: 'center' }}>{sets}</span>
             <button
-              onClick={() => setSets(sets + 1)}
+              onClick={() => updateDraft({ sets: sets + 1 })}
               style={{ width: 42, height: 42, borderRadius: '50%', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 22, color: 'var(--foreground)', border: 'none', flexShrink: 0 }}
             >+</button>
           </div>
@@ -195,12 +217,12 @@ export function ExerciseCardNew({
           <span style={{ fontSize: 15, color: 'var(--muted-foreground)', fontWeight: 500 }}>Reps</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <button
-              onClick={() => setReps(Math.max(1, reps - 1))}
+              onClick={() => updateDraft({ reps: Math.max(1, reps - 1) })}
               style={{ width: 42, height: 42, borderRadius: '50%', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 22, color: 'var(--foreground)', border: 'none', flexShrink: 0 }}
             >−</button>
             <span style={{ fontSize: 30, fontWeight: 800, color: 'var(--foreground)', minWidth: 64, textAlign: 'center' }}>{reps}</span>
             <button
-              onClick={() => setReps(reps + 1)}
+              onClick={() => updateDraft({ reps: reps + 1 })}
               style={{ width: 42, height: 42, borderRadius: '50%', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 22, color: 'var(--foreground)', border: 'none', flexShrink: 0 }}
             >+</button>
           </div>
@@ -219,7 +241,7 @@ export function ExerciseCardNew({
             max={600}
             step={5}
             value={weight}
-            onChange={(e) => setWeight(parseInt(e.target.value))}
+            onChange={(e) => updateDraft({ weight: parseInt(e.target.value, 10) })}
             style={{ width: '100%', accentColor: 'var(--foreground)', height: 6, cursor: 'pointer' }}
           />
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>

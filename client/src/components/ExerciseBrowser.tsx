@@ -53,6 +53,18 @@ export function ExerciseBrowser({ open, onClose, onSelectExercise, selectedExerc
     }
   }, [open]);
 
+  useEffect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    const previousPosition = document.body.style.position;
+    document.body.style.overflow = "hidden";
+    document.body.style.position = "relative";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.body.style.position = previousPosition;
+    };
+  }, [open]);
+
   // Filter exercises
   const filtered = allExercises.filter((ex) => {
     const matchesFilter = activeFilter === "all" || ex.category.toLowerCase() === activeFilter;
@@ -87,8 +99,10 @@ export function ExerciseBrowser({ open, onClose, onSelectExercise, selectedExerc
           background: "var(--background)",
           transform: open ? "translateY(0)" : "translateY(100%)",
           transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+          height: "100dvh",
           maxWidth: 700,
           margin: "0 auto",
+          pointerEvents: open ? "auto" : "none",
         }}
       >
         {/* ── Header: back button + search ── */}
@@ -137,7 +151,6 @@ export function ExerciseBrowser({ open, onClose, onSelectExercise, selectedExerc
                 borderRadius: 14, fontSize: 15, color: "var(--foreground)",
                 outline: "none", boxSizing: "border-box",
               }}
-              autoFocus
             />
           </div>
         </div>
@@ -172,7 +185,17 @@ export function ExerciseBrowser({ open, onClose, onSelectExercise, selectedExerc
         </div>
 
         {/* ── Exercise list ── */}
-        <div style={{ flex: 1, overflowY: "auto" }}>
+        <div
+          style={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: "auto",
+            WebkitOverflowScrolling: "touch",
+            overscrollBehavior: "contain",
+            touchAction: "pan-y",
+            paddingBottom: onCreateCustom ? 12 : "calc(env(safe-area-inset-bottom, 0px) + 24px)",
+          }}
+        >
           {filtered.length === 0 ? (
             <div style={{ textAlign: "center", padding: "56px 24px", color: "var(--muted-foreground)", fontSize: 15 }}>
               No exercises found
