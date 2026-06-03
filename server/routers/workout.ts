@@ -54,7 +54,7 @@ export const workoutRouter = router({
         distanceUnit: input.distanceUnit,
         calories: input.calories,
       });
-      return { success: true, id: newRow?.id };
+      return { success: true, id: newRow?.id, sessionId };
     }),
 
   // Save workout duration when the user finishes a workout
@@ -69,7 +69,7 @@ export const workoutRouter = router({
       // Find the session for this date (it must already exist since sets were logged)
       const sessionId = await findOrCreateSession(ctx.user.id, input.date);
       await updateSessionDuration(sessionId, ctx.user.id, input.durationSeconds);
-      return { success: true };
+      return { success: true, sessionId };
     }),
 
   getSetLogs: protectedProcedure.query(async ({ ctx }) => {

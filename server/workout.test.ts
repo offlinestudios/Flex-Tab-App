@@ -134,7 +134,7 @@ describe("workout.logSet", () => {
     const caller = appRouter.createCaller(ctx);
 
     vi.mocked(db.findOrCreateSession).mockResolvedValue(10);
-    vi.mocked(db.createSetLog).mockResolvedValue(undefined as any);
+    vi.mocked(db.createSetLog).mockResolvedValue({ id: 123 } as any);
 
     const result = await caller.workout.logSet({
       date: "1/20/2026",
@@ -145,7 +145,7 @@ describe("workout.logSet", () => {
       time: "02:30:00 PM",
     });
 
-    expect(result).toEqual({ success: true });
+    expect(result).toEqual({ success: true, id: 123, sessionId: 10 });
     expect(db.findOrCreateSession).toHaveBeenCalledWith(1, "1/20/2026");
     expect(db.createSetLog).toHaveBeenCalledWith({
       sessionId: 10,

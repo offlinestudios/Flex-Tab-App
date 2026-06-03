@@ -25,6 +25,7 @@ import { formatDateFull } from "@/lib/dateUtils";
 import { Loader2 } from "lucide-react";
 import { PRESET_EXERCISES as EXPANDED_EXERCISES, EXERCISE_CATEGORIES } from "@/lib/exercises";
 import { getExerciseDetail } from "@/lib/exerciseDetails";
+import { calculateCalories } from "@/utils/calorieCalculations";
 import { useTheme } from "@/contexts/ThemeContext";
 import type { ExerciseDetail } from "@/lib/exerciseDetails";
 import { ExerciseDetailSheet } from "@/components/ExerciseDetailSheet";
@@ -240,6 +241,7 @@ export default function Home() {
     isRunning: boolean; 
     isStopped: boolean 
   }>>({});
+  const [cardioMetrics, setCardioMetrics] = useState<Record<string, { distance: number; distanceUnit: 'miles' | 'km' }>>({});
   
   // Swipe gesture tracking
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -317,11 +319,11 @@ export default function Home() {
           time: newSet.time,
           createdAt: new Date(),
           date: newSet.date,
-          category: null,
-          duration: null,
-          distance: null,
-          distanceUnit: null,
-          calories: null,
+          category: newSet.category ?? null,
+          duration: newSet.duration ?? null,
+          distance: newSet.distance !== undefined ? String(newSet.distance) : null,
+          distanceUnit: newSet.distanceUnit ?? null,
+          calories: newSet.calories ?? null,
         },
       ] as any);
       
@@ -479,6 +481,16 @@ export default function Home() {
         delete next[exercise.id];
         return next;
       });
+      setCardioTimers((prev) => {
+        const next = { ...prev };
+        delete next[exercise.id];
+        return next;
+      });
+      setCardioMetrics((prev) => {
+        const next = { ...prev };
+        delete next[exercise.id];
+        return next;
+      });
     } else {
       setSelectedExercises([...selectedExercises, exercise]);
     }
@@ -491,7 +503,23 @@ export default function Home() {
     }));
   };
 
-  const handleLogSet = async (
+  const handleCardioMetricsUpdate = (exerciseId: string, metrics: { distance: number; distanceUnit: 'miles' | 'km' }) => {
+    setCardioMetrics(prev => ({
+      ...prev,
+      [exerciseId]: metrics,
+    }));
+  };
+
+  const getCardioTimerElapsedSeconds = (exerciseId: string) => {
+    const timer = cardioTimers[exerciseId];
+    if (!timer) return 0;
+    if (timer.isRunning && timer.startTimestamp) {
+      return Math.floor((Date.now() - timer.startTimestamp) / 1000) + timer.pausedElapsed;
+    }
+    return timer.pausedElapsed;
+  };
+
+  const saveSetLog = async (
     exercise: string,
     sets: number,
     reps: number,
@@ -509,7 +537,7 @@ export default function Home() {
       hour12: true,
     });
 
-    await logSetMutation.mutateAsync({
+    return await logSetMutation.mutateAsync({
       date: workoutDateKey,
       exercise,
       sets,
@@ -522,6 +550,72 @@ export default function Home() {
       distanceUnit,
       calories,
     });
+  };
+
+  const handleLogSet = async (
+    exercise: string,
+    sets: number,
+    reps: number,
+    weight: number,
+    category?: string,
+    duration?: number,
+    distance?: number,
+    distanceUnit?: 'miles' | 'km',
+    calories?: number
+  ) => {
+    await saveSetLog(exercise, sets, reps, weight, category, duration, distance, distanceUnit, calories);
+  };
+
+  const logPendingCardioSessions = async (dateKey: string) => {
+    const loggedCardio: SetLog[] = [];
+    let workoutSessionId: number | null = null;
+
+    for (const exercise of selectedExercises) {
+      if (exercise.category !== 'Cardio') continue;
+
+      const elapsedSeconds = getCardioTimerElapsedSeconds(exercise.id);
+      if (elapsedSeconds <= 0) continue;
+
+      const durationMinutes = Math.max(1, Math.round(elapsedSeconds / 60));
+      const metrics = cardioMetrics[exercise.id] ?? { distance: 0, distanceUnit: 'miles' as const };
+      const weightKg = latestMeasurement?.weight ? latestMeasurement.weight * 0.453592 : 70;
+      const calories = calculateCalories(exercise.name, durationMinutes, weightKg);
+      const loggedAt = new Date().toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true,
+      });
+      const result = await saveSetLog(
+        exercise.name,
+        1,
+        0,
+        0,
+        exercise.category,
+        durationMinutes,
+        metrics.distance,
+        metrics.distanceUnit,
+        calories,
+      );
+
+      workoutSessionId = result?.sessionId ?? workoutSessionId;
+      loggedCardio.push({
+        id: result?.id ? String(result.id) : `cardio-${exercise.id}-${Date.now()}`,
+        date: dateKey,
+        exercise: exercise.name,
+        sets: 1,
+        reps: 0,
+        weight: 0,
+        time: loggedAt,
+        category: exercise.category,
+        duration: durationMinutes,
+        distance: metrics.distance,
+        distanceUnit: metrics.distanceUnit,
+        calories,
+      });
+    }
+
+    return { loggedCardio, workoutSessionId };
   };
 
   const handleDeleteLog = async (logId: string, sessionDate: string) => {
@@ -896,21 +990,36 @@ export default function Home() {
         onEnd={() => {
           setWorkoutTimerActive(false);
           setSelectedExercises([]);
+          setExerciseDrafts({});
+          setCardioTimers({});
+          setCardioMetrics({});
           setCurrentExerciseIndex(0);
           // Reset workout date back to today for the next session
           setWorkoutDateKey(new Date().toLocaleDateString("en-US", { year: "numeric", month: "numeric", day: "numeric" }));
         }}
-        onFinishAndShare={(durationStr) => {
-          // Save duration to database
-          const durationSecs = durationStr.split(':').reduce((acc, t, i, arr) =>
-            i === arr.length - 1 ? acc + parseInt(t) : acc + parseInt(t) * 60, 0
-          );
-          finishWorkoutMutation.mutate({ date: workoutDateKey, durationSeconds: durationSecs });
-          // Open the share dialog with the session data and elapsed duration
-          const session = workoutSessions.find(s => s.date === workoutDateKey);
-          if (session && session.exercises.length > 0) {
-            setShareWorkoutData({ exercises: session.exercises, date: workoutDateKey, duration: durationStr, workoutSessionId: session.sessionId ?? null });
-            setShowShareDialog(true);
+        onFinishAndShare={async (durationStr) => {
+          try {
+            const dateKey = workoutDateKey;
+            const durationSecs = durationStr
+              .split(':')
+              .reduce((acc, part) => (acc * 60) + (parseInt(part, 10) || 0), 0);
+
+            const { loggedCardio, workoutSessionId: cardioSessionId } = await logPendingCardioSessions(dateKey);
+            const finishResult = await finishWorkoutMutation.mutateAsync({ date: dateKey, durationSeconds: durationSecs });
+
+            await utils.workout.getSetLogs.invalidate();
+
+            const existingSession = workoutSessions.find(s => s.date === dateKey);
+            const exercisesToShare = [...(existingSession?.exercises ?? []), ...loggedCardio];
+            const workoutSessionId = cardioSessionId ?? existingSession?.sessionId ?? finishResult?.sessionId ?? null;
+
+            if (exercisesToShare.length > 0) {
+              setShareWorkoutData({ exercises: exercisesToShare, date: dateKey, duration: durationStr, workoutSessionId });
+              setShowShareDialog(true);
+            }
+          } catch (error) {
+            console.error('Failed to finish workout:', error);
+            alert('Failed to finish workout. Please try again.');
           }
         }}
       />
@@ -1093,6 +1202,16 @@ export default function Home() {
                     onRemove={(exerciseId) => {
                       const updated = selectedExercises.filter((e) => e.id !== exerciseId);
                       setSelectedExercises(updated);
+                      setCardioTimers((prev) => {
+                        const next = { ...prev };
+                        delete next[exerciseId];
+                        return next;
+                      });
+                      setCardioMetrics((prev) => {
+                        const next = { ...prev };
+                        delete next[exerciseId];
+                        return next;
+                      });
                       setCurrentExerciseIndex(Math.min(safeIdx, updated.length - 1));
                     }}
                     onNext={() => {
@@ -1116,7 +1235,10 @@ export default function Home() {
                     pausedElapsed={cardioTimers[exercise.id]?.pausedElapsed}
                     isTimerRunning={cardioTimers[exercise.id]?.isRunning}
                     isTimerStopped={cardioTimers[exercise.id]?.isStopped}
+                    distance={cardioMetrics[exercise.id]?.distance}
+                    distanceUnit={cardioMetrics[exercise.id]?.distanceUnit}
                     onTimerUpdate={handleTimerUpdate}
+                    onMetricsUpdate={handleCardioMetricsUpdate}
                     userWeightLbs={latestMeasurement?.weight ? latestMeasurement.weight : undefined}
                   />
                 );
