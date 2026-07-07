@@ -97,6 +97,7 @@ export const PRESET_EXERCISES: Exercise[] = [
   { id: "79", name: "Back Extensions", category: "Back" },
   // CARDIO
   { id: "80", name: "Running", category: "Cardio" },
+  { id: "92", name: "Walking", category: "Cardio" },
   { id: "81", name: "Cycling", category: "Cardio" },
   { id: "82", name: "Swimming", category: "Cardio" },
   { id: "83", name: "Jump Rope", category: "Cardio" },

@@ -35,6 +35,7 @@ import { ShareWorkoutDialog } from "@/components/ShareWorkoutDialog";
 import { UserMenu } from "@/components/UserMenu";
 import { ExerciseCardNew } from "@/components/ExerciseCardNew";
 import { CardioExerciseCard } from "@/components/CardioExerciseCard";
+import { CardioGPSTracker, GPS_TRACKABLE } from "@/components/CardioGPSTracker";
 import { CalendarModal } from "@/components/CalendarModal";
 import { useLocalStorageMigration } from "@/hooks/useLocalStorageMigration";
 import { ExerciseBrowser } from "@/components/ExerciseBrowser";
@@ -65,6 +66,7 @@ interface SetLog {
   distance?: number; // Distance covered (miles or kilometers)
   distanceUnit?: 'miles' | 'km'; // Unit for distance measurement
   calories?: number; // Calories burned (cardio)
+  routePolyline?: string; // JSON GPS route [{lat,lng},...] for outdoor activities
 }
 
 interface WorkoutSession {
@@ -196,6 +198,7 @@ export default function Home() {
         distance: log.distance ? parseFloat(log.distance) : undefined,
         distanceUnit: log.distanceUnit,
         calories: log.calories ?? undefined,
+        routePolyline: log.routePolyline ?? undefined,
       });
 
       // Capture session duration if present (all rows for same session share the same value)
@@ -324,6 +327,7 @@ export default function Home() {
           distance: newSet.distance !== undefined ? String(newSet.distance) : null,
           distanceUnit: newSet.distanceUnit ?? null,
           calories: newSet.calories ?? null,
+          routePolyline: newSet.routePolyline ?? null,
         },
       ] as any);
       
@@ -528,7 +532,8 @@ export default function Home() {
     duration?: number,
     distance?: number,
     distanceUnit?: 'miles' | 'km',
-    calories?: number
+    calories?: number,
+    routePolyline?: string,
   ) => {
     const time = new Date().toLocaleTimeString("en-US", {
       hour: "2-digit",
@@ -549,6 +554,7 @@ export default function Home() {
       distance,
       distanceUnit,
       calories,
+      routePolyline,
     });
   };
 
@@ -561,9 +567,10 @@ export default function Home() {
     duration?: number,
     distance?: number,
     distanceUnit?: 'miles' | 'km',
-    calories?: number
+    calories?: number,
+    routePolyline?: string,
   ) => {
-    await saveSetLog(exercise, sets, reps, weight, category, duration, distance, distanceUnit, calories);
+    await saveSetLog(exercise, sets, reps, weight, category, duration, distance, distanceUnit, calories, routePolyline);
   };
 
   const logPendingCardioSessions = async (dateKey: string) => {
@@ -572,6 +579,9 @@ export default function Home() {
 
     for (const exercise of selectedExercises) {
       if (exercise.category !== 'Cardio') continue;
+      // GPS-trackable activities (Running, Walking, Cycling) save themselves via the
+      // CardioGPSTracker "Save Activity" button — skip them here to avoid duplicates.
+      if (GPS_TRACKABLE.includes(exercise.name)) continue;
 
       const elapsedSeconds = getCardioTimerElapsedSeconds(exercise.id);
       if (elapsedSeconds <= 0) continue;
@@ -1194,6 +1204,80 @@ export default function Home() {
                 const cardioHistory = exHistory.filter(e => e.reps === 0);
                 const lastCardio = cardioHistory.length > 0 ? cardioHistory[cardioHistory.length - 1] : null;
                 const bestCardioDistance = cardioHistory.length > 0 ? Math.max(...cardioHistory.map(e => e.vol)) : 0;
+                const isGPSActivity = GPS_TRACKABLE.includes(exercise.name);
+
+                // ── GPS-trackable outdoor activities (Running, Walking, Cycling) ──
+                // Use the Strava-style CardioGPSTracker with live map + real metrics
+                if (isGPSActivity) {
+                  return (
+                    <div key={exercise.id} style={{
+                      background: 'var(--card)',
+                      borderRadius: 20,
+                      border: '1px solid var(--border)',
+                      overflow: 'hidden',
+                      marginBottom: 12,
+                    }}>
+                      {/* Card header */}
+                      <div style={{ padding: '16px 16px 8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+                          <h3 style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', margin: 0, letterSpacing: -0.5, lineHeight: 1.2 }}>
+                            {exercise.name}
+                          </h3>
+                          <button
+                            onClick={() => {
+                              const updated = selectedExercises.filter((e) => e.id !== exercise.id);
+                              setSelectedExercises(updated);
+                              setCurrentExerciseIndex(Math.min(safeIdx, updated.length - 1));
+                            }}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted-foreground)', flexShrink: 0, marginTop: 2 }}
+                            aria-label="Remove exercise"
+                          >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                              <circle cx="12" cy="5" r="1.5"/>
+                              <circle cx="12" cy="12" r="1.5"/>
+                              <circle cx="12" cy="19" r="1.5"/>
+                            </svg>
+                          </button>
+                        </div>
+                        <span style={{ marginTop: 6, padding: '4px 12px', borderRadius: 20, display: 'inline-block', background: 'var(--foreground)', color: 'var(--background)', fontSize: 12, fontWeight: 700 }}>
+                          {exercise.category}
+                        </span>
+                      </div>
+                      {/* Pagination dots */}
+                      {selectedExercises.length > 1 && (
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: 6, margin: '8px 0 0' }}>
+                          {Array.from({ length: selectedExercises.length }).map((_, i) => (
+                            <div key={i} style={{ width: i === safeIdx ? 20 : 7, height: 7, borderRadius: 4, background: i === safeIdx ? 'var(--foreground)' : 'var(--border)', transition: 'width .2s' }} />
+                          ))}
+                        </div>
+                      )}
+                      {/* GPS Tracker body */}
+                      <CardioGPSTracker
+                        exercise={exercise}
+                        distanceUnit={cardioMetrics[exercise.id]?.distanceUnit ?? 'miles'}
+                        userWeightLbs={latestMeasurement?.weight ? latestMeasurement.weight : undefined}
+                        onDistanceUnitChange={(unit) => handleCardioMetricsUpdate(exercise.id, { distance: cardioMetrics[exercise.id]?.distance ?? 0, distanceUnit: unit })}
+                        onLogSet={handleLogSet}
+                        onNext={() => {
+                          const nextIdx = safeIdx + 1;
+                          if (nextIdx < selectedExercises.length) {
+                            setCurrentExerciseIndex(nextIdx);
+                          } else {
+                            setShowExerciseBrowser(true);
+                          }
+                        }}
+                        onPrev={() => {
+                          if (safeIdx > 0) setCurrentExerciseIndex(safeIdx - 1);
+                        }}
+                        totalExercises={selectedExercises.length}
+                        currentIndex={safeIdx}
+                      />
+                    </div>
+                  );
+                }
+
+                // ── Indoor cardio (Swimming, Jump Rope, Rowing, etc.) ──
+                // Keep the existing manual timer + distance slider UI
                 return (
                   <CardioExerciseCard
                     key={exercise.id}
@@ -1412,9 +1496,12 @@ export default function Home() {
                           const pace = totalDistance > 0 && totalDuration > 0
                             ? (totalDuration / totalDistance).toFixed(1)
                             : null;
+                          // Check if any set has a saved GPS route
+                          const routeSet = sets.find(s => s.routePolyline);
+                          const hasRoute = !!routeSet;
                           return (
                             <div key={exName} style={{ paddingBottom:14, marginBottom:14, borderBottom:'1px solid var(--border)' }}>
-                              {/* Header: exercise name + edit button — identical layout to strength card */}
+                              {/* Header: exercise name + edit button */}
                               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
                                 <p style={{ fontWeight:700, fontSize:14, color:'var(--foreground)', margin:0 }}>{exName}</p>
                                 {sets.length > 0 && (
@@ -1430,6 +1517,35 @@ export default function Home() {
                                   </button>
                                 )}
                               </div>
+                              {/* GPS Route Map (shown when route data exists) */}
+                              {hasRoute && (() => {
+                                let coords: Array<{lat: number; lng: number}> = [];
+                                try { coords = JSON.parse(routeSet!.routePolyline!); } catch {}
+                                if (coords.length < 2) return null;
+                                // Build a Google Static Maps URL via the Forge proxy
+                                const FORGE_BASE = import.meta.env.VITE_FRONTEND_FORGE_API_URL || 'https://forge.butterfly-effect.dev';
+                                const API_KEY_STATIC = import.meta.env.VITE_FRONTEND_FORGE_API_KEY;
+                                // Encode polyline path (sample every Nth point to stay under URL limit)
+                                const step = Math.max(1, Math.floor(coords.length / 60));
+                                const sampled = coords.filter((_, i) => i % step === 0);
+                                const pathStr = sampled.map(c => `${c.lat.toFixed(5)},${c.lng.toFixed(5)}`).join('|');
+                                const isDark = document.documentElement.classList.contains('dark');
+                                const styleParams = isDark
+                                  ? '&style=element:geometry|color:0x1a2332&style=element:labels.text.fill|color:0xf0f1f3&style=feature:road|element:geometry|color:0x252836&style=feature:water|element:geometry|color:0x0d1520'
+                                  : '&style=element:geometry|color:0xf0f1f3&style=element:labels.text.fill|color:0x1a2332&style=feature:road|element:geometry|color:0xffffff&style=feature:water|element:geometry|color:0xc9d8e8';
+                                const lineColor = isDark ? '0xf0f1f3ff' : '0x1a2332ff';
+                                const staticUrl = `${FORGE_BASE}/v1/maps/proxy/maps/api/staticmap?size=600x200&scale=2&key=${API_KEY_STATIC}&path=color:${lineColor}|weight:4|${pathStr}${styleParams}`;
+                                return (
+                                  <div style={{ borderRadius: 12, overflow: 'hidden', marginBottom: 10, height: 140 }}>
+                                    <img
+                                      src={staticUrl}
+                                      alt={`${exName} route map`}
+                                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                                      loading="lazy"
+                                    />
+                                  </div>
+                                );
+                              })()}
                               {/* Stats row: circular arc for duration + side stats */}
                               <div style={{ display:'flex', alignItems:'center', gap:20, marginTop:8 }}>
                                 {/* Circular arc — 60 min = full circle, uses app foreground colour */}
@@ -1442,17 +1558,9 @@ export default function Home() {
                                   return (
                                     <div style={{ position:'relative', width:size, height:size, flexShrink:0 }}>
                                       <svg width={size} height={size} style={{ transform:'rotate(-90deg)' }}>
-                                        {/* Track */}
                                         <circle cx={size/2} cy={size/2} r={R} fill="none" stroke="var(--border)" strokeWidth={stroke} />
-                                        {/* Progress */}
-                                        <circle
-                                          cx={size/2} cy={size/2} r={R} fill="none"
-                                          stroke="var(--foreground)" strokeWidth={stroke}
-                                          strokeDasharray={`${dash} ${circ}`}
-                                          strokeLinecap="round"
-                                        />
+                                        <circle cx={size/2} cy={size/2} r={R} fill="none" stroke="var(--foreground)" strokeWidth={stroke} strokeDasharray={`${dash} ${circ}`} strokeLinecap="round" />
                                       </svg>
-                                      {/* Centre label */}
                                       <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
                                         <span style={{ fontSize:16, fontWeight:800, color:'var(--foreground)', lineHeight:1 }}>{totalDuration > 0 ? totalDuration : '—'}</span>
                                         <span style={{ fontSize:9, color:'#9ca3af', fontWeight:500 }}>min</span>
@@ -1464,7 +1572,7 @@ export default function Home() {
                                 <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
                                   {totalDistance > 0 && (
                                     <div>
-                                      <span style={{ fontSize:15, fontWeight:800, color:'var(--foreground)' }}>{totalDistance.toFixed(1)}</span>
+                                      <span style={{ fontSize:15, fontWeight:800, color:'var(--foreground)' }}>{totalDistance.toFixed(2)}</span>
                                       <span style={{ fontSize:11, color:'#9ca3af', marginLeft:3 }}>{distUnit}</span>
                                       <span style={{ fontSize:11, color:'#9ca3af', marginLeft:6 }}>Distance</span>
                                     </div>

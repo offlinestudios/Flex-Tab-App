@@ -169,6 +169,7 @@ export async function getSetLogsByUser(userId: number) {
       distance: setLogs.distance,
       distanceUnit: setLogs.distanceUnit,
       calories: setLogs.calories,
+      routePolyline: setLogs.routePolyline,
       createdAt: setLogs.createdAt,
       date: workoutSessions.date,
       sessionDurationSeconds: workoutSessions.durationSeconds,

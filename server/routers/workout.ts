@@ -34,6 +34,7 @@ export const workoutRouter = router({
         distance: z.number().nonnegative().optional(),
         distanceUnit: z.enum(['miles', 'km']).optional(),
         calories: z.number().int().nonnegative().optional(),
+        routePolyline: z.string().optional(), // JSON-encoded GPS route [{lat,lng},...]
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -53,6 +54,7 @@ export const workoutRouter = router({
         distance: input.distance !== undefined ? input.distance.toString() : undefined,
         distanceUnit: input.distanceUnit,
         calories: input.calories,
+        routePolyline: input.routePolyline,
       });
       return { success: true, id: newRow?.id, sessionId };
     }),
@@ -95,6 +97,7 @@ export const workoutRouter = router({
         distance: z.number().nonnegative().optional(),
         distanceUnit: z.enum(['miles', 'km']).optional(),
         calories: z.number().int().nonnegative().optional(),
+        routePolyline: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {

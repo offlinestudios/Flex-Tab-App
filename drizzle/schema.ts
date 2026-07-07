@@ -59,6 +59,7 @@ export const setLogs = pgTable("set_logs", {
   distance: decimal("distance", { precision: 6, scale: 2 }), // Distance (for cardio)
   distanceUnit: varchar("distanceUnit", { length: 10 }), // "miles" or "km"
   calories: integer("calories"), // Calories burned (for cardio)
+  routePolyline: text("routePolyline"), // JSON array of {lat,lng} GPS coordinates for outdoor cardio
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

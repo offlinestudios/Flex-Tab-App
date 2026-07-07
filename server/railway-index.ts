@@ -33,6 +33,8 @@ async function runMigrations() {
     await pool.query(`ALTER TABLE "set_logs" ADD COLUMN IF NOT EXISTS "distance" numeric(6, 2);`);
     await pool.query(`ALTER TABLE "set_logs" ADD COLUMN IF NOT EXISTS "distanceUnit" varchar(10);`);
     await pool.query(`ALTER TABLE "set_logs" ADD COLUMN IF NOT EXISTS "calories" integer;`);
+    // 0001b: routePolyline column on set_logs (GPS route data for outdoor cardio)
+    await pool.query(`ALTER TABLE "set_logs" ADD COLUMN IF NOT EXISTS "routePolyline" text;`);
 
     // 0002: community tables (posts, post_media, post_likes, post_comments)
     await pool.query(`
