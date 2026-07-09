@@ -42,16 +42,10 @@ interface CardioGPSTrackerProps {
 // ── Constants ─────────────────────────────────────────────────────────────────
 export const GPS_TRACKABLE = ['Running', 'Walking', 'Cycling'];
 
-const API_KEY = import.meta.env.VITE_FRONTEND_FORGE_API_KEY;
-const FORGE_BASE_URL =
-  import.meta.env.VITE_FRONTEND_FORGE_API_URL ||
-  "https://forge.butterfly-effect.dev";
-const MAPS_PROXY_URL = `${FORGE_BASE_URL}/v1/maps/proxy`;
-
-// ── Map script loader — uses Google Maps callback pattern for guaranteed init ──
+// ── Map script loader — server-side proxy, Google Maps callback pattern ─────────────
+// The frontend calls /api/maps/js (same-origin, no CORS, no API key exposed).
+// The Express server fetches from Google with the real key injected server-side.
 // Google Maps calls window.__gpsMapReady() when the SDK is 100% initialised.
-// This is the same pattern used by Google's own documentation and avoids the
-// race condition where script.onload fires before window.google.maps is ready.
 let _mapLoadPromise: Promise<void> | null = null;
 
 function loadMapScript(): Promise<void> {
@@ -60,17 +54,17 @@ function loadMapScript(): Promise<void> {
   // Already loading — return the same promise
   if (_mapLoadPromise) return _mapLoadPromise;
   _mapLoadPromise = new Promise((resolve) => {
-    // Set up the callback that Google Maps will call when ready
+    // Set up the callback that Google Maps will call when fully ready
     (window as unknown as Record<string, unknown>).__gpsMapReady = () => {
       resolve();
     };
     const script = document.createElement("script");
-    script.src = `${MAPS_PROXY_URL}/maps/api/js?key=${API_KEY}&v=weekly&libraries=marker,places,geocoding,geometry&callback=__gpsMapReady`;
+    // Use same-origin server proxy — no API key needed on the client
+    script.src = `/api/maps/js?v=weekly&libraries=marker,places,geocoding,geometry&callback=__gpsMapReady`;
     script.async = true;
     script.defer = true;
-    script.crossOrigin = "anonymous";
     script.onerror = () => {
-      console.error("Failed to load Google Maps script");
+      console.error("Failed to load Google Maps script via /api/maps/js");
       _mapLoadPromise = null;
       resolve(); // resolve anyway so UI doesn't hang indefinitely
     };

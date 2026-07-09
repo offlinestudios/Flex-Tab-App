@@ -11,6 +11,9 @@ export const ENV = {
   isProduction: process.env.NODE_ENV === "production",
   port: process.env.PORT ?? "3000",
   
+  // Google Maps (server-side proxy for frontend map script)
+  googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY ?? "",
+
   // Cloudflare R2 Storage (optional)
   r2AccountId: process.env.R2_ACCOUNT_ID ?? "",
   r2AccessKeyId: process.env.R2_ACCESS_KEY_ID ?? "",

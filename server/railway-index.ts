@@ -10,6 +10,7 @@ import { createContext } from "./railway-context";
 import { handleAvatarUpload } from "./avatarUpload";
 import { handleMediaUpload } from "./mediaUpload";
 import { handleGenerateWorkoutCard } from "./workoutCardImage";
+import { ENV } from "./_core/env";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -163,6 +164,34 @@ async function startServer() {
 
   // Workout card PNG generation (server-side satori rendering — avoids html2canvas iOS failures)
   app.post("/api/generate-workout-card", handleGenerateWorkoutCard);
+
+  // Google Maps JS script proxy — injects API key server-side so it never touches the client
+  // Frontend loads: /api/maps/js?libraries=...&callback=...
+  // Server fetches: https://maps.googleapis.com/maps/api/js?key=REAL_KEY&...
+  app.get("/api/maps/js", async (req, res) => {
+    const apiKey = ENV.googleMapsApiKey;
+    if (!apiKey) {
+      res.status(503).send('// Google Maps API key not configured on server');
+      return;
+    }
+    try {
+      const params = new URLSearchParams();
+      params.set("key", apiKey);
+      // Forward all query params from client except key (we inject ours)
+      for (const [k, v] of Object.entries(req.query)) {
+        if (k !== "key") params.set(k, String(v));
+      }
+      const mapsUrl = `https://maps.googleapis.com/maps/api/js?${params.toString()}`;
+      const upstream = await fetch(mapsUrl);
+      const text = await upstream.text();
+      res.setHeader("Content-Type", "application/javascript; charset=utf-8");
+      res.setHeader("Cache-Control", "public, max-age=3600");
+      res.send(text);
+    } catch (err) {
+      console.error('[Maps Proxy] Error fetching Maps script:', err);
+      res.status(502).send('// Failed to load Google Maps script');
+    }
+  });
 
   // tRPC API endpoints
   console.log('[Server] Setting up tRPC API at /api/trpc');
