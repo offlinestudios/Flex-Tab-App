@@ -48,27 +48,31 @@ const FORGE_BASE_URL =
   "https://forge.butterfly-effect.dev";
 const MAPS_PROXY_URL = `${FORGE_BASE_URL}/v1/maps/proxy`;
 
-// ── Map script loader — matches Map.tsx exactly ───────────────────────────────
-let _mapLoaded = false;
+// ── Map script loader — uses Google Maps callback pattern for guaranteed init ──
+// Google Maps calls window.__gpsMapReady() when the SDK is 100% initialised.
+// This is the same pattern used by Google's own documentation and avoids the
+// race condition where script.onload fires before window.google.maps is ready.
 let _mapLoadPromise: Promise<void> | null = null;
 
 function loadMapScript(): Promise<void> {
-  if (_mapLoaded && window.google?.maps) return Promise.resolve();
+  // Already loaded and ready
+  if (window.google?.maps?.Map) return Promise.resolve();
+  // Already loading — return the same promise
   if (_mapLoadPromise) return _mapLoadPromise;
   _mapLoadPromise = new Promise((resolve) => {
-    const script = document.createElement("script");
-    script.src = `${MAPS_PROXY_URL}/maps/api/js?key=${API_KEY}&v=weekly&libraries=marker,places,geocoding,geometry`;
-    script.async = true;
-    script.crossOrigin = "anonymous";
-    script.onload = () => {
-      _mapLoaded = true;
-      script.remove();
+    // Set up the callback that Google Maps will call when ready
+    (window as unknown as Record<string, unknown>).__gpsMapReady = () => {
       resolve();
     };
+    const script = document.createElement("script");
+    script.src = `${MAPS_PROXY_URL}/maps/api/js?key=${API_KEY}&v=weekly&libraries=marker,places,geocoding,geometry&callback=__gpsMapReady`;
+    script.async = true;
+    script.defer = true;
+    script.crossOrigin = "anonymous";
     script.onerror = () => {
       console.error("Failed to load Google Maps script");
       _mapLoadPromise = null;
-      resolve(); // resolve anyway so UI doesn't hang
+      resolve(); // resolve anyway so UI doesn't hang indefinitely
     };
     document.head.appendChild(script);
   });
