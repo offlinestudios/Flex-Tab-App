@@ -3,11 +3,12 @@
  * ─────────────────
  * Strava-style GPS activity tracker for outdoor cardio (Running, Walking, Cycling).
  *
- * Layout: Split-screen with collapsible dashboard
- *  • Top: full-width live Google Map (edge-to-edge, no card border)
- *  • Bottom: collapsible dashboard (big timer + 2×2 metric grid + controls)
- *  • Chevron top-right collapses dashboard → map expands to near full-screen
- *  • Floating mini-HUD on map when dashboard is collapsed
+ * Layout: Full-screen overlay (like ExerciseBrowser) — slides up from bottom when
+ * user taps "Start Activity" from the card. Matches the chosen prototype exactly:
+ *  • Top ~55%: live Google Map edge-to-edge, no card border
+ *  • Bottom ~45%: white dashboard — FlexTab logo + unit toggle, big timer, 2×2 metric grid, Finish/Pause buttons
+ *  • Top-left back arrow: returns user to the workout/weights view
+ *  • Chevron on map: collapses dashboard so map expands to near full-screen
  */
 /// <reference types="@types/google.maps" />
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -42,32 +43,22 @@ interface CardioGPSTrackerProps {
 // ── Constants ─────────────────────────────────────────────────────────────────
 export const GPS_TRACKABLE = ['Running', 'Walking', 'Cycling'];
 
-// ── Map script loader — server-side proxy, Google Maps callback pattern ─────────────
+// ── Map script loader — server-side proxy, Google Maps callback pattern ───────
 // The frontend calls /api/maps/js (same-origin, no CORS, no API key exposed).
 // The Express server fetches from Google with the real key injected server-side.
 // Google Maps calls window.__gpsMapReady() when the SDK is 100% initialised.
 let _mapLoadPromise: Promise<void> | null = null;
 
 function loadMapScript(): Promise<void> {
-  // Already loaded and ready
   if (window.google?.maps?.Map) return Promise.resolve();
-  // Already loading — return the same promise
   if (_mapLoadPromise) return _mapLoadPromise;
   _mapLoadPromise = new Promise((resolve) => {
-    // Set up the callback that Google Maps will call when fully ready
-    (window as unknown as Record<string, unknown>).__gpsMapReady = () => {
-      resolve();
-    };
+    (window as unknown as Record<string, unknown>).__gpsMapReady = () => { resolve(); };
     const script = document.createElement("script");
-    // Use same-origin server proxy — no API key needed on the client
     script.src = `/api/maps/js?v=weekly&libraries=marker,places,geocoding,geometry&callback=__gpsMapReady`;
     script.async = true;
     script.defer = true;
-    script.onerror = () => {
-      console.error("Failed to load Google Maps script via /api/maps/js");
-      _mapLoadPromise = null;
-      resolve(); // resolve anyway so UI doesn't hang indefinitely
-    };
+    script.onerror = () => { _mapLoadPromise = null; resolve(); };
     document.head.appendChild(script);
   });
   return _mapLoadPromise;
@@ -113,6 +104,7 @@ function ActivityIcon({ name, size = 18 }: { name: string; size?: number }) {
       <path d="M9 8l1.5 3L8 14h3l1 4"/><path d="M15 8l-1.5 3L16 14h-3l-1 4"/>
     </svg>
   );
+  // Running
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="4" r="1.5"/>
@@ -121,18 +113,97 @@ function ActivityIcon({ name, size = 18 }: { name: string; size?: number }) {
   );
 }
 
-// ── Metric card ───────────────────────────────────────────────────────────────
+// ── Metric card (dashboard 2×2 grid) ─────────────────────────────────────────
 function MetricCard({ icon, label, value, unit }: { icon: React.ReactNode; label: string; value: string; unit: string }) {
   return (
-    <div style={{ background: 'var(--secondary)', borderRadius: 16, padding: '14px 16px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--muted-foreground)', marginBottom: 6 }}>
+    <div style={{ background: '#f0f1f3', borderRadius: 16, padding: '14px 16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#6b7280', marginBottom: 6 }}>
         {icon}
         <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</span>
       </div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-        <span style={{ fontSize: 26, fontWeight: 800, color: 'var(--foreground)', letterSpacing: -0.5, lineHeight: 1 }}>{value}</span>
-        {unit && <span style={{ fontSize: 12, color: 'var(--muted-foreground)', fontWeight: 600 }}>{unit}</span>}
+        <span style={{ fontSize: 26, fontWeight: 800, color: '#1a2332', letterSpacing: -0.5, lineHeight: 1 }}>{value}</span>
+        {unit && <span style={{ fontSize: 12, color: '#6b7280', fontWeight: 600 }}>{unit}</span>}
       </div>
+    </div>
+  );
+}
+
+// ── Pre-activity card (shown inside the exercise card before starting) ─────────
+function PreActivityCard({
+  exercise,
+  onStart,
+  gpsAvailable,
+}: {
+  exercise: { name: string };
+  onStart: () => void;
+  gpsAvailable: boolean;
+}) {
+  return (
+    <div style={{ padding: '12px 16px 16px' }}>
+      {/* Activity type row */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+        <div style={{
+          width: 40, height: 40, borderRadius: 12,
+          background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: 'var(--foreground)',
+        }}>
+          <ActivityIcon name={exercise.name} size={20} />
+        </div>
+        <div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--foreground)' }}>{exercise.name}</div>
+          <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginTop: 1 }}>GPS · Distance · Pace · Calories</div>
+        </div>
+        {gpsAvailable && (
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: '#22c55e', fontWeight: 600 }}>
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', display: 'inline-block' }} />
+            GPS ready
+          </div>
+        )}
+      </div>
+
+      {/* Map preview thumbnail */}
+      <div style={{
+        height: 120, borderRadius: 14, marginBottom: 14,
+        background: 'linear-gradient(135deg, #e8f0fe 0%, #dde8f8 50%, #d0e4f7 100%)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        border: '1px solid var(--border)', overflow: 'hidden', position: 'relative',
+      }}>
+        {/* Fake map grid lines */}
+        <svg width="100%" height="100%" style={{ position: 'absolute', inset: 0, opacity: 0.3 }}>
+          {[20, 40, 60, 80].map(y => <line key={`h${y}`} x1="0" y1={`${y}%`} x2="100%" y2={`${y}%`} stroke="#1a2332" strokeWidth="0.5"/>)}
+          {[15, 30, 45, 60, 75, 90].map(x => <line key={`v${x}`} x1={`${x}%`} y1="0" x2={`${x}%`} y2="100%" stroke="#1a2332" strokeWidth="0.5"/>)}
+        </svg>
+        <div style={{ textAlign: 'center', zIndex: 1 }}>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1a2332" strokeWidth="1.5" strokeLinecap="round" style={{ opacity: 0.5 }}>
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+          </svg>
+          <div style={{ fontSize: 12, color: '#1a2332', opacity: 0.6, fontWeight: 600, marginTop: 4 }}>Map loads when you start</div>
+        </div>
+      </div>
+
+      {/* Start button */}
+      <button
+        onClick={onStart}
+        disabled={!gpsAvailable}
+        style={{
+          width: '100%', padding: '16px 0',
+          background: gpsAvailable ? '#1a2332' : '#d1d5db',
+          color: gpsAvailable ? '#ffffff' : '#9ca3af',
+          border: 'none', borderRadius: 16, fontSize: 16, fontWeight: 700,
+          cursor: gpsAvailable ? 'pointer' : 'default', fontFamily: 'inherit',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+        }}
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Start Activity
+      </button>
+
+      {!gpsAvailable && (
+        <p style={{ textAlign: 'center', fontSize: 12, color: '#ef4444', marginTop: 8, fontWeight: 600 }}>
+          GPS not available on this device
+        </p>
+      )}
     </div>
   );
 }
@@ -151,6 +222,7 @@ export function CardioGPSTracker({
 }: CardioGPSTrackerProps) {
   type Phase = 'idle' | 'running' | 'paused' | 'finished';
   const [phase, setPhase] = useState<Phase>('idle');
+  const [fullscreen, setFullscreen] = useState(false);
   const [elapsedSec, setElapsedSec] = useState(0);
   const [distanceMetres, setDistanceMetres] = useState(0);
   const [gpsError, setGpsError] = useState<string | null>(null);
@@ -193,7 +265,7 @@ export function CardioGPSTracker({
       center: { lat: 37.7749, lng: -122.4194 },
       mapTypeControl: false,
       fullscreenControl: false,
-      zoomControl: true,
+      zoomControl: false,
       streetViewControl: false,
       gestureHandling: 'greedy',
       mapId: "DEMO_MAP_ID",
@@ -248,8 +320,14 @@ export function CardioGPSTracker({
     }
   }, []);
 
+  // Init map when fullscreen opens
   useEffect(() => {
-    initLiveMap();
+    if (fullscreen && !mapRef.current) {
+      setTimeout(() => initLiveMap(), 50);
+    }
+  }, [fullscreen, initLiveMap]);
+
+  useEffect(() => {
     if (!navigator.geolocation) setGpsAvailable(false);
     return () => { stopGPS(); stopTimer(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -257,15 +335,16 @@ export function CardioGPSTracker({
 
   useEffect(() => {
     if (!showSummary || !summaryData) return;
-    // Small delay to let the modal DOM render before initialising the map
-    const t = setTimeout(() => initSummaryMap(summaryData.coords), 100);
+    const t = setTimeout(() => initSummaryMap(summaryData.coords), 150);
     return () => clearTimeout(t);
   }, [showSummary, summaryData, initSummaryMap]);
 
-  // Trigger resize when map height changes (collapse/expand)
+  // Trigger map resize when dashboard collapses/expands
   useEffect(() => {
     if (mapRef.current && window.google?.maps?.event) {
-      window.google.maps.event.trigger(mapRef.current, 'resize');
+      setTimeout(() => {
+        if (mapRef.current) window.google.maps.event.trigger(mapRef.current, 'resize');
+      }, 350);
     }
   }, [dashboardCollapsed]);
 
@@ -320,13 +399,35 @@ export function CardioGPSTracker({
   }
 
   // ── Controls ───────────────────────────────────────────────────────────────
-  function handleStart() { setPhase('running'); startTimer(); startGPS(); }
+  function handleStartActivity() {
+    setFullscreen(true);
+    setPhase('running');
+    startTimer();
+    startGPS();
+  }
+
   function handlePause() { setPhase('paused'); stopTimer(); stopGPS(); pausedSecRef.current = elapsedSec; }
   function handleResume() { setPhase('running'); startTimer(); startGPS(); }
   function handleFinish() {
     stopTimer(); stopGPS(); setPhase('finished');
     setSummaryData({ elapsedSec, distance: distanceInUnit, calories, coords: coordsRef.current });
     setShowSummary(true);
+  }
+
+  // Back button — return to workout without saving
+  function handleBack() {
+    if (phase === 'running' || phase === 'paused') {
+      stopTimer(); stopGPS();
+    }
+    setFullscreen(false);
+    setPhase('idle');
+    setElapsedSec(0); setDistanceMetres(0); setDashboardCollapsed(false);
+    coordsRef.current = []; distanceRef.current = 0; pausedSecRef.current = 0;
+    if (polylineRef.current) polylineRef.current.setPath([]);
+    if (startMarkerRef.current) { startMarkerRef.current.map = null; startMarkerRef.current = null; }
+    if (currentMarkerRef.current) { currentMarkerRef.current.map = null; currentMarkerRef.current = null; }
+    mapRef.current = null;
+    setMapReady(false);
   }
 
   async function handleLogSession() {
@@ -341,281 +442,401 @@ export function CardioGPSTracker({
         summaryData.coords.length > 0 ? JSON.stringify(summaryData.coords) : undefined,
       );
       setShowSummary(false);
+      setFullscreen(false);
       setPhase('idle'); setElapsedSec(0); setDistanceMetres(0); setDashboardCollapsed(false);
       coordsRef.current = []; distanceRef.current = 0; pausedSecRef.current = 0;
       if (polylineRef.current) polylineRef.current.setPath([]);
       if (startMarkerRef.current) { startMarkerRef.current.map = null; startMarkerRef.current = null; }
       if (currentMarkerRef.current) { currentMarkerRef.current.map = null; currentMarkerRef.current = null; }
+      mapRef.current = null;
+      setMapReady(false);
     } finally { setIsLogging(false); }
   }
 
-  // ── Map heights ────────────────────────────────────────────────────────────
-  const mapHeight = dashboardCollapsed ? 500 : (phase === 'idle' ? 240 : 300);
-
-  // ── Shared icon styles ─────────────────────────────────────────────────────
+  // ── Shared icon style ──────────────────────────────────────────────────────
   const iconSm = { width: 14, height: 14, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2.5", strokeLinecap: "round" as const };
 
+  // ── Dashboard height based on collapse state ───────────────────────────────
+  // Map takes top portion, dashboard takes bottom portion
+  // When collapsed: map = ~100%, dashboard = 0 (floating HUD only)
+  // When expanded: map = ~52%, dashboard = ~48%
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column' }}>
-
-      {/* ══ MAP ══════════════════════════════════════════════════════════════ */}
-      <div style={{ position: 'relative' }}>
-        {/* Map container — explicit pixel height so Google Maps renders */}
-        <div
-          ref={mapContainerRef}
-          style={{
-            width: '100%',
-            height: mapHeight,
-            transition: 'height 0.35s cubic-bezier(0.4,0,0.2,1)',
-            background: '#e8eaed',
-          }}
+    <>
+      {/* ══ PRE-ACTIVITY CARD (shown inside the exercise card) ══════════════ */}
+      {!fullscreen && (
+        <PreActivityCard
+          exercise={exercise}
+          onStart={handleStartActivity}
+          gpsAvailable={gpsAvailable}
         />
+      )}
 
-        {/* Loading overlay — shown until map is ready */}
-        {!mapReady && (
-          <div style={{
-            position: 'absolute', inset: 0,
-            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            background: '#e8eaed', gap: 10,
-          }}>
-            <div style={{
-              width: 32, height: 32, border: '3px solid #d0d4dc',
-              borderTopColor: '#1a2332', borderRadius: '50%',
-              animation: 'spin 0.8s linear infinite',
-            }} />
-            <span style={{ fontSize: 13, color: '#6b7280', fontWeight: 600 }}>Loading map…</span>
-            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-          </div>
-        )}
+      {/* ══ FULL-SCREEN ACTIVITY OVERLAY ════════════════════════════════════ */}
+      {fullscreen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9998,
+            background: '#ffffff',
+            display: 'flex',
+            flexDirection: 'column',
+            // Slide up animation
+            animation: 'slideUpIn 0.3s cubic-bezier(0.4,0,0.2,1)',
+          }}
+        >
+          <style>{`
+            @keyframes slideUpIn { from { transform: translateY(100%); } to { transform: translateY(0); } }
+            @keyframes spin { to { transform: rotate(360deg); } }
+          `}</style>
 
-        {/* Activity badge — top left */}
-        <div style={{
-          position: 'absolute', top: 12, left: 12,
-          background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(6px)',
-          borderRadius: 24, padding: '6px 12px',
-          display: 'flex', alignItems: 'center', gap: 7,
-          boxShadow: '0 2px 12px rgba(0,0,0,0.15)', color: '#1a2332',
-        }}>
-          <ActivityIcon name={exercise.name} size={17} />
-          <span style={{ fontSize: 13, fontWeight: 700 }}>{exercise.name}</span>
-          {phase === 'running' && (
-            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 0 2px rgba(34,197,94,0.3)', display: 'inline-block' }} />
-          )}
-        </div>
-
-        {/* Collapse/expand toggle — top right (only when activity started) */}
-        {phase !== 'idle' && (
-          <button
-            onClick={() => setDashboardCollapsed(c => !c)}
+          {/* ── MAP SECTION ── */}
+          <div
             style={{
-              position: 'absolute', top: 12, right: 12,
-              background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(6px)',
-              border: 'none', borderRadius: '50%', width: 38, height: 38,
-              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 2px 12px rgba(0,0,0,0.15)', color: '#1a2332',
+              position: 'relative',
+              flex: dashboardCollapsed ? '1 1 auto' : '0 0 52%',
+              transition: 'flex 0.35s cubic-bezier(0.4,0,0.2,1)',
+              minHeight: 0,
             }}
-            title={dashboardCollapsed ? 'Show dashboard' : 'Expand map'}
           >
-            <svg {...iconSm} strokeLinejoin="round">
-              {dashboardCollapsed
-                ? <polyline points="18 15 12 9 6 15" />
-                : <polyline points="6 9 12 15 18 9" />}
-            </svg>
-          </button>
-        )}
+            {/* Map container */}
+            <div
+              ref={mapContainerRef}
+              style={{
+                width: '100%',
+                height: '100%',
+                background: '#e8eaed',
+              }}
+            />
 
-        {/* Floating mini-HUD when dashboard collapsed */}
-        {dashboardCollapsed && phase !== 'idle' && (
+            {/* Loading overlay */}
+            {!mapReady && (
+              <div style={{
+                position: 'absolute', inset: 0,
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                background: '#e8eaed', gap: 10,
+              }}>
+                <div style={{
+                  width: 32, height: 32, border: '3px solid #d0d4dc',
+                  borderTopColor: '#1a2332', borderRadius: '50%',
+                  animation: 'spin 0.8s linear infinite',
+                }} />
+                <span style={{ fontSize: 13, color: '#6b7280', fontWeight: 600 }}>Loading map…</span>
+              </div>
+            )}
+
+            {/* ← Back button — top left, returns to workout */}
+            <button
+              onClick={handleBack}
+              style={{
+                position: 'absolute',
+                top: `calc(env(safe-area-inset-top, 0px) + 14px)`,
+                left: 14,
+                width: 40, height: 40,
+                background: 'rgba(255,255,255,0.95)',
+                backdropFilter: 'blur(8px)',
+                border: 'none', borderRadius: 12,
+                cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 2px 12px rgba(0,0,0,0.18)',
+                color: '#1a2332',
+                zIndex: 10,
+              }}
+              title="Back to workout"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+              </svg>
+            </button>
+
+            {/* Activity badge — top centre */}
+            <div style={{
+              position: 'absolute',
+              top: `calc(env(safe-area-inset-top, 0px) + 14px)`,
+              left: '50%', transform: 'translateX(-50%)',
+              background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(6px)',
+              borderRadius: 24, padding: '7px 14px',
+              display: 'flex', alignItems: 'center', gap: 7,
+              boxShadow: '0 2px 12px rgba(0,0,0,0.15)', color: '#1a2332',
+              whiteSpace: 'nowrap',
+              zIndex: 10,
+            }}>
+              <ActivityIcon name={exercise.name} size={16} />
+              <span style={{ fontSize: 13, fontWeight: 700 }}>{exercise.name}</span>
+              {phase === 'running' && (
+                <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 0 2px rgba(34,197,94,0.3)', display: 'inline-block' }} />
+              )}
+              {phase === 'paused' && (
+                <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }} />
+              )}
+            </div>
+
+            {/* Expand/collapse chevron — top right */}
+            <button
+              onClick={() => setDashboardCollapsed(c => !c)}
+              style={{
+                position: 'absolute',
+                top: `calc(env(safe-area-inset-top, 0px) + 14px)`,
+                right: 14,
+                width: 40, height: 40,
+                background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(6px)',
+                border: 'none', borderRadius: 12,
+                cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 2px 12px rgba(0,0,0,0.15)', color: '#1a2332',
+                zIndex: 10,
+              }}
+              title={dashboardCollapsed ? 'Show dashboard' : 'Expand map'}
+            >
+              <svg {...iconSm} strokeLinejoin="round">
+                {dashboardCollapsed
+                  ? <polyline points="18 15 12 9 6 15" />
+                  : <polyline points="6 9 12 15 18 9" />}
+              </svg>
+            </button>
+
+            {/* Floating mini-HUD — visible when dashboard is collapsed */}
+            {dashboardCollapsed && (
+              <div style={{
+                position: 'absolute',
+                bottom: `calc(env(safe-area-inset-bottom, 0px) + 20px)`,
+                left: '50%', transform: 'translateX(-50%)',
+                background: 'rgba(255,255,255,0.97)', backdropFilter: 'blur(10px)',
+                borderRadius: 28, padding: '12px 24px',
+                display: 'flex', alignItems: 'center', gap: 22,
+                boxShadow: '0 4px 24px rgba(0,0,0,0.2)', color: '#1a2332',
+                whiteSpace: 'nowrap', zIndex: 10,
+              }}>
+                {[
+                  { label: 'Time', value: fmtTime(elapsedSec), unit: '' },
+                  { label: 'Dist', value: distanceInUnit.toFixed(2), unit: unitLabel },
+                  { label: 'Pace', value: pace, unit: `/${unitLabel}` },
+                ].map((m, i) => (
+                  <div key={m.label} style={{ display: 'flex', alignItems: 'center', gap: 22 }}>
+                    {i > 0 && <div style={{ width: 1, height: 32, background: '#e5e7eb' }} />}
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#6b7280', marginBottom: 1 }}>{m.label}</div>
+                      <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: -0.5 }}>
+                        {m.value}<span style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', marginLeft: 2 }}>{m.unit}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* GPS error banner */}
+            {gpsError && (
+              <div style={{
+                position: 'absolute', bottom: 8, left: 8, right: 8,
+                background: 'rgba(239,68,68,0.92)', color: 'white',
+                borderRadius: 10, padding: '8px 12px', fontSize: 12, fontWeight: 600, zIndex: 10,
+              }}>
+                {gpsError}
+              </div>
+            )}
+          </div>
+
+          {/* ── DASHBOARD SECTION ── */}
+          <div
+            style={{
+              flex: dashboardCollapsed ? '0 0 0px' : '0 0 48%',
+              overflow: 'hidden',
+              transition: 'flex 0.35s cubic-bezier(0.4,0,0.2,1)',
+              background: '#ffffff',
+              display: 'flex',
+              flexDirection: 'column',
+              borderTop: '1px solid #e5e7eb',
+            }}
+          >
+            {/* Drag handle */}
+            <div
+              onClick={() => setDashboardCollapsed(c => !c)}
+              style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 4px', cursor: 'pointer', flexShrink: 0 }}
+            >
+              <div style={{ width: 36, height: 4, borderRadius: 2, background: '#e5e7eb' }} />
+            </div>
+
+            {/* Header: FlexTab logo + unit toggle */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '2px 20px 0', flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, color: '#1a2332' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                </svg>
+                <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: -0.3, color: '#1a2332' }}>FlexTab</span>
+              </div>
+              <div style={{ display: 'flex', gap: 0, background: '#f0f1f3', borderRadius: 20, padding: 3 }}>
+                {(['miles', 'km'] as const).map(u => (
+                  <button
+                    key={u}
+                    onClick={() => onDistanceUnitChange(u)}
+                    disabled={phase === 'running'}
+                    style={{
+                      padding: '4px 14px', borderRadius: 18, border: 'none',
+                      cursor: phase === 'running' ? 'default' : 'pointer',
+                      background: distanceUnit === u ? '#1a2332' : 'transparent',
+                      color: distanceUnit === u ? '#ffffff' : '#6b7280',
+                      fontSize: 12, fontWeight: 700, fontFamily: 'inherit',
+                      opacity: phase === 'running' ? 0.7 : 1,
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    {u === 'miles' ? 'Miles' : 'Km'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Big timer */}
+            <div style={{ textAlign: 'center', padding: '6px 20px 4px', flexShrink: 0 }}>
+              <span style={{
+                fontSize: 58, fontWeight: 900, color: '#1a2332',
+                letterSpacing: -3, lineHeight: 1, fontVariantNumeric: 'tabular-nums',
+              }}>
+                {fmtTime(elapsedSec)}
+              </span>
+            </div>
+
+            {/* 2×2 metric grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, padding: '0 16px 10px', flexShrink: 0 }}>
+              <MetricCard
+                icon={<svg {...iconSm} strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>}
+                label="Distance" value={distanceInUnit.toFixed(2)} unit={unitLabel}
+              />
+              <MetricCard
+                icon={<svg {...iconSm} strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>}
+                label="Pace" value={pace} unit={`/${unitLabel}`}
+              />
+              <MetricCard
+                icon={<svg {...iconSm} strokeLinejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>}
+                label="Calories" value={String(calories)} unit="kcal"
+              />
+              <MetricCard
+                icon={<svg {...iconSm} strokeLinejoin="round">
+                  <circle cx="12" cy="4" r="1.5"/>
+                  <path d="M8 12l2-4 2 2 2-2 2 4"/><path d="M7 17l2-5h6l2 5"/>
+                </svg>}
+                label="Steps" value="--" unit="steps"
+              />
+            </div>
+
+            {/* Control buttons */}
+            <div style={{ padding: '0 16px', display: 'flex', gap: 10, flexShrink: 0 }}>
+              {phase === 'running' && (
+                <button onClick={handlePause} style={{
+                  flex: 1, padding: '15px 0',
+                  background: 'transparent', color: '#1a2332',
+                  border: 'none', borderRadius: 16, fontSize: 15, fontWeight: 700,
+                  cursor: 'pointer', fontFamily: 'inherit',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                  Pause
+                </button>
+              )}
+              {phase === 'paused' && (
+                <button onClick={handleResume} style={{
+                  flex: 1, padding: '15px 0',
+                  background: 'transparent', color: '#1a2332',
+                  border: 'none', borderRadius: 16, fontSize: 15, fontWeight: 700,
+                  cursor: 'pointer', fontFamily: 'inherit',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  Resume
+                </button>
+              )}
+              {(phase === 'running' || phase === 'paused') && (
+                <button onClick={handleFinish} style={{
+                  flex: 2, padding: '15px 0',
+                  background: '#1a2332', color: '#ffffff',
+                  border: 'none', borderRadius: 16, fontSize: 15, fontWeight: 700,
+                  cursor: 'pointer', fontFamily: 'inherit',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+                  Finish Activity
+                </button>
+              )}
+            </div>
+
+            {/* Safe area bottom padding */}
+            <div style={{ flexShrink: 0, height: 'env(safe-area-inset-bottom, 8px)' }} />
+          </div>
+        </div>
+      )}
+
+      {/* ══ ACTIVITY SUMMARY MODAL ══════════════════════════════════════════ */}
+      {showSummary && summaryData && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, zIndex: 9999,
+            background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)',
+            display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+          }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowSummary(false); }}
+        >
           <div style={{
-            position: 'absolute', bottom: 16, left: '50%', transform: 'translateX(-50%)',
-            background: 'rgba(255,255,255,0.96)', backdropFilter: 'blur(8px)',
-            borderRadius: 24, padding: '10px 22px',
-            display: 'flex', alignItems: 'center', gap: 20,
-            boxShadow: '0 4px 20px rgba(0,0,0,0.18)', color: '#1a2332',
-            whiteSpace: 'nowrap',
+            background: '#ffffff', borderRadius: '24px 24px 0 0',
+            width: '100%', maxWidth: 540, maxHeight: '92vh',
+            overflow: 'auto', paddingBottom: 'max(24px, env(safe-area-inset-bottom, 24px))',
           }}>
-            {[
-              { label: 'Time', value: fmtTime(elapsedSec), unit: '' },
-              { label: 'Dist', value: distanceInUnit.toFixed(2), unit: unitLabel },
-              { label: 'Pace', value: pace, unit: `/${unitLabel}` },
-            ].map((m, i) => (
-              <>
-                {i > 0 && <div key={`sep-${i}`} style={{ width: 1, height: 32, background: '#e5e7eb' }} />}
-                <div key={m.label} style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#6b7280', marginBottom: 1 }}>{m.label}</div>
-                  <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: -0.5 }}>
-                    {m.value}<span style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', marginLeft: 2 }}>{m.unit}</span>
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 0' }}>
+              <div style={{ width: 36, height: 4, borderRadius: 2, background: '#e5e7eb' }} />
+            </div>
+            <div style={{ padding: '12px 20px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Activity Complete</div>
+                <div style={{ fontSize: 24, fontWeight: 900, color: '#1a2332', marginTop: 2, letterSpacing: -0.5 }}>{exercise.name}</div>
+              </div>
+              <button onClick={() => setShowSummary(false)} style={{ background: '#f0f1f3', border: 'none', borderRadius: '50%', width: 38, height: 38, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            {/* Summary route map */}
+            <div style={{ margin: '14px 20px', borderRadius: 18, overflow: 'hidden', height: 220, background: '#e8eaed' }}>
+              <div ref={summaryMapContainerRef} style={{ width: '100%', height: '100%' }} />
+            </div>
+            {/* 2×2 stats */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, padding: '0 20px 16px' }}>
+              {[
+                { label: 'Duration', value: fmtTime(summaryData.elapsedSec), unit: '' },
+                { label: 'Distance', value: summaryData.distance.toFixed(2), unit: unitLabel },
+                { label: 'Pace', value: fmtPace(summaryData.elapsedSec, summaryData.distance), unit: `/${unitLabel}` },
+                { label: 'Calories', value: String(summaryData.calories), unit: 'kcal' },
+              ].map(({ label, value, unit }) => (
+                <div key={label} style={{ background: '#f0f1f3', borderRadius: 16, padding: '14px 16px' }}>
+                  <div style={{ fontSize: 11, color: '#6b7280', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>{label}</div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+                    <span style={{ fontSize: 26, fontWeight: 800, color: '#1a2332', letterSpacing: -0.5 }}>{value}</span>
+                    {unit && <span style={{ fontSize: 12, color: '#6b7280', fontWeight: 600 }}>{unit}</span>}
                   </div>
                 </div>
-              </>
-            ))}
-          </div>
-        )}
-
-        {/* GPS error */}
-        {gpsError && (
-          <div style={{
-            position: 'absolute', bottom: 8, left: 8, right: 8,
-            background: 'rgba(239,68,68,0.92)', color: 'white',
-            borderRadius: 10, padding: '8px 12px', fontSize: 12, fontWeight: 600,
-          }}>
-            {gpsError}
-          </div>
-        )}
-
-        {/* GPS unavailable */}
-        {!gpsAvailable && (
-          <div style={{
-            position: 'absolute', inset: 0,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'rgba(0,0,0,0.45)',
-          }}>
-            <div style={{ textAlign: 'center', color: 'white', padding: 16 }}>
-              <div style={{ fontSize: 32, marginBottom: 8 }}>📍</div>
-              <div style={{ fontSize: 14, fontWeight: 700 }}>GPS not available</div>
-              <div style={{ fontSize: 12, opacity: 0.8, marginTop: 4 }}>Use a device with location services</div>
+              ))}
             </div>
-          </div>
-        )}
-      </div>
-
-      {/* ══ DASHBOARD (collapsible) ══════════════════════════════════════════ */}
-      <div style={{
-        overflow: 'hidden',
-        maxHeight: dashboardCollapsed ? 0 : 700,
-        transition: 'max-height 0.35s cubic-bezier(0.4,0,0.2,1)',
-      }}>
-        {/* Drag handle */}
-        <div
-          onClick={() => phase !== 'idle' && setDashboardCollapsed(c => !c)}
-          style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 4px', cursor: phase !== 'idle' ? 'pointer' : 'default' }}
-        >
-          <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border)' }} />
-        </div>
-
-        {/* Header row: FlexTab logo + unit toggle */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 20px 0' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7, color: 'var(--foreground)' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-            </svg>
-            <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: -0.3 }}>FlexTab</span>
-          </div>
-          <div style={{ display: 'flex', gap: 0, background: 'var(--secondary)', borderRadius: 20, padding: 3 }}>
-            {(['miles', 'km'] as const).map(u => (
+            {/* Save button */}
+            <div style={{ padding: '0 20px' }}>
               <button
-                key={u}
-                onClick={() => onDistanceUnitChange(u)}
-                disabled={phase === 'running'}
+                onClick={handleLogSession}
+                disabled={isLogging}
                 style={{
-                  padding: '4px 14px', borderRadius: 18, border: 'none',
-                  cursor: phase === 'running' ? 'default' : 'pointer',
-                  background: distanceUnit === u ? 'var(--foreground)' : 'transparent',
-                  color: distanceUnit === u ? 'var(--background)' : 'var(--muted-foreground)',
-                  fontSize: 12, fontWeight: 700, fontFamily: 'inherit',
-                  opacity: phase === 'running' ? 0.6 : 1,
-                  transition: 'all 0.15s',
+                  width: '100%', padding: '17px 0',
+                  background: isLogging ? '#d1d5db' : '#1a2332',
+                  color: isLogging ? '#9ca3af' : '#ffffff',
+                  border: 'none', borderRadius: 16, fontSize: 16, fontWeight: 700,
+                  cursor: isLogging ? 'default' : 'pointer', fontFamily: 'inherit',
                 }}
               >
-                {u === 'miles' ? 'Miles' : 'Km'}
+                {isLogging ? 'Saving…' : 'Save Activity'}
               </button>
-            ))}
+            </div>
           </div>
         </div>
+      )}
 
-        {/* Big timer */}
-        <div style={{ textAlign: 'center', padding: '10px 20px 6px' }}>
-          <span style={{
-            fontSize: 58, fontWeight: 900, color: 'var(--foreground)',
-            letterSpacing: -3, lineHeight: 1, fontVariantNumeric: 'tabular-nums',
-          }}>
-            {fmtTime(elapsedSec)}
-          </span>
-        </div>
-
-        {/* 2×2 metric grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, padding: '0 16px 12px' }}>
-          <MetricCard
-            icon={<svg {...iconSm} strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>}
-            label="Distance" value={distanceInUnit.toFixed(2)} unit={unitLabel}
-          />
-          <MetricCard
-            icon={<svg {...iconSm} strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>}
-            label="Pace" value={pace} unit={`/${unitLabel}`}
-          />
-          <MetricCard
-            icon={<svg {...iconSm} strokeLinejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>}
-            label="Calories" value={String(calories)} unit="kcal"
-          />
-          <MetricCard
-            icon={<svg {...iconSm} strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>}
-            label="Elapsed" value={elapsedSec < 3600 ? `${Math.floor(elapsedSec/60)}m` : `${Math.floor(elapsedSec/3600)}h ${Math.floor((elapsedSec%3600)/60)}m`} unit=""
-          />
-        </div>
-
-        {/* Control buttons */}
-        <div style={{ padding: '0 16px 8px', display: 'flex', gap: 10 }}>
-          {phase === 'idle' && (
-            <button onClick={handleStart} disabled={!gpsAvailable} style={{
-              flex: 1, padding: '16px 0',
-              background: gpsAvailable ? 'var(--foreground)' : 'var(--muted)',
-              color: gpsAvailable ? 'var(--background)' : 'var(--muted-foreground)',
-              border: 'none', borderRadius: 16, fontSize: 16, fontWeight: 700,
-              cursor: gpsAvailable ? 'pointer' : 'default', fontFamily: 'inherit',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-              Start Activity
-            </button>
-          )}
-          {phase === 'running' && (<>
-            <button onClick={handlePause} style={{
-              flex: 1, padding: '16px 0', background: 'var(--secondary)', color: 'var(--foreground)',
-              border: '2px solid var(--border)', borderRadius: 16, fontSize: 15, fontWeight: 700,
-              cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-              Pause
-            </button>
-            <button onClick={handleFinish} style={{
-              flex: 1, padding: '16px 0', background: 'var(--foreground)', color: 'var(--background)',
-              border: 'none', borderRadius: 16, fontSize: 15, fontWeight: 700,
-              cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
-              Finish Activity
-            </button>
-          </>)}
-          {phase === 'paused' && (<>
-            <button onClick={handleResume} style={{
-              flex: 1, padding: '16px 0', background: 'var(--secondary)', color: 'var(--foreground)',
-              border: '2px solid var(--border)', borderRadius: 16, fontSize: 15, fontWeight: 700,
-              cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-              Resume
-            </button>
-            <button onClick={handleFinish} style={{
-              flex: 1, padding: '16px 0', background: 'var(--foreground)', color: 'var(--background)',
-              border: 'none', borderRadius: 16, fontSize: 15, fontWeight: 700,
-              cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
-              Finish Activity
-            </button>
-          </>)}
-          {phase === 'finished' && (
-            <button onClick={() => setShowSummary(true)} style={{
-              flex: 1, padding: '16px 0', background: 'var(--foreground)', color: 'var(--background)',
-              border: 'none', borderRadius: 16, fontSize: 15, fontWeight: 700,
-              cursor: 'pointer', fontFamily: 'inherit',
-            }}>
-              View Summary
-            </button>
-          )}
-        </div>
-
-        {/* Prev / Next navigation */}
+      {/* Prev / Next navigation (shown in card when idle) */}
+      {!fullscreen && (
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 20px 16px' }}>
           {currentIndex > 0 && onPrev ? (
             <button onClick={onPrev} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: 'var(--foreground)', fontFamily: 'inherit', padding: '6px 0', display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -630,75 +851,7 @@ export function CardioGPSTracker({
             </button>
           )}
         </div>
-      </div>
-
-      {/* ══ ACTIVITY SUMMARY MODAL ══════════════════════════════════════════ */}
-      {showSummary && summaryData && (
-        <div
-          style={{
-            position: 'fixed', inset: 0, zIndex: 9999,
-            background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)',
-            display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-          }}
-          onClick={(e) => { if (e.target === e.currentTarget) setShowSummary(false); }}
-        >
-          <div style={{
-            background: 'var(--card)', borderRadius: '24px 24px 0 0',
-            width: '100%', maxWidth: 540, maxHeight: '92vh',
-            overflow: 'auto', paddingBottom: 36,
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 0' }}>
-              <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border)' }} />
-            </div>
-            <div style={{ padding: '12px 20px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div>
-                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Activity Complete</div>
-                <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--foreground)', marginTop: 2, letterSpacing: -0.5 }}>{exercise.name}</div>
-              </div>
-              <button onClick={() => setShowSummary(false)} style={{ background: 'var(--secondary)', border: 'none', borderRadius: '50%', width: 38, height: 38, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted-foreground)' }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-              </button>
-            </div>
-            {/* Summary route map */}
-            <div style={{ margin: '14px 20px', borderRadius: 18, overflow: 'hidden', height: 240, background: '#e8eaed' }}>
-              <div ref={summaryMapContainerRef} style={{ width: '100%', height: '100%' }} />
-            </div>
-            {/* 2×2 stats */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, padding: '0 20px 16px' }}>
-              {[
-                { label: 'Duration', value: fmtTime(summaryData.elapsedSec), unit: '' },
-                { label: 'Distance', value: summaryData.distance.toFixed(2), unit: unitLabel },
-                { label: 'Pace', value: fmtPace(summaryData.elapsedSec, summaryData.distance), unit: `/${unitLabel}` },
-                { label: 'Calories', value: String(summaryData.calories), unit: 'kcal' },
-              ].map(({ label, value, unit }) => (
-                <div key={label} style={{ background: 'var(--secondary)', borderRadius: 16, padding: '14px 16px' }}>
-                  <div style={{ fontSize: 11, color: 'var(--muted-foreground)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>{label}</div>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-                    <span style={{ fontSize: 26, fontWeight: 800, color: 'var(--foreground)', letterSpacing: -0.5 }}>{value}</span>
-                    {unit && <span style={{ fontSize: 12, color: 'var(--muted-foreground)', fontWeight: 600 }}>{unit}</span>}
-                  </div>
-                </div>
-              ))}
-            </div>
-            {/* Save button */}
-            <div style={{ padding: '0 20px' }}>
-              <button
-                onClick={handleLogSession}
-                disabled={isLogging}
-                style={{
-                  width: '100%', padding: '17px 0',
-                  background: isLogging ? 'var(--muted)' : 'var(--foreground)',
-                  color: isLogging ? 'var(--muted-foreground)' : 'var(--background)',
-                  border: 'none', borderRadius: 16, fontSize: 16, fontWeight: 700,
-                  cursor: isLogging ? 'default' : 'pointer', fontFamily: 'inherit',
-                }}
-              >
-                {isLogging ? 'Saving…' : 'Save Activity'}
-              </button>
-            </div>
-          </div>
-        </div>
       )}
-    </div>
+    </>
   );
 }
