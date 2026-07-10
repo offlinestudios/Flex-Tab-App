@@ -417,12 +417,18 @@ export default function Home() {
   // Sync custom exercises with API data
   useEffect(() => {
     if (customExercisesData) {
-      const customExercises = customExercisesData.map(ex => ({
-        id: ex.id.toString(),
-        name: ex.name,
-        category: ex.category,
-        isCustom: true,
-      }));
+      // Deduplicate: skip custom exercises whose name already exists as a preset
+      // This prevents duplicates when a user created a custom exercise that was
+      // later added as a built-in preset (e.g. Walking).
+      const presetNames = new Set(PRESET_EXERCISES.map(e => e.name.toLowerCase()));
+      const customExercises = customExercisesData
+        .filter(ex => !presetNames.has(ex.name.toLowerCase()))
+        .map(ex => ({
+          id: ex.id.toString(),
+          name: ex.name,
+          category: ex.category,
+          isCustom: true,
+        }));
       setAllExercises([...PRESET_EXERCISES, ...customExercises]);
     }
   }, [customExercisesData]);
@@ -1522,19 +1528,20 @@ export default function Home() {
                                 let coords: Array<{lat: number; lng: number}> = [];
                                 try { coords = JSON.parse(routeSet!.routePolyline!); } catch {}
                                 if (coords.length < 2) return null;
-                                // Build a Google Static Maps URL via the Forge proxy
-                                const FORGE_BASE = import.meta.env.VITE_FRONTEND_FORGE_API_URL || 'https://forge.butterfly-effect.dev';
-                                const API_KEY_STATIC = import.meta.env.VITE_FRONTEND_FORGE_API_KEY;
-                                // Encode polyline path (sample every Nth point to stay under URL limit)
+                                // Build a Google Static Maps URL via the server-side proxy (/api/maps/static)
+                                // This avoids exposing the API key to the client and works in all environments.
+                                // Sample points to stay under URL length limits (max ~60 points)
                                 const step = Math.max(1, Math.floor(coords.length / 60));
                                 const sampled = coords.filter((_, i) => i % step === 0);
                                 const pathStr = sampled.map(c => `${c.lat.toFixed(5)},${c.lng.toFixed(5)}`).join('|');
                                 const isDark = document.documentElement.classList.contains('dark');
+                                // FlexTab-branded map style: strip all POIs, use navy/grey palette
                                 const styleParams = isDark
-                                  ? '&style=element:geometry|color:0x1a2332&style=element:labels.text.fill|color:0xf0f1f3&style=feature:road|element:geometry|color:0x252836&style=feature:water|element:geometry|color:0x0d1520'
-                                  : '&style=element:geometry|color:0xf0f1f3&style=element:labels.text.fill|color:0x1a2332&style=feature:road|element:geometry|color:0xffffff&style=feature:water|element:geometry|color:0xc9d8e8';
+                                  ? '&style=feature:all|element:geometry|color:0x1a2332&style=feature:all|element:labels.text.fill|color:0x8896a8&style=feature:road|element:geometry|color:0x253347&style=feature:road|element:geometry.stroke|color:0x1a2332&style=feature:water|element:geometry|color:0x0d1520&style=feature:poi|visibility:off&style=feature:transit|visibility:off&style=feature:administrative|element:labels|visibility:off'
+                                  : '&style=feature:all|element:geometry|color:0xf0f1f3&style=feature:all|element:labels.text.fill|color:0x1a2332&style=feature:road|element:geometry|color:0xffffff&style=feature:road|element:geometry.stroke|color:0xe0e2e8&style=feature:water|element:geometry|color:0xc9d8e8&style=feature:poi|visibility:off&style=feature:transit|visibility:off&style=feature:administrative|element:labels|visibility:off';
                                 const lineColor = isDark ? '0xf0f1f3ff' : '0x1a2332ff';
-                                const staticUrl = `${FORGE_BASE}/v1/maps/proxy/maps/api/staticmap?size=600x200&scale=2&key=${API_KEY_STATIC}&path=color:${lineColor}|weight:4|${pathStr}${styleParams}`;
+                                // Use same-origin /api/maps/static proxy (no CORS, no exposed key)
+                                const staticUrl = `/api/maps/static?size=600x200&scale=2&path=color:${lineColor}|weight:5|${pathStr}${styleParams}`;
                                 return (
                                   <div style={{ borderRadius: 12, overflow: 'hidden', marginBottom: 10, height: 140 }}>
                                     <img

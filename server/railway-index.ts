@@ -193,6 +193,37 @@ async function startServer() {
     }
   });
 
+  // Google Static Maps image proxy — used for route thumbnails in workout history
+  // Frontend loads: /api/maps/static?path=...&size=...&style=...
+  // Server fetches: https://maps.googleapis.com/maps/api/staticmap?key=REAL_KEY&...
+  app.get("/api/maps/static", async (req, res) => {
+    const apiKey = ENV.googleMapsApiKey;
+    if (!apiKey) {
+      res.status(503).send('Google Maps API key not configured');
+      return;
+    }
+    try {
+      const params = new URLSearchParams();
+      params.set("key", apiKey);
+      // Forward all query params from client except key (we inject ours)
+      // Note: style and path can appear multiple times, so we use append
+      const rawQuery = req.url.split('?')[1] || '';
+      const incoming = new URLSearchParams(rawQuery);
+      Array.from(incoming.entries()).forEach(([k, v]) => {
+        if (k !== "key") params.append(k, v);
+      });
+      const staticUrl = `https://maps.googleapis.com/maps/api/staticmap?${params.toString()}`;
+      const upstream = await fetch(staticUrl);
+      const buffer = await upstream.arrayBuffer();
+      res.setHeader("Content-Type", upstream.headers.get("content-type") || "image/png");
+      res.setHeader("Cache-Control", "public, max-age=86400");
+      res.send(Buffer.from(buffer));
+    } catch (err) {
+      console.error('[Static Maps Proxy] Error:', err);
+      res.status(502).send('Failed to load static map');
+    }
+  });
+
   // tRPC API endpoints
   console.log('[Server] Setting up tRPC API at /api/trpc');
   app.use(
