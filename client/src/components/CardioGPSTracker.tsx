@@ -80,7 +80,7 @@ function loadMapScript(): Promise<void> {
   _mapLoadPromise = new Promise((resolve) => {
     (window as unknown as Record<string, unknown>).__gpsMapReady = () => { resolve(); };
     const script = document.createElement("script");
-    script.src = `/api/maps/js?v=weekly&libraries=marker,places,geocoding,geometry&callback=__gpsMapReady`;
+    script.src = `/api/maps/js?v=3&libraries=marker,places,geocoding,geometry&callback=__gpsMapReady`;
     script.async = true;
     script.defer = true;
     script.onerror = () => { _mapLoadPromise = null; resolve(); };
@@ -115,14 +115,16 @@ function fmtPace(durationSec: number, distanceInUnit: number): string {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
-// ── FlexTab "F" logo SVG (correct wordmark bolt) ─────────────────────────────
-function FlexTabLogo({ size = 16 }: { size?: number }) {
+// ── FlexTab logo — uses the real /flextab-icon.png asset ─────────────────────
+function FlexTabLogo({ size = 22 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
-      {/* Stylised "F" tab shape matching the FlexTab brand */}
-      <rect x="4" y="4" width="24" height="24" rx="6" fill={NAVY} />
-      <path d="M10 10h12v3H13v3h8v3h-8v6h-3V10z" fill={WHITE} />
-    </svg>
+    <img
+      src="/flextab-icon.png"
+      alt="FlexTab"
+      width={size}
+      height={size}
+      style={{ objectFit: 'contain', flexShrink: 0 }}
+    />
   );
 }
 
@@ -482,15 +484,20 @@ export function CardioGPSTracker({
   return (
     <>
       {/* ══ FULL-SCREEN ACTIVITY OVERLAY ════════════════════════════════════ */}
+      {/* Scrim behind the overlay so rounded corners are visible */}
+      <div style={{ position: 'fixed', inset: 0, zIndex: 9997, background: 'rgba(0,0,0,0.4)' }} />
       <div
         style={{
           position: 'fixed',
-          inset: 0,
+          top: 12,
+          left: 0,
+          right: 0,
+          bottom: 0,
           zIndex: 9998,
           background: WHITE,
           display: 'flex',
           flexDirection: 'column',
-          // Rounded top corners like a bottom sheet
+          // Rounded top corners — visible against the dark scrim
           borderRadius: '24px 24px 0 0',
           overflow: 'hidden',
           animation: 'slideUpIn 0.3s cubic-bezier(0.4,0,0.2,1)',
