@@ -168,6 +168,13 @@ async function startServer() {
   // Google Maps JS script proxy — injects API key server-side so it never touches the client
   // Frontend loads: /api/maps/js?libraries=...&callback=...
   // Server fetches: https://maps.googleapis.com/maps/api/js?key=REAL_KEY&...
+  //
+  // IMPORTANT: Google Maps JS API validates the HTTP Referer of the request.
+  // When this proxy fetches the script, Google sees the Railway server IP, not
+  // the user's browser. We therefore send the app's public domain as the Referer
+  // so that HTTP-referrer restrictions on the key pass correctly.
+  // Set APP_DOMAIN in Railway env vars to your public URL, e.g.
+  //   APP_DOMAIN=https://flextab.up.railway.app
   app.get("/api/maps/js", async (req, res) => {
     const apiKey = ENV.googleMapsApiKey;
     if (!apiKey) {
@@ -177,15 +184,26 @@ async function startServer() {
     try {
       const params = new URLSearchParams();
       params.set("key", apiKey);
-      // Forward all query params from client except key (we inject ours)
+      // Forward all query params from client except key and v
+      // (we omit v= so Google uses the latest stable version — v=3 is deprecated)
       for (const [k, v] of Object.entries(req.query)) {
-        if (k !== "key") params.set(k, String(v));
+        if (k !== "key" && k !== "v") params.set(k, String(v));
       }
       const mapsUrl = `https://maps.googleapis.com/maps/api/js?${params.toString()}`;
-      // Forward the app's origin as Referer so key HTTP-referrer restrictions pass
-      const appOrigin = req.headers.origin || req.headers.referer || `https://${req.headers.host}`;
+      // Build the Referer to send to Google:
+      // Priority: APP_DOMAIN env var > Origin header > Referer header > Host header
+      // APP_DOMAIN must be set in Railway to match the allowed referrers on the API key.
+      const appOrigin =
+        ENV.appDomain ||
+        (req.headers.origin as string | undefined) ||
+        (req.headers.referer as string | undefined) ||
+        `https://${req.headers.host}`;
       const upstream = await fetch(mapsUrl, {
-        headers: { 'Referer': appOrigin, 'Origin': appOrigin },
+        headers: {
+          'Referer': appOrigin,
+          'Origin': appOrigin,
+          'User-Agent': 'Mozilla/5.0 (compatible; FlexTab/1.0)',
+        },
       });
       const text = await upstream.text();
       res.setHeader("Content-Type", "application/javascript; charset=utf-8");

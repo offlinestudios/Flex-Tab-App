@@ -93,7 +93,7 @@ function loadMapScript(): Promise<void> {
   _mapLoadPromise = new Promise((resolve) => {
     (window as unknown as Record<string, unknown>).__gpsMapReady = () => { resolve(); };
     const script = document.createElement("script");
-    script.src = `/api/maps/js?v=3&libraries=marker,places,geocoding,geometry&callback=__gpsMapReady`;
+    script.src = `/api/maps/js?libraries=marker,places,geocoding,geometry&callback=__gpsMapReady`;
     script.async = true;
     script.defer = true;
     script.onerror = () => { _mapLoadPromise = null; resolve(); };
