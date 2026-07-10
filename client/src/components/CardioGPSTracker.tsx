@@ -54,21 +54,34 @@ const GREEN = '#22c55e';
 const AMBER = '#f59e0b';
 
 // ── On-brand Google Maps style — strips POIs, transit, uses FlexTab palette ───
+// Minimal, clean style: white/grey roads, muted everything, navy text, no green parks
 const MAP_STYLES_LIGHT: google.maps.MapTypeStyle[] = [
-  { elementType: 'geometry', stylers: [{ color: '#f0f1f3' }] },
-  { elementType: 'labels.text.fill', stylers: [{ color: NAVY }] },
-  { elementType: 'labels.text.stroke', stylers: [{ color: WHITE }] },
-  { featureType: 'road', elementType: 'geometry', stylers: [{ color: WHITE }] },
-  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#e0e2e8' }] },
-  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#e8eaed' }] },
-  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#c9d8e8' }] },
+  // Base geometry — off-white background
+  { elementType: 'geometry', stylers: [{ color: '#f5f5f7' }] },
+  // All text — navy
+  { elementType: 'labels.text.fill', stylers: [{ color: '#1a2332' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#ffffff' }] },
+  // Roads — white with light grey stroke
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
+  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#e2e4ea' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#eaecf0' }] },
+  { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#d4d8e2' }] },
+  // Water — muted blue-grey (not bright blue)
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#d0dce8' }] },
   { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#8896a8' }] },
-  { featureType: 'park', elementType: 'geometry', stylers: [{ color: '#d8ecd8' }] },
-  // Strip all clutter
+  // Parks — GREY not green (key fix)
+  { featureType: 'park', elementType: 'geometry', stylers: [{ color: '#e8eaed' }] },
+  { featureType: 'landscape.natural', elementType: 'geometry', stylers: [{ color: '#e8eaed' }] },
+  { featureType: 'landscape', elementType: 'geometry', stylers: [{ color: '#f0f1f3' }] },
+  // Strip ALL clutter — no restaurants, transit, business icons
   { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+  { featureType: 'poi.park', stylers: [{ visibility: 'off' }] },
   { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+  { featureType: 'transit.station', stylers: [{ visibility: 'off' }] },
+  // Keep road labels, hide neighbourhood/admin noise
   { featureType: 'administrative', elementType: 'labels', stylers: [{ visibility: 'simplified' }] },
   { featureType: 'administrative.neighborhood', stylers: [{ visibility: 'off' }] },
+  { featureType: 'administrative.land_parcel', stylers: [{ visibility: 'off' }] },
 ];
 
 // ── Map script loader ─────────────────────────────────────────────────────────

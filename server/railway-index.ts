@@ -182,7 +182,11 @@ async function startServer() {
         if (k !== "key") params.set(k, String(v));
       }
       const mapsUrl = `https://maps.googleapis.com/maps/api/js?${params.toString()}`;
-      const upstream = await fetch(mapsUrl);
+      // Forward the app's origin as Referer so key HTTP-referrer restrictions pass
+      const appOrigin = req.headers.origin || req.headers.referer || `https://${req.headers.host}`;
+      const upstream = await fetch(mapsUrl, {
+        headers: { 'Referer': appOrigin, 'Origin': appOrigin },
+      });
       const text = await upstream.text();
       res.setHeader("Content-Type", "application/javascript; charset=utf-8");
       res.setHeader("Cache-Control", "public, max-age=3600");
