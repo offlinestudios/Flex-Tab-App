@@ -184,10 +184,9 @@ async function startServer() {
     try {
       const params = new URLSearchParams();
       params.set("key", apiKey);
-      // Forward all query params from client except key and v
-      // (we omit v= so Google uses the latest stable version — v=3 is deprecated)
+      // Forward all query params from client except key (we inject ours)
       for (const [k, v] of Object.entries(req.query)) {
-        if (k !== "key" && k !== "v") params.set(k, String(v));
+        if (k !== "key") params.set(k, String(v));
       }
       const mapsUrl = `https://maps.googleapis.com/maps/api/js?${params.toString()}`;
       // Build the Referer to send to Google:
