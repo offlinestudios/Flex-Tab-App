@@ -71,6 +71,7 @@ interface SetLog {
 
 interface WorkoutSession {
   date: string;
+  sessionKey: string; // unique key: date for weights, date-cardio-ExerciseName for GPS cardio
   exercises: SetLog[];
   durationSeconds?: number | null;
   sessionId?: number | null;
@@ -165,27 +166,30 @@ export default function Home() {
     refetchOnWindowFocus: false,
   });
   
-  // Transform flat set logs into grouped workout sessions
+  // Transform flat set logs into grouped workout sessions.
+  // GPS cardio activities (Running/Walking/Cycling with a routePolyline) get their own
+  // session card keyed by `${date}-cardio-${exerciseName}` so they appear separately from
+  // weight sessions logged on the same day.
   const workoutSessions: WorkoutSession[] = useMemo(() => {
     const sessionMap = new Map<string, SetLog[]>();
-    // Track the session duration per date (last non-null value wins)
     const durationMap = new Map<string, number | null>();
-    // Track the sessionId per date (first log's sessionId wins)
     const sessionIdMap = new Map<string, number | null>();
-    
+
     setLogsData.forEach((log: any) => {
-      // Extract date from the log (assuming it has a date field)
       const date = log.date || new Date(log.createdAt).toLocaleDateString("en-US", {
         year: "numeric",
         month: "numeric",
         day: "numeric",
       });
-      
-      if (!sessionMap.has(date)) {
-        sessionMap.set(date, []);
+
+      // GPS cardio activities get their own session card keyed by exercise name
+      const isGPSCardio = GPS_TRACKABLE.includes(log.exercise) && !!log.routePolyline;
+      const sessionKey = isGPSCardio ? `${date}-cardio-${log.exercise}` : date;
+
+      if (!sessionMap.has(sessionKey)) {
+        sessionMap.set(sessionKey, []);
       }
-      
-      sessionMap.get(date)!.push({
+      sessionMap.get(sessionKey)!.push({
         id: log.id.toString(),
         date: date,
         exercise: log.exercise,
@@ -201,23 +205,22 @@ export default function Home() {
         routePolyline: log.routePolyline ?? undefined,
       });
 
-      // Capture session duration if present (all rows for same session share the same value)
       if (log.sessionDurationSeconds != null) {
-        durationMap.set(date, log.sessionDurationSeconds);
-      } else if (!durationMap.has(date)) {
-        durationMap.set(date, null);
+        durationMap.set(sessionKey, log.sessionDurationSeconds);
+      } else if (!durationMap.has(sessionKey)) {
+        durationMap.set(sessionKey, null);
       }
-      // Capture sessionId (first log per date wins)
-      if (!sessionIdMap.has(date)) {
-        sessionIdMap.set(date, log.sessionId ?? null);
+      if (!sessionIdMap.has(sessionKey)) {
+        sessionIdMap.set(sessionKey, log.sessionId ?? null);
       }
     });
-    
-    const sessions = Array.from(sessionMap.entries()).map(([date, exercises]) => ({
-      date,
+
+    const sessions = Array.from(sessionMap.entries()).map(([sessionKey, exercises]) => ({
+      date: exercises[0]?.date ?? sessionKey,
+      sessionKey,
       exercises,
-      durationSeconds: durationMap.get(date) ?? null,
-      sessionId: sessionIdMap.get(date) ?? null,
+      durationSeconds: durationMap.get(sessionKey) ?? null,
+      sessionId: sessionIdMap.get(sessionKey) ?? null,
     }));
     console.log('[DEBUG] Transformed workout sessions:', sessions);
     return sessions;
@@ -1025,8 +1028,11 @@ export default function Home() {
 
             await utils.workout.getSetLogs.invalidate();
 
-            const existingSession = workoutSessions.find(s => s.date === dateKey);
-            const exercisesToShare = [...(existingSession?.exercises ?? []), ...loggedCardio];
+            // Aggregate all sessions for this date (weights + GPS cardio may be separate sessions)
+            const existingSessions = workoutSessions.filter(s => s.date === dateKey);
+            const existingSession = existingSessions[0];
+            const existingExercises = existingSessions.flatMap(s => s.exercises);
+            const exercisesToShare = [...existingExercises, ...loggedCardio];
             const workoutSessionId = cardioSessionId ?? existingSession?.sessionId ?? finishResult?.sessionId ?? null;
 
             if (exercisesToShare.length > 0) {
@@ -1381,21 +1387,24 @@ export default function Home() {
             {/* Today's logged sets summary */}
             {(() => {
               const today = new Date().toLocaleDateString();
-              const todaySession = workoutSessions.find(s => s.date === today);
-              if (!todaySession || todaySession.exercises.length === 0) return null;
+              // Aggregate all sessions for today (weights + GPS cardio may be separate sessions)
+              const todaySessions = workoutSessions.filter(s => s.date === today);
+              const todayExercises = todaySessions.flatMap(s => s.exercises);
+              const todaySession = todaySessions[0]; // for sessionId/share
+              if (!todaySession || todayExercises.length === 0) return null;
               const stats = {
-                sets: todaySession.exercises.reduce((sum, set) => sum + set.sets, 0),
-                reps: todaySession.exercises.reduce((sum, set) => sum + set.sets * set.reps, 0),
-                volume: todaySession.exercises.reduce((sum, set) => sum + set.sets * set.reps * set.weight, 0),
+                sets: todayExercises.reduce((sum, set) => sum + set.sets, 0),
+                reps: todayExercises.reduce((sum, set) => sum + set.sets * set.reps, 0),
+                volume: todayExercises.reduce((sum, set) => sum + set.sets * set.reps * set.weight, 0),
               };
               const byEx: Record<string, SetLog[]> = {};
-              todaySession.exercises.forEach(e => { if (!byEx[e.exercise]) byEx[e.exercise] = []; byEx[e.exercise].push(e); });
+              todayExercises.forEach(e => { if (!byEx[e.exercise]) byEx[e.exercise] = []; byEx[e.exercise].push(e); });
               return (
                 <div style={{ background:'var(--card)', borderRadius:20, border:'1px solid var(--border)', overflow:'hidden' }}>
                   <div style={{ padding:'16px 20px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                     <h3 style={{ fontSize:15, fontWeight:700, color:'var(--foreground)', margin:0 }}>Today's Workout</h3>
                     <button
-                      onClick={() => { setShareWorkoutData({ exercises: todaySession.exercises, date: today, workoutSessionId: todaySession.sessionId ?? null }); setShowShareDialog(true); }}
+                      onClick={() => { setShareWorkoutData({ exercises: todayExercises, date: today, workoutSessionId: todaySession.sessionId ?? null }); setShowShareDialog(true); }}
                       style={{ display:'flex', alignItems:'center', gap:5, fontSize:13, fontWeight:600, color:'var(--foreground)', background:'none', border:'none', cursor:'pointer' }}
                     >
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -1468,7 +1477,7 @@ export default function Home() {
                 const dayTotalVol = session.exercises.reduce((s, e) => s + e.sets * e.reps * e.weight, 0);
                 const dayExCount = Object.keys(byEx).length;
                 return (
-                  <div key={session.date} style={{ background:'var(--card)', borderRadius:20, border:'1px solid var(--border)', overflow:'hidden' }}>
+                  <div key={session.sessionKey} style={{ background:'var(--card)', borderRadius:20, border:'1px solid var(--border)', overflow:'hidden' }}>
                     <div style={{ padding:'16px 20px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                       <h3 style={{ fontSize:15, fontWeight:700, color:'var(--foreground)', margin:0 }}>{formatDateFull(session.date)}</h3>
                       <button
@@ -2386,7 +2395,7 @@ export default function Home() {
       <CalendarModal
         open={showCalendarModal}
         onOpenChange={setShowCalendarModal}
-        workoutDates={workoutSessions.map(s => s.date)}
+        workoutDates={Array.from(new Set(workoutSessions.map(s => s.date)))}
         selectedDate={selectedDate}
         onDateSelect={(dateYMD) => {
           // dateYMD is YYYY-MM-DD from CalendarModal — convert to M/D/YYYY for history filter

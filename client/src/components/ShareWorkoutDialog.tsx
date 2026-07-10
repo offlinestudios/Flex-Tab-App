@@ -549,16 +549,45 @@ export function ShareWorkoutDialog({
         })}
       </div>
 
-      {/* ── Cardio graphic filler (pure-cardio only) ── */}
-      {pureCardio && (
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 8 }}>
-          <img
-            src={`/cardio-graphic.png`}
-            alt=""
-            style={{ width: '100%', opacity: 0.92, objectFit: 'contain' }}
-          />
-        </div>
-      )}
+      {/* ── Cardio graphic / route map filler (pure-cardio only) ── */}
+      {pureCardio && (() => {
+        // Find the first exercise with a GPS route polyline
+        const routeEx = groupedExercises.find(ex => ex.routePolyline);
+        if (routeEx?.routePolyline) {
+          let coords: Array<{lat: number; lng: number}> = [];
+          try { coords = JSON.parse(routeEx.routePolyline); } catch { /* ignore */ }
+          if (coords.length >= 2) {
+            const step = Math.max(1, Math.floor(coords.length / 60));
+            const sampled = coords.filter((_: any, i: number) => i % step === 0);
+            const pathStr = sampled.map((c: {lat: number; lng: number}) => `${c.lat.toFixed(5)},${c.lng.toFixed(5)}`).join('|');
+            const isDark = theme === 'dark';
+            const styleParams = isDark
+              ? '&style=feature:all|element:geometry|color:0x1a2332&style=feature:all|element:labels.text.fill|color:0x8896a8&style=feature:road|element:geometry|color:0x253347&style=feature:road|element:geometry.stroke|color:0x1a2332&style=feature:water|element:geometry|color:0x0d1520&style=feature:poi|visibility:off&style=feature:transit|visibility:off&style=feature:administrative|element:labels|visibility:off'
+              : '&style=feature:all|element:geometry|color:0xf0f1f3&style=feature:all|element:labels.text.fill|color:0x1a2332&style=feature:road|element:geometry|color:0xffffff&style=feature:road|element:geometry.stroke|color:0xe0e2e8&style=feature:water|element:geometry|color:0xc9d8e8&style=feature:poi|visibility:off&style=feature:transit|visibility:off&style=feature:administrative|element:labels|visibility:off';
+            const lineColor = isDark ? '0xf0f1f3ff' : '0x1a2332ff';
+            const staticUrl = `/api/maps/static?size=600x300&scale=2&path=color:${lineColor}|weight:5|${pathStr}${styleParams}`;
+            return (
+              <div style={{ flex: 1, borderRadius: 10, overflow: 'hidden', marginTop: 8, minHeight: 80 }}>
+                <img
+                  src={staticUrl}
+                  alt="Route map"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                />
+              </div>
+            );
+          }
+        }
+        // Fallback: show cardio graphic when no GPS route is available
+        return (
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 8 }}>
+            <img
+              src={`/cardio-graphic.png`}
+              alt=""
+              style={{ width: '100%', opacity: 0.92, objectFit: 'contain' }}
+            />
+          </div>
+        );
+      })()}
 
       {/* ── Footer ── */}
       <div style={{ marginTop: 'auto', paddingTop: 5, borderTop: `1px solid ${C.divider}` }}>
