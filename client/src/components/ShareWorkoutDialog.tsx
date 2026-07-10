@@ -19,6 +19,7 @@ interface SetLog {
   duration?: number;
   distance?: number;
   distanceUnit?: 'miles' | 'km';
+  routePolyline?: string;
 }
 
 interface ShareWorkoutDialogProps {
@@ -145,6 +146,7 @@ export function ShareWorkoutDialog({
         duration:     exercise.duration,
         distance:     exercise.distance,
         distanceUnit: exercise.distanceUnit,
+        routePolyline: exercise.routePolyline,
         setDetails:   [{ setNumber: 1, reps: exercise.reps, weight: exercise.weight }],
       });
     }
@@ -159,6 +161,7 @@ export function ShareWorkoutDialog({
     duration?:    number;
     distance?:    number;
     distanceUnit?: 'miles' | 'km';
+    routePolyline?: string;
     setDetails:   Array<{ setNumber: number; reps: number; weight: number }>;
   }>);
 
@@ -242,6 +245,7 @@ export function ShareWorkoutDialog({
         duration:     ex.duration,
         distance:     ex.distance,
         distanceUnit: ex.distanceUnit,
+        routePolyline: ex.routePolyline,
       })),
       theme,
       userName,
