@@ -93,7 +93,7 @@ function loadMapScript(): Promise<void> {
   _mapLoadPromise = new Promise((resolve) => {
     (window as unknown as Record<string, unknown>).__gpsMapReady = () => { resolve(); };
     const script = document.createElement("script");
-    script.src = `/api/maps/js?v=weekly&libraries=marker,places,geocoding,geometry&callback=__gpsMapReady`;
+    script.src = `/api/maps/js?v=weekly&libraries=places,geocoding,geometry&callback=__gpsMapReady`;
     script.async = true;
     script.defer = true;
     script.onerror = () => { _mapLoadPromise = null; resolve(); };
@@ -215,8 +215,10 @@ export function CardioGPSTracker({
   const summaryMapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const polylineRef = useRef<google.maps.Polyline | null>(null);
-  const startMarkerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null);
-  const currentMarkerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const startMarkerRef = useRef<google.maps.Marker | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const currentMarkerRef = useRef<google.maps.Marker | null>(null);
   const watchIdRef = useRef<number | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<number>(Date.now());
@@ -290,21 +292,19 @@ export function CardioGPSTracker({
       coords.forEach(c => bounds.extend(c));
       map.fitBounds(bounds, 48);
     }
-    // Start marker (green)
+    // Start marker (green dot)
     if (coords.length > 0) {
-      const startDot = document.createElement("div");
-      startDot.style.cssText = `width:14px;height:14px;border-radius:50%;background:${GREEN};border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.35)`;
-      new window.google.maps.marker.AdvancedMarkerElement({
-        map, position: coords[0], content: startDot,
+      new window.google.maps.Marker({
+        map, position: coords[0],
+        icon: { path: window.google.maps.SymbolPath.CIRCLE, scale: 7, fillColor: GREEN, fillOpacity: 1, strokeColor: '#ffffff', strokeWeight: 2 },
         zIndex: 10,
       });
     }
-    // End marker (red)
+    // End marker (red dot)
     if (coords.length > 1) {
-      const endDot = document.createElement("div");
-      endDot.style.cssText = "width:14px;height:14px;border-radius:50%;background:#ef4444;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.35)";
-      new window.google.maps.marker.AdvancedMarkerElement({
-        map, position: coords[coords.length - 1], content: endDot,
+      new window.google.maps.Marker({
+        map, position: coords[coords.length - 1],
+        icon: { path: window.google.maps.SymbolPath.CIRCLE, scale: 7, fillColor: '#ef4444', fillOpacity: 1, strokeColor: '#ffffff', strokeWeight: 2 },
         zIndex: 10,
       });
     }
@@ -384,20 +384,20 @@ export function CardioGPSTracker({
           mapRef.current.panTo(pt);
           // Update current position marker
           if (currentMarkerRef.current) {
-            currentMarkerRef.current.position = pt;
+            currentMarkerRef.current.setPosition(pt);
           } else {
-            const dot = document.createElement("div");
-            dot.style.cssText = `width:18px;height:18px;border-radius:50%;background:${NAVY};border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.4)`;
-            currentMarkerRef.current = new window.google.maps.marker.AdvancedMarkerElement({
-              map: mapRef.current, position: pt, content: dot, zIndex: 20,
+            currentMarkerRef.current = new window.google.maps.Marker({
+              map: mapRef.current, position: pt,
+              icon: { path: window.google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: NAVY, fillOpacity: 1, strokeColor: '#ffffff', strokeWeight: 3 },
+              zIndex: 20,
             });
           }
           // Place start marker once
           if (!startMarkerRef.current) {
-            const startDot = document.createElement("div");
-            startDot.style.cssText = `width:14px;height:14px;border-radius:50%;background:${GREEN};border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.35)`;
-            startMarkerRef.current = new window.google.maps.marker.AdvancedMarkerElement({
-              map: mapRef.current, position: pt, content: startDot, zIndex: 10,
+            startMarkerRef.current = new window.google.maps.Marker({
+              map: mapRef.current, position: pt,
+              icon: { path: window.google.maps.SymbolPath.CIRCLE, scale: 7, fillColor: GREEN, fillOpacity: 1, strokeColor: '#ffffff', strokeWeight: 2 },
+              zIndex: 10,
             });
             mapRef.current.setCenter(pt);
           }
@@ -427,8 +427,8 @@ export function CardioGPSTracker({
 
   // ── Cleanup markers ────────────────────────────────────────────────────────
   function clearMarkers() {
-    if (startMarkerRef.current) { startMarkerRef.current.map = null; startMarkerRef.current = null; }
-    if (currentMarkerRef.current) { currentMarkerRef.current.map = null; currentMarkerRef.current = null; }
+    if (startMarkerRef.current) { startMarkerRef.current.setMap(null); startMarkerRef.current = null; }
+    if (currentMarkerRef.current) { currentMarkerRef.current.setMap(null); currentMarkerRef.current = null; }
   }
 
   // ── Controls ───────────────────────────────────────────────────────────────
