@@ -12,6 +12,8 @@ export const PRESET_EXERCISES: Exercise[] = [
   { id: "3", name: "Decline Bench Press", category: "Chest" },
   { id: "4", name: "Dumbbell Press", category: "Chest" },
   { id: "5", name: "Guillotine Press", category: "Chest" },
+  { id: "93", name: "Incline Bench Press", category: "Chest" },
+  { id: "94", name: "Pull Overs", category: "Chest" },
   // CHEST - Flies & Isolation
   { id: "7", name: "Dumbbell Fly", category: "Chest" },
   { id: "8", name: "Machine Fly", category: "Chest" },
@@ -21,10 +23,17 @@ export const PRESET_EXERCISES: Exercise[] = [
   { id: "12", name: "Chest Dips", category: "Chest" },
   { id: "13", name: "Push-Ups (Weighted)", category: "Chest" },
   { id: "14", name: "Push-Ups (Deficit)", category: "Chest" },
+
   // BACK - Vertical Pulls
   { id: "15", name: "Pull-Ups", category: "Back" },
   { id: "16", name: "Lat Pulldown", category: "Back" },
   { id: "17", name: "Straight-Arm Pulldown", category: "Back" },
+  { id: "95", name: "Behind the head Lat Pull Down", category: "Back" },
+  { id: "96", name: "Close Grip Pulls", category: "Back" },
+  { id: "97", name: "Reverse Grip Lat Pull Down", category: "Back" },
+  { id: "98", name: "Reverse Grip Pull Ups", category: "Back" },
+  { id: "99", name: "Wide Grip Chest Pulls", category: "Back" },
+  { id: "100", name: "Wide Grip Pull Ups", category: "Back" },
   // BACK - Horizontal Pulls
   { id: "18", name: "Barbell Rows", category: "Back" },
   { id: "19", name: "Dumbbell Rows", category: "Back" },
@@ -33,9 +42,16 @@ export const PRESET_EXERCISES: Exercise[] = [
   { id: "22", name: "Chest-Supported Row", category: "Back" },
   { id: "23", name: "Single-Arm Cable Row", category: "Back" },
   { id: "24", name: "Meadows Row", category: "Back" },
+  { id: "101", name: "Kettle Bell Rows", category: "Back" },
+  { id: "102", name: "Low Rope Pulls", category: "Back" },
+  { id: "103", name: "Reverse Grip Incline Bench Barbell Row", category: "Back" },
   // BACK - Rear Chain
   { id: "26", name: "Reverse Fly", category: "Shoulders" },
   { id: "27", name: "Rack Pulls", category: "Back" },
+  { id: "104", name: "Reverse Cable Fly Low", category: "Back" },
+  { id: "105", name: "Reverse Cable Flys", category: "Back" },
+  { id: "79", name: "Back Extensions", category: "Back" },
+
   // BICEPS
   { id: "28", name: "Bicep Curls", category: "Arms" },
   { id: "29", name: "Hammer Curls", category: "Arms" },
@@ -44,25 +60,37 @@ export const PRESET_EXERCISES: Exercise[] = [
   { id: "32", name: "Cable Curls", category: "Arms" },
   { id: "33", name: "Spider Curls", category: "Arms" },
   { id: "34", name: "Concentration Curls", category: "Arms" },
+  { id: "106", name: "Barbell Curls", category: "Arms" },
+  { id: "107", name: "Single Arm Preacher Curls", category: "Arms" },
   // TRICEPS
   { id: "36", name: "Skullcrushers", category: "Arms" },
   { id: "37", name: "Rope Pushdowns", category: "Arms" },
   { id: "38", name: "Overhead Cable Extensions", category: "Arms" },
   { id: "39", name: "Close-Grip Bench", category: "Arms" },
   { id: "40", name: "JM Press", category: "Arms" },
+  { id: "108", name: "Overhead Triceps Extensions", category: "Arms" },
+  { id: "109", name: "Overhead Triceps Push", category: "Arms" },
+  { id: "110", name: "Single Arm Triceps Extension", category: "Arms" },
+  { id: "111", name: "Triceps Pushdown", category: "Arms" },
+
   // SHOULDERS - Front & Press
   { id: "42", name: "Dumbbell Shoulder Press", category: "Shoulders" },
   { id: "43", name: "Arnold Press", category: "Shoulders" },
   { id: "44", name: "Landmine Press", category: "Shoulders" },
+  { id: "112", name: "Seated Dumbbell Press", category: "Shoulders" },
+  { id: "113", name: "Standing Military Press", category: "Shoulders" },
+  { id: "114", name: "Standing Military Press (behind head)", category: "Shoulders" },
   // SHOULDERS - Lateral
   { id: "45", name: "Lateral Raises", category: "Shoulders" },
   { id: "46", name: "Cable Lateral Raises", category: "Shoulders" },
   { id: "47", name: "Upright Rows", category: "Shoulders" },
+  { id: "115", name: "Shoulder Shrugs", category: "Shoulders" },
   // SHOULDERS - Rear & Stability
   { id: "48", name: "Rear Delt Fly", category: "Shoulders" },
   { id: "49", name: "Face Pulls", category: "Shoulders" },
   { id: "50", name: "Cuban Rotations", category: "Shoulders" },
   { id: "51", name: "Y-Raises", category: "Shoulders" },
+
   // LEGS - Quads
   { id: "52", name: "Squats", category: "Legs" },
   { id: "53", name: "Front Squats", category: "Legs" },
@@ -71,6 +99,8 @@ export const PRESET_EXERCISES: Exercise[] = [
   { id: "56", name: "Leg Press", category: "Legs" },
   { id: "57", name: "Step-Ups", category: "Legs" },
   { id: "58", name: "Sissy Squats", category: "Legs" },
+  { id: "116", name: "Belt Squat", category: "Legs" },
+  { id: "117", name: "Leg Extensions", category: "Legs" },
   // LEGS - Hamstrings
   { id: "59", name: "Deadlifts", category: "Legs" },
   { id: "60", name: "Romanian Deadlifts", category: "Legs" },
@@ -84,9 +114,11 @@ export const PRESET_EXERCISES: Exercise[] = [
   { id: "67", name: "Cable Kickbacks", category: "Legs" },
   { id: "68", name: "Frog Pumps", category: "Legs" },
   { id: "69", name: "Reverse Lunges", category: "Legs" },
+  { id: "118", name: "Hip Abductor", category: "Legs" },
   // LEGS - Calves
   { id: "70", name: "Standing Calf Raises", category: "Legs" },
   { id: "71", name: "Seated Calf Raises", category: "Legs" },
+
   // CORE
   { id: "73", name: "Hanging Leg Raises", category: "Core" },
   { id: "74", name: "Cable Crunches", category: "Core" },
@@ -94,24 +126,11 @@ export const PRESET_EXERCISES: Exercise[] = [
   { id: "76", name: "Planks", category: "Core" },
   { id: "77", name: "Pallof Press", category: "Core" },
   { id: "78", name: "Russian Twists", category: "Core" },
-  { id: "79", name: "Back Extensions", category: "Back" },
-  // CARDIO
-  { id: "80", name: "Running", category: "Cardio" },
-  { id: "92", name: "Walking", category: "Cardio" },
-  { id: "81", name: "Cycling", category: "Cardio" },
-  { id: "82", name: "Swimming", category: "Cardio" },
-  { id: "83", name: "Jump Rope", category: "Cardio" },
-  { id: "84", name: "Rowing Machine", category: "Cardio" },
-  { id: "85", name: "Elliptical", category: "Cardio" },
-  { id: "86", name: "Stair Climber", category: "Cardio" },
-  { id: "87", name: "HIIT Training", category: "Cardio" },
-  { id: "88", name: "Burpees", category: "Cardio" },
-  { id: "89", name: "Mountain Climbers", category: "Cardio" },
-  { id: "90", name: "Box Jumps", category: "Cardio" },
-  { id: "91", name: "Battle Ropes", category: "Cardio" },
+  { id: "119", name: "Farmers Walk", category: "Core" },
+  { id: "120", name: "Sit Ups", category: "Core" },
 ];
 
-export const EXERCISE_CATEGORIES = ["Chest", "Back", "Arms", "Shoulders", "Legs", "Core", "Cardio"];
+export const EXERCISE_CATEGORIES = ["Chest", "Back", "Arms", "Shoulders", "Legs", "Core"];
 
 export const EXERCISE_SUBCATEGORIES: Record<string, string[]> = {
   "Chest": ["Pressing", "Flies & Isolation"],

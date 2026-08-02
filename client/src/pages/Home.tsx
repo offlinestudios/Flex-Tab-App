@@ -89,6 +89,24 @@ interface Measurement {
 
 const PRESET_EXERCISES: Exercise[] = EXPANDED_EXERCISES;
 
+const EXERCISE_NAME_ALIASES: Record<string, string> = {
+  "incline dumbbell biceps": "incline dumbbell curls",
+  "cable rows": "seated cable row",
+  "overhead lat pull down": "lat pulldown",
+  "reverse dumbbell fly": "reverse fly",
+  "rope face pulls": "face pulls",
+};
+
+function canonicalExerciseName(name: string): string {
+  const normalized = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+
+  return EXERCISE_NAME_ALIASES[normalized] ?? normalized;
+}
+
 export default function Home() {
   // The userAuth hooks provides authentication state
   // To implement login/logout functionality, simply call logout() or redirect to getLoginUrl()
@@ -420,12 +438,12 @@ export default function Home() {
   // Sync custom exercises with API data
   useEffect(() => {
     if (customExercisesData) {
-      // Deduplicate: skip custom exercises whose name already exists as a preset
-      // This prevents duplicates when a user created a custom exercise that was
-      // later added as a built-in preset (e.g. Walking).
-      const presetNames = new Set(PRESET_EXERCISES.map(e => e.name.toLowerCase()));
+      // Keep the active catalog free of the removed Cardio category and avoid
+      // showing legacy custom exercises that are now built-in under an equivalent name.
+      const presetNames = new Set(PRESET_EXERCISES.map(ex => canonicalExerciseName(ex.name)));
       const customExercises = customExercisesData
-        .filter(ex => !presetNames.has(ex.name.toLowerCase()))
+        .filter(ex => ex.category !== "Cardio")
+        .filter(ex => !presetNames.has(canonicalExerciseName(ex.name)))
         .map(ex => ({
           id: ex.id.toString(),
           name: ex.name,
@@ -2063,7 +2081,7 @@ export default function Home() {
                 style={{ width:'100%', padding:'11px 14px', borderRadius:12, border:'1.5px solid var(--border)', fontSize:15, color: customExerciseCategory ? 'var(--foreground)' : '#9ca3af', background:'var(--background)', outline:'none', cursor:'pointer', boxSizing:'border-box' }}
               >
                 <option value="" disabled>Select a category…</option>
-                {['Chest','Back','Arms','Shoulders','Legs','Core','Cardio'].map(c => (
+                {EXERCISE_CATEGORIES.map(c => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
@@ -2128,7 +2146,7 @@ export default function Home() {
                 style={{ width:'100%', padding:'11px 14px', borderRadius:12, border:'1.5px solid var(--border)', fontSize:15, color:'var(--foreground)', background:'var(--background)', outline:'none', cursor:'pointer', boxSizing:'border-box' }}
               >
                 <option value="" disabled>Select a category…</option>
-                {['Chest','Back','Arms','Shoulders','Legs','Core','Cardio'].map(c => (
+                {EXERCISE_CATEGORIES.map(c => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
