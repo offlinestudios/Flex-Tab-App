@@ -99,6 +99,20 @@ describe("workout.addCustomExercise", () => {
       category: "Back",
     });
   });
+
+  it("rejects Cardio as a custom exercise category", async () => {
+    const ctx = createAuthContext(1);
+    const caller = appRouter.createCaller(ctx);
+
+    await expect(
+      caller.workout.addCustomExercise({
+        name: "Walking",
+        category: "Cardio",
+      })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+
+    expect(db.createCustomExercise).not.toHaveBeenCalled();
+  });
 });
 
 describe("workout.getCustomExercises", () => {

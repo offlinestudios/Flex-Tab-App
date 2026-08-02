@@ -24,7 +24,6 @@ const PART_LABELS: Record<string, string> = {
   arms: "Arms",
   shoulders: "Shoulders",
   core: "Core",
-  cardio: "Cardio",
 };
 
 const PART_ICON = (
@@ -32,12 +31,6 @@ const PART_ICON = (
     <path d="M6.5 6.5h11"/><path d="M6.5 17.5h11"/>
     <path d="M3 9.5h2v5H3z"/><path d="M19 9.5h2v5h-2z"/>
     <path d="M5 12h14"/>
-  </svg>
-);
-
-const CARDIO_ICON = (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
   </svg>
 );
 
@@ -80,7 +73,7 @@ export function ExerciseBrowser({ open, onClose, onSelectExercise, selectedExerc
     grouped[cat].push(ex);
   });
 
-  const filters = ["all", "chest", "back", "legs", "arms", "shoulders", "core", "cardio"];
+  const filters = ["all", "chest", "back", "legs", "arms", "shoulders", "core"];
 
   return (
     <>
@@ -210,7 +203,7 @@ export function ExerciseBrowser({ open, onClose, onSelectExercise, selectedExerc
                     borderRadius: 8, display: "flex", alignItems: "center",
                     justifyContent: "center", color: "var(--exercise-icon-color)",
                   }}>
-                    {part === "cardio" ? CARDIO_ICON : PART_ICON}
+                    {PART_ICON}
                   </div>
                   <span style={{
                     fontSize: 11, fontWeight: 700, color: "var(--muted-foreground)",
@@ -243,7 +236,7 @@ export function ExerciseBrowser({ open, onClose, onSelectExercise, selectedExerc
                         alignItems: "center", justifyContent: "center",
                         flexShrink: 0, color: "var(--exercise-icon-color)",
                       }}>
-                        {ex.category.toLowerCase() === "cardio" ? CARDIO_ICON : PART_ICON}
+                        {PART_ICON}
                       </div>
 
                       {/* Name + category */}

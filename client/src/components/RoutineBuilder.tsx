@@ -23,10 +23,10 @@ interface RoutineBuilderProps {
 
 const PART_LABELS: Record<string, string> = {
   chest: "Chest", back: "Back", legs: "Legs", arms: "Arms",
-  shoulders: "Shoulders", core: "Core", cardio: "Cardio",
+  shoulders: "Shoulders", core: "Core",
 };
 
-const FILTERS = ["all", "chest", "back", "legs", "arms", "shoulders", "core", "cardio"];
+const FILTERS = ["all", "chest", "back", "legs", "arms", "shoulders", "core"];
 
 export function RoutineBuilder({ open, onClose, onSave, allExercises }: RoutineBuilderProps) {
   const [routineName, setRoutineName] = useState("");
