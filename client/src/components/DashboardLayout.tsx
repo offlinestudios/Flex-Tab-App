@@ -122,6 +122,7 @@ export default function DashboardLayout({ children, timerSlot }: DashboardLayout
 function AppShell({ children, timerSlot }: { children: React.ReactNode; timerSlot?: React.ReactNode }) {
   const { user, logout } = useAuth();
   const [location, setLocation] = useLocation();
+  const search = useSearch();
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
@@ -136,7 +137,7 @@ function AppShell({ children, timerSlot }: { children: React.ReactNode; timerSlo
   const { theme, setTheme } = useTheme();
 
   // Close sidebar on route change
-  useEffect(() => { setSidebarOpen(false); }, [location]);
+  useEffect(() => { setSidebarOpen(false); }, [location, search]);
 
   // Prevent body scroll when sidebar open on mobile
   useEffect(() => {
@@ -150,7 +151,6 @@ function AppShell({ children, timerSlot }: { children: React.ReactNode; timerSlo
     ? user.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
     : "FT";
 
-  const search = useSearch();
   const currentTab = new URLSearchParams(search).get('tab') || 'log';
 
   const isActive = (path: string) => {

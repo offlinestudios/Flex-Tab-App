@@ -215,7 +215,6 @@ export default function Home() {
       durationSeconds: durationMap.get(date) ?? null,
       sessionId: sessionIdMap.get(date) ?? null,
     }));
-    console.log('[DEBUG] Transformed workout sessions:', sessions);
     return sessions;
   }, [setLogsData]);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
@@ -1168,7 +1167,7 @@ export default function Home() {
 
             {/* Today's logged sets summary */}
             {(() => {
-              const today = new Date().toLocaleDateString();
+              const today = workoutDateKey;
               const todaySession = workoutSessions.find(s => s.date === today);
               if (!todaySession || todaySession.exercises.length === 0) return null;
               const stats = {
@@ -1181,7 +1180,7 @@ export default function Home() {
               return (
                 <div style={{ background:'var(--card)', borderRadius:20, border:'1px solid var(--border)', overflow:'hidden' }}>
                   <div style={{ padding:'16px 20px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                    <h3 style={{ fontSize:15, fontWeight:700, color:'var(--foreground)', margin:0 }}>Today's Workout</h3>
+                    <h3 style={{ fontSize:15, fontWeight:700, color:'var(--foreground)', margin:0 }}>{isLoggingToday ? "Today's Workout" : 'Workout Summary'}</h3>
                     <button
                       onClick={() => { setShareWorkoutData({ exercises: todaySession.exercises, date: today, workoutSessionId: todaySession.sessionId ?? null }); setShowShareDialog(true); }}
                       style={{ display:'flex', alignItems:'center', gap:5, fontSize:13, fontWeight:600, color:'var(--foreground)', background:'none', border:'none', cursor:'pointer' }}
