@@ -1,3 +1,4 @@
+import { mobileCors } from "./mobileCors";
 import express from "express";
 import { createServer } from "http";
 import path from "path";
@@ -150,6 +151,7 @@ async function startServer() {
   await runMigrations();
 
   const app = express();
+  app.use("/api", mobileCors);
   const server = createServer(app);
   
   // Configure body parser
