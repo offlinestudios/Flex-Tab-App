@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { PRESET_EXERCISES } from "@/lib/exercises";
 
 interface Exercise {
@@ -29,6 +29,7 @@ const PART_LABELS: Record<string, string> = {
 const FILTERS = ["all", "chest", "back", "legs", "arms", "shoulders", "core", "cardio"];
 
 export function RoutineBuilder({ open, onClose, onSave, allExercises }: RoutineBuilderProps) {
+  const nameInput = useRef<HTMLInputElement>(null);
   const [routineName, setRoutineName] = useState("");
   const [selected, setSelected] = useState<Exercise[]>([]);
   const [activeFilter, setActiveFilter] = useState("all");
@@ -38,6 +39,8 @@ export function RoutineBuilder({ open, onClose, onSave, allExercises }: RoutineB
       setRoutineName("");
       setSelected([]);
       setActiveFilter("all");
+    } else {
+      nameInput.current?.blur();
     }
   }, [open]);
 
@@ -98,6 +101,7 @@ export function RoutineBuilder({ open, onClose, onSave, allExercises }: RoutineB
         {/* Routine name input */}
         <div style={{ padding: "14px 16px", borderBottom: "1px solid #f0f1f3", flexShrink: 0 }}>
           <input
+            ref={nameInput}
             type="text"
             placeholder="Routine name (e.g. Push Day)"
             maxLength={40}

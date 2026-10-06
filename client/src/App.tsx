@@ -6,7 +6,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 
-import Landing from "./pages/Landing";
+import Start from "./pages/Start";
 import Settings from "./pages/Settings";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
@@ -14,12 +14,16 @@ import SignInPage from "./pages/SignIn";
 import SignUpPage from "./pages/SignUp";
 import PublicProfile from "./pages/PublicProfile";
 
+import { NativeAuthListener } from "./components/NativeAuth";
+import ResetPassword from "./pages/ResetPassword";
+
 function Router() {
   // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
-      <Route path={"/"} component={Landing} />
+      <Route path={"/"} component={Start} />
       <Route path="/sign-in" component={SignInPage} />
+      <Route path="/reset-password" component={ResetPassword} />
       <Route path="/sign-up" component={SignUpPage} />
       <Route path={"/dashboard"} component={Home} />
       <Route path={"/app"} component={Home} />
@@ -49,6 +53,7 @@ function App() {
       >
         <TooltipProvider>
           <Toaster />
+          <NativeAuthListener />
           <Router />
         </TooltipProvider>
       </ThemeProvider>

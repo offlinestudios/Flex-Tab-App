@@ -6,11 +6,13 @@ import { httpBatchLink, TRPCClientError } from "@trpc/client";
 import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import { supabase } from "@/lib/supabase";
-import { apiUrl, canUseServiceWorker } from "@/lib/api";
+import { apiUrl, canUseServiceWorker, isNativeShell } from "@/lib/api";
 
 import App from "./App";
 import { getLoginUrl } from "./const";
 import "./index.css";
+
+document.documentElement.dataset.native = String(isNativeShell());
 
 const queryClient = new QueryClient();
 

@@ -1,7 +1,8 @@
 import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { supabase } from '@/lib/supabase';
-import { publicAppUrl } from '@/lib/api';
+import { isNativeShell } from '@/lib/api';
+import { AUTH_PROVIDERS, authRedirectUrl, NativeOAuthButtons } from '@/components/NativeAuth';
 import { useEffect } from 'react';
 import { useLocation } from 'wouter';
 
@@ -35,11 +36,12 @@ export default function SignUpPage() {
           <h1 className="text-2xl font-bold text-slate-900 mb-2">Join FlexTab</h1>
           <p className="text-slate-600">Create an account to start tracking</p>
         </div>
+        <NativeOAuthButtons />
         <Auth
           supabaseClient={supabase}
           appearance={{ theme: ThemeSupa }}
-          providers={['apple', 'google', 'github']}
-          redirectTo={publicAppUrl('/dashboard')}
+          providers={isNativeShell() ? [] : AUTH_PROVIDERS}
+          redirectTo={authRedirectUrl()}
           view="sign_up"
           showLinks={true}
           theme="light"

@@ -174,7 +174,7 @@ function AppShell({ children, timerSlot }: { children: React.ReactNode; timerSlo
   useEffect(() => { setShowNotifications(false); }, [location]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="app-shell flex flex-col min-h-screen bg-background">
       {/* ── Top header ── */}
       <header style={{ position: 'sticky', top: 0, zIndex: 40, background: 'var(--card)', borderBottom: '1px solid var(--border)', paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', maxWidth: 700, margin: '0 auto' }}>
@@ -353,7 +353,7 @@ function AppShell({ children, timerSlot }: { children: React.ReactNode; timerSlo
       )}
 
       {/* ── Page content ── */}
-      <main className="flex-1 overflow-y-auto" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 80px)' }}>
+      <main className="min-h-0 flex-1 overflow-y-auto" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 80px)' }}>
         {children}
       </main>
 

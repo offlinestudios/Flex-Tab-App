@@ -4,12 +4,11 @@ const config: CapacitorConfig = {
   appId: "com.offlinestudios.flextab",
   appName: "FlexTab",
   webDir: "dist/public",
-  bundledWebRuntime: false,
   server: {
     androidScheme: "https",
   },
   ios: {
-    contentInset: "automatic",
+    contentInset: "never",
   },
   android: {
     allowMixedContent: false,
