@@ -36,7 +36,7 @@ export function useLocalStorageMigration() {
   const [migratedCount, setMigratedCount] = useState({ workouts: 0, measurements: 0 });
   
   const logSetMutation = trpc.workout.logSet.useMutation();
-  const addMeasurementMutation = trpc.measurements.addMeasurement.useMutation();
+  const addMeasurementMutation = trpc.workout.addMeasurement.useMutation();
 
   useEffect(() => {
     const migrateData = async () => {
@@ -113,11 +113,11 @@ export function useLocalStorageMigration() {
             try {
               await addMeasurementMutation.mutateAsync({
                 date: measurement.date,
-                weight: measurement.weight.toString(),
-                chest: measurement.chest.toString(),
-                waist: measurement.waist.toString(),
-                arms: measurement.arms.toString(),
-                thighs: measurement.thighs.toString(),
+                weight: measurement.weight,
+                chest: measurement.chest,
+                waist: measurement.waist,
+                arms: measurement.arms,
+                thighs: measurement.thighs,
               });
               measurementCount++;
               console.log(`[Migration] Successfully migrated measurement ${measurementCount}`);

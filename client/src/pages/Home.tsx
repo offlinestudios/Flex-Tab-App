@@ -1633,8 +1633,8 @@ export default function Home() {
                         }
                         // ── Strength exercise card (unchanged) ────────────────────
                         const flatSets = sets.flatMap(s => Array.from({ length: s.sets }, () => ({ weight: s.weight, reps: s.reps })));
-                        const maxW = Math.max(...flatSets.map(s => s.weight), 1);
-                        const minW = Math.min(...flatSets.map(s => s.weight));
+                        const maxW = Math.max(...flatSets.map(s => s.weight), 0);
+                        const minW = flatSets.length ? Math.min(...flatSets.map(s => s.weight)) : 0;
                         const totalRepsEx = flatSets.reduce((a, s) => a + s.reps, 0);
                         return (
                           <div key={exName} style={{ paddingBottom:14, marginBottom:14, borderBottom:'1px solid var(--border)' }}>

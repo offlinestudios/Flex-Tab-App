@@ -612,7 +612,7 @@ function HelpPanel({ onBack }: { onBack: () => void }) {
 /* Blocked & Muted management panel */
 function BlockedMutedPanel({ onBack }: { onBack: () => void }) {
   const utils = (trpc as any).useUtils();
-  const [tab, setTab] = (useState as any)<'blocked' | 'muted'>('blocked');
+  const [tab, setTab] = useState<'blocked' | 'muted'>('blocked');
 
   const { data: blockedUsers = [], isLoading: loadingBlocked } = (trpc as any).social.getBlockedUsers.useQuery({}, { staleTime: 30_000 });
   const { data: mutedUsers = [], isLoading: loadingMuted } = (trpc as any).social.getMutedUsers.useQuery({}, { staleTime: 30_000 });
