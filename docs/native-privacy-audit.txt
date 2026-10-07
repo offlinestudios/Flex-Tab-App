@@ -1,7 +1,7 @@
 Native privacy audit — draft, not submitted
 
 Evidence reviewed: ios/App/App/Info.plist; CapApp-SPM/Package.swift;
-Capacitor 8.3.3 and bundled Cordova PrivacyInfo.xcprivacy; Capacitor App/Browser
+Capacitor 8.5.3 and bundled Cordova PrivacyInfo.xcprivacy; Capacitor App/Browser
 Swift sources; client/src/components/CardioGPSTracker.tsx; media/profile upload
 flows; drizzle/schema.ts; client HTML/TS and server TS searches for analytics SDKs.
 
@@ -22,7 +22,7 @@ Known data flows to reconcile with App Store Connect privacy answers:
 These are linked to accounts and transmitted to application/backend providers.
 Optional user entry does not by itself remove disclosure requirements.
 
-Native dependency inventory: Capacitor 8.3.3, Cordova bridge, Capacitor App 8.1.2,
+Native dependency inventory: Capacitor 8.5.3, Cordova bridge, Capacitor App 8.1.2,
 Capacitor Browser 8.0.5. Capacitor/Cordova ship privacy manifests. The inspected
 Capacitor manifest declares no accessed-reason APIs or collected data; this does
 not describe FlexTab's own backend collection. No direct required-reason API use
