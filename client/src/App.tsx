@@ -1,3 +1,4 @@
+import Support from './pages/Support';
 import Moderation from './pages/Moderation';
 import DeleteAccount, { AccountDeletionRequested } from "./pages/DeleteAccount";
 import { Toaster } from "@/components/ui/sonner";
@@ -33,6 +34,8 @@ function Router() {
       <Route path="/delete-account" component={DeleteAccount} />
       <Route path="/account-deletion-requested" component={AccountDeletionRequested} />
       <Route path={"/settings"} component={Settings} />
+      <Route path="/support" component={Support} />
+      <Route path="/feedback" component={Support} />
       <Route path={"/privacy"} component={PrivacyPolicy} />
       <Route path={"/terms"} component={TermsOfService} />
       <Route path={"/404"} component={NotFound} />
