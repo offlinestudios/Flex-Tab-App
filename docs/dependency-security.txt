@@ -10,7 +10,6 @@ from count differences. Capacitor iOS/Android are no longer flagged in this snap
 
 Remaining critical package chains:
 - @clerk/shared: node_modules/@clerk/shared
-- proxy-addr: node_modules/proxy-addr
 - tar: node_modules/@capacitor/assets/node_modules/tar, node_modules/tar
 - tinypool: node_modules/tinypool
 - vitest: node_modules/vitest
@@ -23,3 +22,9 @@ audit-fix-force applied. This is not a complete security clearance.
 
 Release gates: remaining advisories, patched-runtime auth/media/navigation testing
 on physical devices, Android native build, and updated final iOS archive validation.
+
+Proxy address patch — 2026-10-07
+Express transitive proxy-addr updated2.0.7 to2.0.8 in npm and pnpm locks.
+Addresses GHSA-jqcg-44mw-7w3h; runtime dependency requirements unchanged.
+TypeScript check and eight mobile CORS unit/integration tests pass.
+Registry audit after update:61 findings, including4 critical; other chains remain.
