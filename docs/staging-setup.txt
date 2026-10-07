@@ -1,0 +1,28 @@
+FlexTab staging setup
+
+Railway project: 3881ba66-1002-4397-a671-6279a4f96e5a
+Empty staging environment: bb91a223-b06a-4351-bbe7-d1ebbdd3b4a3
+Created without copying production services, variables or data. No services deployed.
+
+Before deployment:
+1. Confirm additional hosting budget before provisioning billable app/database services.
+2. Create an isolated Supabase auth/storage project. The owner must enter its database
+   password through Supabase; never paste credentials into chat. Use the same owning
+   organization, a clear FlexTab staging name, and a suitable available Canadian region.
+   Do not automatically expose application tables through the Data API.
+3. Provision separate Railway PostgreSQL and app services, source the release branch,
+   and set references to staging DATABASE_URL and staging auth/storage configuration.
+   Never duplicate production service-role keys or storage credentials into testing.
+4. On the new empty database, run npm run db:initialize with DATABASE_URL and
+   FLEXTAB_INITIALIZE_EMPTY_DATABASE=yes in the deployment environment. This command
+   takes a transaction/advisory lock and refuses a public schema containing tables,
+   sequences, views, foreign tables, enum types or domains. All creation rolls back
+   on failure. It copies no user data. Do not run against an existing database.
+5. Remove the opt-in variable after initialization. Normal server startup applies
+   idempotent incremental migrations. Configure the native build with staging public
+   auth credentials and API URL; keep the App Store build pointed to production.
+6. Test disposable sign-up, profile save/restart, workouts, media, block/report/admin
+   removal and account deletion/retry. The R2 skip flag is valid only when staging
+   truly has never used R2; use dedicated staging R2 credentials when covering it.
+7. Verify Apple provider/revocation, privacy inventory, moderation operations and
+   physical-device behavior before TestFlight. Staging is not a production release.

@@ -30,6 +30,11 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci --legacy-peer-deps
+      - name: Initialize empty test database
+        run: npm run db:initialize
+        env:
+          DATABASE_URL: ${{ env.TEST_DATABASE_URL }}
+          FLEXTAB_INITIALIZE_EMPTY_DATABASE: 'yes'
       - run: npm run check
       # Live R2 integration tests require a dedicated test bucket and run separately.
       - run: npm run test:local
