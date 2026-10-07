@@ -11,6 +11,7 @@ import { createContext } from "./railway-context";
 import { handleAvatarUpload } from "./avatarUpload";
 import { handleMediaUpload } from "./mediaUpload";
 import { handleGenerateWorkoutCard } from "./workoutCardImage";
+import { ENV } from "./_core/env";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -34,6 +35,8 @@ async function runMigrations() {
     await pool.query(`ALTER TABLE "set_logs" ADD COLUMN IF NOT EXISTS "distance" numeric(6, 2);`);
     await pool.query(`ALTER TABLE "set_logs" ADD COLUMN IF NOT EXISTS "distanceUnit" varchar(10);`);
     await pool.query(`ALTER TABLE "set_logs" ADD COLUMN IF NOT EXISTS "calories" integer;`);
+    // 0001b: routePolyline column on set_logs (GPS route data for outdoor cardio)
+    await pool.query(`ALTER TABLE "set_logs" ADD COLUMN IF NOT EXISTS "routePolyline" text;`);
 
     // 0002: community tables (posts, post_media, post_likes, post_comments)
     await pool.query(`
@@ -163,6 +166,86 @@ async function startServer() {
 
   // Workout card PNG generation (server-side satori rendering — avoids html2canvas iOS failures)
   app.post("/api/generate-workout-card", handleGenerateWorkoutCard);
+
+  // Google Maps JS script proxy — injects API key server-side so it never touches the client
+  // Frontend loads: /api/maps/js?libraries=...&callback=...
+  // Server fetches: https://maps.googleapis.com/maps/api/js?key=REAL_KEY&...
+  //
+  // IMPORTANT: Google Maps JS API validates the HTTP Referer of the request.
+  // When this proxy fetches the script, Google sees the Railway server IP, not
+  // the user's browser. We therefore send the app's public domain as the Referer
+  // so that HTTP-referrer restrictions on the key pass correctly.
+  // Set APP_DOMAIN in Railway env vars to your public URL, e.g.
+  //   APP_DOMAIN=https://flextab.up.railway.app
+  app.get("/api/maps/js", async (req, res) => {
+    const apiKey = ENV.googleMapsApiKey;
+    if (!apiKey) {
+      res.status(503).send('// Google Maps API key not configured on server');
+      return;
+    }
+    try {
+      const params = new URLSearchParams();
+      params.set("key", apiKey);
+      // Forward all query params from client except key (we inject ours)
+      for (const [k, v] of Object.entries(req.query)) {
+        if (k !== "key") params.set(k, String(v));
+      }
+      const mapsUrl = `https://maps.googleapis.com/maps/api/js?${params.toString()}`;
+      // Build the Referer to send to Google:
+      // Priority: APP_DOMAIN env var > Origin header > Referer header > Host header
+      // APP_DOMAIN must be set in Railway to match the allowed referrers on the API key.
+      const appOrigin =
+        ENV.appDomain ||
+        (req.headers.origin as string | undefined) ||
+        (req.headers.referer as string | undefined) ||
+        `https://${req.headers.host}`;
+      const upstream = await fetch(mapsUrl, {
+        headers: {
+          'Referer': appOrigin,
+          'Origin': appOrigin,
+          'User-Agent': 'Mozilla/5.0 (compatible; FlexTab/1.0)',
+        },
+      });
+      const text = await upstream.text();
+      res.setHeader("Content-Type", "application/javascript; charset=utf-8");
+      res.setHeader("Cache-Control", "public, max-age=3600");
+      res.send(text);
+    } catch (err) {
+      console.error('[Maps Proxy] Error fetching Maps script:', err);
+      res.status(502).send('// Failed to load Google Maps script');
+    }
+  });
+
+  // Google Static Maps image proxy — used for route thumbnails in workout history
+  // Frontend loads: /api/maps/static?path=...&size=...&style=...
+  // Server fetches: https://maps.googleapis.com/maps/api/staticmap?key=REAL_KEY&...
+  app.get("/api/maps/static", async (req, res) => {
+    const apiKey = ENV.googleMapsApiKey;
+    if (!apiKey) {
+      res.status(503).send('Google Maps API key not configured');
+      return;
+    }
+    try {
+      const params = new URLSearchParams();
+      params.set("key", apiKey);
+      // Forward all query params from client except key (we inject ours)
+      // Note: style and path can appear multiple times, so we use append
+      const rawQuery = req.url.split('?')[1] || '';
+      const incoming = new URLSearchParams(rawQuery);
+      Array.from(incoming.entries()).forEach(([k, v]) => {
+        if (k !== "key") params.append(k, v);
+      });
+      const staticUrl = `https://maps.googleapis.com/maps/api/staticmap?${params.toString()}`;
+      const upstream = await fetch(staticUrl);
+      const buffer = await upstream.arrayBuffer();
+      res.setHeader("Content-Type", upstream.headers.get("content-type") || "image/png");
+      res.setHeader("Cache-Control", "public, max-age=86400");
+      res.send(Buffer.from(buffer));
+    } catch (err) {
+      console.error('[Static Maps Proxy] Error:', err);
+      res.status(502).send('Failed to load static map');
+    }
+  });
 
   // tRPC API endpoints
   console.log('[Server] Setting up tRPC API at /api/trpc');

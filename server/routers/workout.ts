@@ -17,6 +17,12 @@ import {
   updateSessionDuration,
 } from "../db";
 
+const CUSTOM_EXERCISE_CATEGORIES = ["Chest", "Back", "Arms", "Shoulders", "Legs", "Core"] as const;
+const customExerciseCategorySchema = z.string().min(1).refine(
+  category => CUSTOM_EXERCISE_CATEGORIES.includes(category as (typeof CUSTOM_EXERCISE_CATEGORIES)[number]),
+  { message: "Category must be one of the active exercise categories." }
+);
+
 export const workoutRouter = router({
   // Set Logs - with automatic session management
   logSet: protectedProcedure
@@ -34,6 +40,7 @@ export const workoutRouter = router({
         distance: z.number().nonnegative().optional(),
         distanceUnit: z.enum(['miles', 'km']).optional(),
         calories: z.number().int().nonnegative().optional(),
+        routePolyline: z.string().optional(), // JSON-encoded GPS route [{lat,lng},...]
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -53,8 +60,9 @@ export const workoutRouter = router({
         distance: input.distance !== undefined ? input.distance.toString() : undefined,
         distanceUnit: input.distanceUnit,
         calories: input.calories,
+        routePolyline: input.routePolyline,
       });
-      return { success: true, id: newRow?.id };
+      return { success: true, id: newRow?.id, sessionId };
     }),
 
   // Save workout duration when the user finishes a workout
@@ -69,7 +77,7 @@ export const workoutRouter = router({
       // Find the session for this date (it must already exist since sets were logged)
       const sessionId = await findOrCreateSession(ctx.user.id, input.date);
       await updateSessionDuration(sessionId, ctx.user.id, input.durationSeconds);
-      return { success: true };
+      return { success: true, sessionId };
     }),
 
   getSetLogs: protectedProcedure.query(async ({ ctx }) => {
@@ -95,6 +103,7 @@ export const workoutRouter = router({
         distance: z.number().nonnegative().optional(),
         distanceUnit: z.enum(['miles', 'km']).optional(),
         calories: z.number().int().nonnegative().optional(),
+        routePolyline: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -179,7 +188,7 @@ export const workoutRouter = router({
     .input(
       z.object({
         name: z.string().min(1),
-        category: z.string().min(1),
+        category: customExerciseCategorySchema,
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -200,7 +209,7 @@ export const workoutRouter = router({
       z.object({
         id: z.number().int().positive(),
         name: z.string().min(1).optional(),
-        category: z.string().min(1).optional(),
+        category: customExerciseCategorySchema.optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {

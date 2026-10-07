@@ -44,7 +44,10 @@ interface CardioExerciseCardProps {
   pausedElapsed?: number;
   isTimerRunning?: boolean;
   isTimerStopped?: boolean;
+  distance?: number;
+  distanceUnit?: 'miles' | 'km';
   onTimerUpdate?: (exerciseId: string, startTimestamp: number | null, pausedElapsed: number, isRunning: boolean, isStopped: boolean) => void;
+  onMetricsUpdate?: (exerciseId: string, metrics: { distance: number; distanceUnit: 'miles' | 'km' }) => void;
 }
 
 /* ─── Sparkline placeholder heights ─── */
@@ -152,11 +155,25 @@ export function CardioExerciseCard({
   pausedElapsed: externalPausedElapsed,
   isTimerRunning: externalIsTimerRunning,
   isTimerStopped: externalIsTimerStopped,
+  distance: externalDistance,
+  distanceUnit: externalDistanceUnit,
   onTimerUpdate,
+  onMetricsUpdate,
 }: CardioExerciseCardProps) {
-  const [distance, setDistance] = useState(0);
-  const [distanceUnit, setDistanceUnit] = useState<'miles' | 'km'>('miles');
+  const [localDistance, setLocalDistance] = useState(0);
+  const [localDistanceUnit, setLocalDistanceUnit] = useState<'miles' | 'km'>('miles');
   const [isLogging, setIsLogging] = useState(false);
+
+  const distance = externalDistance !== undefined ? externalDistance : localDistance;
+  const distanceUnit = externalDistanceUnit !== undefined ? externalDistanceUnit : localDistanceUnit;
+
+  const updateMetrics = (nextDistance: number, nextDistanceUnit: 'miles' | 'km') => {
+    if (onMetricsUpdate) onMetricsUpdate(exercise.id, { distance: nextDistance, distanceUnit: nextDistanceUnit });
+    else {
+      setLocalDistance(nextDistance);
+      setLocalDistanceUnit(nextDistanceUnit);
+    }
+  };
 
   /* ── Timer state (external or local) ── */
   const [localStartTimestamp, setLocalStartTimestamp] = useState<number | null>(null);
@@ -205,7 +222,7 @@ export function CardioExerciseCard({
   function handleReset() {
     if (onTimerUpdate) onTimerUpdate(exercise.id, null, 0, false, false);
     else { setLocalStartTimestamp(null); setLocalPausedElapsed(0); setLocalIsTimerRunning(false); setLocalIsTimerStopped(false); }
-    setDistance(0);
+    updateMetrics(0, distanceUnit);
   }
 
   /* ── Log ── */
@@ -429,7 +446,7 @@ export function CardioExerciseCard({
 
         {/* Distance knob */}
         <div style={{ paddingBottom: 14, borderBottom: '1px solid var(--border)', marginBottom: 14 }}>
-          <DistanceKnob value={distance} unit={distanceUnit} onChange={setDistance} />
+          <DistanceKnob value={distance} unit={distanceUnit} onChange={(nextDistance) => updateMetrics(nextDistance, distanceUnit)} />
         </div>
 
         {/* Distance unit toggle */}
@@ -439,7 +456,7 @@ export function CardioExerciseCard({
             {(['miles', 'km'] as const).map(u => (
               <button
                 key={u}
-                onClick={() => setDistanceUnit(u)}
+                onClick={() => updateMetrics(distance, u)}
                 style={{
                   padding: '6px 14px', borderRadius: 20, border: 'none', cursor: 'pointer',
                   background: distanceUnit === u ? 'var(--foreground)' : 'var(--secondary)',

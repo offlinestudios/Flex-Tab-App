@@ -25,6 +25,7 @@ import { formatDateFull } from "@/lib/dateUtils";
 import { Loader2 } from "lucide-react";
 import { PRESET_EXERCISES as EXPANDED_EXERCISES, EXERCISE_CATEGORIES } from "@/lib/exercises";
 import { getExerciseDetail } from "@/lib/exerciseDetails";
+import { calculateCalories } from "@/utils/calorieCalculations";
 import { useTheme } from "@/contexts/ThemeContext";
 import type { ExerciseDetail } from "@/lib/exerciseDetails";
 import { ExerciseDetailSheet } from "@/components/ExerciseDetailSheet";
@@ -34,6 +35,7 @@ import { ShareWorkoutDialog } from "@/components/ShareWorkoutDialog";
 import { UserMenu } from "@/components/UserMenu";
 import { ExerciseCardNew } from "@/components/ExerciseCardNew";
 import { CardioExerciseCard } from "@/components/CardioExerciseCard";
+import { CardioGPSTracker, GPS_TRACKABLE } from "@/components/CardioGPSTracker";
 import { CalendarModal } from "@/components/CalendarModal";
 import { useLocalStorageMigration } from "@/hooks/useLocalStorageMigration";
 import { ExerciseBrowser } from "@/components/ExerciseBrowser";
@@ -64,10 +66,12 @@ interface SetLog {
   distance?: number; // Distance covered (miles or kilometers)
   distanceUnit?: 'miles' | 'km'; // Unit for distance measurement
   calories?: number; // Calories burned (cardio)
+  routePolyline?: string; // JSON GPS route [{lat,lng},...] for outdoor activities
 }
 
 interface WorkoutSession {
   date: string;
+  sessionKey: string; // unique key: date for weights, date-cardio-ExerciseName for GPS cardio
   exercises: SetLog[];
   durationSeconds?: number | null;
   sessionId?: number | null;
@@ -84,6 +88,24 @@ interface Measurement {
 }
 
 const PRESET_EXERCISES: Exercise[] = EXPANDED_EXERCISES;
+
+const EXERCISE_NAME_ALIASES: Record<string, string> = {
+  "incline dumbbell biceps": "incline dumbbell curls",
+  "cable rows": "seated cable row",
+  "overhead lat pull down": "lat pulldown",
+  "reverse dumbbell fly": "reverse fly",
+  "rope face pulls": "face pulls",
+};
+
+function canonicalExerciseName(name: string): string {
+  const normalized = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+
+  return EXERCISE_NAME_ALIASES[normalized] ?? normalized;
+}
 
 export default function Home() {
   // The userAuth hooks provides authentication state
@@ -162,27 +184,30 @@ export default function Home() {
     refetchOnWindowFocus: false,
   });
   
-  // Transform flat set logs into grouped workout sessions
+  // Transform flat set logs into grouped workout sessions.
+  // GPS cardio activities (Running/Walking/Cycling with a routePolyline) get their own
+  // session card keyed by `${date}-cardio-${exerciseName}` so they appear separately from
+  // weight sessions logged on the same day.
   const workoutSessions: WorkoutSession[] = useMemo(() => {
     const sessionMap = new Map<string, SetLog[]>();
-    // Track the session duration per date (last non-null value wins)
     const durationMap = new Map<string, number | null>();
-    // Track the sessionId per date (first log's sessionId wins)
     const sessionIdMap = new Map<string, number | null>();
-    
+
     setLogsData.forEach((log: any) => {
-      // Extract date from the log (assuming it has a date field)
       const date = log.date || new Date(log.createdAt).toLocaleDateString("en-US", {
         year: "numeric",
         month: "numeric",
         day: "numeric",
       });
-      
-      if (!sessionMap.has(date)) {
-        sessionMap.set(date, []);
+
+      // GPS cardio activities get their own session card keyed by exercise name
+      const isGPSCardio = GPS_TRACKABLE.includes(log.exercise) && !!log.routePolyline;
+      const sessionKey = isGPSCardio ? `${date}-cardio-${log.exercise}` : date;
+
+      if (!sessionMap.has(sessionKey)) {
+        sessionMap.set(sessionKey, []);
       }
-      
-      sessionMap.get(date)!.push({
+      sessionMap.get(sessionKey)!.push({
         id: log.id.toString(),
         date: date,
         exercise: log.exercise,
@@ -195,25 +220,25 @@ export default function Home() {
         distance: log.distance ? parseFloat(log.distance) : undefined,
         distanceUnit: log.distanceUnit,
         calories: log.calories ?? undefined,
+        routePolyline: log.routePolyline ?? undefined,
       });
 
-      // Capture session duration if present (all rows for same session share the same value)
       if (log.sessionDurationSeconds != null) {
-        durationMap.set(date, log.sessionDurationSeconds);
-      } else if (!durationMap.has(date)) {
-        durationMap.set(date, null);
+        durationMap.set(sessionKey, log.sessionDurationSeconds);
+      } else if (!durationMap.has(sessionKey)) {
+        durationMap.set(sessionKey, null);
       }
-      // Capture sessionId (first log per date wins)
-      if (!sessionIdMap.has(date)) {
-        sessionIdMap.set(date, log.sessionId ?? null);
+      if (!sessionIdMap.has(sessionKey)) {
+        sessionIdMap.set(sessionKey, log.sessionId ?? null);
       }
     });
-    
-    const sessions = Array.from(sessionMap.entries()).map(([date, exercises]) => ({
-      date,
+
+    const sessions = Array.from(sessionMap.entries()).map(([sessionKey, exercises]) => ({
+      date: exercises[0]?.date ?? sessionKey,
+      sessionKey,
       exercises,
-      durationSeconds: durationMap.get(date) ?? null,
-      sessionId: sessionIdMap.get(date) ?? null,
+      durationSeconds: durationMap.get(sessionKey) ?? null,
+      sessionId: sessionIdMap.get(sessionKey) ?? null,
     }));
     return sessions;
   }, [setLogsData]);
@@ -239,6 +264,7 @@ export default function Home() {
     isRunning: boolean; 
     isStopped: boolean 
   }>>({});
+  const [cardioMetrics, setCardioMetrics] = useState<Record<string, { distance: number; distanceUnit: 'miles' | 'km' }>>({});
   
   // Swipe gesture tracking
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -316,11 +342,12 @@ export default function Home() {
           time: newSet.time,
           createdAt: new Date(),
           date: newSet.date,
-          category: null,
-          duration: null,
-          distance: null,
-          distanceUnit: null,
-          calories: null,
+          category: newSet.category ?? null,
+          duration: newSet.duration ?? null,
+          distance: newSet.distance !== undefined ? String(newSet.distance) : null,
+          distanceUnit: newSet.distanceUnit ?? null,
+          calories: newSet.calories ?? null,
+          routePolyline: newSet.routePolyline ?? null,
         },
       ] as any);
       
@@ -410,12 +437,18 @@ export default function Home() {
   // Sync custom exercises with API data
   useEffect(() => {
     if (customExercisesData) {
-      const customExercises = customExercisesData.map(ex => ({
-        id: ex.id.toString(),
-        name: ex.name,
-        category: ex.category,
-        isCustom: true,
-      }));
+      // Keep the active catalog free of the removed Cardio category and avoid
+      // showing legacy custom exercises that are now built-in under an equivalent name.
+      const presetNames = new Set(PRESET_EXERCISES.map(ex => canonicalExerciseName(ex.name)));
+      const customExercises = customExercisesData
+        .filter(ex => ex.category !== "Cardio")
+        .filter(ex => !presetNames.has(canonicalExerciseName(ex.name)))
+        .map(ex => ({
+          id: ex.id.toString(),
+          name: ex.name,
+          category: ex.category,
+          isCustom: true,
+        }));
       setAllExercises([...PRESET_EXERCISES, ...customExercises]);
     }
   }, [customExercisesData]);
@@ -478,6 +511,16 @@ export default function Home() {
         delete next[exercise.id];
         return next;
       });
+      setCardioTimers((prev) => {
+        const next = { ...prev };
+        delete next[exercise.id];
+        return next;
+      });
+      setCardioMetrics((prev) => {
+        const next = { ...prev };
+        delete next[exercise.id];
+        return next;
+      });
     } else {
       setSelectedExercises([...selectedExercises, exercise]);
     }
@@ -490,7 +533,23 @@ export default function Home() {
     }));
   };
 
-  const handleLogSet = async (
+  const handleCardioMetricsUpdate = (exerciseId: string, metrics: { distance: number; distanceUnit: 'miles' | 'km' }) => {
+    setCardioMetrics(prev => ({
+      ...prev,
+      [exerciseId]: metrics,
+    }));
+  };
+
+  const getCardioTimerElapsedSeconds = (exerciseId: string) => {
+    const timer = cardioTimers[exerciseId];
+    if (!timer) return 0;
+    if (timer.isRunning && timer.startTimestamp) {
+      return Math.floor((Date.now() - timer.startTimestamp) / 1000) + timer.pausedElapsed;
+    }
+    return timer.pausedElapsed;
+  };
+
+  const saveSetLog = async (
     exercise: string,
     sets: number,
     reps: number,
@@ -499,7 +558,8 @@ export default function Home() {
     duration?: number,
     distance?: number,
     distanceUnit?: 'miles' | 'km',
-    calories?: number
+    calories?: number,
+    routePolyline?: string,
   ) => {
     const time = new Date().toLocaleTimeString("en-US", {
       hour: "2-digit",
@@ -508,7 +568,7 @@ export default function Home() {
       hour12: true,
     });
 
-    await logSetMutation.mutateAsync({
+    return await logSetMutation.mutateAsync({
       date: workoutDateKey,
       exercise,
       sets,
@@ -520,7 +580,78 @@ export default function Home() {
       distance,
       distanceUnit,
       calories,
+      routePolyline,
     });
+  };
+
+  const handleLogSet = async (
+    exercise: string,
+    sets: number,
+    reps: number,
+    weight: number,
+    category?: string,
+    duration?: number,
+    distance?: number,
+    distanceUnit?: 'miles' | 'km',
+    calories?: number,
+    routePolyline?: string,
+  ) => {
+    await saveSetLog(exercise, sets, reps, weight, category, duration, distance, distanceUnit, calories, routePolyline);
+  };
+
+  const logPendingCardioSessions = async (dateKey: string) => {
+    const loggedCardio: SetLog[] = [];
+    let workoutSessionId: number | null = null;
+
+    for (const exercise of selectedExercises) {
+      if (exercise.category !== 'Cardio') continue;
+      // GPS-trackable activities (Running, Walking, Cycling) save themselves via the
+      // CardioGPSTracker "Save Activity" button — skip them here to avoid duplicates.
+      if (GPS_TRACKABLE.includes(exercise.name)) continue;
+
+      const elapsedSeconds = getCardioTimerElapsedSeconds(exercise.id);
+      if (elapsedSeconds <= 0) continue;
+
+      const durationMinutes = Math.max(1, Math.round(elapsedSeconds / 60));
+      const metrics = cardioMetrics[exercise.id] ?? { distance: 0, distanceUnit: 'miles' as const };
+      const weightKg = latestMeasurement?.weight ? latestMeasurement.weight * 0.453592 : 70;
+      const calories = calculateCalories(exercise.name, durationMinutes, weightKg);
+      const loggedAt = new Date().toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true,
+      });
+      const result = await saveSetLog(
+        exercise.name,
+        1,
+        0,
+        0,
+        exercise.category,
+        durationMinutes,
+        metrics.distance,
+        metrics.distanceUnit,
+        calories,
+      );
+
+      workoutSessionId = result?.sessionId ?? workoutSessionId;
+      loggedCardio.push({
+        id: result?.id ? String(result.id) : `cardio-${exercise.id}-${Date.now()}`,
+        date: dateKey,
+        exercise: exercise.name,
+        sets: 1,
+        reps: 0,
+        weight: 0,
+        time: loggedAt,
+        category: exercise.category,
+        duration: durationMinutes,
+        distance: metrics.distance,
+        distanceUnit: metrics.distanceUnit,
+        calories,
+      });
+    }
+
+    return { loggedCardio, workoutSessionId };
   };
 
   const handleDeleteLog = async (logId: string, sessionDate: string) => {
@@ -895,21 +1026,39 @@ export default function Home() {
         onEnd={() => {
           setWorkoutTimerActive(false);
           setSelectedExercises([]);
+          setExerciseDrafts({});
+          setCardioTimers({});
+          setCardioMetrics({});
           setCurrentExerciseIndex(0);
           // Reset workout date back to today for the next session
           setWorkoutDateKey(new Date().toLocaleDateString("en-US", { year: "numeric", month: "numeric", day: "numeric" }));
         }}
-        onFinishAndShare={(durationStr) => {
-          // Save duration to database
-          const durationSecs = durationStr.split(':').reduce((acc, t, i, arr) =>
-            i === arr.length - 1 ? acc + parseInt(t) : acc + parseInt(t) * 60, 0
-          );
-          finishWorkoutMutation.mutate({ date: workoutDateKey, durationSeconds: durationSecs });
-          // Open the share dialog with the session data and elapsed duration
-          const session = workoutSessions.find(s => s.date === workoutDateKey);
-          if (session && session.exercises.length > 0) {
-            setShareWorkoutData({ exercises: session.exercises, date: workoutDateKey, duration: durationStr, workoutSessionId: session.sessionId ?? null });
-            setShowShareDialog(true);
+        onFinishAndShare={async (durationStr) => {
+          try {
+            const dateKey = workoutDateKey;
+            const durationSecs = durationStr
+              .split(':')
+              .reduce((acc, part) => (acc * 60) + (parseInt(part, 10) || 0), 0);
+
+            const { loggedCardio, workoutSessionId: cardioSessionId } = await logPendingCardioSessions(dateKey);
+            const finishResult = await finishWorkoutMutation.mutateAsync({ date: dateKey, durationSeconds: durationSecs });
+
+            await utils.workout.getSetLogs.invalidate();
+
+            // Aggregate all sessions for this date (weights + GPS cardio may be separate sessions)
+            const existingSessions = workoutSessions.filter(s => s.date === dateKey);
+            const existingSession = existingSessions[0];
+            const existingExercises = existingSessions.flatMap(s => s.exercises);
+            const exercisesToShare = [...existingExercises, ...loggedCardio];
+            const workoutSessionId = cardioSessionId ?? existingSession?.sessionId ?? finishResult?.sessionId ?? null;
+
+            if (exercisesToShare.length > 0) {
+              setShareWorkoutData({ exercises: exercisesToShare, date: dateKey, duration: durationStr, workoutSessionId });
+              setShowShareDialog(true);
+            }
+          } catch (error) {
+            console.error('Failed to finish workout:', error);
+            alert('Failed to finish workout. Please try again.');
           }
         }}
       />
@@ -1084,6 +1233,80 @@ export default function Home() {
                 const cardioHistory = exHistory.filter(e => e.reps === 0);
                 const lastCardio = cardioHistory.length > 0 ? cardioHistory[cardioHistory.length - 1] : null;
                 const bestCardioDistance = cardioHistory.length > 0 ? Math.max(...cardioHistory.map(e => e.vol)) : 0;
+                const isGPSActivity = GPS_TRACKABLE.includes(exercise.name);
+
+                // ── GPS-trackable outdoor activities (Running, Walking, Cycling) ──
+                // Use the Strava-style CardioGPSTracker with live map + real metrics
+                if (isGPSActivity) {
+                  return (
+                    <div key={exercise.id} style={{
+                      background: 'var(--card)',
+                      borderRadius: 20,
+                      border: '1px solid var(--border)',
+                      overflow: 'hidden',
+                      marginBottom: 12,
+                    }}>
+                      {/* Card header */}
+                      <div style={{ padding: '16px 16px 8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+                          <h3 style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', margin: 0, letterSpacing: -0.5, lineHeight: 1.2 }}>
+                            {exercise.name}
+                          </h3>
+                          <button
+                            onClick={() => {
+                              const updated = selectedExercises.filter((e) => e.id !== exercise.id);
+                              setSelectedExercises(updated);
+                              setCurrentExerciseIndex(Math.min(safeIdx, updated.length - 1));
+                            }}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted-foreground)', flexShrink: 0, marginTop: 2 }}
+                            aria-label="Remove exercise"
+                          >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                              <circle cx="12" cy="5" r="1.5"/>
+                              <circle cx="12" cy="12" r="1.5"/>
+                              <circle cx="12" cy="19" r="1.5"/>
+                            </svg>
+                          </button>
+                        </div>
+                        <span style={{ marginTop: 6, padding: '4px 12px', borderRadius: 20, display: 'inline-block', background: 'var(--foreground)', color: 'var(--background)', fontSize: 12, fontWeight: 700 }}>
+                          {exercise.category}
+                        </span>
+                      </div>
+                      {/* Pagination dots */}
+                      {selectedExercises.length > 1 && (
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: 6, margin: '8px 0 0' }}>
+                          {Array.from({ length: selectedExercises.length }).map((_, i) => (
+                            <div key={i} style={{ width: i === safeIdx ? 20 : 7, height: 7, borderRadius: 4, background: i === safeIdx ? 'var(--foreground)' : 'var(--border)', transition: 'width .2s' }} />
+                          ))}
+                        </div>
+                      )}
+                      {/* GPS Tracker body */}
+                      <CardioGPSTracker
+                        exercise={exercise}
+                        distanceUnit={cardioMetrics[exercise.id]?.distanceUnit ?? 'miles'}
+                        userWeightLbs={latestMeasurement?.weight ? latestMeasurement.weight : undefined}
+                        onDistanceUnitChange={(unit) => handleCardioMetricsUpdate(exercise.id, { distance: cardioMetrics[exercise.id]?.distance ?? 0, distanceUnit: unit })}
+                        onLogSet={handleLogSet}
+                        onNext={() => {
+                          const nextIdx = safeIdx + 1;
+                          if (nextIdx < selectedExercises.length) {
+                            setCurrentExerciseIndex(nextIdx);
+                          } else {
+                            setShowExerciseBrowser(true);
+                          }
+                        }}
+                        onPrev={() => {
+                          if (safeIdx > 0) setCurrentExerciseIndex(safeIdx - 1);
+                        }}
+                        totalExercises={selectedExercises.length}
+                        currentIndex={safeIdx}
+                      />
+                    </div>
+                  );
+                }
+
+                // ── Indoor cardio (Swimming, Jump Rope, Rowing, etc.) ──
+                // Keep the existing manual timer + distance slider UI
                 return (
                   <CardioExerciseCard
                     key={exercise.id}
@@ -1092,6 +1315,16 @@ export default function Home() {
                     onRemove={(exerciseId) => {
                       const updated = selectedExercises.filter((e) => e.id !== exerciseId);
                       setSelectedExercises(updated);
+                      setCardioTimers((prev) => {
+                        const next = { ...prev };
+                        delete next[exerciseId];
+                        return next;
+                      });
+                      setCardioMetrics((prev) => {
+                        const next = { ...prev };
+                        delete next[exerciseId];
+                        return next;
+                      });
                       setCurrentExerciseIndex(Math.min(safeIdx, updated.length - 1));
                     }}
                     onNext={() => {
@@ -1115,7 +1348,10 @@ export default function Home() {
                     pausedElapsed={cardioTimers[exercise.id]?.pausedElapsed}
                     isTimerRunning={cardioTimers[exercise.id]?.isRunning}
                     isTimerStopped={cardioTimers[exercise.id]?.isStopped}
+                    distance={cardioMetrics[exercise.id]?.distance}
+                    distanceUnit={cardioMetrics[exercise.id]?.distanceUnit}
                     onTimerUpdate={handleTimerUpdate}
+                    onMetricsUpdate={handleCardioMetricsUpdate}
                     userWeightLbs={latestMeasurement?.weight ? latestMeasurement.weight : undefined}
                   />
                 );
@@ -1168,21 +1404,23 @@ export default function Home() {
             {/* Today's logged sets summary */}
             {(() => {
               const today = workoutDateKey;
-              const todaySession = workoutSessions.find(s => s.date === today);
-              if (!todaySession || todaySession.exercises.length === 0) return null;
+              const todaySessions = workoutSessions.filter(s => s.date === today);
+              const todayExercises = todaySessions.flatMap(s => s.exercises);
+              const todaySession = todaySessions[0];
+              if (!todaySession || todayExercises.length === 0) return null;
               const stats = {
-                sets: todaySession.exercises.reduce((sum, set) => sum + set.sets, 0),
-                reps: todaySession.exercises.reduce((sum, set) => sum + set.sets * set.reps, 0),
-                volume: todaySession.exercises.reduce((sum, set) => sum + set.sets * set.reps * set.weight, 0),
+                sets: todayExercises.reduce((sum, set) => sum + set.sets, 0),
+                reps: todayExercises.reduce((sum, set) => sum + set.sets * set.reps, 0),
+                volume: todayExercises.reduce((sum, set) => sum + set.sets * set.reps * set.weight, 0),
               };
               const byEx: Record<string, SetLog[]> = {};
-              todaySession.exercises.forEach(e => { if (!byEx[e.exercise]) byEx[e.exercise] = []; byEx[e.exercise].push(e); });
+              todayExercises.forEach(e => { if (!byEx[e.exercise]) byEx[e.exercise] = []; byEx[e.exercise].push(e); });
               return (
                 <div style={{ background:'var(--card)', borderRadius:20, border:'1px solid var(--border)', overflow:'hidden' }}>
                   <div style={{ padding:'16px 20px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                     <h3 style={{ fontSize:15, fontWeight:700, color:'var(--foreground)', margin:0 }}>{isLoggingToday ? "Today's Workout" : 'Workout Summary'}</h3>
                     <button
-                      onClick={() => { setShareWorkoutData({ exercises: todaySession.exercises, date: today, workoutSessionId: todaySession.sessionId ?? null }); setShowShareDialog(true); }}
+                      onClick={() => { setShareWorkoutData({ exercises: todayExercises, date: today, workoutSessionId: todaySession.sessionId ?? null }); setShowShareDialog(true); }}
                       style={{ display:'flex', alignItems:'center', gap:5, fontSize:13, fontWeight:600, color:'var(--foreground)', background:'none', border:'none', cursor:'pointer' }}
                     >
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -1255,7 +1493,7 @@ export default function Home() {
                 const dayTotalVol = session.exercises.reduce((s, e) => s + e.sets * e.reps * e.weight, 0);
                 const dayExCount = Object.keys(byEx).length;
                 return (
-                  <div key={session.date} style={{ background:'var(--card)', borderRadius:20, border:'1px solid var(--border)', overflow:'hidden' }}>
+                  <div key={session.sessionKey} style={{ background:'var(--card)', borderRadius:20, border:'1px solid var(--border)', overflow:'hidden' }}>
                     <div style={{ padding:'16px 20px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                       <h3 style={{ fontSize:15, fontWeight:700, color:'var(--foreground)', margin:0 }}>{formatDateFull(session.date)}</h3>
                       <button
@@ -1289,9 +1527,12 @@ export default function Home() {
                           const pace = totalDistance > 0 && totalDuration > 0
                             ? (totalDuration / totalDistance).toFixed(1)
                             : null;
+                          // Check if any set has a saved GPS route
+                          const routeSet = sets.find(s => s.routePolyline);
+                          const hasRoute = !!routeSet;
                           return (
                             <div key={exName} style={{ paddingBottom:14, marginBottom:14, borderBottom:'1px solid var(--border)' }}>
-                              {/* Header: exercise name + edit button — identical layout to strength card */}
+                              {/* Header: exercise name + edit button */}
                               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
                                 <p style={{ fontWeight:700, fontSize:14, color:'var(--foreground)', margin:0 }}>{exName}</p>
                                 {sets.length > 0 && (
@@ -1307,6 +1548,36 @@ export default function Home() {
                                   </button>
                                 )}
                               </div>
+                              {/* GPS Route Map (shown when route data exists) */}
+                              {hasRoute && (() => {
+                                let coords: Array<{lat: number; lng: number}> = [];
+                                try { coords = JSON.parse(routeSet!.routePolyline!); } catch {}
+                                if (coords.length < 2) return null;
+                                // Build a Google Static Maps URL via the server-side proxy (/api/maps/static)
+                                // This avoids exposing the API key to the client and works in all environments.
+                                // Sample points to stay under URL length limits (max ~60 points)
+                                const step = Math.max(1, Math.floor(coords.length / 60));
+                                const sampled = coords.filter((_, i) => i % step === 0);
+                                const pathStr = sampled.map(c => `${c.lat.toFixed(5)},${c.lng.toFixed(5)}`).join('|');
+                                const isDark = document.documentElement.classList.contains('dark');
+                                // FlexTab-branded map style: strip all POIs, use navy/grey palette
+                                const styleParams = isDark
+                                  ? '&style=feature:all|element:geometry|color:0x1a2332&style=feature:all|element:labels.text.fill|color:0x8896a8&style=feature:road|element:geometry|color:0x253347&style=feature:road|element:geometry.stroke|color:0x1a2332&style=feature:water|element:geometry|color:0x0d1520&style=feature:poi|visibility:off&style=feature:transit|visibility:off&style=feature:administrative|element:labels|visibility:off'
+                                  : '&style=feature:all|element:geometry|color:0xf0f1f3&style=feature:all|element:labels.text.fill|color:0x1a2332&style=feature:road|element:geometry|color:0xffffff&style=feature:road|element:geometry.stroke|color:0xe0e2e8&style=feature:water|element:geometry|color:0xc9d8e8&style=feature:poi|visibility:off&style=feature:transit|visibility:off&style=feature:administrative|element:labels|visibility:off';
+                                const lineColor = isDark ? '0xf0f1f3ff' : '0x1a2332ff';
+                                // Use same-origin /api/maps/static proxy (no CORS, no exposed key)
+                                const staticUrl = `/api/maps/static?size=600x200&scale=2&path=color:${lineColor}|weight:5|${pathStr}${styleParams}`;
+                                return (
+                                  <div style={{ borderRadius: 12, overflow: 'hidden', marginBottom: 10, height: 140 }}>
+                                    <img
+                                      src={staticUrl}
+                                      alt={`${exName} route map`}
+                                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                                      loading="lazy"
+                                    />
+                                  </div>
+                                );
+                              })()}
                               {/* Stats row: circular arc for duration + side stats */}
                               <div style={{ display:'flex', alignItems:'center', gap:20, marginTop:8 }}>
                                 {/* Circular arc — 60 min = full circle, uses app foreground colour */}
@@ -1319,17 +1590,9 @@ export default function Home() {
                                   return (
                                     <div style={{ position:'relative', width:size, height:size, flexShrink:0 }}>
                                       <svg width={size} height={size} style={{ transform:'rotate(-90deg)' }}>
-                                        {/* Track */}
                                         <circle cx={size/2} cy={size/2} r={R} fill="none" stroke="var(--border)" strokeWidth={stroke} />
-                                        {/* Progress */}
-                                        <circle
-                                          cx={size/2} cy={size/2} r={R} fill="none"
-                                          stroke="var(--foreground)" strokeWidth={stroke}
-                                          strokeDasharray={`${dash} ${circ}`}
-                                          strokeLinecap="round"
-                                        />
+                                        <circle cx={size/2} cy={size/2} r={R} fill="none" stroke="var(--foreground)" strokeWidth={stroke} strokeDasharray={`${dash} ${circ}`} strokeLinecap="round" />
                                       </svg>
-                                      {/* Centre label */}
                                       <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
                                         <span style={{ fontSize:16, fontWeight:800, color:'var(--foreground)', lineHeight:1 }}>{totalDuration > 0 ? totalDuration : '—'}</span>
                                         <span style={{ fontSize:9, color:'#9ca3af', fontWeight:500 }}>min</span>
@@ -1341,7 +1604,7 @@ export default function Home() {
                                 <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
                                   {totalDistance > 0 && (
                                     <div>
-                                      <span style={{ fontSize:15, fontWeight:800, color:'var(--foreground)' }}>{totalDistance.toFixed(1)}</span>
+                                      <span style={{ fontSize:15, fontWeight:800, color:'var(--foreground)' }}>{totalDistance.toFixed(2)}</span>
                                       <span style={{ fontSize:11, color:'#9ca3af', marginLeft:3 }}>{distUnit}</span>
                                       <span style={{ fontSize:11, color:'#9ca3af', marginLeft:6 }}>Distance</span>
                                     </div>
@@ -1816,7 +2079,7 @@ export default function Home() {
                 style={{ width:'100%', padding:'11px 14px', borderRadius:12, border:'1.5px solid var(--border)', fontSize:15, color: customExerciseCategory ? 'var(--foreground)' : '#9ca3af', background:'var(--background)', outline:'none', cursor:'pointer', boxSizing:'border-box' }}
               >
                 <option value="" disabled>Select a category…</option>
-                {['Chest','Back','Arms','Shoulders','Legs','Core','Cardio'].map(c => (
+                {EXERCISE_CATEGORIES.map(c => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
@@ -1881,7 +2144,7 @@ export default function Home() {
                 style={{ width:'100%', padding:'11px 14px', borderRadius:12, border:'1.5px solid var(--border)', fontSize:15, color:'var(--foreground)', background:'var(--background)', outline:'none', cursor:'pointer', boxSizing:'border-box' }}
               >
                 <option value="" disabled>Select a category…</option>
-                {['Chest','Back','Arms','Shoulders','Legs','Core','Cardio'].map(c => (
+                {EXERCISE_CATEGORIES.map(c => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
@@ -2148,7 +2411,7 @@ export default function Home() {
       <CalendarModal
         open={showCalendarModal}
         onOpenChange={setShowCalendarModal}
-        workoutDates={workoutSessions.map(s => s.date)}
+        workoutDates={Array.from(new Set(workoutSessions.map(s => s.date)))}
         selectedDate={selectedDate}
         onDateSelect={(dateYMD) => {
           // dateYMD is YYYY-MM-DD from CalendarModal — convert to M/D/YYYY for history filter

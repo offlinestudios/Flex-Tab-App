@@ -98,6 +98,7 @@ interface ExerciseRow {
   duration?: number;
   distance?: number;
   distanceUnit?: "miles" | "km";
+  routePolyline?: string;
 }
 
 interface CardData {
@@ -181,7 +182,7 @@ function computeChipH(exercises: ExerciseRow[]): number {
 }
 
 // ── Card builder ──────────────────────────────────────────────────────────────
-function buildCard(data: CardData) {
+function buildCard(data: CardData, routeMapB64?: string) {
   const C      = THEMES[data.theme === "dark" ? "dark" : "light"];
   const isDark = data.theme === "dark";
   const { date, duration, totalSets, totalReps, volumeDisplay, exercises, userName, userAvatarUrl } = data;
@@ -423,6 +424,8 @@ function buildCard(data: CardData) {
   };
 
   // ── Cardio graphic filler (pure-cardio only) ──────────────────────────────
+  // If a GPS route map image is available, use it; otherwise fall back to the stick figure
+  const routeMapH = Math.round(CONTENT_W * 0.56); // ~16:9 aspect ratio
   const cardioGraphicEl = pureCardio ? {
     type: "div",
     props: {
@@ -430,10 +433,14 @@ function buildCard(data: CardData) {
       children: [{
         type: "img",
         props: {
-          src: CARDIO_GRAPHIC_B64,
+          src: routeMapB64 ?? CARDIO_GRAPHIC_B64,
           width: CONTENT_W,
-          height: Math.round(CONTENT_W * 640 / 920),
-          style: { opacity: 0.92 },
+          height: routeMapB64 ? routeMapH : Math.round(CONTENT_W * 640 / 920),
+          style: {
+            borderRadius: routeMapB64 ? 20 : 0,
+            opacity: 0.97,
+            objectFit: "cover",
+          },
         },
       }],
     },
@@ -463,7 +470,45 @@ function buildCard(data: CardData) {
   };
 }
 
-// ── HTTP handler ─────────────────────────────────────────────────────────────
+// ── Fetch GPS route map as base64 data URI + HTTP handler ───────────────────────
+async function fetchRouteMapB64(routePolyline: string, apiKey: string): Promise<string | null> {
+  try {
+    const coords: Array<{ lat: number; lng: number }> = JSON.parse(routePolyline);
+    if (!coords || coords.length < 2) return null;
+
+    // Build Static Maps URL with FlexTab-branded style
+    const params = new URLSearchParams({
+      size:    '920x515',
+      scale:   '2',
+      maptype: 'roadmap',
+      key:     apiKey,
+    });
+    const styleParams = [
+      'feature:poi|visibility:off',
+      'feature:transit|visibility:off',
+      'feature:road|element:labels.icon|visibility:off',
+      'feature:landscape|element:geometry|color:0xf0f1f3',
+      'feature:road|element:geometry|color:0xffffff',
+      'feature:road.arterial|element:geometry|color:0xe8eaed',
+      'feature:water|element:geometry|color:0xc9d8e8',
+    ];
+    const styleStr   = styleParams.map(s => `&style=${encodeURIComponent(s)}`).join('');
+    const pathStr    = `&path=color:0x1a2332ff|weight:5|${coords.map(c => `${c.lat},${c.lng}`).join('|')}`;
+    const startMark  = `&markers=color:green|label:S|${coords[0].lat},${coords[0].lng}`;
+    const endMark    = `&markers=color:red|label:F|${coords[coords.length - 1].lat},${coords[coords.length - 1].lng}`;
+
+    const url = `https://maps.googleapis.com/maps/api/staticmap?${params.toString()}${styleStr}${pathStr}${startMark}${endMark}`;
+    const response = await fetch(url);
+    if (!response.ok) { console.warn('[workout-card] Static map fetch failed:', response.status); return null; }
+    const buffer = await response.arrayBuffer();
+    const mime   = response.headers.get('content-type') || 'image/png';
+    return `data:${mime};base64,${Buffer.from(buffer).toString('base64')}`;
+  } catch (err: any) {
+    console.warn('[workout-card] fetchRouteMapB64 error:', err?.message);
+    return null;
+  }
+}
+
 export async function handleGenerateWorkoutCard(req: Request, res: Response) {
   try {
     const data: CardData = req.body;
@@ -479,6 +524,17 @@ export async function handleGenerateWorkoutCard(req: Request, res: Response) {
       return { ...ex, sets: expanded, totalSets: expanded.length };
     });
 
+    // Fetch GPS route map image if any exercise has a routePolyline
+    let routeMapB64: string | undefined;
+    const { ENV } = await import("./_core/env.js");
+    if (ENV.googleMapsApiKey) {
+      const routeEx = data.exercises.find(ex => ex.routePolyline);
+      if (routeEx?.routePolyline) {
+        const fetched = await fetchRouteMapB64(routeEx.routePolyline, ENV.googleMapsApiKey);
+        if (fetched) routeMapB64 = fetched;
+      }
+    }
+
     const { default: satori } = await import("satori");
     const { Resvg }           = await import("@resvg/resvg-js");
 
@@ -491,7 +547,7 @@ export async function handleGenerateWorkoutCard(req: Request, res: Response) {
       ],
     };
 
-    const pageElement = buildCard(data);
+    const pageElement = buildCard(data, routeMapB64);
 
     const svg       = await satori(pageElement as any, satoriOpts);
     const resvg     = new Resvg(svg, { fitTo: { mode: "width", value: STORY_W } });

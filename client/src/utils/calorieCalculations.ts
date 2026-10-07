@@ -5,6 +5,9 @@ export const MET_VALUES: Record<string, number> = {
   // Running (based on pace)
   "Running": 10.0, // ~6 mph / 10 min/mile
   
+  // Walking
+  "Walking": 3.5, // moderate pace, ~3 mph
+  
   // Cycling (based on effort)
   "Cycling": 8.0, // moderate effort, 12-14 mph
   
