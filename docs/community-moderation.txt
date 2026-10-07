@@ -30,8 +30,9 @@ This is not a complete live moderation operation. Required before community laun
   automatically and cleanup fails closed. Resolve these records before release.
 - Decide and implement pre-publication objectionable-content filtering and repeat-abuser
   enforcement. Current intake/removal alone does not satisfy all community requirements.
-- Follow/block now share a transaction-level pair lock and have a concurrency test.
-  Exercise and serialize remaining concurrent block/comment/like writes.
+- Follow, likes and comments now share the block transaction’s account-pair lock.
+  PostgreSQL tests cover a follow/block race and likes/comments waiting for a block
+  to commit, then rechecking visibility before writing.
 - Verify storage access policies; reporting/removal does not prevent a user from
   re-uploading content, and this implementation does not ban accounts.
 

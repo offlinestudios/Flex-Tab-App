@@ -1,5 +1,5 @@
 import { ownedMedia } from "../ownedMedia";
-import { visibleAccount, unmutedAccount, requireVisiblePost } from "../communityAccess";
+import { visibleAccount, unmutedAccount, requireVisiblePost, withVisiblePostWrite } from "../communityAccess";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { and, desc, eq, sql } from "drizzle-orm";
@@ -435,14 +435,14 @@ export const communityRouter = router({
   likePost: protectedProcedure
     .input(z.object({ postId: z.number().int().positive() }))
     .mutation(async ({ ctx, input }) => {
-      await requireVisiblePost(ctx.user.id, input.postId);
       const db = await getDb();
       if (!db) throw new Error("Database not available");
 
-      await db
-        .insert(postLikes)
+      await withVisiblePostWrite(ctx.user.id,input.postId,async tx => {
+        await tx.insert(postLikes)
         .values({ postId: input.postId, userId: ctx.user.id })
         .onConflictDoNothing();
+      });
 
       // Fan out like notification — look up post owner first
       const [postRow] = await db
@@ -494,18 +494,19 @@ export const communityRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      await requireVisiblePost(ctx.user.id, input.postId);
       const db = await getDb();
       if (!db) throw new Error("Database not available");
 
-      const [comment] = await db
-        .insert(postComments)
+      const comment = await withVisiblePostWrite(ctx.user.id,input.postId,async tx => {
+        const [created] = await tx.insert(postComments)
         .values({
           postId: input.postId,
           userId: ctx.user.id,
           body: input.body,
         })
         .returning({ id: postComments.id });
+        return created;
+      });
 
       // Fan out comment notification — look up post owner
       const [postRow] = await db

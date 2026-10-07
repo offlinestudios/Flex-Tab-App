@@ -187,4 +187,25 @@ const url = process.env.TEST_DATABASE_URL;
     await expect(follower.follow({userId:1})).rejects.toThrow('Profile unavailable');
   });
 
+  it('rechecks likes and comments after waiting for a concurrent block', async () => {
+    const blocker=await pool.connect();
+    await blocker.query('BEGIN');
+    let pending: Promise<unknown>[]=[];
+    try {
+      await blocker.query('SELECT pg_advisory_xact_lock(1,2)');
+      await blocker.query('INSERT INTO user_blocks ("blockerId","blockedId") VALUES (1,2)');
+      const caller=communityRouter.createCaller(ctx(1));
+      pending=[caller.likePost({postId:2}),caller.addComment({postId:2,body:'Must not slip through'})];
+      const completed=Promise.allSettled(pending);
+      await vi.waitFor(async ()=>{
+        const waiting=await pool.query("SELECT count(*)::int AS n FROM pg_locks WHERE locktype='advisory' AND classid=1 AND objid=2 AND NOT granted");
+        expect(waiting.rows[0].n).toBeGreaterThanOrEqual(2);
+      });
+      await blocker.query('COMMIT');
+      expect((await completed).map(result=>result.status)).toEqual(['rejected','rejected']);
+      expect((await pool.query('SELECT * FROM post_likes WHERE "postId"=2 AND "userId"=1')).rowCount).toBe(0);
+      expect((await pool.query('SELECT * FROM post_comments WHERE "postId"=2 AND "userId"=1')).rowCount).toBe(0);
+    } finally {await blocker.query('ROLLBACK');blocker.release();await Promise.allSettled(pending);}
+  });
+
 });

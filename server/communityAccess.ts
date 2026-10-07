@@ -33,3 +33,21 @@ export async function requireVisiblePost(viewerId: number, postId: number) {
   if (!post) throw new TRPCError({ code: 'NOT_FOUND', message: 'Post unavailable.' });
   return post;
 }
+
+type Database = NonNullable<Awaited<ReturnType<typeof getDb>>>;
+type Transaction = Parameters<Parameters<Database['transaction']>[0]>[0];
+
+// Serialize interaction authorization with social.block's account-pair lock.
+export async function withVisiblePostWrite<T>(viewerId:number,postId:number,write:(tx:Transaction)=>Promise<T>) {
+  const db=await getDb();
+  if(!db)throw new TRPCError({code:'INTERNAL_SERVER_ERROR'});
+  return db.transaction(async tx=>{
+    const [owner]=await tx.select({userId:posts.userId}).from(posts).where(eq(posts.id,postId)).limit(1);
+    if(!owner)throw new TRPCError({code:'NOT_FOUND',message:'Post unavailable.'});
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(${Math.min(viewerId,owner.userId)},${Math.max(viewerId,owner.userId)})`);
+    const [visible]=await tx.select({id:posts.id}).from(posts)
+      .where(and(eq(posts.id,postId),visibleAccount(viewerId,posts.userId))).limit(1);
+    if(!visible)throw new TRPCError({code:'NOT_FOUND',message:'Post unavailable.'});
+    return write(tx);
+  });
+}
