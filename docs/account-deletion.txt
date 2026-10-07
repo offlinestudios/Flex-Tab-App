@@ -64,3 +64,15 @@ against the authenticated Apple identity; persist them encrypted server-side;
 wire revocation before Supabase identity deletion with retry-safe state; test
 sign-in, linked identities, revocation and deletion against isolated staging.
 The existing Apple-linked deletion guard remains in place until these are done.
+
+Encrypted Apple token envelopes
+server/appleTokenEnvelope.ts provides AES-256-GCM encryption with random96-bit
+nonces and authenticated account ID, Apple subject, client ID and key version.
+Keys must be canonical base64-encoded32-byte secrets supplied only server-side.
+The keyring supports rotation: retain old keys until every envelope is re-encrypted
+or deleted. Unknown keys, metadata substitution and tampering fail closed.
+Thirteen offline tests cover round trips, tampering, account/client/subject binding,
+malformed envelopes, weak keys and rotation. No production key was generated.
+This helper does not itself persist tokens or establish their ownership. Callers
+must verify Apple's token identity before encryption; client-supplied metadata is
+not evidence of ownership. Database persistence/capture/deletion integration remains.
