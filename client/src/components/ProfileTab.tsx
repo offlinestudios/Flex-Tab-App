@@ -554,18 +554,29 @@ function BlockedMutedPanel({ onBack }: { onBack: () => void }) {
   const utils = (trpc as any).useUtils();
   const [tab, setTab] = useState<'blocked' | 'muted'>('blocked');
 
-  const { data: blockedUsers = [], isLoading: loadingBlocked } = (trpc as any).social.getBlockedUsers.useQuery({}, { staleTime: 30_000 });
-  const { data: mutedUsers = [], isLoading: loadingMuted } = (trpc as any).social.getMutedUsers.useQuery({}, { staleTime: 30_000 });
+  const blockedQuery = trpc.social.getBlockedUsers.useQuery(undefined, { staleTime: 30_000 });
+  const blockedUsers = blockedQuery.data ?? [];
+  const mutedQuery = trpc.social.getMutedUsers.useQuery(undefined, { staleTime: 30_000 });
+  const mutedUsers = mutedQuery.data ?? [];
 
-  const unblockMutation = (trpc as any).social.unblock.useMutation({
-    onSuccess: () => utils.social.getBlockedUsers.invalidate(),
+  const unblockMutation = trpc.social.unblock.useMutation({
+    onSuccess: async () => {
+      await utils.social.getBlockedUsers.invalidate();
+      toast.success('User unblocked.');
+    },
+    onError: () => toast.error('Could not unblock this user. Please try again.'),
   });
-  const unmuteMutation = (trpc as any).social.unmute.useMutation({
-    onSuccess: () => utils.social.getMutedUsers.invalidate(),
+  const unmuteMutation = trpc.social.unmute.useMutation({
+    onSuccess: async () => {
+      await utils.social.getMutedUsers.invalidate();
+      toast.success('User unmuted.');
+    },
+    onError: () => toast.error('Could not unmute this user. Please try again.'),
   });
 
   const list = tab === 'blocked' ? blockedUsers : mutedUsers;
-  const isLoading = tab === 'blocked' ? loadingBlocked : loadingMuted;
+  const activeQuery = tab === 'blocked' ? blockedQuery : mutedQuery;
+  const isLoading = activeQuery.isLoading;
 
   return (
     <SettingsSheet title="Blocked & Muted" onBack={onBack}>
@@ -584,14 +595,21 @@ function BlockedMutedPanel({ onBack }: { onBack: () => void }) {
               fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
             }}
           >
-            {t === 'blocked' ? `Blocked (${blockedUsers.length})` : `Muted (${mutedUsers.length})`}
+            {t === 'blocked' ? (blockedQuery.data ? `Blocked (${blockedUsers.length})` : 'Blocked') : (mutedQuery.data ? `Muted (${mutedUsers.length})` : 'Muted')}
           </button>
         ))}
       </div>
 
       {isLoading && <p style={{ textAlign: 'center', color: '#9ca3af', fontSize: 14, padding: '24px 0' }}>Loading…</p>}
 
-      {!isLoading && list.length === 0 && (
+      {activeQuery.isError && <div role="alert" className="py-4 text-center space-y-2">
+        <p>Could not refresh your {tab} users. {list.length > 0 ? 'The list below may be out of date.' : 'Please try again.'}</p>
+        <button type="button" className="underline disabled:opacity-50" disabled={activeQuery.isFetching} onClick={() => void activeQuery.refetch()}>
+          {activeQuery.isFetching ? 'Retrying…' : 'Try again'}
+        </button>
+      </div>}
+
+      {!isLoading && !activeQuery.isError && list.length === 0 && (
         <p style={{ textAlign: 'center', color: '#9ca3af', fontSize: 14, padding: '24px 0' }}>
           {tab === 'blocked' ? 'No blocked users' : 'No muted users'}
         </p>
