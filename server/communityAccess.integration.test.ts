@@ -131,13 +131,14 @@ const url = process.env.TEST_DATABASE_URL;
     await expect(caller.resolve({reportId:1,action:'remove'})).rejects.toThrow();
     await expect(caller.report({postId:1,reason:'spam'})).rejects.toThrow('own content');
   });
-  it('validates comment/post association and enforces blocks on reporting', async () => {
+  it('validates comment/post association and accepts reports after blocking', async () => {
     const comment=(await pool.query('SELECT id FROM post_comments WHERE "postId"=2')).rows[0];
     const caller=moderationRouter.createCaller(ctx(1));
     await expect(caller.report({postId:3,commentId:comment.id,reason:'spam'})).rejects.toThrow('Comment unavailable');
     await caller.report({postId:2,commentId:comment.id,reason:'spam'});
     await block();
-    await expect(caller.report({postId:2,reason:'spam'})).rejects.toThrow('Post unavailable');
+    expect(await caller.report({postId:2,reason:'spam'})).toEqual({received:true});
+    expect(await communityRouter.createCaller(ctx(1)).getPost({postId:2})).toBeNull();
   });
   it('removes reported content and durably retries storage cleanup after reporter deletion', async () => {
     await moderationRouter.createCaller(ctx(1)).report({postId:2,reason:'spam'});
@@ -175,6 +176,15 @@ const url = process.env.TEST_DATABASE_URL;
     await caller.updateProfile({name:'Name',bio:'Bio',fitnessGoal:'Build Muscle'});
     await caller.updateProfile({name:'Name',bio:'',fitnessGoal:''});
     expect(await caller.getProfile()).toMatchObject({bio:'',fitnessGoal:''});
+  });
+
+  it('serializes a follow with a concurrent block in either direction', async () => {
+    const blocker=socialRouter.createCaller(ctx(1));
+    const follower=socialRouter.createCaller(ctx(2));
+    await Promise.allSettled([follower.follow({userId:1}),blocker.block({userId:2})]);
+    expect((await pool.query('SELECT * FROM user_follows WHERE ("followerId"=1 AND "followeeId"=2) OR ("followerId"=2 AND "followeeId"=1)')).rowCount).toBe(0);
+    expect((await pool.query('SELECT * FROM user_blocks WHERE "blockerId"=1 AND "blockedId"=2')).rowCount).toBe(1);
+    await expect(follower.follow({userId:1})).rejects.toThrow('Profile unavailable');
   });
 
 });

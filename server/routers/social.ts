@@ -1,3 +1,4 @@
+import { TRPCError } from '@trpc/server';
 import { visibleAccount, requireVisibleAccount } from "../communityAccess";
 import { z } from "zod";
 import { and, eq, not, inArray, sql } from "drizzle-orm";
@@ -19,13 +20,15 @@ export const socialRouter = router({
     .input(z.object({ userId: z.number().int().positive() }))
     .mutation(async ({ ctx, input }) => {
       if (ctx.user.id === input.userId) throw new Error("Cannot follow yourself");
-      await requireVisibleAccount(ctx.user.id, input.userId);
       const db = await getDb();
       if (!db) throw new Error("Database not available");
-      await db
-        .insert(userFollows)
-        .values({ followerId: ctx.user.id, followeeId: input.userId })
-        .onConflictDoNothing();
+      await db.transaction(async tx => {
+        await tx.execute(sql`SELECT pg_advisory_xact_lock(${Math.min(ctx.user.id,input.userId)},${Math.max(ctx.user.id,input.userId)})`);
+        const [target] = await tx.select({id:users.id}).from(users)
+          .where(and(eq(users.id,input.userId),visibleAccount(ctx.user.id,users.id))).limit(1);
+        if (!target) throw new TRPCError({code:'NOT_FOUND',message:'Profile unavailable.'});
+        await tx.insert(userFollows).values({followerId:ctx.user.id,followeeId:input.userId}).onConflictDoNothing();
+      });
       // Complete the best-effort notification before releasing the account lock.
       await createNotification({
         recipientId: input.userId,
@@ -64,8 +67,11 @@ export const socialRouter = router({
       const db = await getDb();
       if (!db) throw new Error("Database not available");
 
+      await db.transaction(async tx => {
+        // Share a lock with follow, regardless of which account initiated the action.
+        await tx.execute(sql`SELECT pg_advisory_xact_lock(${Math.min(ctx.user.id,input.userId)},${Math.max(ctx.user.id,input.userId)})`);
       // Remove follow relationships in both directions
-      await db
+      await tx
         .delete(userFollows)
         .where(
           and(
@@ -73,7 +79,7 @@ export const socialRouter = router({
             eq(userFollows.followeeId, input.userId)
           )
         );
-      await db
+      await tx
         .delete(userFollows)
         .where(
           and(
@@ -83,10 +89,12 @@ export const socialRouter = router({
         );
 
       // Insert block (idempotent)
-      await db
+      await tx
         .insert(userBlocks)
         .values({ blockerId: ctx.user.id, blockedId: input.userId })
         .onConflictDoNothing();
+
+      });
 
       return { success: true };
     }),

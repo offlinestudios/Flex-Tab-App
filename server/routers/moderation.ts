@@ -3,8 +3,7 @@ import { TRPCError } from '@trpc/server';
 import { and, eq, sql } from 'drizzle-orm';
 import { adminProcedure, protectedProcedure, router } from '../_core/trpc';
 import { getDb } from '../db';
-import { postComments } from '../../drizzle/schema';
-import { requireVisiblePost, visibleAccount } from '../communityAccess';
+import { postComments, posts } from '../../drizzle/schema';
 import { ownedMedia } from '../ownedMedia';
 import { reportReasons } from '../../shared/moderation';
 
@@ -13,13 +12,14 @@ export const moderationRouter = router({
     postId: z.number().int().positive(), commentId: z.number().int().positive().optional(),
     reason: z.enum(reportReasons), details: z.string().trim().max(2000).default(''),
   }).strict()).mutation(async ({ ctx, input }) => {
-    const post = await requireVisiblePost(ctx.user.id, input.postId);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+    const [post] = await db.select({userId:posts.userId}).from(posts).where(eq(posts.id,input.postId)).limit(1);
+    if (!post) return {received:true}; // Never disclose blocked/deleted content through report intake.
     let targetUserId = post.userId;
     if (input.commentId !== undefined) {
       const [comment] = await db.select().from(postComments).where(and(
-        eq(postComments.id,input.commentId), eq(postComments.postId,input.postId), visibleAccount(ctx.user.id,postComments.userId)
+        eq(postComments.id,input.commentId), eq(postComments.postId,input.postId)
       )).limit(1);
       if (!comment) throw new TRPCError({ code: 'NOT_FOUND', message: 'Comment unavailable.' });
       targetUserId = comment.userId;

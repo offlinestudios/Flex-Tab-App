@@ -8,8 +8,8 @@ Author-only post deletion checks ownership before cascading any child deletion.
 
 Report post/comment opens a reason/details form. The server verifies the target,
 rejects self-reports, deduplicates reports, and limits each reporter to 20/hour.
-Reports on already blocked targets currently require unblocking first; improve this
-before launch without exposing blocked content through the report API.
+Report intake accepts known content IDs after blocking without returning content.
+A direct report-account action from the blocked list still needs a UI path.
 
 Moderators use /moderation (also linked in profile settings for server-side admins).
 Both queue and resolution require an active admin role. Review current content,
@@ -30,7 +30,8 @@ This is not a complete live moderation operation. Required before community laun
   automatically and cleanup fails closed. Resolve these records before release.
 - Decide and implement pre-publication objectionable-content filtering and repeat-abuser
   enforcement. Current intake/removal alone does not satisfy all community requirements.
-- Exercise concurrent block/follow/comment actions and improve transaction serialization.
+- Follow/block now share a transaction-level pair lock and have a concurrency test.
+  Exercise and serialize remaining concurrent block/comment/like writes.
 - Verify storage access policies; reporting/removal does not prevent a user from
   re-uploading content, and this implementation does not ban accounts.
 
