@@ -52,65 +52,7 @@ interface Comment {
   authorAvatarUrl?: string | null;
 }
 
-/* ─────────────────────────────────────────────────────────────────
-   Sample posts shown when the real feed is empty (display reference)
-───────────────────────────────────────────────────────────────── */
-const SAMPLE_POSTS: FeedPost[] = [
-  {
-    id: -1,
-    userId: -1,
-    authorName: "Marcus Reid",
-    authorHandle: "@marcusreid",
-    caption: "Hit a new deadlift PR today. Consistency is everything.",
-    createdAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
-    likeCount: 47,
-    commentCount: 2,
-    likedByMe: false,
-    media: [],
-    workout: {
-      exercises: ["Deadlift", "Romanian Deadlift", "Leg Press"],
-      totalSets: 10,
-      totalReps: 84,
-      totalVolume: 14200,
-    },
-  },
-  {
-    id: -2,
-    userId: -2,
-    authorName: "Sofia Lim",
-    authorHandle: "@sofialim",
-    caption: "225 lbs bench press — finally hit it after 3 months of grinding.",
-    createdAt: new Date(Date.now() - 4 * 3600 * 1000).toISOString(),
-    likeCount: 24,
-    commentCount: 3,
-    likedByMe: false,
-    media: [],
-    workout: {
-      exercises: ["Bench Press", "Incline DB Press", "Cable Fly"],
-      totalSets: 12,
-      totalReps: 96,
-      totalVolume: 11200,
-    },
-  },
-  {
-    id: -3,
-    userId: -3,
-    authorName: "Jordan Kim",
-    authorHandle: "@jordankim",
-    caption: "Leg day done. Squats feeling strong this week.",
-    createdAt: new Date(Date.now() - 5 * 3600 * 1000).toISOString(),
-    likeCount: 18,
-    commentCount: 5,
-    likedByMe: true,
-    media: [],
-    workout: {
-      exercises: ["Squat", "Romanian Deadlift", "Leg Press"],
-      totalSets: 10,
-      totalReps: 80,
-      totalVolume: 18200,
-    },
-  },
-];
+
 
 /* ─────────────────────────────────────────────────────────────────
    Helpers
@@ -1544,10 +1486,7 @@ export function CommunityTab({ user, userAvatarUrl, workoutSessions = [], showSe
     { enabled: searchQuery.trim().length >= 2, staleTime: 10_000 }
   );
 
-  // Use real posts if available, fall back to sample posts for display
-  const feedPosts: FeedPost[] =
-    data && data.posts.length > 0 ? (data.posts as FeedPost[]) : (followingOnly ? [] : SAMPLE_POSTS);
-  const showingSamples = !followingOnly && (!data || data.posts.length === 0);
+  const feedPosts: FeedPost[] = (data?.posts as FeedPost[] | undefined) ?? [];
 
   return (
     <div className="space-y-3" style={{ position: "relative", paddingBottom: 80 }}>
@@ -1680,31 +1619,17 @@ export function CommunityTab({ user, userAvatarUrl, workoutSessions = [], showSe
         </div>
       )}
 
-      {/* Sample posts notice */}
-      {!isLoading && showingSamples && (
-        <div
-          style={{
-            background: "var(--secondary)",
-            borderRadius: 12,
-            padding: "10px 14px",
-            border: "1px solid var(--border)",
-          }}
-        >
-          <p
-            style={{
-              fontSize: 12,
-              color: "#9ca3af",
-              margin: 0,
-              textAlign: "center",
-            }}
-          >
-            Sample posts shown for reference — be the first to post!
-          </p>
-        </div>
+      {!isLoading && !error && !followingOnly && feedPosts.length === 0 && (
+        <section className="rounded-2xl border border-border bg-card p-6 text-center space-y-3">
+          <h2 className="text-lg font-semibold">Your community starts here</h2>
+          <p className="text-sm text-muted-foreground">Share a workout, celebrate a small win, or find someone to train alongside.</p>
+          <button type="button" className="rounded-xl bg-primary text-primary-foreground px-5 py-3 font-semibold" onClick={() => setShowComposer(true)}>Share your first post</button>
+          {onToggleSearch && <button type="button" className="block mx-auto text-sm underline py-2" onClick={onToggleSearch}>Find people</button>}
+        </section>
       )}
 
       {/* Following-only empty state */}
-      {!isLoading && followingOnly && feedPosts.length === 0 && (
+      {!isLoading && !error && followingOnly && feedPosts.length === 0 && (
         <div style={{ textAlign: "center", padding: "40px 24px" }}>
           <div style={{ width: 52, height: 52, borderRadius: "50%", background: "var(--secondary)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px" }}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -1715,7 +1640,7 @@ export function CommunityTab({ user, userAvatarUrl, workoutSessions = [], showSe
       )}
 
       {/* Suggested Users — shown in the Following tab when feed is empty, or in For You tab below the feed */}
-      {!isLoading && followingOnly && feedPosts.length === 0 && (
+      {!isLoading && !error && followingOnly && feedPosts.length === 0 && (
         <SuggestedUsersSection
           currentUser={user}
           onViewProfile={(userId, name, avatarUrl) => setViewingUserId({ id: userId, name, avatarUrl })}
