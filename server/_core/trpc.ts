@@ -37,11 +37,12 @@ export const adminProcedure = t.procedure.use(
       throw new TRPCError({ code: "FORBIDDEN", message: NOT_ADMIN_ERR_MSG });
     }
 
-    return next({
+    const user = ctx.user;
+    return withActiveAccount(user.id, () => next({
       ctx: {
         ...ctx,
-        user: ctx.user,
+        user,
       },
-    });
+    }));
   }),
 );

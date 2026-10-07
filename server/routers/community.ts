@@ -1,3 +1,5 @@
+import { ownedMedia } from "../ownedMedia";
+import { visibleAccount, unmutedAccount, requireVisiblePost } from "../communityAccess";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { and, desc, eq, sql } from "drizzle-orm";
@@ -125,6 +127,11 @@ export const communityRouter = router({
         if (!ownedSession) throw new TRPCError({ code: "NOT_FOUND", message: "Workout session not found." });
       }
 
+      for (const media of input.mediaItems ?? []) {
+        try { ownedMedia(media.url ?? media.key, ctx.user.id); }
+        catch { throw new TRPCError({code: 'BAD_REQUEST', message: 'Upload media from your own account before posting.'}); }
+      }
+
       // Insert post row
       const [post] = await db
         .insert(posts)
@@ -172,7 +179,7 @@ export const communityRouter = router({
         })
         .from(posts)
         .leftJoin(users, eq(posts.userId, users.id))
-        .where(eq(posts.id, input.postId))
+        .where(and(eq(posts.id, input.postId), visibleAccount(ctx.user.id, posts.userId)))
         .limit(1);
 
       if (!post) return null;
@@ -190,7 +197,7 @@ export const communityRouter = router({
       const [commentCountRow] = await db
         .select({ count: sql<number>`count(*)::int` })
         .from(postComments)
-        .where(eq(postComments.postId, input.postId));
+        .where(and(eq(postComments.postId, input.postId), visibleAccount(ctx.user.id, postComments.userId)));
 
       const media = mediaRows.map((m) => ({
         id: m.id,
@@ -224,25 +231,10 @@ export const communityRouter = router({
       const db = await getDb();
       if (!db) throw new Error("Database not available");
 
-      await db
-        .delete(postMedia)
-        .where(
-          and(eq(postMedia.postId, input.postId), eq(postMedia.userId, ctx.user.id))
-        );
-
-      await db
-        .delete(postComments)
-        .where(eq(postComments.postId, input.postId));
-
-      await db
-        .delete(postLikes)
-        .where(eq(postLikes.postId, input.postId));
-
-      await db
-        .delete(posts)
-        .where(
-          and(eq(posts.id, input.postId), eq(posts.userId, ctx.user.id))
-        );
+      const [deleted] = await db.delete(posts)
+        .where(and(eq(posts.id, input.postId), eq(posts.userId, ctx.user.id)))
+        .returning({ id: posts.id });
+      if (!deleted) throw new TRPCError({ code: "NOT_FOUND", message: "Post unavailable." });
 
       return { success: true };
     }),
@@ -289,6 +281,7 @@ export const communityRouter = router({
       }
 
       const feedPosts = await query
+        .where(and(visibleAccount(ctx.user.id, posts.userId), unmutedAccount(ctx.user.id, posts.userId)))
         .orderBy(desc(posts.createdAt))
         .limit(input.limit)
         .offset(input.offset);
@@ -321,7 +314,7 @@ export const communityRouter = router({
           count: sql<number>`count(*)::int`,
         })
         .from(postComments)
-        .where(sql`${postComments.postId} = ANY(${sql.raw(`ARRAY[${postIds.join(",")}]`)})`)
+        .where(and(sql`${postComments.postId} = ANY(${sql.raw(`ARRAY[${postIds.join(",")}]`)})`, visibleAccount(ctx.user.id, postComments.userId)))
         .groupBy(postComments.postId)
         .catch(() => [] as { postId: number; count: number }[]);
 
@@ -331,6 +324,7 @@ export const communityRouter = router({
         .filter((id): id is number => id !== null && id !== undefined);
 
       let workoutData: {
+        userId: number;
         sessionId: number;
         exercise: string;
         sets: number;
@@ -341,6 +335,7 @@ export const communityRouter = router({
       if (sessionIds.length > 0) {
         workoutData = await db
           .select({
+            userId: setLogs.userId,
             sessionId: setLogs.sessionId,
             exercise: setLogs.exercise,
             sets: setLogs.sets,
@@ -391,7 +386,7 @@ export const communityRouter = router({
 
         const exercises =
           p.workoutSessionId
-            ? workoutBySession.get(p.workoutSessionId) ?? []
+            ? (workoutBySession.get(p.workoutSessionId) ?? []).filter(w => w.userId === p.userId)
             : [];
 
         const totalSets = exercises.reduce((s, e) => s + e.sets, 0);
@@ -440,6 +435,7 @@ export const communityRouter = router({
   likePost: protectedProcedure
     .input(z.object({ postId: z.number().int().positive() }))
     .mutation(async ({ ctx, input }) => {
+      await requireVisiblePost(ctx.user.id, input.postId);
       const db = await getDb();
       if (!db) throw new Error("Database not available");
 
@@ -452,7 +448,7 @@ export const communityRouter = router({
       const [postRow] = await db
         .select({ userId: posts.userId })
         .from(posts)
-        .where(eq(posts.id, input.postId))
+        .where(and(eq(posts.id, input.postId), visibleAccount(ctx.user.id, posts.userId)))
         .limit(1);
       if (postRow) {
         await createNotification({
@@ -498,6 +494,7 @@ export const communityRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      await requireVisiblePost(ctx.user.id, input.postId);
       const db = await getDb();
       if (!db) throw new Error("Database not available");
 
@@ -514,7 +511,7 @@ export const communityRouter = router({
       const [postRow] = await db
         .select({ userId: posts.userId })
         .from(posts)
-        .where(eq(posts.id, input.postId))
+        .where(and(eq(posts.id, input.postId), visibleAccount(ctx.user.id, posts.userId)))
         .limit(1);
       if (postRow) {
         await createNotification({
@@ -539,7 +536,8 @@ export const communityRouter = router({
         offset: z.number().int().nonnegative().default(0),
       })
     )
-    .query(async ({ ctx: _ctx, input }) => {
+    .query(async ({ ctx, input }) => {
+      await requireVisiblePost(ctx.user.id, input.postId);
       const db = await getDb();
       if (!db) return [];
 
@@ -555,7 +553,7 @@ export const communityRouter = router({
         })
         .from(postComments)
         .leftJoin(users, eq(postComments.userId, users.id))
-        .where(eq(postComments.postId, input.postId))
+        .where(and(eq(postComments.postId, input.postId), visibleAccount(ctx.user.id, postComments.userId)))
         .orderBy(desc(postComments.createdAt))
         .limit(input.limit)
         .offset(input.offset);
@@ -566,6 +564,7 @@ export const communityRouter = router({
         userId: r.userId,
         body: r.body,
         createdAt: r.createdAt.toISOString(),
+        isMyComment: r.userId === ctx.user.id,
         authorName: r.authorName ?? "FlexTab User",
         authorAvatarUrl: r.authorAvatarUrl ?? null,
         authorHandle:
@@ -601,7 +600,7 @@ export const communityRouter = router({
           createdAt: posts.createdAt,
         })
         .from(posts)
-        .where(eq(posts.userId, input.userId))
+        .where(and(eq(posts.userId, input.userId), visibleAccount(ctx.user.id, posts.userId)))
         .orderBy(desc(posts.createdAt))
         .limit(input.limit)
         .offset(input.offset);

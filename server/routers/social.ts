@@ -1,3 +1,4 @@
+import { visibleAccount, requireVisibleAccount } from "../communityAccess";
 import { z } from "zod";
 import { and, eq, not, inArray, sql } from "drizzle-orm";
 import { protectedProcedure, router } from "../_core/trpc";
@@ -18,6 +19,7 @@ export const socialRouter = router({
     .input(z.object({ userId: z.number().int().positive() }))
     .mutation(async ({ ctx, input }) => {
       if (ctx.user.id === input.userId) throw new Error("Cannot follow yourself");
+      await requireVisibleAccount(ctx.user.id, input.userId);
       const db = await getDb();
       if (!db) throw new Error("Database not available");
       await db
@@ -186,6 +188,10 @@ export const socialRouter = router({
         )
         .limit(1);
 
+      const [visible] = await db.select({ id: users.id }).from(users)
+        .where(and(eq(users.id, input.userId), visibleAccount(ctx.user.id, users.id))).limit(1);
+      if (!visible) return { following: false, blocked: !!blockRow, muted: !!muteRow, followerCount: 0, followingCount: 0 };
+
       // Follower / following counts for the target user
       const [{ followerCount }] = await db
         .select({ followerCount: sql<number>`count(*)::int` })
@@ -215,6 +221,7 @@ export const socialRouter = router({
   getFollowers: protectedProcedure
     .input(z.object({ userId: z.number().int().positive() }))
     .query(async ({ ctx, input }) => {
+      await requireVisibleAccount(ctx.user.id, input.userId);
       const db = await getDb();
       if (!db) return [];
       const followers = await db
@@ -225,7 +232,7 @@ export const socialRouter = router({
         })
         .from(userFollows)
         .innerJoin(users, eq(userFollows.followerId, users.id))
-        .where(eq(userFollows.followeeId, input.userId))
+        .where(and(eq(userFollows.followeeId, input.userId), visibleAccount(ctx.user.id, users.id)))
         .orderBy(users.name);
       return followers;
     }),
@@ -236,6 +243,7 @@ export const socialRouter = router({
   getFollowing: protectedProcedure
     .input(z.object({ userId: z.number().int().positive() }))
     .query(async ({ ctx, input }) => {
+      await requireVisibleAccount(ctx.user.id, input.userId);
       const db = await getDb();
       if (!db) return [];
       const following = await db
@@ -246,7 +254,7 @@ export const socialRouter = router({
         })
         .from(userFollows)
         .innerJoin(users, eq(userFollows.followeeId, users.id))
-        .where(eq(userFollows.followerId, input.userId))
+        .where(and(eq(userFollows.followerId, input.userId), visibleAccount(ctx.user.id, users.id)))
         .orderBy(users.name);
       return following;
     }),
@@ -330,18 +338,17 @@ export const socialRouter = router({
           avatarUrl: users.avatarUrl,
           followerCount: sql<number>`(
             SELECT count(*) FROM user_follows uf
-            WHERE uf.followee_id = ${users.id}
+            WHERE uf."followeeId" = ${users.id}
           )::int`,
         })
         .from(users)
         .where(
-          excludeIds.length > 0
-            ? not(inArray(users.id, excludeIds))
-            : sql`true`
+          and(visibleAccount(ctx.user.id, users.id),
+            excludeIds.length > 0 ? not(inArray(users.id, excludeIds)) : sql`true`)
         )
         .orderBy(sql`(
           SELECT count(*) FROM user_follows uf
-          WHERE uf.followee_id = ${users.id}
+          WHERE uf."followeeId" = ${users.id}
         ) DESC`)
         .limit(input.limit);
 

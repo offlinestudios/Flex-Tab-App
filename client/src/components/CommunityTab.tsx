@@ -1,3 +1,4 @@
+import { ReportContent } from './ReportContent';
 import { useState, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { supabase } from "@/lib/supabase";
@@ -40,6 +41,7 @@ export interface FeedPost {
 }
 
 interface Comment {
+  isMyComment?: boolean;
   id: number;
   postId: number;
   userId: number;
@@ -499,6 +501,7 @@ export function CommentsSheet({
                 </p>
                 <p style={{ fontSize: 11, color: "#9ca3af", margin: 0 }}>
                   {timeAgo(c.createdAt)}
+                  {isReal && !c.isMyComment && <ReportContent postId={post.id} commentId={c.id} />}
                 </p>
               </div>
             </div>
@@ -1033,6 +1036,7 @@ function PostCard({
                 >
                   {isOtherUser && (
                     <>
+                      <ReportContent postId={post.id} />
                       <button
                         onClick={() => { setShowOverflow(false); toggleFollow(); }}
                         style={{

@@ -1,3 +1,4 @@
+import { moderationRouter } from "./routers/moderation";
 import { accountRouter } from "./routers/account";
 import { publicProcedure, router } from "./_core/trpc";
 import { workoutRouter } from "./routers/workout";
@@ -8,6 +9,7 @@ import { notificationsRouter } from "./routers/notifications";
 
 export const appRouter = router({
   account: accountRouter,
+  moderation: moderationRouter,
   // Simple health check
   health: publicProcedure.query(() => ({ ok: true, timestamp: Date.now() })),
   

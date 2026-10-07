@@ -1,5 +1,8 @@
+import { ownedMedia } from "../ownedMedia";
+import { TRPCError } from "@trpc/server";
+import { visibleAccount } from "../communityAccess";
 import { z } from "zod";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { users } from "../../drizzle/schema";
@@ -50,7 +53,7 @@ export const userRouter = router({
       const [user] = await db
         .select({ id: users.id, name: users.name, avatarUrl: users.avatarUrl })
         .from(users)
-        .where(eq(users.id, input.userId))
+        .where(and(eq(users.id, input.userId), visibleAccount(ctx.user.id, users.id)))
         .limit(1);
       return user ?? null;
     }),
@@ -64,7 +67,7 @@ export const userRouter = router({
       const results = await db
         .select({ id: users.id, name: users.name, avatarUrl: users.avatarUrl })
         .from(users)
-        .where(sql`${users.name} ILIKE ${searchTerm}`)
+        .where(and(sql`${users.name} ILIKE ${searchTerm}`, visibleAccount(ctx.user.id, users.id)))
         .limit(20);
       return results;
     }),
@@ -101,6 +104,8 @@ export const userRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
+      try { const location = ownedMedia(input.key,ctx.user.id); if(location.bucket !== 'avatars' && !location.key.startsWith(`avatars/${ctx.user.id}/`)) throw new Error(); }
+      catch { throw new TRPCError({code:'BAD_REQUEST',message:'Upload a profile photo from your own account.'}); }
       const avatarUrl = r2PublicUrl(input.key);
       await db
         .update(users)

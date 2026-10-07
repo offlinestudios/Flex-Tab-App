@@ -1,4 +1,4 @@
-import { boolean, decimal, integer, pgEnum, pgTable, text, timestamp, unique, varchar } from "drizzle-orm/pg-core";
+import { jsonb, boolean, decimal, integer, pgEnum, pgTable, text, timestamp, unique, varchar } from "drizzle-orm/pg-core";
 
 /**
  * Core user table backing auth flow.
@@ -235,3 +235,21 @@ export const notifications = pgTable("notifications", {
 
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = typeof notifications.$inferInsert;
+
+// See migration 0007 for partial unique indexes and status checks.
+export const contentReports = pgTable("content_reports", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  reporterId: integer("reporterId").references(()=>users.id,{onDelete:'set null'}),
+  targetUserId: integer("targetUserId").notNull().references(()=>users.id,{onDelete:'cascade'}),
+  postId: integer("postId").references(()=>posts.id,{onDelete:'set null'}),
+  commentId: integer("commentId").references(()=>postComments.id,{onDelete:'set null'}),
+  targetKind: text("targetKind").notNull(), reason: text("reason").notNull(),
+  details: text("details").notNull().default(''), status: text("status").notNull().default('open'),
+  createdAt: timestamp("createdAt",{withTimezone:true}).notNull().defaultNow(),
+  resolvedAt: timestamp("resolvedAt",{withTimezone:true}),
+  moderatorId: integer("moderatorId").references(()=>users.id,{onDelete:'set null'}),
+  mediaKeys: jsonb("mediaKeys").$type<string[]>().notNull().default([]),
+  mediaCleanupPending: boolean("mediaCleanupPending").notNull().default(false),
+  cleanupAttempts: integer("cleanupAttempts").notNull().default(0),
+  nextCleanupAt: timestamp("nextCleanupAt",{withTimezone:true}).notNull().defaultNow(),
+});

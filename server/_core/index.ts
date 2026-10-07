@@ -1,3 +1,5 @@
+import { startModerationWorker } from "../moderationWorker";
+import { communityModerationMigration } from "../communityModerationMigration";
 import { accountLifecycleMigration } from "../accountLifecycle";
 import { startAccountDeletionWorker } from "../accountDeletionWorker";
 import { Pool } from "pg";
@@ -42,9 +44,10 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 async function startServer() {
   if (process.env.DATABASE_URL) {
     const migrationPool = new Pool({ connectionString: process.env.DATABASE_URL });
-    try { await migrationPool.query(accountLifecycleMigration); }
+    try { await migrationPool.query(accountLifecycleMigration); await migrationPool.query(communityModerationMigration); }
     finally { await migrationPool.end(); }
     startAccountDeletionWorker();
+    startModerationWorker();
   }
   const app = express();
   app.use("/api", mobileCors);

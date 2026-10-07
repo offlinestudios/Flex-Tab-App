@@ -110,6 +110,7 @@ export interface DeletionServices {
 // Use the same statements in production and PostgreSQL integration tests.
 export async function deleteAccountRecords(db: PoolClient, userId: number) {
   // Remove reactions/notifications by other users that reference the deleted content too.
+  await db.query(`UPDATE content_reports SET details='' WHERE "reporterId"=$1`, [userId]);
   await db.query(`DELETE FROM notifications WHERE "recipientId"=$1 OR "actorId"=$1
     OR (type IN ('like','comment') AND "entityId" IN (SELECT id FROM posts WHERE "userId"=$1))`, [userId]);
   for (const table of ['post_likes', 'post_comments', 'post_media']) {

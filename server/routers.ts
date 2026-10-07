@@ -1,3 +1,4 @@
+import { moderationRouter } from "./routers/moderation";
 import { accountRouter } from "./routers/account";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
@@ -11,6 +12,7 @@ import { notificationsRouter } from "./routers/notifications";
 
 export const appRouter = router({
   account: accountRouter,
+  moderation: moderationRouter,
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
   auth: router({

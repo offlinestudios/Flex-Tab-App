@@ -1,12 +1,12 @@
+import { PrivacyNotice } from "./PrivacyNotice";
 import { useState } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
 
-type SheetField = 'name' | 'email' | 'password' | 'visibility' | null;
+type SheetField = 'name' | 'email' | 'password' | null;
 type Appearance = 'light' | 'system' | 'dark';
 type WeightUnit = 'lbs' | 'kg';
 
 const FITNESS_GOALS = ['Build Muscle', 'Lose Fat', 'Improve Endurance', 'Increase Strength', 'General Fitness', 'Athletic Performance'];
-const VISIBILITY_OPTIONS = ['Public', 'Followers Only', 'Private'];
 
 interface SettingsTabProps {
   user: any;
@@ -20,8 +20,6 @@ export function SettingsTab({ user, onLogout }: SettingsTabProps) {
   const [weightUnit, setWeightUnit] = useState<WeightUnit>('lbs');
   const [fitnessGoal, setFitnessGoal] = useState('Build Muscle');
   const [notifications, setNotifications] = useState(false);
-  const [profileVisibility, setProfileVisibility] = useState('Public');
-  const [allowFollow, setAllowFollow] = useState(true);
 
   const [sheetField, setSheetField] = useState<SheetField>(null);
   const [sheetValue, setSheetValue] = useState('');
@@ -41,13 +39,11 @@ export function SettingsTab({ user, onLogout }: SettingsTabProps) {
     if (field === 'name') setSheetValue(nameVal);
     else if (field === 'email') setSheetValue(emailVal);
     else if (field === 'password') setSheetValue('');
-    else if (field === 'visibility') setSheetValue(profileVisibility);
   };
 
   const saveSheet = () => {
     if (sheetField === 'name') setNameVal(sheetValue);
     else if (field === 'email') setEmailVal(sheetValue);
-    else if (sheetField === 'visibility') setProfileVisibility(sheetValue);
     setSheetField(null);
   };
 
@@ -164,36 +160,10 @@ export function SettingsTab({ user, onLogout }: SettingsTabProps) {
           </div>
         </div>
 
-        {/* Privacy section */}
-        <div style={{ background: 'var(--card)', borderRadius: 20, border: '1.5px solid var(--border)', overflow: 'hidden' }}>
-          <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)' }}>
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>Privacy</h3>
-          </div>
-          <div style={{ padding: '0 18px' }}>
-            <div
-              onClick={() => openSheet('visibility')}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0', borderBottom: '1px solid var(--border)', cursor: 'pointer' }}
-            >
-              <div>
-                <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)', margin: '0 0 2px' }}>Profile Visibility</p>
-                <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>{profileVisibility}</p>
-              </div>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0' }}>
-              <div>
-                <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)', margin: '0 0 2px' }}>Allow Others to Follow</p>
-                <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>Let others follow your progress</p>
-              </div>
-              <div
-                onClick={() => setAllowFollow(!allowFollow)}
-                style={{ width: 44, height: 24, borderRadius: 99, background: allowFollow ? 'var(--foreground)' : '#e2e4e7', cursor: 'pointer', position: 'relative', transition: 'background .2s', flexShrink: 0 }}
-              >
-                <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'white', position: 'absolute', top: 2, left: allowFollow ? 22 : 2, transition: 'left .2s', boxShadow: '0 1px 3px rgba(0,0,0,.2)' }} />
-              </div>
-            </div>
-          </div>
-        </div>
+        <section style={{ background: 'var(--card)', borderRadius: 20, border: '1.5px solid var(--border)', padding: 18 }}>
+          <h3 className="mb-4 font-bold">Privacy & Sharing</h3>
+          <PrivacyNotice />
+        </section>
 
         {/* Danger zone */}
         <div style={{ background: 'var(--card)', borderRadius: 20, border: '1.5px solid var(--border)', overflow: 'hidden' }}>
@@ -217,7 +187,7 @@ export function SettingsTab({ user, onLogout }: SettingsTabProps) {
       </div>
 
       {/* Edit field bottom sheet */}
-      {sheetField && sheetField !== 'visibility' && (
+      {sheetField && (
         <>
           <div onClick={() => setSheetField(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 200 }} />
           <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'var(--card)', borderRadius: '24px 24px 0 0', zIndex: 201, padding: '24px 20px 36px', maxWidth: 700, margin: '0 auto' }}>
@@ -235,33 +205,6 @@ export function SettingsTab({ user, onLogout }: SettingsTabProps) {
               style={{ width: '100%', padding: '14px 16px', border: '1.5px solid var(--border)', borderRadius: 14, fontSize: 15, color: 'var(--foreground)', background: 'var(--card)', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', marginBottom: 16 }}
             />
             <button onClick={saveSheet} style={{ width: '100%', background: 'var(--foreground)', color: 'var(--background)', border: 'none', borderRadius: 14, padding: 15, fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Save</button>
-          </div>
-        </>
-      )}
-
-      {/* Visibility bottom sheet */}
-      {sheetField === 'visibility' && (
-        <>
-          <div onClick={() => setSheetField(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 200 }} />
-          <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'var(--card)', borderRadius: '24px 24px 0 0', zIndex: 201, padding: '24px 20px 36px', maxWidth: 700, margin: '0 auto' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-              <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>Profile Visibility</h3>
-              <button onClick={() => setSheetField(null)} style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--secondary)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-              </button>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {VISIBILITY_OPTIONS.map(opt => (
-                <button
-                  key={opt}
-                  onClick={() => { setProfileVisibility(opt); setSheetField(null); }}
-                  style={{ padding: '14px 18px', borderRadius: 14, border: `1.5px solid ${profileVisibility === opt ? 'var(--foreground)' : 'var(--border)'}`, background: profileVisibility === opt ? 'var(--secondary)' : 'var(--card)', fontSize: 15, fontWeight: 600, color: 'var(--foreground)', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-                >
-                  {opt}
-                  {profileVisibility === opt && <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>}
-                </button>
-              ))}
-            </div>
           </div>
         </>
       )}

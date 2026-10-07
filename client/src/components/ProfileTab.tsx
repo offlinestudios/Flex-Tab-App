@@ -1,3 +1,4 @@
+import { PrivacyNotice } from "./PrivacyNotice";
 import React, { useState, useRef, useCallback } from "react";
 import { formatDateFull } from "@/lib/dateUtils";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -493,51 +494,7 @@ function UnitsPanel({ onBack }: { onBack: () => void }) {
 
 /* Privacy Settings panel */
 function PrivacyPanel({ onBack }: { onBack: () => void }) {
-  const [visibility, setVisibility] = useState(() => localStorage.getItem('profileVisibility') || 'Public');
-  const [allowFollow, setAllowFollow] = useState(() => localStorage.getItem('allowFollow') !== 'false');
-  const [showActivity, setShowActivity] = useState(() => localStorage.getItem('showActivity') !== 'false');
-  const [showStats, setShowStats] = useState(() => localStorage.getItem('showStats') !== 'false');
-
-  const save = () => {
-    localStorage.setItem('profileVisibility', visibility);
-    localStorage.setItem('allowFollow', String(allowFollow));
-    localStorage.setItem('showActivity', String(showActivity));
-    localStorage.setItem('showStats', String(showStats));
-    onBack();
-  };
-
-  const visOptions = ['Public', 'Followers Only', 'Private'];
-
-  return (
-    <SettingsSheet title="Privacy Settings" onBack={onBack}>
-      <p style={{ fontSize: 12, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 8px' }}>Profile Visibility</p>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-        {visOptions.map(v => (
-          <button
-            key={v}
-            onClick={() => setVisibility(v)}
-            style={{
-              flex: 1, padding: '10px 4px', borderRadius: 12,
-              border: `1.5px solid ${visibility === v ? 'var(--foreground)' : 'var(--border)'}`,
-              background: visibility === v ? 'var(--foreground)' : 'var(--secondary)',
-              color: visibility === v ? 'var(--background)' : '#6b7280',
-              fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
-            }}
-          >{v}</button>
-        ))}
-      </div>
-
-      <p style={{ fontSize: 12, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>Activity</p>
-      <ToggleRow label="Allow Others to Follow" sublabel="People can follow your profile" checked={allowFollow} onChange={setAllowFollow} />
-      <ToggleRow label="Show Activity Status" sublabel="Let followers see when you're active" checked={showActivity} onChange={setShowActivity} />
-      <ToggleRow label="Show Workout Stats" sublabel="Display your stats on your public profile" checked={showStats} onChange={setShowStats} />
-
-      <button
-        onClick={save}
-        style={{ width: '100%', marginTop: 20, padding: 13, background: 'var(--foreground)', color: 'var(--background)', border: 'none', borderRadius: 14, fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
-      >Save Settings</button>
-    </SettingsSheet>
-  );
+  return <SettingsSheet title="Privacy & Sharing" onBack={onBack}><PrivacyNotice /></SettingsSheet>;
 }
 
 /* Help & Support panel */
@@ -715,6 +672,7 @@ function BlockedMutedPanel({ onBack }: { onBack: () => void }) {
 
 /* Main Settings Menu */
 function SettingsMenu({ onClose }: SettingsMenuProps) {
+  const me = trpc.auth.me.useQuery();
   const [activePanel, setActivePanel] = useState<SettingsPanel>(null);
 
   if (activePanel === 'notifications') return <NotificationPanel onBack={() => setActivePanel(null)} />;
@@ -735,7 +693,7 @@ function SettingsMenu({ onClose }: SettingsMenuProps) {
       icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M4.93 19.07l1.41-1.41M19.07 19.07l-1.41-1.41M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>,
     },
     {
-      label: 'Privacy Settings',
+      label: 'Privacy & Sharing',
       panel: 'privacy',
       icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>,
     },
@@ -763,6 +721,7 @@ function SettingsMenu({ onClose }: SettingsMenuProps) {
       }}>
         <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border)', margin: '0 auto 16px' }} />
         <p style={{ fontSize: 13, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '0 20px', margin: '0 0 8px' }}>Settings</p>
+        {me.data?.role === 'admin' && <a href="/moderation" style={{display: 'block', padding: '14px 20px'}}>Community reports</a>}
         <a href="/delete-account" style={{ display: 'block', padding: '14px 20px', color: '#ef4444', fontWeight: 600 }}>Delete Account</a>
         {items.map((item, i) => (
           <button
