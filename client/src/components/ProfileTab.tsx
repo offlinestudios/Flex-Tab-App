@@ -1,3 +1,4 @@
+import { NotificationNotice } from './NotificationNotice';
 import { fitnessGoals } from '../../../shared/profile';
 import { PrivacyNotice } from "./PrivacyNotice";
 import React, { useState, useRef, useCallback } from "react";
@@ -395,32 +396,7 @@ function ToggleRow({ label, sublabel, checked, onChange }: { label: string; subl
 
 /* Notification Preferences panel */
 function NotificationPanel({ onBack }: { onBack: () => void }) {
-  const [workoutReminders, setWorkoutReminders] = useState(() => localStorage.getItem('notif_workout') !== 'false');
-  const [communityActivity, setCommunityActivity] = useState(() => localStorage.getItem('notif_community') !== 'false');
-  const [weeklySummary, setWeeklySummary] = useState(() => localStorage.getItem('notif_weekly') !== 'false');
-  const [prAlerts, setPrAlerts] = useState(() => localStorage.getItem('notif_pr') !== 'false');
-
-  const save = () => {
-    localStorage.setItem('notif_workout', String(workoutReminders));
-    localStorage.setItem('notif_community', String(communityActivity));
-    localStorage.setItem('notif_weekly', String(weeklySummary));
-    localStorage.setItem('notif_pr', String(prAlerts));
-    onBack();
-  };
-
-  return (
-    <SettingsSheet title="Notification Preferences" onBack={onBack}>
-      <p style={{ fontSize: 12, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>Activity</p>
-      <ToggleRow label="Workout Reminders" sublabel="Daily nudges to stay on track" checked={workoutReminders} onChange={setWorkoutReminders} />
-      <ToggleRow label="Community Activity" sublabel="Likes, comments and new followers" checked={communityActivity} onChange={setCommunityActivity} />
-      <ToggleRow label="PR Alerts" sublabel="Celebrate when you hit a new record" checked={prAlerts} onChange={setPrAlerts} />
-      <ToggleRow label="Weekly Summary" sublabel="Your week in review every Sunday" checked={weeklySummary} onChange={setWeeklySummary} />
-      <button
-        onClick={save}
-        style={{ width: '100%', marginTop: 20, padding: 13, background: 'var(--foreground)', color: 'var(--background)', border: 'none', borderRadius: 14, fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
-      >Save Preferences</button>
-    </SettingsSheet>
-  );
+  return <SettingsSheet title="Notifications" onBack={onBack}><NotificationNotice /></SettingsSheet>;
 }
 
 /* Units & Preferences panel */
@@ -690,7 +666,7 @@ function SettingsMenu({ onClose }: SettingsMenuProps) {
 
   const items: Array<{ label: string; panel: SettingsPanel; icon: React.ReactNode }> = [
     {
-      label: 'Notification Preferences',
+      label: 'Notifications',
       panel: 'notifications',
       icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>,
     },
