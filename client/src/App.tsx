@@ -1,3 +1,4 @@
+import DeleteAccount, { AccountDeletionRequested } from "./pages/DeleteAccount";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
@@ -27,6 +28,8 @@ function Router() {
       <Route path="/sign-up" component={SignUpPage} />
       <Route path={"/dashboard"} component={Home} />
       <Route path={"/app"} component={Home} />
+      <Route path="/delete-account" component={DeleteAccount} />
+      <Route path="/account-deletion-requested" component={AccountDeletionRequested} />
       <Route path={"/settings"} component={Settings} />
       <Route path={"/privacy"} component={PrivacyPolicy} />
       <Route path={"/terms"} component={TermsOfService} />

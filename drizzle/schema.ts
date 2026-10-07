@@ -25,6 +25,18 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
   avatarUrl: text("avatarUrl"),
+  deletionRequestedAt: timestamp("deletionRequestedAt", { withTimezone: true }),
+  deletionNextAttemptAt: timestamp("deletionNextAttemptAt", { withTimezone: true }),
+  deletionAttempts: integer("deletionAttempts").default(0).notNull(),
+  deletionFailureStage: text("deletionFailureStage"),
+});
+
+// Opaque, expiring deletion confirmations; no email, name or workout data retained.
+export const accountDeletionReceipts = pgTable("account_deletion_receipts", {
+  tokenHash: text("tokenHash").primaryKey(),
+  userId: integer("userId").references(() => users.id, { onDelete: "set null" }),
+  status: text("status").default("pending").notNull(),
+  expiresAt: timestamp("expiresAt", { withTimezone: true }).notNull(),
 });
 
 export type User = typeof users.$inferSelect;

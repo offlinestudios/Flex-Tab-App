@@ -763,6 +763,7 @@ function SettingsMenu({ onClose }: SettingsMenuProps) {
       }}>
         <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border)', margin: '0 auto 16px' }} />
         <p style={{ fontSize: 13, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '0 20px', margin: '0 0 8px' }}>Settings</p>
+        <a href="/delete-account" style={{ display: 'block', padding: '14px 20px', color: '#ef4444', fontWeight: 600 }}>Delete Account</a>
         {items.map((item, i) => (
           <button
             key={i}

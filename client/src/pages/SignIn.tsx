@@ -62,6 +62,7 @@ export default function SignInPage() {
           <h1 className="text-2xl font-bold text-slate-900 mb-2">Welcome to FlexTab</h1>
           <p className="text-slate-600">Sign in to track your workouts</p>
         </div>
+        {localStorage.getItem('flextab_deletion_receipt') && <a href="/account-deletion-requested" className="mb-4 block text-center text-sm underline">Check account deletion status</a>}
         <NativeOAuthButtons />
         <Auth
           supabaseClient={supabase}

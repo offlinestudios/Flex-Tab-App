@@ -1,3 +1,4 @@
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { protectedProcedure, router } from "../_core/trpc";
@@ -117,6 +118,12 @@ export const communityRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
+
+      if (input.workoutSessionId !== undefined) {
+        const [ownedSession] = await db.select({ id: workoutSessions.id }).from(workoutSessions)
+          .where(and(eq(workoutSessions.id, input.workoutSessionId), eq(workoutSessions.userId, ctx.user.id))).limit(1);
+        if (!ownedSession) throw new TRPCError({ code: "NOT_FOUND", message: "Workout session not found." });
+      }
 
       // Insert post row
       const [post] = await db
@@ -448,7 +455,7 @@ export const communityRouter = router({
         .where(eq(posts.id, input.postId))
         .limit(1);
       if (postRow) {
-        createNotification({
+        await createNotification({
           recipientId: postRow.userId,
           actorId: ctx.user.id,
           type: "like",
@@ -510,7 +517,7 @@ export const communityRouter = router({
         .where(eq(posts.id, input.postId))
         .limit(1);
       if (postRow) {
-        createNotification({
+        await createNotification({
           recipientId: postRow.userId,
           actorId: ctx.user.id,
           type: "comment",

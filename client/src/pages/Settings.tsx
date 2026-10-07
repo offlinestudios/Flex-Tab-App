@@ -17,6 +17,16 @@ import { User, Scale, Palette, Bell, Save } from "lucide-react";
 export default function Settings() {
   const { user, loading, isAuthenticated } = useAuth();
   
+  const [weightUnit, setWeightUnit] = useState(
+    localStorage.getItem("weightUnit") || "lbs"
+  );
+  const [theme, setTheme] = useState(
+    localStorage.getItem("theme") || "system"
+  );
+  const [notificationsEnabled, setNotificationsEnabled] = useState(
+    localStorage.getItem("notificationsEnabled") === "true"
+  );
+
   // Redirect to landing page if not authenticated
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -40,16 +50,6 @@ export default function Settings() {
   if (!isAuthenticated) {
     return null;
   }
-  const [weightUnit, setWeightUnit] = useState(
-    localStorage.getItem("weightUnit") || "lbs"
-  );
-  const [theme, setTheme] = useState(
-    localStorage.getItem("theme") || "system"
-  );
-  const [notificationsEnabled, setNotificationsEnabled] = useState(
-    localStorage.getItem("notificationsEnabled") === "true"
-  );
-
   const handleSaveSettings = () => {
     localStorage.setItem("weightUnit", weightUnit);
     localStorage.setItem("theme", theme);
@@ -190,6 +190,8 @@ export default function Settings() {
             </div>
           </div>
         </Card>
+
+        <a href="/delete-account" className="block text-red-600 underline">Delete Account</a>
 
         {/* Save Button */}
         <div className="flex justify-end">

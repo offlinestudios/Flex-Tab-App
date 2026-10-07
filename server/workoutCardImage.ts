@@ -1,3 +1,5 @@
+import { getSupabaseRequestUser } from "./supabaseRequestUser";
+import { withActiveAccount } from "./accountLifecycle";
 /**
  * POST /api/generate-workout-card
  *
@@ -498,7 +500,7 @@ async function fetchRouteMapB64(routePolyline: string, apiKey: string): Promise<
     const endMark    = `&markers=color:red|label:F|${coords[coords.length - 1].lat},${coords[coords.length - 1].lng}`;
 
     const url = `https://maps.googleapis.com/maps/api/staticmap?${params.toString()}${styleStr}${pathStr}${startMark}${endMark}`;
-    const response = await fetch(url);
+    const response = await fetch(url, { signal: AbortSignal.timeout(20000) });
     if (!response.ok) { console.warn('[workout-card] Static map fetch failed:', response.status); return null; }
     const buffer = await response.arrayBuffer();
     const mime   = response.headers.get('content-type') || 'image/png';
@@ -511,61 +513,65 @@ async function fetchRouteMapB64(routePolyline: string, apiKey: string): Promise<
 
 export async function handleGenerateWorkoutCard(req: Request, res: Response) {
   try {
-    const data: CardData = req.body;
-    if (!data || !data.exercises || !Array.isArray(data.exercises)) {
-      return res.status(400).json({ error: "Invalid card data" });
-    }
-
-    // Expand bulk-logged sets
-    data.exercises = data.exercises.map(ex => {
-      if (!ex.sets || ex.sets.length === 0) return ex;
-      const expanded: SetDetail[] = [];
-      ex.sets.forEach(s => { expanded.push(s); });
-      return { ...ex, sets: expanded, totalSets: expanded.length };
-    });
-
-    // Fetch GPS route map image if any exercise has a routePolyline
-    let routeMapB64: string | undefined;
-    const { ENV } = await import("./_core/env.js");
-    if (ENV.googleMapsApiKey) {
-      const routeEx = data.exercises.find(ex => ex.routePolyline);
-      if (routeEx?.routePolyline) {
-        const fetched = await fetchRouteMapB64(routeEx.routePolyline, ENV.googleMapsApiKey);
-        if (fetched) routeMapB64 = fetched;
+    const user = await getSupabaseRequestUser(req);
+    if (!user) return res.status(401).json({ error: "Unauthorized" });
+    return await withActiveAccount(user.id, async () => {
+      const data: CardData = req.body;
+      if (!data || !data.exercises || !Array.isArray(data.exercises)) {
+        return res.status(400).json({ error: "Invalid card data" });
       }
-    }
 
-    const { default: satori } = await import("satori");
-    const { Resvg }           = await import("@resvg/resvg-js");
+      // Expand bulk-logged sets
+      data.exercises = data.exercises.map(ex => {
+        if (!ex.sets || ex.sets.length === 0) return ex;
+        const expanded: SetDetail[] = [];
+        ex.sets.forEach(s => { expanded.push(s); });
+        return { ...ex, sets: expanded, totalSets: expanded.length };
+      });
 
-    const satoriOpts = {
-      width: STORY_W, height: STORY_H,
-      fonts: [
-        { name: "Inter", data: fontRegular, weight: 400 as const, style: "normal" as const },
-        { name: "Inter", data: fontBold,    weight: 700 as const, style: "normal" as const },
-        { name: "Inter", data: fontBold,    weight: 800 as const, style: "normal" as const },
-      ],
-    };
+      // Fetch GPS route map image if any exercise has a routePolyline
+      let routeMapB64: string | undefined;
+      const { ENV } = await import("./_core/env.js");
+      if (ENV.googleMapsApiKey) {
+        const routeEx = data.exercises.find(ex => ex.routePolyline);
+        if (routeEx?.routePolyline) {
+          const fetched = await fetchRouteMapB64(routeEx.routePolyline, ENV.googleMapsApiKey);
+          if (fetched) routeMapB64 = fetched;
+        }
+      }
 
-    const pageElement = buildCard(data, routeMapB64);
+      const { default: satori } = await import("satori");
+      const { Resvg }           = await import("@resvg/resvg-js");
 
-    const svg       = await satori(pageElement as any, satoriOpts);
-    const resvg     = new Resvg(svg, { fitTo: { mode: "width", value: STORY_W } });
-    const pngBuffer = resvg.render().asPng();
-    const dataUri   = `data:image/png;base64,${Buffer.from(pngBuffer).toString("base64")}`;
+      const satoriOpts = {
+        width: STORY_W, height: STORY_H,
+        fonts: [
+          { name: "Inter", data: fontRegular, weight: 400 as const, style: "normal" as const },
+          { name: "Inter", data: fontBold,    weight: 700 as const, style: "normal" as const },
+          { name: "Inter", data: fontBold,    weight: 800 as const, style: "normal" as const },
+        ],
+      };
 
-    let url: string | null = null;
-    let key: string | null = null;
-    try {
-      const r2Key = `workout-cards/${Date.now()}-${Math.random().toString(36).slice(2)}.png`;
-      const result = await storagePut(r2Key, pngBuffer, "image/png");
-      url = result.url;
-      key = r2Key;
-    } catch (r2Err: any) {
-      console.warn("[workout-card] R2 upload failed (non-fatal):", r2Err?.message);
-    }
+      const pageElement = buildCard(data, routeMapB64);
 
-    return res.json({ pages: [{ dataUri, url, key }] });
+      const svg       = await satori(pageElement as any, satoriOpts);
+      const resvg     = new Resvg(svg, { fitTo: { mode: "width", value: STORY_W } });
+      const pngBuffer = resvg.render().asPng();
+      const dataUri   = `data:image/png;base64,${Buffer.from(pngBuffer).toString("base64")}`;
+
+      let url: string | null = null;
+      let key: string | null = null;
+      try {
+        const r2Key = `workout-cards/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.png`;
+        const result = await storagePut(r2Key, pngBuffer, "image/png");
+        url = result.url;
+        key = r2Key;
+      } catch (r2Err: any) {
+        console.warn("[workout-card] R2 upload failed (non-fatal):", r2Err?.message);
+      }
+
+      return res.json({ pages: [{ dataUri, url, key }] });
+    });
   } catch (err: any) {
     console.error("[workout-card] Error:", err);
     return res.status(500).json({ error: err?.message ?? "Unknown error" });

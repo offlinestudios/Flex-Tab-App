@@ -26,7 +26,6 @@ export function SettingsTab({ user, onLogout }: SettingsTabProps) {
   const [sheetField, setSheetField] = useState<SheetField>(null);
   const [sheetValue, setSheetValue] = useState('');
   const [showGoalSheet, setShowGoalSheet] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const [nameVal, setNameVal] = useState(user?.name || 'John Doe');
   const [emailVal, setEmailVal] = useState(user?.email || 'john@example.com');
@@ -207,7 +206,7 @@ export function SettingsTab({ user, onLogout }: SettingsTabProps) {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
             </div>
             <div
-              onClick={() => setShowDeleteConfirm(true)}
+              onClick={() => { window.location.href = "/delete-account"; }}
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0', cursor: 'pointer' }}
             >
               <p style={{ fontSize: 13, fontWeight: 600, color: '#ef4444', margin: 0 }}>Delete Account</p>
@@ -294,18 +293,6 @@ export function SettingsTab({ user, onLogout }: SettingsTabProps) {
         </>
       )}
 
-      {/* Delete account confirm */}
-      {showDeleteConfirm && (
-        <>
-          <div onClick={() => setShowDeleteConfirm(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 200 }} />
-          <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', background: 'var(--card)', borderRadius: 24, padding: '28px 24px 24px', zIndex: 201, width: 'calc(100% - 48px)', maxWidth: 380 }}>
-            <h3 style={{ fontSize: 17, fontWeight: 800, color: 'var(--foreground)', margin: '0 0 8px' }}>Delete Account?</h3>
-            <p style={{ fontSize: 14, color: '#6b7280', margin: '0 0 24px', lineHeight: 1.5 }}>This will permanently delete all your workout data, measurements, and account. This cannot be undone.</p>
-            <button onClick={() => setShowDeleteConfirm(false)} style={{ width: '100%', padding: 14, background: '#ef4444', color: 'white', border: 'none', borderRadius: 14, fontSize: 15, fontWeight: 700, cursor: 'pointer', marginBottom: 10 }}>Delete Account</button>
-            <button onClick={() => setShowDeleteConfirm(false)} style={{ width: '100%', padding: 12, background: 'transparent', color: '#9ca3af', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-          </div>
-        </>
-      )}
     </>
   );
 }

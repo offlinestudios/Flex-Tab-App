@@ -24,8 +24,8 @@ export const socialRouter = router({
         .insert(userFollows)
         .values({ followerId: ctx.user.id, followeeId: input.userId })
         .onConflictDoNothing();
-      // Fan out follow notification (best-effort, non-blocking)
-      createNotification({
+      // Complete the best-effort notification before releasing the account lock.
+      await createNotification({
         recipientId: input.userId,
         actorId: ctx.user.id,
         type: "follow",
