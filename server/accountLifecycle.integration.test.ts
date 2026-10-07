@@ -1,3 +1,4 @@
+import { profileMigration } from "./profileMigration";
 import { communityModerationMigration } from './communityModerationMigration';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Pool } from 'pg';
@@ -24,9 +25,9 @@ suite('account deletion against PostgreSQL', () => {
     await pool.query(`CREATE TABLE notifications (id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
       "recipientId" integer NOT NULL, "actorId" integer NOT NULL, type text NOT NULL, "entityId" integer, read boolean DEFAULT false)`);
     await pool.query(accountLifecycleMigration);
-    await pool.query(communityModerationMigration);
+    await pool.query(communityModerationMigration); await pool.query(profileMigration);
     await pool.query(accountLifecycleMigration);
-    await pool.query(communityModerationMigration); // Must be safe on every server restart.
+    await pool.query(communityModerationMigration); await pool.query(profileMigration); // Must be safe on every server restart.
     lifecycle = new AccountLifecycle(pool);
   });
   afterAll(async () => { await pool?.end(); });

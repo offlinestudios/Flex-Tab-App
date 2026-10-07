@@ -25,6 +25,8 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
   avatarUrl: text("avatarUrl"),
+  bio: text("bio").notNull().default(''),
+  fitnessGoal: text("fitnessGoal").notNull().default(''),
   deletionRequestedAt: timestamp("deletionRequestedAt", { withTimezone: true }),
   deletionNextAttemptAt: timestamp("deletionNextAttemptAt", { withTimezone: true }),
   deletionAttempts: integer("deletionAttempts").default(0).notNull(),

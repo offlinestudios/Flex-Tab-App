@@ -672,6 +672,8 @@ export function UserProfileSheet({
               </p>
             </div>
 
+            {profile?.bio && <p style={{fontSize:13,whiteSpace:'pre-wrap',overflowWrap:'anywhere',marginBottom:12}}>{profile.bio}</p>}
+            {profile?.fitnessGoal && <p style={{fontSize:12,color:'#9ca3af',marginBottom:12}}>{profile.fitnessGoal}</p>}
             {/* Action buttons row */}
             <div style={{ display: "flex", gap: 8 }}>
               {/* Follow / Unfollow — only for other users */}

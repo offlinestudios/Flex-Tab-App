@@ -1,0 +1,17 @@
+Profile editing
+
+Migration 0008 adds empty bio and fitnessGoal columns to users. No default biography
+or fitness goal is invented. The authenticated updateProfile mutation validates
+name (1–80 trimmed characters), bio (up to 500) and an optional enumerated goal.
+The input is strict and accepts no target ID. Protected-procedure account-lifecycle
+locking prevents writes after a deletion request has been accepted.
+
+Edit Profile waits for the mutation; failures retain the draft and show an error.
+The profile, community and auth caches are invalidated after saving. Public profile
+views display the saved bio and goal, covered by the updated sharing disclosure.
+Profile share links use the server account ID, not the auth hook's placeholder ID.
+
+Local PostgreSQL tests verify fresh-reader persistence, other-account isolation,
+input validation and clearing optional details. Deploy backend/migration before
+shipping this UI. End-to-end native save/restart against staging remains required;
+no real user's profile was edited during development.

@@ -1,3 +1,4 @@
+import { profileMigration } from "./profileMigration";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
@@ -33,7 +34,7 @@ const url = process.env.TEST_DATABASE_URL;
       "recipientId" integer NOT NULL, "actorId" integer NOT NULL, type text NOT NULL, "entityId" integer,
       read boolean NOT NULL DEFAULT false, "createdAt" timestamp NOT NULL DEFAULT now())`);
     await pool.query(accountLifecycleMigration);
-    await pool.query(communityModerationMigration);
+    await pool.query(communityModerationMigration); await pool.query(profileMigration);
     database.current = drizzle(pool);
   });
   afterAll(async () => { await pool?.end(); });
@@ -157,6 +158,23 @@ const url = process.env.TEST_DATABASE_URL;
     expect(await processModerationCleanup(remove)).toBe('removed');
     expect(await processModerationCleanup(remove)).toBe('idle');
     expect(remove).toHaveBeenCalledTimes(1);
+  });
+
+  it('persists profile changes for only the authenticated account and fresh readers', async () => {
+    await userRouter.createCaller(ctx(1)).updateProfile({name:'  New display name  ',bio:'A real bio',fitnessGoal:'Increase Strength'});
+    const fresh=await userRouter.createCaller(ctx(1)).getProfile();
+    expect(fresh).toMatchObject({id:1,name:'New display name',bio:'A real bio',fitnessGoal:'Increase Strength'});
+    expect(await userRouter.createCaller(ctx(2)).getPublicProfile({userId:1})).toMatchObject({name:'New display name',bio:'A real bio'});
+    expect(await userRouter.createCaller(ctx(2)).getProfile()).toMatchObject({name:'Person Two',bio:'',fitnessGoal:''});
+    await expect(userRouter.createCaller(ctx(1)).updateProfile({name:'Attempt',bio:'',fitnessGoal:'',userId:2} as any)).rejects.toThrow();
+  });
+  it('validates profile fields and supports clearing optional details', async () => {
+    const caller=userRouter.createCaller(ctx(1));
+    await expect(caller.updateProfile({name:' ',bio:'',fitnessGoal:''})).rejects.toThrow();
+    await expect(caller.updateProfile({name:'Name',bio:'x'.repeat(501),fitnessGoal:''})).rejects.toThrow();
+    await caller.updateProfile({name:'Name',bio:'Bio',fitnessGoal:'Build Muscle'});
+    await caller.updateProfile({name:'Name',bio:'',fitnessGoal:''});
+    expect(await caller.getProfile()).toMatchObject({bio:'',fitnessGoal:''});
   });
 
 });

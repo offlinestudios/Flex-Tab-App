@@ -1,3 +1,4 @@
+import { fitnessGoals } from '../../../shared/profile';
 import { PrivacyNotice } from "./PrivacyNotice";
 import React, { useState, useRef, useCallback } from "react";
 import { formatDateFull } from "@/lib/dateUtils";
@@ -211,7 +212,7 @@ interface EditProfileModalProps {
   name: string;
   bio: string;
   goal: string;
-  onSave: (name: string, bio: string, goal: string) => void;
+  onSave: (name: string, bio: string, goal: string) => Promise<void>;
   onClose: () => void;
 }
 
@@ -220,7 +221,9 @@ function EditProfileModal({ name, bio, goal, onSave, onClose }: EditProfileModal
   const [draftBio, setDraftBio] = useState(bio);
   const [draftGoal, setDraftGoal] = useState(goal);
 
-  const goals = ['Build Muscle', 'Lose Fat', 'Improve Endurance', 'Increase Strength', 'General Fitness'];
+  const goals = fitnessGoals;
+  const [saving,setSaving] = useState(false);
+  const [saveError,setSaveError] = useState('');
 
   return (
     <>
@@ -253,6 +256,7 @@ function EditProfileModal({ name, bio, goal, onSave, onClose }: EditProfileModal
           <label style={{ fontSize: 12, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 6 }}>Display Name</label>
           <input
             type="text"
+            maxLength={80}
             value={draftName}
             onChange={e => setDraftName(e.target.value)}
             placeholder="Your name"
@@ -268,6 +272,7 @@ function EditProfileModal({ name, bio, goal, onSave, onClose }: EditProfileModal
         <div style={{ marginBottom: 14 }}>
           <label style={{ fontSize: 12, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 6 }}>Bio</label>
           <textarea
+            maxLength={500}
             value={draftBio}
             onChange={e => setDraftBio(e.target.value)}
             placeholder="Tell the community about yourself…"
@@ -286,7 +291,7 @@ function EditProfileModal({ name, bio, goal, onSave, onClose }: EditProfileModal
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {goals.map(g => (
               <button
-                key={g}
+                key={g || 'Not selected'}
                 onClick={() => setDraftGoal(g)}
                 style={{
                   padding: '7px 14px', borderRadius: 50,
@@ -296,12 +301,13 @@ function EditProfileModal({ name, bio, goal, onSave, onClose }: EditProfileModal
                   fontSize: 13, fontWeight: 600, cursor: 'pointer',
                 }}
               >
-                {g}
+                {g || 'Not selected'}
               </button>
             ))}
           </div>
         </div>
 
+        {saveError && <p role="alert" style={{color:'#ef4444'}}>{saveError}</p>}
         {/* Actions */}
         <div style={{ display: 'flex', gap: 10 }}>
           <button
@@ -311,10 +317,11 @@ function EditProfileModal({ name, bio, goal, onSave, onClose }: EditProfileModal
             Cancel
           </button>
           <button
-            onClick={() => { onSave(draftName.trim() || name, draftBio.trim(), draftGoal); onClose(); }}
+            disabled={saving || !draftName.trim()}
+            onClick={async () => {setSaving(true);setSaveError('');try {await onSave(draftName.trim(),draftBio.trim(),draftGoal);onClose();} catch {setSaveError('Could not save your profile. Please try again.');} finally {setSaving(false);} }}
             style={{ flex: 2, padding: 12, background: 'var(--foreground)', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 700, color: 'var(--background)', cursor: 'pointer' }}
           >
-            Save Changes
+            {saving ? 'Saving…' : 'Save Changes'}
           </button>
         </div>
       </div>
@@ -471,7 +478,7 @@ function UnitsPanel({ onBack }: { onBack: () => void }) {
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
         {fitnessGoals.map(g => (
           <button
-            key={g}
+            key={g || 'Not selected'}
             onClick={() => setFitnessGoal(g)}
             style={{
               padding: '8px 14px', borderRadius: 50,
@@ -1136,10 +1143,14 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
     onError: () => { toast.error('Failed to remove photo. Please try again.'); },
   });
 
-  // Editable profile fields
-  const [profileName, setProfileName] = useState<string>(user?.name || 'FlexTab User');
-  const [profileBio, setProfileBio] = useState<string>('Passionate about strength training and building healthy habits. Logging every rep. 💪');
-  const [profileGoal, setProfileGoal] = useState<string>('Build Muscle');
+  const profileName = myProfile?.name || user?.name || 'FlexTab User';
+  const profileBio = myProfile?.bio || '';
+  const profileGoal = myProfile?.fitnessGoal || '';
+  const profileUtils = trpc.useUtils();
+  const saveProfile = trpc.user.updateProfile.useMutation({onSuccess: async () => {
+    await Promise.all([profileUtils.user.invalidate(), profileUtils.community.invalidate(), profileUtils.auth.me.invalidate()]);
+    toast.success('Profile saved.');
+  }});
 
   const allSetLogs = workoutSessions.flatMap(s => s.exercises);
   const totalSets = allSetLogs.reduce((s, e) => s + e.sets, 0);
@@ -1295,7 +1306,7 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
             <div style={{ marginBottom: 12 }}>
               <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--foreground)', margin: '0 0 2px' }}>{profileName}</h3>
               <p style={{ fontSize: 13, color: '#6b7280', margin: '0 0 3px' }}>{handle}</p>
-              <p style={{ fontSize: 12, color: '#9ca3af', fontWeight: 500, margin: '0 0 8px' }}>{tier.tier} Lifter · {profileGoal}</p>
+              <p style={{ fontSize: 12, color: '#9ca3af', fontWeight: 500, margin: '0 0 8px' }}>{tier.tier} Lifter{profileGoal ? ` · ${profileGoal}` : ''}</p>
               {profileBio && (
                 <p style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.5, margin: 0 }}>{profileBio}</p>
               )}
@@ -1511,7 +1522,7 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
                   ['Total Sets', totalSets, 'border-right:1px solid var(--border);border-bottom:1px solid var(--border)'],
                   ['Total Reps', totalReps, 'border-bottom:1px solid var(--border)'],
                   ['Workouts', workoutSessions.length, 'border-right:1px solid var(--border)'],
-                  ['Fitness Goal', profileGoal, ''],
+                  ['Fitness Goal', profileGoal || 'Not selected', ''],
                 ] as [string, string | number, string][]).map(([label, val]) => (
                   <div key={label} style={{ padding: '14px 18px' }}>
                     <p style={{ fontSize: 11, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>{label}</p>
@@ -1557,12 +1568,12 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
           name={profileName}
           bio={profileBio}
           goal={profileGoal}
-          onSave={(n, b, g) => { setProfileName(n); setProfileBio(b); setProfileGoal(g); }}
+          onSave={async (name,bio,goal) => {await saveProfile.mutateAsync({name,bio,fitnessGoal:goal as typeof fitnessGoals[number]});}}
           onClose={() => setShowEditModal(false)}
         />
       )}
       {showSettingsMenu && <SettingsMenu onClose={() => setShowSettingsMenu(false)} />}
-      {showShareSheet && <ShareSheet profileName={profileName} userId={user?.id} onClose={() => setShowShareSheet(false)} />}
+      {showShareSheet && <ShareSheet profileName={profileName} userId={myProfile?.id} onClose={() => setShowShareSheet(false)} />}
       {/* Avatar crop modal — shown after file is selected */}
       {cropSrc && (
         <AvatarCropModal

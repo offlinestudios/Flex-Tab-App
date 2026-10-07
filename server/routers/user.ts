@@ -1,3 +1,4 @@
+import { fitnessGoals } from '../../shared/profile';
 import { ownedMedia } from "../ownedMedia";
 import { TRPCError } from "@trpc/server";
 import { visibleAccount } from "../communityAccess";
@@ -51,7 +52,7 @@ export const userRouter = router({
       const db = await getDb();
       if (!db) return null;
       const [user] = await db
-        .select({ id: users.id, name: users.name, avatarUrl: users.avatarUrl })
+        .select({ id: users.id, name: users.name, avatarUrl: users.avatarUrl, bio: users.bio, fitnessGoal: users.fitnessGoal })
         .from(users)
         .where(and(eq(users.id, input.userId), visibleAccount(ctx.user.id, users.id)))
         .limit(1);
@@ -65,7 +66,7 @@ export const userRouter = router({
       if (!db) return [];
       const searchTerm = `%${input.query}%`;
       const results = await db
-        .select({ id: users.id, name: users.name, avatarUrl: users.avatarUrl })
+        .select({ id: users.id, name: users.name, avatarUrl: users.avatarUrl, bio: users.bio, fitnessGoal: users.fitnessGoal })
         .from(users)
         .where(and(sql`${users.name} ILIKE ${searchTerm}`, visibleAccount(ctx.user.id, users.id)))
         .limit(20);
@@ -76,11 +77,24 @@ export const userRouter = router({
     const db = await getDb();
     if (!db) return null;
     const [user] = await db
-      .select({ id: users.id, name: users.name, avatarUrl: users.avatarUrl })
+      .select({ id: users.id, name: users.name, avatarUrl: users.avatarUrl, bio: users.bio, fitnessGoal: users.fitnessGoal })
       .from(users)
       .where(eq(users.id, ctx.user.id))
       .limit(1);
     return user ?? null;
+  }),
+
+  updateProfile: protectedProcedure.input(z.object({
+    name: z.string().trim().min(1).max(80),
+    bio: z.string().trim().max(500),
+    fitnessGoal: z.enum(fitnessGoals),
+  }).strict()).mutation(async ({ctx,input}) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({code:'INTERNAL_SERVER_ERROR'});
+    const [profile] = await db.update(users).set({...input,updatedAt:new Date()})
+      .where(eq(users.id,ctx.user.id)).returning({id:users.id,name:users.name,bio:users.bio,fitnessGoal:users.fitnessGoal,avatarUrl:users.avatarUrl});
+    if (!profile) throw new TRPCError({code:'NOT_FOUND'});
+    return profile;
   }),
 
   getAvatarUploadUrl: protectedProcedure
