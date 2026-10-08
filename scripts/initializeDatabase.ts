@@ -26,7 +26,7 @@ try {
     "entityId" integer,read boolean NOT NULL DEFAULT false,"createdAt" timestamp NOT NULL DEFAULT now());
     CREATE INDEX notifications_recipientId_idx ON notifications("recipientId");
     CREATE INDEX notifications_unread_idx ON notifications("recipientId") WHERE read=false;`);
-  for (const file of ['0006_account_deletion.sql','0007_content_reports.sql','0008_profile_details.sql','0009_apple_tokens.sql','0010_account_reports.sql']) {
+  for (const file of ['0006_account_deletion.sql','0007_content_reports.sql','0008_profile_details.sql','0009_apple_tokens.sql','0010_account_reports.sql','0011_private_display_names.sql']) {
     await db.query(await readFile(new URL(`../drizzle/${file}`,import.meta.url),'utf8'));
   }
   await db.query('COMMIT');

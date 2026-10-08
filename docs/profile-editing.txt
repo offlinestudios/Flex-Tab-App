@@ -15,3 +15,14 @@ Local PostgreSQL tests verify fresh-reader persistence, other-account isolation,
 input validation and clearing optional details. Deploy backend/migration before
 shipping this UI. End-to-end native save/restart against staging remains required;
 no real user's profile was edited during development.
+
+Public display-name privacy: new Supabase accounts no longer default to their
+sign-in email or its local part. Shared initialization uses a supplied metadata
+name (trimmed/bounded) or FlexTab Member. Migration0011 replaces stored display
+names exactly matching the same account's sign-in email (case/space insensitive).
+This also changes any explicitly chosen name that exactly matches that address;
+auth emails and unrelated display names are preserved. Users can edit their
+public display name. No production data has been changed by this development work.
+Local tests verify initialization, repeatable migration, unchanged auth emails,
+preserved chosen names and absence from name search after repair. This does not
+remove email addresses a user voluntarily puts in posts, bios or other content.

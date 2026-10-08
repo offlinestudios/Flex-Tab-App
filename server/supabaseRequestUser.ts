@@ -1,3 +1,4 @@
+import { initialDisplayName } from "../shared/profile";
 import type { Request } from 'express';
 import { createClient } from '@supabase/supabase-js';
 import { eq } from 'drizzle-orm';
@@ -19,7 +20,7 @@ export async function getSupabaseRequestUser(req: Request) {
   // Parallel first requests may both create the account. Never overwrite an existing
   // user's deletion state, and re-read after a uniqueness conflict.
   await db.insert(users).values({ openId: identity.id, email: identity.email || '',
-    name: identity.user_metadata?.name || identity.email || 'User', role: 'user' })
+    name: initialDisplayName(identity.user_metadata?.name, identity.email), role: 'user' })
     .onConflictDoNothing({ target: users.openId });
   const result = await db.select().from(users).where(eq(users.openId, identity.id)).limit(1);
   return result[0]?.deletionRequestedAt ? null : result[0] ?? null;

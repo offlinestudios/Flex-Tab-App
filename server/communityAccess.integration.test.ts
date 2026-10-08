@@ -1,3 +1,4 @@
+import { privateDisplayNameMigration } from "./privateDisplayNameMigration";
 import { accountReportMigration } from "./accountReportMigration";
 import { profileMigration } from "./profileMigration";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -203,6 +204,17 @@ const url = process.env.TEST_DATABASE_URL;
     expect(await processModerationCleanup(remove)).toBe('removed');
     expect(await processModerationCleanup(remove)).toBe('idle');
     expect(remove).toHaveBeenCalledTimes(1);
+  });
+
+  it('repairs email fallback display names without changing login emails or chosen names', async () => {
+    await pool.query(`UPDATE users SET email='private@example.com',name=' PRIVATE@EXAMPLE.COM ' WHERE id=2`);
+    await pool.query(`UPDATE users SET email='other@example.com',name='Chosen Name' WHERE id=3`);
+    await pool.query(privateDisplayNameMigration);
+    await pool.query(privateDisplayNameMigration);
+    expect(await userRouter.createCaller(ctx(1)).getPublicProfile({userId:2})).toMatchObject({name:'FlexTab Member'});
+    expect(await userRouter.createCaller(ctx(1)).searchUsers({query:'private@example.com'})).toEqual([]);
+    expect((await pool.query('SELECT email FROM users WHERE id=2')).rows[0].email).toBe('private@example.com');
+    expect(await userRouter.createCaller(ctx(1)).getPublicProfile({userId:3})).toMatchObject({name:'Chosen Name'});
   });
 
   it('persists profile changes for only the authenticated account and fresh readers', async () => {

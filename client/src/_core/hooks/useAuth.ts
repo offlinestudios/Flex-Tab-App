@@ -1,3 +1,4 @@
+import { initialDisplayName } from "@shared/profile";
 import { supabase } from '@/lib/supabase';
 import { getLoginUrl } from "@/const";
 import { useCallback, useEffect, useState, useMemo } from "react";
@@ -58,7 +59,7 @@ export function useAuth(options?: UseAuthOptions) {
     const mappedUser: MappedUser | null = user ? {
       id: 0, // Supabase doesn't expose numeric ID
       openId: user.id,
-      name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+      name: initialDisplayName(user.user_metadata?.name, user.email),
       email: user.email || '',
       role: 'user' as const,
       loginMethod: 'supabase',
