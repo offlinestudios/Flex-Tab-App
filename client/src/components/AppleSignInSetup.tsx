@@ -65,8 +65,10 @@ export function AppleSignInSetup({children}:{children:ReactNode}) {
       if(native){await Browser.open({url:data.url});setPhase('reauthenticate');}
     } catch {setPhase('retry');}
   };
+  // Recovery must remain accessible even when Apple token setup is incomplete.
+  // The reset form still relies on Supabase to authorize the password update.
   // Support, legal information and a deletion receipt remain accessible.
-  if (['/support','/feedback','/privacy','/terms','/account-deletion-requested'].includes(path) || (loaded && (!hasApple || readyAccount===accountKey))) return <>{children}</>;
+  if (['/support','/feedback','/privacy','/terms','/account-deletion-requested','/reset-password'].includes(path) || (loaded && (!hasApple || readyAccount===accountKey))) return <>{children}</>;
   return <main className="min-h-screen flex items-center justify-center bg-background text-foreground p-6"><div className="max-w-md space-y-5">
     <h1 className="text-2xl font-bold">{loaded ? 'Finish Apple sign-in' : 'Loading FlexTab'}</h1>
     {!loaded || phase==='checking' || phase==='complete' ? <p role="status">Completing your account setup…</p> : <>
