@@ -1,3 +1,5 @@
+import { PrivacyNotice } from "../components/PrivacyNotice";
+
 export default function PrivacyPolicy() {
   return (
     <div className="min-h-screen bg-white">
@@ -14,7 +16,7 @@ export default function PrivacyPolicy() {
       {/* Content */}
       <main className="container mx-auto px-6 py-16 max-w-4xl">
         <h1 className="text-4xl font-bold text-[#0B0B0C] mb-4">Privacy Policy</h1>
-        <p className="text-sm text-[#6B6F76] mb-12">Last updated: February 9, 2026</p>
+        <p className="text-sm text-[#6B6F76] mb-12">Last updated: October 7, 2026</p>
 
         <div className="prose prose-lg max-w-none">
           <section className="mb-12">
@@ -41,6 +43,18 @@ export default function PrivacyPolicy() {
             <p className="text-base leading-relaxed text-[#6B6F76] mb-4">
               We automatically collect certain information about your device and how you interact with our Service. This includes device information (type, operating system, unique device identifiers), log data (IP address, browser type, pages visited, time spent), and usage patterns (features used, frequency of use, session duration). This information helps us improve our Service and provide technical support.
             </p>
+          </section>
+
+          <section className="mb-12 text-[#6B6F76]">
+            <h2 className="text-2xl font-bold text-[#0B0B0C] mb-4">Community Content and Visibility</h2>
+            <PrivacyNotice showPolicyLink={false} />
+            <p className="mt-4">We store community posts, captions, photos, videos, comments, follows, blocks and mutes to provide these features. Reports and the details you supply are available to moderators for review and follow-up.</p>
+          </section>
+
+          <section className="mb-12 text-[#6B6F76]">
+            <h2 className="text-2xl font-bold text-[#0B0B0C] mb-4">Location and Media Permissions</h2>
+            <p className="mb-4">If you start GPS workout tracking and grant location permission, FlexTab uses precise location coordinates to record your route and calculate workout distance. Saved GPS activities can include route information linked to your account. Map displays use Google Maps.</p>
+            <p>You can choose photos or videos for your profile or posts. Camera and microphone access support capture when you choose to use those features. You can manage location, camera and microphone permissions in your device settings; denying a permission may prevent the related feature from working.</p>
           </section>
 
           <section className="mb-12">
@@ -73,12 +87,14 @@ export default function PrivacyPolicy() {
           <section className="mb-12">
             <h2 className="text-2xl font-bold text-[#0B0B0C] mb-4">Your Rights and Choices</h2>
             <p className="text-base leading-relaxed text-[#6B6F76] mb-4">
-              You have the right to access, update, or delete your personal information at any time through your account settings. You can export your workout data in a portable format. You may delete your account, which will result in the deletion of your personal information and workout data. You can opt out of non-essential communications from us while still receiving important service-related notifications.
+              You have the right to access, update, or delete your personal information at any time through your account settings. For a request to access a copy of your data, contact us using the details below. You can request account deletion through the account deletion page. The request is processed in the background; keep the status receipt shown after your request to check its progress. Deletion cannot recall copies or media links saved by other people. You can opt out of non-essential communications from us while still receiving important service-related notifications.
             </p>
             <p className="text-base leading-relaxed text-[#6B6F76] mb-4">
               If you are located in the European Economic Area (EEA), you have additional rights under the General Data Protection Regulation (GDPR), including the right to data portability, the right to object to processing, and the right to lodge a complaint with a supervisory authority.
             </p>
           </section>
+
+          <p className="mb-8"><a className="underline" href="/delete-account">Request account deletion</a> · <a className="underline" href="/support">Get support</a></p>
 
           <section className="mb-12">
             <h2 className="text-2xl font-bold text-[#0B0B0C] mb-4">Children's Privacy</h2>
