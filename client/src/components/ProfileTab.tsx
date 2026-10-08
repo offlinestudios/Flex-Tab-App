@@ -1,3 +1,4 @@
+import { AppPreferences } from './AppPreferences';
 import { NotificationNotice } from './NotificationNotice';
 import { fitnessGoals } from '../../../shared/profile';
 import { PrivacyNotice } from "./PrivacyNotice";
@@ -401,78 +402,7 @@ function NotificationPanel({ onBack }: { onBack: () => void }) {
 
 /* Units & Preferences panel */
 function UnitsPanel({ onBack }: { onBack: () => void }) {
-  const { theme, setTheme } = useTheme();
-  const [weightUnit, setWeightUnit] = useState(() => localStorage.getItem('weightUnit') || 'lbs');
-  const [appearance, setAppearance] = useState<'light' | 'dark' | 'system'>(
-    theme === 'dark' ? 'dark' : 'light'
-  );
-  const fitnessGoals = ['Build Muscle', 'Lose Fat', 'Improve Endurance', 'Increase Strength', 'General Fitness', 'Athletic Performance'];
-  const [fitnessGoal, setFitnessGoal] = useState(() => localStorage.getItem('fitnessGoal') || 'Build Muscle');
-
-  const save = () => {
-    localStorage.setItem('weightUnit', weightUnit);
-    localStorage.setItem('fitnessGoal', fitnessGoal);
-    if (appearance === 'dark') setTheme('dark');
-    else if (appearance === 'light') setTheme('light');
-    else {
-      if (window.matchMedia('(prefers-color-scheme: dark)').matches) setTheme('dark');
-      else setTheme('light');
-    }
-    onBack();
-  };
-
-  const optBtn = (label: string, val: string, current: string, setter: (v: any) => void) => (
-    <button
-      key={val}
-      onClick={() => setter(val)}
-      style={{
-        flex: 1, padding: '10px 0', borderRadius: 12,
-        border: `1.5px solid ${current === val ? 'var(--foreground)' : 'var(--border)'}`,
-        background: current === val ? 'var(--foreground)' : 'var(--secondary)',
-        color: current === val ? 'var(--background)' : '#6b7280',
-        fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
-      }}
-    >{label}</button>
-  );
-
-  return (
-    <SettingsSheet title="Units & Preferences" onBack={onBack}>
-      <p style={{ fontSize: 12, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 8px' }}>Weight Unit</p>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-        {optBtn('Pounds (lbs)', 'lbs', weightUnit, setWeightUnit)}
-        {optBtn('Kilograms (kg)', 'kg', weightUnit, setWeightUnit)}
-      </div>
-
-      <p style={{ fontSize: 12, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 8px' }}>Appearance</p>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-        {optBtn('Light', 'light', appearance, setAppearance)}
-        {optBtn('Dark', 'dark', appearance, setAppearance)}
-        {optBtn('System', 'system', appearance, setAppearance)}
-      </div>
-
-      <p style={{ fontSize: 12, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 8px' }}>Fitness Goal</p>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
-        {fitnessGoals.map(g => (
-          <button
-            key={g || 'Not selected'}
-            onClick={() => setFitnessGoal(g)}
-            style={{
-              padding: '8px 14px', borderRadius: 50,
-              border: `1.5px solid ${fitnessGoal === g ? 'var(--foreground)' : 'var(--border)'}`,
-              background: fitnessGoal === g ? 'var(--foreground)' : 'var(--secondary)',
-              color: fitnessGoal === g ? 'var(--background)' : '#6b7280',
-              fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
-            }}
-          >{g}</button>
-        ))}
-      </div>
-
-      <button
-        onClick={save}
-        style={{ width: '100%', padding: 13, background: 'var(--foreground)', color: 'var(--background)', border: 'none', borderRadius: 14, fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
-      >Save Preferences</button>
-    </SettingsSheet>
-  );
+  return <SettingsSheet title="Preferences" onBack={onBack}><AppPreferences /></SettingsSheet>;
 }
 
 /* Privacy Settings panel */
