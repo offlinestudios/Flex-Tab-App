@@ -76,3 +76,15 @@ malformed envelopes, weak keys and rotation. No production key was generated.
 This helper does not itself persist tokens or establish their ownership. Callers
 must verify Apple's token identity before encryption; client-supplied metadata is
 not evidence of ownership. Database persistence/capture/deletion integration remains.
+
+Apple token ownership validation
+server/appleTokenValidation.ts exchanges the supplied refresh token at Apple's
+fixed token endpoint, then verifies the returned identity token with Apple's
+public keys, RS256, issuer, client audience, expiry and expected Apple subject.
+Expected subject must come from the authenticated user's server-verified Apple
+identity. Email matching or caller-supplied identifiers must never establish it.
+Twelve offline tests cover ownership/issuer/audience/expiry/signature failures and
+provider errors. Together with encryption/revocation,35 Apple tests pass.
+Source: https://developer.apple.com/documentation/signinwithapplerestapi/generate-and-validate-tokens
+This is not yet connected to the auth callback, database persistence or deletion
+worker. No real token was captured, stored or revoked. Apple login stays disabled.

@@ -7,6 +7,18 @@ export type AppleRevocationConfig = {
   privateKey: string;
 };
 
+export async function createAppleClientSecret(config: AppleRevocationConfig) {
+    const key = await importPKCS8(config.privateKey, 'ES256');
+    return await new SignJWT({})
+      .setProtectedHeader({ alg: 'ES256', kid: config.keyId })
+      .setIssuer(config.teamId)
+      .setSubject(config.clientId)
+      .setAudience('https://appleid.apple.com')
+      .setIssuedAt()
+      .setExpirationTime('5m')
+      .sign(key);
+}
+
 // Server-only: neither Apple's signing key nor the user's provider refresh token
 // may be bundled into the client, logged, or included in error messages.
 export async function revokeAppleRefreshToken(
@@ -18,15 +30,7 @@ export async function revokeAppleRefreshToken(
     throw new Error('Apple revocation configuration is incomplete');
   }
   try {
-    const key = await importPKCS8(config.privateKey, 'ES256');
-    const clientSecret = await new SignJWT({})
-      .setProtectedHeader({ alg: 'ES256', kid: config.keyId })
-      .setIssuer(config.teamId)
-      .setSubject(config.clientId)
-      .setAudience('https://appleid.apple.com')
-      .setIssuedAt()
-      .setExpirationTime('5m')
-      .sign(key);
+    const clientSecret = await createAppleClientSecret(config);
     const response = await send('https://appleid.apple.com/auth/revoke', {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
