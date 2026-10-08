@@ -71,3 +71,13 @@ export async function revokeStoredAppleTokens(openId: string, subjects: string[]
       AND "appleSubject"=${row.appleSubject} AND "clientId"=${row.clientId} AND envelope=${row.envelope}`);
   }
 }
+
+export async function appleTokenStorageStatus(userId: number, identity: User) {
+  const subjects = appleSubjects(identity);
+  if (!subjects.length) return { required: false, complete: true };
+  const {config} = appleTokenConfig();
+  const db = await getDb(); if (!db) throw new Error('Database unavailable');
+  const result = await db.execute(sql`SELECT t."appleSubject" FROM apple_provider_tokens t JOIN users u ON u.id=t."userId"
+    WHERE u.id=${userId} AND u."openId"=${identity.id} AND t."clientId"=${config.clientId} AND t."revokedAt" IS NULL`);
+  return {required:true,complete:subjects.every(subject=>result.rows.some(row=>row.appleSubject===subject))};
+}

@@ -1,3 +1,4 @@
+import { AppleSignInSetup } from './components/AppleSignInSetup';
 import Support from './pages/Support';
 import Moderation from './pages/Moderation';
 import DeleteAccount, { AccountDeletionRequested } from "./pages/DeleteAccount";
@@ -62,7 +63,7 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <NativeAuthListener />
-          <Router />
+          <AppleSignInSetup><Router /></AppleSignInSetup>
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

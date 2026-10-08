@@ -8,7 +8,7 @@ const state = vi.hoisted(() => ({db:null as any, validate:vi.fn(), revoke:vi.fn(
 vi.mock('./db',()=>({getDb:async()=>state.db}));
 vi.mock('./appleTokenValidation',()=>({validateAppleRefreshToken:state.validate}));
 vi.mock('./appleTokenRevocation',()=>({revokeAppleRefreshToken:state.revoke}));
-import { storeAppleToken, revokeStoredAppleTokens } from './appleTokenVault';
+import { storeAppleToken, revokeStoredAppleTokens, appleTokenStorageStatus } from './appleTokenVault';
 const url = process.env.TEST_DATABASE_URL;
 (url ? describe : describe.skip)('Apple encrypted token persistence against PostgreSQL',()=>{
   let pool:Pool;
@@ -33,7 +33,10 @@ const url = process.env.TEST_DATABASE_URL;
     state.validate.mockReset().mockResolvedValue(undefined); state.revoke.mockReset().mockResolvedValue(undefined);
   });
   it('stores ciphertext for the verified account and rejects cross-account assignment',async()=>{
+    expect(await appleTokenStorageStatus(1,identity)).toEqual({required:true,complete:false});
     await storeAppleToken(1,identity,'secret-refresh');
+    expect(await appleTokenStorageStatus(1,identity)).toEqual({required:true,complete:true});
+    expect(await appleTokenStorageStatus(2,identity)).toEqual({required:true,complete:false});
     const [row] = (await pool.query('SELECT * FROM apple_provider_tokens')).rows;
     expect(row.envelope).not.toContain('secret-refresh');
     expect(row).toMatchObject({userId:1,appleSubject:'apple-one',clientId:'com.example.auth'});
@@ -53,6 +56,7 @@ const url = process.env.TEST_DATABASE_URL;
     await expect(revokeStoredAppleTokens('auth-one',['apple-one'])).rejects.toThrow('temporary');
     expect((await pool.query('SELECT "revokedAt" FROM apple_provider_tokens')).rows[0].revokedAt).toBeNull();
     await revokeStoredAppleTokens('auth-one',['apple-one']);
+    expect(await appleTokenStorageStatus(1,identity)).toEqual({required:true,complete:false});
     await revokeStoredAppleTokens('auth-one',['apple-one']);
     expect(state.revoke).toHaveBeenCalledTimes(2);
     expect(state.revoke).toHaveBeenLastCalledWith('secret-refresh',expect.any(Object));

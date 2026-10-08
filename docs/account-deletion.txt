@@ -108,3 +108,18 @@ empty initialization through0009 and production build verified locally.
 Remaining: callback capture/retry UI, production key/configuration setup, migration
 rollout, Supabase provider activation and real external staging lifecycle validation.
 Apple login remains disabled. No production credentials or tokens were used.
+
+2026-10-08 client completion update
+AppleSignInSetup now observes Supabase sessions outside the auth callback lock,
+checks the server-owned token status, uploads the provider_refresh_token through
+the protected mutation when needed, and verifies persistence before showing the
+main app to Apple-linked accounts. Failures offer retry, Apple reauthentication,
+sign-out and support. Tokens are not copied to additional browser storage or logs.
+Pending tokens stay in memory for retry and are cleared after completion/sign-out.
+Normal access-token refreshes do not reset a completed account's workout screen.
+Support/legal pages and deletion receipts remain accessible during setup failure.
+Non-Apple sessions continue without calling the Apple configuration endpoints.
+132 local tests pass, including5 completion-flow tests and32 PostgreSQL cases.
+Actual provider_refresh_token delivery, consent cancellation, cold/warm native
+callbacks, setup-screen rendering and full external deletion still need staging
+and physical-device validation. These tests do not establish live Apple readiness.
