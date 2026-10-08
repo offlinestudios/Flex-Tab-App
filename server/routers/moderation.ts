@@ -14,22 +14,30 @@ export const moderationRouter = router({
   }).strict()).mutation(async ({ ctx, input }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
-    const [post] = await db.select({userId:posts.userId}).from(posts).where(eq(posts.id,input.postId)).limit(1);
-    if (!post) return {received:true}; // Never disclose blocked/deleted content through report intake.
-    let targetUserId = post.userId;
-    if (input.commentId !== undefined) {
-      const [comment] = await db.select().from(postComments).where(and(
-        eq(postComments.id,input.commentId), eq(postComments.postId,input.postId)
-      )).limit(1);
-      if (!comment) throw new TRPCError({ code: 'NOT_FOUND', message: 'Comment unavailable.' });
-      targetUserId = comment.userId;
-    }
-    if (targetUserId === ctx.user.id) throw new TRPCError({ code: 'BAD_REQUEST', message: 'You can delete your own content instead.' });
-    const count = await db.execute(sql`SELECT count(*)::int AS count FROM content_reports WHERE "reporterId"=${ctx.user.id} AND "createdAt">now()-interval '1 hour'`);
-    if (Number(count.rows[0]?.count) >= 20) throw new TRPCError({ code: 'TOO_MANY_REQUESTS', message: 'Please wait before sending more reports.' });
-    await db.execute(sql`INSERT INTO content_reports ("reporterId","targetUserId","postId","commentId","targetKind",reason,details)
-      VALUES (${ctx.user.id},${targetUserId},${input.postId},${input.commentId ?? null},${input.commentId ? 'comment' : 'post'},${input.reason},${input.details}) ON CONFLICT DO NOTHING`);
-    return { received: true };
+    return db.transaction(async tx => {
+      const [post] = await tx.select({userId:posts.userId}).from(posts).where(eq(posts.id,input.postId)).limit(1);
+      if (!post) return {received:true}; // Never disclose blocked/deleted content through report intake.
+      let targetUserId = post.userId;
+      if (input.commentId !== undefined) {
+        const [comment] = await tx.select().from(postComments).where(and(
+          eq(postComments.id,input.commentId), eq(postComments.postId,input.postId)
+        )).limit(1);
+        if (!comment) throw new TRPCError({ code: 'NOT_FOUND', message: 'Comment unavailable.' });
+        targetUserId = comment.userId;
+      }
+      if (targetUserId === ctx.user.id) throw new TRPCError({ code: 'BAD_REQUEST', message: 'You can delete your own content instead.' });
+      // A negative namespace cannot collide with positive account-pair locks.
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(-80401, ${ctx.user.id})`);
+      const duplicate = await tx.execute(sql`SELECT id FROM content_reports WHERE "reporterId"=${ctx.user.id}
+        AND "targetKind"=${input.commentId ? 'comment' : 'post'}
+        AND "postId"=${input.postId} AND "commentId" IS NOT DISTINCT FROM ${input.commentId ?? null}::integer LIMIT 1`);
+      if (duplicate.rows.length) return { received: true };
+      const count = await tx.execute(sql`SELECT count(*)::int AS count FROM content_reports WHERE "reporterId"=${ctx.user.id} AND "createdAt">now()-interval '1 hour'`);
+      if (Number(count.rows[0]?.count) >= 20) throw new TRPCError({ code: 'TOO_MANY_REQUESTS', message: 'Please wait before sending more reports.' });
+      await tx.execute(sql`INSERT INTO content_reports ("reporterId","targetUserId","postId","commentId","targetKind",reason,details)
+        VALUES (${ctx.user.id},${targetUserId},${input.postId},${input.commentId ?? null},${input.commentId ? 'comment' : 'post'},${input.reason},${input.details}) ON CONFLICT DO NOTHING`);
+      return { received: true };
+    });
   }),
 
   queue: adminProcedure.input(z.object({ status: z.enum(['open','dismissed','removed']).default('open') }))

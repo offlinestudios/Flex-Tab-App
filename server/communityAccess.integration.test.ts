@@ -131,6 +131,20 @@ const url = process.env.TEST_DATABASE_URL;
     await expect(caller.resolve({reportId:1,action:'remove'})).rejects.toThrow();
     await expect(caller.report({postId:1,reason:'spam'})).rejects.toThrow('own content');
   });
+  it('enforces the report limit across concurrent requests while accepting duplicate retries', async () => {
+    await pool.query(`INSERT INTO posts (id,"userId",caption) OVERRIDING SYSTEM VALUE
+      SELECT n,2,'Report target' FROM generate_series(100,124) n`);
+    const caller = moderationRouter.createCaller(ctx(1));
+    const attempts = await Promise.allSettled(Array.from({length:25}, (_,i) => caller.report({postId:100+i,reason:'spam'})));
+    expect(attempts.filter(r => r.status === 'fulfilled')).toHaveLength(20);
+    const rejected = attempts.filter(r => r.status === 'rejected');
+    expect(rejected).toHaveLength(5);
+    for (const result of rejected) if (result.status === 'rejected') expect(result.reason.code).toBe('TOO_MANY_REQUESTS');
+    const reports = await pool.query('SELECT "postId" FROM content_reports WHERE "reporterId"=1');
+    expect(reports.rowCount).toBe(20);
+    await expect(caller.report({postId:reports.rows[0].postId,reason:'spam'})).resolves.toEqual({received:true});
+    await expect(moderationRouter.createCaller(ctx(3)).report({postId:100,reason:'spam'})).resolves.toEqual({received:true});
+  });
   it('validates comment/post association and accepts reports after blocking', async () => {
     const comment=(await pool.query('SELECT id FROM post_comments WHERE "postId"=2')).rows[0];
     const caller=moderationRouter.createCaller(ctx(1));
