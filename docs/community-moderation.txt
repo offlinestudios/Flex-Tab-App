@@ -9,7 +9,11 @@ Author-only post deletion checks ownership before cascading any child deletion.
 Report post/comment opens a reason/details form. The server verifies the target,
 rejects self-reports, deduplicates reports, and limits each reporter to 20/hour.
 Report intake accepts known content IDs after blocking without returning content.
-A direct report-account action from the blocked list still needs a UI path.
+Account reports are available from profile sheets and blocked/muted lists. They
+share the 20/hour budget with content reports and deduplicate per reporter/target.
+Intake does not reveal missing accounts or bypass profile blocking. Moderators see
+the account ID/name and details; content removal cannot resolve an account report.
+Account enforcement is still required before community launch.
 
 Moderators use /moderation (also linked in profile settings for server-side admins).
 Both queue and resolution require an active admin role. Review current content,
@@ -39,3 +43,10 @@ This is not a complete live moderation operation. Required before community laun
 Migration 0007 runs after account-lifecycle migration 0006 on server startup.
 Deploy backend before distributing the updated native UI. No production data or roles
 were changed while developing this feature. Local tests use disposable PostgreSQL.
+
+Migration0010 extends report targets to accounts and adds a unique account-report
+index. Apply before updated clients. Local validation:136 tests across17 files,
+including34 PostgreSQL cases; TypeScript and production build pass. Account report
+tests cover post-block intake, concurrent duplicate retries, missing/self targets,
+admin-only queue, shared rate budget and rejection of content removal on accounts.
+Native account-report UI and real moderator workflow remain unverified.

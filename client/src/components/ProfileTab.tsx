@@ -1,3 +1,4 @@
+import { ReportContent } from './ReportContent';
 import { AppPreferences } from './AppPreferences';
 import { NotificationNotice } from './NotificationNotice';
 import { fitnessGoals } from '../../../shared/profile';
@@ -573,6 +574,7 @@ function BlockedMutedPanel({ onBack }: { onBack: () => void }) {
             <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>
               @{(u.name ?? 'user').toLowerCase().replace(/\s+/g, '').slice(0, 20)}
             </p>
+            <ReportContent userId={u.id} />
           </div>
           {/* Action button */}
           <button

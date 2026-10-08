@@ -1,3 +1,4 @@
+import { ReportContent } from './ReportContent';
 import { useState, useEffect, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { publicAppUrl } from "@/lib/api";
@@ -715,6 +716,7 @@ export function UserProfileSheet({
 
               {/* Share profile button */}
               <ShareProfileButton userId={userId} displayName={displayName} />
+              {!isMyProfile && currentUser && <ReportContent userId={userId} />}
             </div>
           </div>
 

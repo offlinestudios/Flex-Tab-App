@@ -19,7 +19,7 @@ export default function Moderation() {
       <p className="whitespace-pre-wrap">Report details: {r.details||'None supplied'}</p>
       {r.mediaCleanupPending&&<p>Media removal pending · {r.cleanupAttempts} retries</p>}
       {status==='open'&&<div className="flex gap-4 flex-wrap"><button disabled={resolve.isPending} onClick={()=>resolve.mutate({reportId:r.id,action:'dismiss'})}>Dismiss report</button>
-      {confirm===r.id?<><span>Remove this content permanently?</span><button disabled={resolve.isPending} className="text-red-500" onClick={()=>resolve.mutate({reportId:r.id,action:'remove'})}>Confirm removal</button><button onClick={()=>setConfirm(null)}>Cancel</button></>:<button className="text-red-500" onClick={()=>setConfirm(r.id)}>Remove content</button>}</div>}
+      {r.targetKind==='account'?<p>Review account #{r.targetUserId}. Account enforcement is not available here; do not dismiss a substantiated report merely to clear the queue.</p>:confirm===r.id?<><span>Remove this content permanently?</span><button disabled={resolve.isPending} className="text-red-500" onClick={()=>resolve.mutate({reportId:r.id,action:'remove'})}>Confirm removal</button><button onClick={()=>setConfirm(null)}>Cancel</button></>:<button className="text-red-500" onClick={()=>setConfirm(r.id)}>Remove content</button>}</div>}
     </article>)}
   </main>;
 }

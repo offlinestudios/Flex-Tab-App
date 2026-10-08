@@ -1,3 +1,4 @@
+import { accountReportMigration } from "./accountReportMigration";
 import { profileMigration } from "./profileMigration";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Pool } from 'pg';
@@ -34,7 +35,7 @@ const url = process.env.TEST_DATABASE_URL;
       "recipientId" integer NOT NULL, "actorId" integer NOT NULL, type text NOT NULL, "entityId" integer,
       read boolean NOT NULL DEFAULT false, "createdAt" timestamp NOT NULL DEFAULT now())`);
     await pool.query(accountLifecycleMigration);
-    await pool.query(communityModerationMigration); await pool.query(profileMigration);
+    await pool.query(communityModerationMigration); await pool.query(accountReportMigration); await pool.query(accountReportMigration); await pool.query(profileMigration);
     database.current = drizzle(pool);
   });
   afterAll(async () => { await pool?.end(); });
@@ -154,6 +155,35 @@ const url = process.env.TEST_DATABASE_URL;
     expect(await caller.report({postId:2,reason:'spam'})).toEqual({received:true});
     expect(await communityRouter.createCaller(ctx(1)).getPost({postId:2})).toBeNull();
   });
+  it('accepts deduplicated account reports after blocking without revealing the profile', async () => {
+    await block();
+    const caller=moderationRouter.createCaller(ctx(1));
+    await Promise.all(Array.from({length:5},()=>caller.reportAccount({userId:2,reason:'harassment',details:'Repeated contact'})));
+    expect((await pool.query(`SELECT * FROM content_reports WHERE "targetKind"='account'`)).rows).toHaveLength(1);
+    expect(await userRouter.createCaller(ctx(1)).getPublicProfile({userId:2})).toBeNull();
+    expect(await caller.reportAccount({userId:999999,reason:'spam'})).toEqual({received:true});
+    await expect(caller.reportAccount({userId:1,reason:'spam'})).rejects.toThrow('own account');
+    await expect(caller.queue({status:'open'})).rejects.toThrow();
+    const admin=moderationRouter.createCaller({...ctx(3),user:{...ctx(3).user,role:'admin'}});
+    const [report]=await admin.queue({status:'open'});
+    expect(report).toMatchObject({targetKind:'account',targetUserId:2,authorName:'Person Two',media:[]});
+    await expect(admin.resolve({reportId:report.id,action:'remove'})).rejects.toThrow('account-level review');
+    expect((await pool.query('SELECT status FROM content_reports WHERE id=$1',[report.id])).rows[0].status).toBe('open');
+    await admin.resolve({reportId:report.id,action:'dismiss'});
+    expect((await pool.query('SELECT id FROM users WHERE id=2')).rowCount).toBe(1);
+  });
+  it('shares the rate budget between account and content reports and retains duplicate retries', async () => {
+    const caller=moderationRouter.createCaller(ctx(1));
+    await caller.reportAccount({userId:2,reason:'spam'});
+    for(let i=0;i<19;i++) {
+      const post=(await pool.query(`INSERT INTO posts (id,"userId",caption) OVERRIDING SYSTEM VALUE VALUES ($1,3,'Report target') RETURNING id`,[100+i])).rows[0];
+      await caller.report({postId:post.id,reason:'spam'});
+    }
+    await expect(caller.reportAccount({userId:3,reason:'spam'})).rejects.toThrow('wait');
+    expect(await caller.reportAccount({userId:2,reason:'spam'})).toEqual({received:true});
+    await expect(caller.report({postId:2,reason:'spam'})).rejects.toThrow('wait');
+  });
+
   it('removes reported content and durably retries storage cleanup after reporter deletion', async () => {
     await moderationRouter.createCaller(ctx(1)).report({postId:2,reason:'spam'});
     const admin=moderationRouter.createCaller({...ctx(3),user:{...ctx(3).user,role:'admin'}});
