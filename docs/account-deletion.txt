@@ -88,3 +88,23 @@ provider errors. Together with encryption/revocation,35 Apple tests pass.
 Source: https://developer.apple.com/documentation/signinwithapplerestapi/generate-and-validate-tokens
 This is not yet connected to the auth callback, database persistence or deletion
 worker. No real token was captured, stored or revoked. Apple login stays disabled.
+
+2026-10-08 server integration update (supersedes earlier helper-only status)
+Migration0009 creates apple_provider_tokens with encrypted envelopes, ownership
+binding, revocation progress and account-delete cascade. Row-level security is
+enabled with no client policies; only the trusted backend database role may use it.
+Railway startup and the empty-database initializer apply this migration.
+account.storeAppleToken is a protected POST mutation accepting only refreshToken.
+It obtains the Supabase identity through the server Admin API, verifies the Apple
+subject and token, and checks the persisted auth-account mapping before storage.
+It runs under the existing active-account lock. No client identity claim is trusted.
+Deletion now revokes persisted Apple tokens before Supabase identity removal and
+records success durably for retries. Linked identities missing a captured token
+still fail closed. Tokens also revoke if the Supabase identity was already removed.
+Server configuration names are documented in .env.example; signing and encryption
+keys are separate secrets. Never put either into VITE_ values or client code.
+127 local tests pass, including32 PostgreSQL cases and6 encrypted-vault cases;
+empty initialization through0009 and production build verified locally.
+Remaining: callback capture/retry UI, production key/configuration setup, migration
+rollout, Supabase provider activation and real external staging lifecycle validation.
+Apple login remains disabled. No production credentials or tokens were used.

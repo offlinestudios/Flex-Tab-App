@@ -1,3 +1,4 @@
+import { appleSubjects, revokeStoredAppleTokens } from './appleTokenVault';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { S3Client, ListObjectsV2Command, DeleteObjectsCommand } from '@aws-sdk/client-s3';
 import { NodeHttpHandler } from '@smithy/node-http-handler';
@@ -73,13 +74,10 @@ export function createDeletionServices(): DeletionServices {
     },
     async deleteIdentity(openId) {
       const { data, error: lookupError } = await supabase.auth.admin.getUserById(openId);
-      if (lookupError?.code === 'user_not_found') return; // Retry after an interrupted final commit.
+      if (lookupError?.code === 'user_not_found') { await revokeStoredAppleTokens(openId, []); return; } // Retry after an interrupted final commit.
       if (lookupError) throw new Error('Identity lookup failed');
-      // Apple is not enabled in the current product. Fail closed for an Apple-linked
-      // identity until its refresh-token revocation has been configured and tested.
-      if (data.user?.identities?.some(identity => identity.provider === 'apple')) {
-        throw new Error('Apple token revocation is required');
-      }
+      if (!data.user) throw new Error('Identity lookup failed');
+      await revokeStoredAppleTokens(openId, appleSubjects(data.user));
       const { error } = await supabase.auth.admin.deleteUser(openId, false);
       if (error && error.code !== 'user_not_found') throw new Error('Identity deletion failed');
     },
