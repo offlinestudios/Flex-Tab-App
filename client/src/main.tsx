@@ -66,7 +66,7 @@ const trpcClient = trpc.createClient({
 });
 
 // Register service worker for PWA
-if (canUseServiceWorker()) {
+if (import.meta.env.PROD && canUseServiceWorker()) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
       .register('/sw.js')

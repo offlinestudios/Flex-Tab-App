@@ -1,0 +1,383 @@
+.ft-launch {
+  --ink: #131b27;
+  --paper: #f5f3ed;
+  --lime: #d9fc70;
+  color: var(--ink);
+  background: var(--paper);
+  font-family: Inter, system-ui, sans-serif;
+}
+.ft-launch a {
+  text-decoration: none;
+  color: inherit;
+}
+.ft-launch a:focus-visible,
+.ft-auth a:focus-visible {
+  outline: 3px solid #7d9639;
+  outline-offset: 5px;
+}
+.ft-nav {
+  height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 6%;
+  border-bottom: 1px solid #d9d9cf;
+}
+.ft-wordmark {
+  font-size: 30px;
+  font-weight: 850;
+  letter-spacing: -1.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ft-wordmark img {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+}
+.ft-wordmark span {
+  font-size: 10px;
+  align-self: flex-start;
+  margin-top: 8px;
+}
+.ft-nav nav {
+  display: flex;
+  gap: 36px;
+  font-size: 14px;
+  font-weight: 650;
+}
+.ft-nav nav a {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.ft-hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 700px;
+}
+.ft-hero-copy {
+  padding: 85px 10% 70px 12%;
+  align-self: center;
+}
+.ft-eyebrow {
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 2px;
+  margin: 0 0 28px;
+}
+.ft-hero h1 {
+  font-size: clamp(52px, 5.6vw, 90px);
+  line-height: 1;
+  letter-spacing: -5px;
+  font-weight: 800;
+  margin: 0 0 30px;
+}
+.ft-hero h1 span {
+  color: #64714e;
+}
+.ft-lede {
+  max-width: 400px;
+  font-size: 18px;
+  line-height: 1.7;
+  color: #535c62;
+  margin: 0 0 34px;
+}
+.ft-launch .ft-primary {
+  display: inline-flex;
+  gap: 28px;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--ink);
+  color: white;
+  border-radius: 6px;
+  padding: 19px 24px;
+  font-size: 15px;
+  font-weight: 650;
+}
+.ft-primary:hover {
+  opacity: 0.86;
+}
+.ft-launch-note {
+  font-size: 12px;
+  color: #69716b;
+  margin: 15px 0 28px;
+}
+.ft-benefits {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  color: #535c62;
+}
+.ft-benefits span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.ft-hero-visual {
+  position: relative;
+  min-height: 680px;
+  overflow: hidden;
+  background: #222b26;
+}
+.ft-athlete,
+.ft-photo-shade {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ft-photo-shade {
+  background: linear-gradient(
+    130deg,
+    rgba(15, 22, 17, 0.12),
+    rgba(15, 22, 17, 0.62)
+  );
+}
+.ft-photo-caption {
+  position: absolute;
+  bottom: 35px;
+  right: 30px;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  font-size: clamp(28px, 3.2vw, 48px);
+  letter-spacing: -1px;
+  font-weight: 800;
+  line-height: 1.15;
+}
+.ft-strip {
+  background: var(--lime);
+  padding: 23px 6%;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+.ft-strip span:last-child {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.ft-features {
+  padding: 95px 6%;
+}
+.ft-section-heading {
+  max-width: 600px;
+  margin-bottom: 45px;
+}
+.ft-section-heading h2,
+.ft-final h2 {
+  font-size: clamp(36px, 4vw, 60px);
+  line-height: 1.08;
+  letter-spacing: -2px;
+  font-weight: 780;
+  margin: 0 0 22px;
+}
+.ft-section-heading > p:last-child {
+  font-size: 17px;
+  line-height: 1.7;
+  color: #626b65;
+  max-width: 450px;
+}
+.ft-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+.ft-feature {
+  background: #e9e9e1;
+  border-radius: 12px;
+  padding: 30px 28px;
+  overflow: hidden;
+}
+.ft-feature-number {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #68725c;
+  font-size: 12px;
+  margin-bottom: 28px;
+}
+.ft-feature h3 {
+  font-size: 23px;
+  letter-spacing: -0.7px;
+  font-weight: 750;
+  margin: 0 0 12px;
+}
+.ft-feature > p {
+  font-size: 14px;
+  color: #626b65;
+  line-height: 1.7;
+  min-height: 72px;
+}
+.ft-final {
+  background: #18221d;
+  color: #f5f3ed;
+  padding: 85px 6%;
+  text-align: center;
+}
+.ft-final .ft-eyebrow {
+  color: var(--lime);
+}
+.ft-final .ft-primary {
+  background: var(--lime);
+  color: var(--ink);
+  margin-top: 12px;
+}
+.ft-final > p:last-child {
+  font-size: 13px;
+  color: #aab2aa;
+  margin-top: 25px;
+}
+.ft-final > p:last-child a {
+  text-decoration: underline;
+  color: white;
+}
+.ft-footer {
+  padding: 45px 6%;
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+.ft-footer p {
+  font-size: 13px;
+  color: #68716a;
+}
+.ft-footer nav {
+  display: flex;
+  gap: 24px;
+  margin-left: auto;
+  font-size: 13px;
+}
+.ft-footer small {
+  font-size: 11px;
+  color: #68716a;
+}
+.ft-skip {
+  position: absolute;
+  top: -100px;
+}
+.ft-skip:focus {
+  top: 8px;
+  left: 8px;
+  background: white;
+  z-index: 50;
+  padding: 12px;
+}
+.ft-auth {
+  min-height: 100dvh;
+  background: #f5f3ed;
+  color: #131b27;
+  padding: 32px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.ft-auth-brand {
+  font-size: 30px;
+  font-weight: 850;
+  letter-spacing: -1.5px;
+  margin-bottom: 30px;
+}
+.ft-auth-card {
+  width: 100%;
+  max-width: 440px;
+  background: white;
+  border: 1px solid #dedfd6;
+  border-radius: 18px;
+  padding: 34px;
+}
+.ft-auth-card h1 {
+  font-size: 30px;
+  letter-spacing: -1px;
+  font-weight: 750;
+  margin-bottom: 8px;
+}
+.ft-auth-card p {
+  color: #626b65;
+  line-height: 1.6;
+}
+.ft-auth-footer {
+  margin-top: 24px;
+  display: flex;
+  gap: 22px;
+  font-size: 12px;
+  color: #626b65;
+}
+.ft-auth-card input {
+  font-size: 16px !important;
+}
+.ft-auth-card button {
+  min-height: 46px;
+}
+.ft-auth-card input:focus-visible {
+  outline: 2px solid #687e39;
+  outline-offset: 2px;
+}
+@media (max-width: 760px) {
+  .ft-nav {
+    height: 76px;
+  }
+  .ft-feature-link {
+    display: none !important;
+  }
+  .ft-nav nav {
+    gap: 15px;
+  }
+  .ft-hero {
+    grid-template-columns: 1fr;
+  }
+  .ft-hero-copy {
+    padding: 55px 7%;
+  }
+  .ft-hero h1 {
+    letter-spacing: -3px;
+  }
+  .ft-hero-visual {
+    min-height: 510px;
+  }
+  .ft-strip {
+    letter-spacing: 1px;
+    line-height: 1.6;
+  }
+  .ft-strip span:last-child {
+    display: none;
+  }
+  .ft-features {
+    padding: 60px 7%;
+  }
+  .ft-feature-grid {
+    grid-template-columns: 1fr;
+  }
+  .ft-feature > p {
+    min-height: 0;
+  }
+  .ft-feature {
+    padding-top: 24px;
+  }
+  .ft-final {
+    padding: 65px 7%;
+  }
+  .ft-footer {
+    gap: 18px;
+  }
+  .ft-footer nav {
+    margin-left: 0;
+    width: 100%;
+  }
+  .ft-auth-card {
+    padding: 26px;
+  }
+}
+
+.ft-athlete {
+  object-position: center top;
+}

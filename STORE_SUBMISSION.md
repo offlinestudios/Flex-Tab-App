@@ -71,27 +71,29 @@ Android notes:
 - Java/JDK is required locally to build Gradle artifacts.
 - Use Play App Signing unless you have a specific reason not to.
 
-## Release status — October 8, 2026
+## Release status — October 9, 2026
 
-This is a release candidate in draft PR [#3](https://github.com/offlinestudios/Flex-Tab-App/pull/3),
-not an App Store release. Code validation below refers to commit `96e2375`.
-Do not infer production deployment or live-provider validation from local tests.
+PR [#3](https://github.com/offlinestudios/Flex-Tab-App/pull/3) was merged as
+`1c0e7e6`. Railway release deployment b3844823 is active; startup logs confirm all migrations completed.
+App Store version 1.0 (build 1) is in TestFlight and was tested by the owner.
+The app has not been submitted to Apple review. CI passed on `f26ac44`.
+Local tests do not establish external provider readiness.
 
 | Gate | Evidence and remaining work |
 | --- | --- |
 | Apple enrollment and app record | App Store Connect authenticated; FlexTab `6819723638`, iOS 1.0, Prepare for Submission. |
-| Distribution signing | Xcode shows an Apple Development certificate. Creating an Apple Distribution certificate awaits owner confirmation. No signed release archive verified. |
-| Local code checks | TypeScript, 132 tests across 16 files (including 32 PostgreSQL cases), and production build passed. Provider calls in Apple tests are mocked. |
+| Distribution signing | Apple Distribution signing and archive upload succeeded; version 1.0 (1) is available in TestFlight. |
+| Local code checks | CI on f26ac44 passed database initialization, TypeScript, local tests and production build. |
 | Native packaging | iOS and Android asset sync passed. Updated iOS app built and opened the existing signed-in workout log on iPhone 17 Pro / iOS 26.5 simulator. Android runtime and physical iPhone behavior are unverified. |
 | Staging deployment | Empty Railway staging environment exists; no app/database services deployed. Hosting budget and isolated Supabase setup remain pending. See [staging setup](docs/staging-setup.txt). |
-| Backend rollout | PR #3 is not deployed. Deploy and validate the matching backend before distributing native clients that call its new endpoints. |
+| Backend rollout | PR #3 merged and deployed as b3844823; all startup migrations completed. Public support/privacy pages verified. Authenticated lifecycle flows remain to be tested. |
 | Sign in with Apple | Validation, encrypted storage, callback capture and deletion revocation implemented. Capability confirmation, provider/signing/key configuration, real token delivery and end-to-end staging tests remain outstanding. Apple provider remains disabled. |
 | Account deletion | Local transactional/retry tests pass. Test a disposable account across actual auth, database and every configured storage provider, including Apple revocation and failure recovery. Resolve legacy ownerless media first. See [deletion notes](docs/account-deletion.txt). |
 | Community safety | Post/comment/account reports, blocking, muting and moderator content removal implemented. Objectionable-content filtering, repeat-abuser enforcement, assigned moderator coverage and live staging validation remain unresolved. See [moderation gates](docs/community-moderation.txt). |
-| Privacy and permissions | Draft inventory exists. Inspect final archive/privacy report; verify real GPS/media permission handling and production data collection/retention. App Privacy answers are not completed. See [privacy audit](docs/native-privacy-audit.txt). |
-| Public support and legal pages | Public support/feedback routes implemented but not deployed. Owner must confirm monitored support/privacy mailboxes and accurate published policies before saving listing URLs. |
-| Store listing | Draft English (Canada) promotional text, description and keywords saved. Final screenshots, build selection, review account/instructions, age rating, privacy, pricing/availability and applicable trader information still require completion/verification. |
-| TestFlight | Authenticated TestFlight page says “Submit a build to start testing.” No uploaded build or tester validation. |
+| Privacy and permissions | Draft inventory exists. Inspect final archive/privacy report; verify real GPS/media permission handling and production data collection/retention. Ten App Privacy categories are drafted; final provider review and publishing remain. See [privacy audit](docs/native-privacy-audit.txt). |
+| Public support and legal pages | Contact confirmed as info@offlinestudios.ca and included in merged code. Deployed public pages verified and listing URLs saved. |
+| Store listing | Free pricing, Health & Fitness category, subtitle, description, build and owner-entered demo credentials saved. Canada/US availability, 13+ age rating and non-medical-device declaration saved. Screenshots, privacy publication, content rights and applicable trader information remain. |
+| TestFlight | Build 1.0 (1) uploaded; owner installed and reports normal use works as intended. Destructive lifecycle/provider flows remain unverified. |
 | Submission and release | Not submitted. Release requires the gates above, successful TestFlight testing and Apple review. |
 
 ## TestFlight acceptance evidence
@@ -113,3 +115,12 @@ or delete real users to complete this checklist.
 Local checks are useful evidence but do not substitute for these external flows.
 Track any remaining dependency vulnerabilities and release impact in
 [dependency security](docs/dependency-security.txt).
+
+### Production storage verification (October 9)
+
+Corrected Railway R2_ACCOUNT_ID using the account and bucket verified in Cloudflare.
+Live deployment 392d67a3 successfully listed storage using its runtime configuration.
+A complete workout-cards/ inventory contained zero objects, including zero legacy
+ownerless cards. ACCOUNT_DELETION_LEGACY_CARDS_CLEARED=true was added for the release
+rollout on this evidence. No files or accounts were deleted. End-to-end deletion
+is still pending; this inventory is not a deletion test.

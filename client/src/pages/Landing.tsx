@@ -1,574 +1,159 @@
-import { Button } from "@/components/ui/button";
-import { getLoginUrl } from "@/const";
+import {
+  ArrowUpRight,
+  Check,
+  Dumbbell,
+  ChartNoAxesCombined,
+  Repeat2,
+} from "lucide-react";
+import { isNativeShell } from "@/lib/api";
+import "./launch.css";
 
-import { InstallPrompt } from "@/components/InstallPrompt";
-import { IOSInstallPrompt } from "@/components/IOSInstallPrompt";
-import { useEffect, useState } from "react";
-import { ChevronRight } from "lucide-react";
+const features = [
+  {
+    icon: Dumbbell,
+    number: "01",
+    title: "Make every set count.",
+    text: "Log your exercises, sets, reps and weight. Keep your attention on the next rep.",
+  },
+  {
+    icon: ChartNoAxesCombined,
+    number: "02",
+    title: "See the work add up.",
+    text: "Look back at your training and follow your strength over time.",
+  },
+  {
+    icon: Repeat2,
+    number: "03",
+    title: "More ways to see progress.",
+    text: "Keep body measurements alongside your training history, all in one place.",
+  },
+];
 
 export default function Landing() {
-
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [touchStart, setTouchStart] = useState(0);
-  const [touchEnd, setTouchEnd] = useState(0);
-
-  const screenshots = [
-    {
-      url: "/screenshot-active.webp",
-      alt: "Active workout tracking",
-      title: "Log every set in real-time.",
-      description: "Track sets, reps, and weight with a simple interface. No complex forms—just tap and log."
-    },
-    {
-      url: "/screenshot-measurements.webp",
-      alt: "Body measurements tracking",
-      title: "Track body measurements over time.",
-      description: "Monitor weight, chest, waist, arms, and thighs. See progress with visual sparklines."
-    },
-    {
-      url: "/screenshot-progress.webp",
-      alt: "Exercise progress charts",
-      title: "Visualize strength gains with charts.",
-      description: "Track weight progression for each exercise. Watch yourself get stronger week after week."
-    }
-  ];
-
-  useEffect(() => {
-    setIsLoaded(true);
-  }, []);
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStart(e.targetTouches[0].clientX);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX);
-  };
-
-  const handleTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > 50;
-    const isRightSwipe = distance < -50;
-
-    if (isLeftSwipe && currentSlide < screenshots.length - 1) {
-      setCurrentSlide(currentSlide + 1);
-    }
-    if (isRightSwipe && currentSlide > 0) {
-      setCurrentSlide(currentSlide - 1);
-    }
-
-    setTouchStart(0);
-    setTouchEnd(0);
-  };
-
+  const native = isNativeShell();
   return (
-    <div className="min-h-screen bg-white">
-      {/* PWA Install Prompts */}
-      <InstallPrompt />
-      <IOSInstallPrompt />
-
-      {/* DESKTOP: Fixed Landing Page (hidden on mobile) */}
-      <div className="hidden md:block fixed inset-0 overflow-hidden pointer-events-none">
-        {/* Background Image - Full Viewport */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('/athlete-hero.webp')`,
-            backgroundPosition: 'center center',
-            transform: isLoaded ? 'scale(1.02)' : 'scale(1)',
-            transition: 'transform 8s cubic-bezier(0.16, 1, 0.3, 1)'
-          }}
-        />
-
-        {/* White Header - Overlay */}
-        <header className="absolute top-0 left-0 right-0 z-20 bg-white/95 backdrop-blur-sm border-b border-[#E6E4E1] pointer-events-auto">
-          <div className="container mx-auto px-12 py-6 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <img src="/flextab-logo.png?v=2" alt="FlexTab" className="h-10 w-auto" />
-              <h1 className="text-2xl font-bold tracking-tight text-[#0B0B0C]">
-                flextab
-              </h1>
-            </div>
-            <Button 
-              onClick={() => window.location.href = getLoginUrl()}
-              className="bg-[#111827] hover:bg-[#1F2937] text-white px-8 py-3 rounded-lg font-semibold transition-all duration-150"
-            >
-              Sign In
-            </Button>
-          </div>
-        </header>
-
-        {/* Hero Content - Centered Between Header and Footer */}
-        <div className="absolute top-[88px] bottom-[340px] left-0 right-0 flex items-center z-10 pointer-events-auto">
-          <div className="container mx-auto px-12">
-            <div className="max-w-2xl">
-              <h2 className="text-7xl font-bold leading-tight mb-6 tracking-tight text-white">
-                Track Your
-                <br />
-                Fitness
-                <br />
-                With Precision
-              </h2>
-              <p className="text-2xl leading-relaxed text-white/90 mb-10">
-                A professional workout tracking tool for serious lifters. Log sets, track progress, and hit your goals.
-              </p>
-              
-              <div className="flex gap-4">
-                <Button 
-                  onClick={() => window.location.href = getLoginUrl()}
-                  className="bg-white hover:bg-gray-100 text-[#111827] px-10 py-6 rounded-xl font-bold text-lg transition-all duration-150 hover:scale-[1.02] active:scale-[0.98] shadow-xl"
-                >
-                  Get Started Free
-                </Button>
-                <Button 
-                  onClick={() => window.location.href = getLoginUrl()}
-                  className="bg-transparent hover:bg-white/10 text-white border-2 border-white/50 hover:border-white px-10 py-6 rounded-xl font-bold text-lg transition-all duration-150"
-                >
-                  Learn More
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer - Overlay */}
-        <footer className="absolute bottom-0 left-0 right-0 z-20 bg-white/95 backdrop-blur-sm border-t border-[#E6E4E1] pointer-events-auto">
-          <div className="container mx-auto px-12 py-12">
-            {/* Main Footer Content */}
-            <div className="grid grid-cols-3 gap-16 mb-12">
-              {/* Brand Column */}
-              <div>
-                <div className="flex items-center gap-3 mb-4">
-                  <img src="/flextab-logo.png?v=2" alt="FlexTab" className="h-8 w-auto" />
-                  <h3 className="text-xl font-bold tracking-tight text-[#0B0B0C]">
-                    flextab
-                  </h3>
-                </div>
-                <p className="text-sm text-[#6B6F76] leading-relaxed">
-                  The workout tracker built for serious lifters. Track every set, visualize progress, and hit new PRs.
-                </p>
-              </div>
-
-              {/* Product Column */}
-              <div>
-                <h4 className="text-xs font-bold text-[#0B0B0C] uppercase tracking-wider mb-4">
-                  Product
-                </h4>
-                <ul className="space-y-3">
-                  <li>
-                    <a href="#" className="text-sm text-[#6B6F76] hover:text-[#6B6F76]/70 transition-colors">
-                      Features
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" className="text-sm text-[#6B6F76] hover:text-[#6B6F76]/70 transition-colors">
-                      Pricing
-                    </a>
-                  </li>
-                  <li>
-                    <a href={getLoginUrl()} className="text-sm text-[#6B6F76] hover:text-[#6B6F76]/70 transition-colors">
-                      Sign In
-                    </a>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Legal Column */}
-              <div>
-                <h4 className="text-xs font-bold text-[#0B0B0C] uppercase tracking-wider mb-4">
-                  Legal
-                </h4>
-                <ul className="space-y-3">
-                  <li>
-                    <a 
-                      href="/privacy"
-                      className="text-sm text-[#6B6F76] hover:text-[#6B6F76]/70 transition-colors"
-                    >
-                      Privacy Policy
-                    </a>
-                  </li>
-                  <li>
-                    <a 
-                      href="/terms"
-                      className="text-sm text-[#6B6F76] hover:text-[#6B6F76]/70 transition-colors"
-                    >
-                      Terms of Service
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" className="text-sm text-[#6B6F76] hover:text-[#6B6F76]/70 transition-colors">
-                      Contact
-                    </a>
-                  </li>
-                </ul>
-              </div>
-            </div>
-
-            {/* Copyright */}
-            <div className="pt-8 border-t border-[#E6E4E1]">
-              <p className="text-sm text-[#6B6F76] text-center">
-                © 2026 FlexTab. Built for serious lifters.
-              </p>
-            </div>
-          </div>
-        </footer>
-      </div>
-
-      {/* MOBILE: Scrolling Landing Page (hidden on desktop) */}
-      <div className="block md:hidden">
-        {/* Header */}
-        <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-[#E6E4E1]" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
-          <div className="container mx-auto px-6 py-5 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <img src="/flextab-logo.png?v=2" alt="FlexTab" className="h-9 w-auto" />
-              <h1 className="text-2xl font-bold tracking-tight text-[#0B0B0C]">
-                flextab
-              </h1>
-            </div>
-            <Button 
-              onClick={() => window.location.href = getLoginUrl()}
-              className="bg-[#111827] hover:bg-[#1F2937] text-white px-6 py-2.5 rounded-lg font-semibold"
-            >
-              Sign In
-            </Button>
-          </div>
-        </header>
-
-        {/* Hero Section */}
-        <section className="relative bg-[#1F2937] overflow-hidden min-h-[600px] flex items-center">
-          <div 
-            className="absolute inset-0 bg-cover bg-center"
-            style={{
-              backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('/athlete-hero.webp')`,
-              backgroundPosition: 'center 30%',
-            }}
-          />
-          
-          <div className="relative container mx-auto px-6 py-20">
-            <div className="max-w-2xl">
-              <h2 className="text-5xl font-bold leading-tight mb-6 tracking-tight text-white">
-                Track Your
-                <br />
-                Fitness
-                <br />
-                With Precision
-              </h2>
-              <p className="text-xl leading-relaxed text-white/90 mb-8">
-                The workout tracker built for serious lifters. Log every set, visualize progress, and hit new PRs faster.
-              </p>
-              
-              <div className="flex flex-col gap-4">
-                <Button 
-                  onClick={() => window.location.href = getLoginUrl()}
-                  className="w-full bg-white hover:bg-gray-100 text-[#111827] px-8 py-6 rounded-xl font-bold text-lg shadow-xl"
-                >
-                  Get started free — no credit card
-                </Button>
-                <button 
-                  onClick={() => window.location.href = getLoginUrl()}
-                  className="text-white/90 hover:text-white font-semibold py-3 transition-colors border-2 border-white/30 hover:border-white/50 rounded-xl"
-                >
-                  See how it works
-                </button>
-              </div>
-            </div>
-          </div>
-          
-          {/* Animated Scroll Arrow */}
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10">
-            <a 
-              href="#who-we-are"
-              className="flex flex-col items-center gap-2 text-white/70 hover:text-white transition-colors group"
-              onClick={(e) => {
-                e.preventDefault();
-                document.getElementById('who-we-are')?.scrollIntoView({ behavior: 'smooth' });
-              }}
-            >
-              <svg 
-                className="w-6 h-6 animate-bounce"
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24"
-              >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M19 9l-7 7-7-7" 
-                />
-              </svg>
+    <div className="ft-launch">
+      <a className="ft-skip" href="#main">
+        Skip to content
+      </a>
+      <header className="ft-nav">
+        <a className="ft-wordmark" href="/" aria-label="FlexTab home">
+          <img src="/flextab-logo.png?v=2" alt="" />
+          flextab
+        </a>
+        <nav aria-label="Main navigation">
+          <a className="ft-feature-link" href="#features">
+            The app
+          </a>
+          <a href="/sign-in">
+            Sign in <ArrowUpRight size={16} />
+          </a>
+        </nav>
+      </header>
+      <main id="main">
+        <section className="ft-hero">
+          <div className="ft-hero-copy">
+            <p className="ft-eyebrow">YOUR TRAINING. YOUR PROGRESS.</p>
+            <h1>
+              Put your
+              <br />
+              work <span>on record.</span>
+            </h1>
+            <p className="ft-lede">
+              The workout log that goes where you train. Record every set, build
+              your routines, and see how far you’ve come.
+            </p>
+            <a className="ft-primary" href="/sign-up">
+              {native ? "Start training free" : "Try FlexTab free"}{" "}
+              <ArrowUpRight size={21} />
             </a>
+            <p className="ft-launch-note">
+              {native
+                ? "Already training with us? Sign in above."
+                : "Coming to iPhone. Train on the web today."}
+            </p>
+            <div className="ft-benefits">
+              <span>
+                <Check size={15} /> Free to use
+              </span>
+              <span>
+                <Check size={15} /> Your log, wherever you train
+              </span>
+            </div>
+          </div>
+          <div className="ft-hero-visual">
+            <img
+              className="ft-athlete"
+              src="/athlete-launch-v2.png"
+              alt="Athlete training in a gym"
+            />
+            <div className="ft-photo-shade" />
+            <div className="ft-photo-caption">
+              <span>SHOW UP.</span>
+              <span>WRITE IT DOWN.</span>
+              <span>BUILD ON IT.</span>
+            </div>
           </div>
         </section>
-
-        {/* Who We Are Section */}
-        <section id="who-we-are" className="bg-white py-16">
-          <div className="container mx-auto px-6">
-            <h3 className="text-xs font-bold text-[#6B6F76] uppercase tracking-wider text-center mb-6">
-              Who We Are
-            </h3>
-            <p className="text-lg leading-relaxed text-[#0B0B0C] text-center max-w-2xl mx-auto">
-              If you're serious about lifting, FlexTab was made for you. Our mobile app enhances the experience of strength training and connects lifters from around the world. We're the workout tracker built for progress, precision, and PRs.
+        <div className="ft-strip">
+          <span>SETS. REPS. PROGRESS.</span>
+          <span>
+            BUILT FOR YOUR NEXT WORKOUT <ArrowUpRight size={18} />
+          </span>
+        </div>
+        <section id="features" className="ft-features">
+          <div className="ft-section-heading">
+            <p className="ft-eyebrow">A LITTLE STRUCTURE. A LOT OF PROGRESS.</p>
+            <h2>
+              Your training,
+              <br />
+              all together.
+            </h2>
+            <p>
+              From your first working set to your next personal best, keep a
+              record you can build on.
             </p>
           </div>
-        </section>
-
-        {/* Unified Feature Card with Swipeable Carousel */}
-        <section className="bg-white py-8">
-          <div className="container mx-auto px-6">
-            <div className="space-y-4">
-              {/* Swipeable Screenshot Carousel */}
-              <div 
-                className="relative overflow-hidden"
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
-              >
-                <div 
-                  className="flex transition-transform duration-300 ease-out"
-                  style={{ transform: `translateX(-${currentSlide * 100}%)` }}
-                >
-                  {screenshots.map((screenshot, index) => (
-                    <div key={index} className="w-full flex-shrink-0 flex items-center justify-center">
-                      <img 
-                        src={screenshot.url}
-                        alt={screenshot.alt}
-                        className="w-full max-w-[200px] h-auto rounded-[2rem] shadow-[0_20px_60px_rgba(0,0,0,0.12)] border-[6px] border-[#1F2937]"
-                      />
-                    </div>
-                  ))}
+          <div className="ft-feature-grid">
+            {features.map(({ icon: Icon, ...f }) => (
+              <article key={f.number} className="ft-feature">
+                <div className="ft-feature-number">
+                  <Icon size={24} />
+                  <span>{f.number}</span>
                 </div>
-              </div>
-
-              {/* Carousel Dots */}
-              <div className="flex items-center justify-center gap-2">
-                {screenshots.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentSlide(index)}
-                    className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 ${
-                      index === currentSlide 
-                        ? 'bg-[#1F2937]' 
-                        : 'bg-[#E6E4E1] hover:bg-[#6B6F76]'
-                    }`}
-                    aria-label={`Go to slide ${index + 1}`}
-                  />
-                ))}
-              </div>
-
-              {/* Dynamic Title and Description with Fade Transition */}
-              <div className="text-center px-4">
-                <h3 
-                  key={`title-${currentSlide}`}
-                  className="text-2xl font-bold leading-tight text-[#0B0B0C] tracking-tight mb-3 animate-fade-in"
-                >
-                  {screenshots[currentSlide].title}
-                </h3>
-                <p 
-                  key={`desc-${currentSlide}`}
-                  className="text-base leading-relaxed text-[#6B6F76] max-w-md mx-auto animate-fade-in"
-                >
-                  {screenshots[currentSlide].description}
-                </p>
-              </div>
-            </div>
+                <h3>{f.title}</h3>
+                <p>{f.text}</p>
+              </article>
+            ))}
           </div>
         </section>
-
-
-
-        {/* Image Section with Shaped Overlay */}
-        <section className="bg-white py-16 overflow-hidden">
-          <div className="container mx-auto px-6">
-            <h2 className="text-3xl font-bold leading-tight text-[#0B0B0C] tracking-tight mb-8 text-center">
-              Open, tap, go.
-            </h2>
-            
-            <div className="relative h-[500px] overflow-hidden">
-              {/* Athlete Image */}
-              <img 
-                src="/black-male-incline-bench.webp" 
-                alt="Athlete performing incline bench press" 
-                className="w-full h-full object-cover rounded-2xl"
-              />
-              
-              {/* White Shaped Overlay with Text */}
-              <div 
-                className="absolute bottom-0 left-0 right-0 bg-white pt-16 pb-8 px-8"
-                style={{ 
-                  clipPath: 'polygon(0 20%, 100% 0%, 100% 100%, 0% 100%)',
-                  marginBottom: '-2px' // Prevent gap at bottom
-                }}
-              >
-                <p className="text-base leading-relaxed text-[#6B6F76]">
-                  Logging your workout with FlexTab is effortless. Open the app, select your exercise, and start tracking sets, reps, and weight instantly.
-                </p>
-              </div>
-            </div>
-          </div>
+        <section className="ft-final">
+          <p className="ft-eyebrow">START WITH YOUR NEXT SET.</p>
+          <h2>
+            Make consistency
+            <br />
+            something you can see.
+          </h2>
+          <a className="ft-primary" href="/sign-up">
+            Create your free account <ArrowUpRight size={21} />
+          </a>
+          <p>
+            Already have an account? <a href="/sign-in">Sign in</a>
+          </p>
         </section>
-
-        {/* Join Now CTA */}
-        <section className="bg-white py-12">
-          <div className="container mx-auto px-6 flex justify-center">
-            <Button 
-              onClick={() => window.location.href = getLoginUrl()}
-              className="bg-[#111827] hover:bg-[#1F2937] text-white px-12 py-4 rounded-xl font-bold text-lg shadow-lg transition-all hover:shadow-xl"
-            >
-              Join Now
-            </Button>
-          </div>
-        </section>
-
-        {/* Explore Features Section */}
-        <section className="bg-white py-16">
-          <div className="container mx-auto px-6">
-            <h2 className="text-3xl font-bold leading-tight text-[#0B0B0C] tracking-tight mb-12 text-center">
-              Explore our features.
-            </h2>
-            
-            <div className="space-y-12 max-w-md mx-auto">
-              {/* Body Measurements Card */}
-              <div className="text-center">
-                <div className="flex justify-center mb-4">
-                  <svg className="w-16 h-16 text-[#1F2937]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                </div>
-                <h3 className="text-2xl font-bold leading-tight text-[#0B0B0C] tracking-tight mb-3">
-                  Track & Measure
-                </h3>
-                <p className="text-base leading-relaxed text-[#6B6F76]">
-                  Log body measurements alongside your workouts. Track weight, chest, waist, arms, and thighs to see your transformation.
-                </p>
-              </div>
-
-              {/* Custom Exercises Card */}
-              <div className="text-center">
-                <div className="flex justify-center mb-4">
-                  <svg className="w-16 h-16 text-[#1F2937]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-                  </svg>
-                </div>
-                <h3 className="text-2xl font-bold leading-tight text-[#0B0B0C] tracking-tight mb-3">
-                  Build & Customize
-                </h3>
-                <p className="text-base leading-relaxed text-[#6B6F76]">
-                  Create custom exercises tailored to your routine. Add any movement, track it your way, and build your perfect workout plan.
-                </p>
-              </div>
-
-              {/* Visual Calendar Card */}
-              <div className="text-center">
-                <div className="flex justify-center mb-4">
-                  <svg className="w-16 h-16 text-[#1F2937]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <h3 className="text-2xl font-bold leading-tight text-[#0B0B0C] tracking-tight mb-3">
-                  Visualize & Stay Consistent
-                </h3>
-                <p className="text-base leading-relaxed text-[#6B6F76]">
-                  See your workout consistency at a glance with the visual calendar. Never miss a training day again.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Final CTA */}
-        <section 
-          className="relative py-32 overflow-hidden"
-          style={{
-            backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('/athlete-legs.webp')`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center'
-          }}
-        >
-          <div className="container mx-auto px-6 text-center relative z-10">
-            <p className="text-lg leading-relaxed text-white/90 mb-8 max-w-xl mx-auto">
-              Join for the tracking, stay for the results. FlexTab helps serious lifters track every rep, visualize progress, and hit new PRs.
-            </p>
-            <Button 
-              onClick={() => window.location.href = getLoginUrl()}
-              className="bg-transparent border-2 border-white/30 hover:border-white/50 text-white px-10 py-6 rounded-xl font-bold text-lg transition-all duration-300"
-            >
-              Join Now
-            </Button>
-          </div>
-        </section>
-
-        {/* Footer */}
-        <footer className="relative z-50 bg-white border-t border-[#E6E4E1] py-16">
-          <div className="container mx-auto px-6">
-            {/* Logo and Tagline */}
-            <div className="mb-12">
-              <div className="flex items-center gap-3 mb-3">
-                <img src="/flextab-icon.png" alt="FlexTab" className="h-8 w-8" />
-                <span className="text-xl font-bold text-[#0B0B0C]">flextab</span>
-              </div>
-              <p className="text-sm text-[#6B6F76] max-w-xs">
-                The workout tracker built for serious lifters. Track every set, visualize progress, and hit new PRs.
-              </p>
-            </div>
-
-            {/* Footer Links - Vertical List */}
-            <nav className="mb-12">
-              <ul className="space-y-4">
-                <li>
-                  <a href="#" className="text-base text-[#6B6F76] hover:text-[#6B6F76]/70 transition-colors">
-                    Features
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-base text-[#6B6F76] hover:text-[#6B6F76]/70 transition-colors">
-                    Pricing
-                  </a>
-                </li>
-                <li>
-                  <a 
-                    href="/privacy"
-                    className="text-base text-[#6B6F76] hover:text-[#6B6F76]/70 transition-colors"
-                  >
-                    Privacy Policy
-                  </a>
-                </li>
-                <li>
-                  <a 
-                    href="/terms"
-                    className="text-base text-[#6B6F76] hover:text-[#6B6F76]/70 transition-colors"
-                  >
-                    Terms of Service
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-base text-[#6B6F76] hover:text-[#6B6F76]/70 transition-colors">
-                    Contact
-                  </a>
-                </li>
-                <li className="pt-4">
-                  <a 
-                    href={getLoginUrl()} 
-                    className="text-base text-[#1F2937] hover:text-[#374151] transition-colors font-medium"
-                  >
-                    Log In
-                  </a>
-                </li>
-              </ul>
-            </nav>
-
-            {/* Copyright */}
-            <div className="pt-8 border-t border-[#E6E4E1]">
-              <p className="text-sm text-[#6B6F76]">
-                © 2026 FlexTab. Built for serious lifters.
-              </p>
-            </div>
-          </div>
-        </footer>
-      </div>
+      </main>
+      <footer className="ft-footer">
+        <a className="ft-wordmark" href="/">
+          flextab
+        </a>
+        <p>Keep showing up.</p>
+        <nav aria-label="Footer">
+          <a href="/support">Support</a>
+          <a href="/privacy">Privacy</a>
+          <a href="/terms">Terms</a>
+        </nav>
+        <small>© {new Date().getFullYear()} FlexTab</small>
+      </footer>
     </div>
   );
 }
