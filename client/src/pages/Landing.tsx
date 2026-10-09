@@ -32,7 +32,7 @@ const features = [
 export default function Landing() {
   const native = isNativeShell();
   return (
-    <div className="ft-launch">
+    <div className={`ft-launch${native ? " ft-launch-native" : ""}`}>
       <a className="ft-skip" href="#main">
         Skip to content
       </a>
@@ -88,11 +88,6 @@ export default function Landing() {
               alt="Athlete training in a gym"
             />
             <div className="ft-photo-shade" />
-            <div className="ft-photo-caption">
-              <span>SHOW UP.</span>
-              <span>WRITE IT DOWN.</span>
-              <span>BUILD ON IT.</span>
-            </div>
           </div>
         </section>
         <div className="ft-strip">

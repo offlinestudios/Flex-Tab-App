@@ -91,12 +91,12 @@ export default function SignInPage() {
             variables: {
               default: {
                 colors: {
-                  brand: "#18221d",
-                  brandAccent: "#344536",
+                  brand: "#1a2332",
+                  brandAccent: "#334155",
                   brandButtonText: "#ffffff",
-                  inputBorder: "#d9ddd3",
-                  inputBorderFocus: "#687e39",
-                  anchorTextColor: "#344536",
+                  inputBorder: "#e2e4e8",
+                  inputBorderFocus: "#526783",
+                  anchorTextColor: "#334155",
                 },
                 radii: { borderRadiusButton: "7px", inputBorderRadius: "7px" },
                 fonts: {
