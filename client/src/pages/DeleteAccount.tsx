@@ -64,7 +64,7 @@ export default function DeleteAccount() {
         {submitting ? 'Requesting deletion…' : 'Permanently delete my account'}
       </button>
     </form>}
-    <p className="mt-6 text-sm">Need help? <a href="mailto:support@flextab.app" className="underline">Contact FlexTab support</a>.</p>
+    <p className="mt-6 text-sm">Need help? <a href="mailto:info@offlinestudios.ca" className="underline">Contact FlexTab support</a>.</p>
   </main>;
 }
 
@@ -91,7 +91,7 @@ export function AccountDeletionRequested() {
       : status === 'loading' ? 'Checking your request…'
       : status === 'unavailable' ? 'We could not check your request right now. This does not cancel an accepted request. Please check again later.'
       : 'No current deletion confirmation is available on this device. If you already requested deletion, contact support for help.'}</p>
-    <p className="mt-4">If you need help with your request, contact <a className="underline" href="mailto:support@flextab.app">support@flextab.app</a>.</p>
+    <p className="mt-4">If you need help with your request, contact <a className="underline" href="mailto:info@offlinestudios.ca">info@offlinestudios.ca</a>.</p>
     <Link href="/" className="mt-6 inline-block underline">Return to FlexTab</Link>
   </main>;
 }

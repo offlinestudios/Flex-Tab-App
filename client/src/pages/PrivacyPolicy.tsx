@@ -116,7 +116,7 @@ export default function PrivacyPolicy() {
               If you have any questions, concerns, or requests regarding this Privacy Policy or our data practices, please contact us at:
             </p>
             <p className="text-base leading-relaxed text-[#6B6F76] mb-2">
-              <strong>Email:</strong> privacy@flextab.app
+              <strong>Email:</strong> info@offlinestudios.ca
             </p>
             <p className="text-base leading-relaxed text-[#6B6F76]">
               We will respond to your inquiry within a reasonable timeframe.

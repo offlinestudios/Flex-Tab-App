@@ -4,7 +4,7 @@ export default function Support() {
     <main className="mx-auto max-w-2xl px-6 py-10 space-y-8">
       <div><h1 className="text-3xl font-bold">FlexTab support</h1><p className="mt-3 text-muted-foreground">Help with your account, workout log and community features.</p></div>
       <section className="space-y-3"><h2 className="text-xl font-semibold">Contact us or send feedback</h2>
-        <p>Email <a className="underline" href="mailto:support@flextab.app?subject=FlexTab%20Support">support@flextab.app</a>.</p>
+        <p>Email <a className="underline" href="mailto:info@offlinestudios.ca?subject=FlexTab%20Support">info@offlinestudios.ca</a>.</p>
         <p>For a technical problem, include your device model, app version, what you were trying to do and any error message. Please leave passwords, sign-in codes and private workout information out of your message.</p>
       </section>
       <section className="space-y-3"><h2 className="text-xl font-semibold">Trouble signing in?</h2>

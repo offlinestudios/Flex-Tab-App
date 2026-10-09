@@ -451,7 +451,7 @@ function HelpPanel({ onBack }: { onBack: () => void }) {
 
       <p style={{ fontSize: 12, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '20px 0 8px' }}>Contact</p>
       <button
-        onClick={() => window.open('mailto:support@flextab.app?subject=FlexTab Support', '_blank')}
+        onClick={() => window.open('mailto:info@offlinestudios.ca?subject=FlexTab Support', '_blank')}
         style={{
           width: '100%', display: 'flex', alignItems: 'center', gap: 12,
           padding: '14px 0', background: 'none', border: 'none', borderBottom: '1px solid var(--border)',
