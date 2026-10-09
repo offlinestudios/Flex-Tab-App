@@ -1,10 +1,15 @@
-import { Auth } from '@supabase/auth-ui-react';
-import { ThemeSupa } from '@supabase/auth-ui-shared';
-import { supabase } from '@/lib/supabase';
-import { isNativeShell } from '@/lib/api';
-import { AUTH_PROVIDERS, authRedirectUrl, NativeOAuthButtons } from '@/components/NativeAuth';
-import { useEffect, useState } from 'react';
-import { useLocation } from 'wouter';
+import "./launch.css";
+import { Auth } from "@supabase/auth-ui-react";
+import { ThemeSupa } from "@supabase/auth-ui-shared";
+import { supabase } from "@/lib/supabase";
+import { isNativeShell } from "@/lib/api";
+import {
+  AUTH_PROVIDERS,
+  authRedirectUrl,
+  NativeOAuthButtons,
+} from "@/components/NativeAuth";
+import { useEffect, useState } from "react";
+import { useLocation } from "wouter";
 
 export default function SignInPage() {
   const [, setLocation] = useLocation();
@@ -13,28 +18,31 @@ export default function SignInPage() {
 
   useEffect(() => {
     // Check if user is already logged in
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        // User is authenticated, redirect immediately
-        setLocation('/dashboard');
-      } else {
-        // No session, show auth UI
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        if (session) {
+          // User is authenticated, redirect immediately
+          setLocation("/dashboard");
+        } else {
+          // No session, show auth UI
+          setIsLoading(false);
+          setShowAuthUI(true);
+        }
+      })
+      .catch(() => {
+        // Supabase call failed (e.g. missing env vars) — show auth UI anyway
         setIsLoading(false);
         setShowAuthUI(true);
-      }
-    }).catch(() => {
-      // Supabase call failed (e.g. missing env vars) — show auth UI anyway
-      setIsLoading(false);
-      setShowAuthUI(true);
-    });
+      });
 
     // Listen for auth changes (OAuth callback)
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session) {
+      if (event === "SIGNED_IN" && session) {
         // Successful sign-in, redirect to dashboard
-        setLocation('/dashboard');
+        setLocation("/dashboard");
       }
     });
 
@@ -56,17 +64,50 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-xl p-8">
+    <div className="ft-auth">
+      <a href="/" className="ft-auth-brand" aria-label="FlexTab home">
+        flextab
+      </a>
+      <div className="ft-auth-card">
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold text-slate-900 mb-2">Welcome to FlexTab</h1>
-          <p className="text-slate-600">Sign in to track your workouts</p>
+          <h1 className="text-2xl font-bold text-slate-900 mb-2">
+            Welcome back.
+          </h1>
+          <p className="text-slate-600">Your next workout starts here.</p>
         </div>
-        {localStorage.getItem('flextab_deletion_receipt') && <a href="/account-deletion-requested" className="mb-4 block text-center text-sm underline">Check account deletion status</a>}
+        {localStorage.getItem("flextab_deletion_receipt") && (
+          <a
+            href="/account-deletion-requested"
+            className="mb-4 block text-center text-sm underline"
+          >
+            Check account deletion status
+          </a>
+        )}
         <NativeOAuthButtons />
         <Auth
           supabaseClient={supabase}
-          appearance={{ theme: ThemeSupa }}
+          appearance={{
+            theme: ThemeSupa,
+            variables: {
+              default: {
+                colors: {
+                  brand: "#18221d",
+                  brandAccent: "#344536",
+                  brandButtonText: "#ffffff",
+                  inputBorder: "#d9ddd3",
+                  inputBorderFocus: "#687e39",
+                  anchorTextColor: "#344536",
+                },
+                radii: { borderRadiusButton: "7px", inputBorderRadius: "7px" },
+                fonts: {
+                  bodyFontFamily: "Inter, system-ui, sans-serif",
+                  buttonFontFamily: "Inter, system-ui, sans-serif",
+                  inputFontFamily: "Inter, system-ui, sans-serif",
+                  labelFontFamily: "Inter, system-ui, sans-serif",
+                },
+              },
+            },
+          }}
           providers={isNativeShell() ? [] : AUTH_PROVIDERS}
           redirectTo={authRedirectUrl()}
           view="sign_in"
@@ -74,6 +115,11 @@ export default function SignInPage() {
           theme="light"
         />
       </div>
+      <nav className="ft-auth-footer" aria-label="Account help">
+        <a href="/support">Support</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+      </nav>
     </div>
   );
 }

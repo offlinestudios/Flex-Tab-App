@@ -1,0 +1,4 @@
+Generated with the built-in image_gen tool, October 9, 2026.
+Asset: client/public/athlete-launch-v2.png
+
+Use case: photorealistic-natural. Original FlexTab landing-page hero photograph, portrait 1024x1536. Adult athlete in an unbranded charcoal training shirt and shorts, standing between sets holding dumbbells naturally. Understated independent gym with matte steel equipment and concrete textures. Editorial sports photography, natural side-window light, quiet determination, authentic everyday training. Muted charcoal/olive palette. Center athlete in upper two thirds, darker lower third for HTML caption. No text, logos, brands, signs, watermark, phone or UI.

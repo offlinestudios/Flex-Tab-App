@@ -1,10 +1,15 @@
-import { Auth } from '@supabase/auth-ui-react';
-import { ThemeSupa } from '@supabase/auth-ui-shared';
-import { supabase } from '@/lib/supabase';
-import { isNativeShell } from '@/lib/api';
-import { AUTH_PROVIDERS, authRedirectUrl, NativeOAuthButtons } from '@/components/NativeAuth';
-import { useEffect } from 'react';
-import { useLocation } from 'wouter';
+import "./launch.css";
+import { Auth } from "@supabase/auth-ui-react";
+import { ThemeSupa } from "@supabase/auth-ui-shared";
+import { supabase } from "@/lib/supabase";
+import { isNativeShell } from "@/lib/api";
+import {
+  AUTH_PROVIDERS,
+  authRedirectUrl,
+  NativeOAuthButtons,
+} from "@/components/NativeAuth";
+import { useEffect } from "react";
+import { useLocation } from "wouter";
 
 export default function SignUpPage() {
   const [, setLocation] = useLocation();
@@ -13,7 +18,7 @@ export default function SignUpPage() {
     // Check if user is already logged in
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        setLocation('/dashboard');
+        setLocation("/dashboard");
       }
     });
 
@@ -22,7 +27,7 @@ export default function SignUpPage() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
-        setLocation('/dashboard');
+        setLocation("/dashboard");
       }
     });
 
@@ -30,16 +35,42 @@ export default function SignUpPage() {
   }, [setLocation]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-xl p-8">
+    <div className="ft-auth">
+      <a href="/" className="ft-auth-brand" aria-label="FlexTab home">
+        flextab
+      </a>
+      <div className="ft-auth-card">
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold text-slate-900 mb-2">Join FlexTab</h1>
-          <p className="text-slate-600">Create an account to start tracking</p>
+          <h1 className="text-2xl font-bold text-slate-900 mb-2">
+            Make your next set count.
+          </h1>
+          <p className="text-slate-600">Create your free FlexTab account.</p>
         </div>
         <NativeOAuthButtons />
         <Auth
           supabaseClient={supabase}
-          appearance={{ theme: ThemeSupa }}
+          appearance={{
+            theme: ThemeSupa,
+            variables: {
+              default: {
+                colors: {
+                  brand: "#18221d",
+                  brandAccent: "#344536",
+                  brandButtonText: "#ffffff",
+                  inputBorder: "#d9ddd3",
+                  inputBorderFocus: "#687e39",
+                  anchorTextColor: "#344536",
+                },
+                radii: { borderRadiusButton: "7px", inputBorderRadius: "7px" },
+                fonts: {
+                  bodyFontFamily: "Inter, system-ui, sans-serif",
+                  buttonFontFamily: "Inter, system-ui, sans-serif",
+                  inputFontFamily: "Inter, system-ui, sans-serif",
+                  labelFontFamily: "Inter, system-ui, sans-serif",
+                },
+              },
+            },
+          }}
           providers={isNativeShell() ? [] : AUTH_PROVIDERS}
           redirectTo={authRedirectUrl()}
           view="sign_up"
@@ -47,6 +78,11 @@ export default function SignUpPage() {
           theme="light"
         />
       </div>
+      <nav className="ft-auth-footer" aria-label="Account help">
+        <a href="/support">Support</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+      </nav>
     </div>
   );
 }
