@@ -1,3 +1,4 @@
+import { visibleAccount } from "../communityAccess";
 import { z } from "zod";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { protectedProcedure, router } from "../_core/trpc";
@@ -33,7 +34,7 @@ export const notificationsRouter = router({
         })
         .from(notifications)
         .innerJoin(users, eq(notifications.actorId, users.id))
-        .where(eq(notifications.recipientId, ctx.user.id))
+        .where(and(eq(notifications.recipientId, ctx.user.id), visibleAccount(ctx.user.id, notifications.actorId)))
         .orderBy(desc(notifications.createdAt))
         .limit(input.limit)
         .offset(input.offset);
@@ -54,7 +55,8 @@ export const notificationsRouter = router({
       .where(
         and(
           eq(notifications.recipientId, ctx.user.id),
-          eq(notifications.read, false)
+          eq(notifications.read, false),
+          visibleAccount(ctx.user.id, notifications.actorId)
         )
       );
 
@@ -124,6 +126,9 @@ export async function createNotification({
   try {
     const db = await getDb();
     if (!db) return;
+    const [allowed] = await db.select({ id: users.id }).from(users)
+      .where(and(eq(users.id, recipientId), visibleAccount(actorId, users.id))).limit(1);
+    if (!allowed) return;
     await db.insert(notifications).values({
       recipientId,
       actorId,

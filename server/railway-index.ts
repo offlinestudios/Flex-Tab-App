@@ -1,3 +1,11 @@
+import { privateDisplayNameMigration } from "./privateDisplayNameMigration";
+import { accountReportMigration } from "./accountReportMigration";
+import { appleTokenMigration } from "./appleTokenMigration";
+import { profileMigration } from "./profileMigration";
+import { startModerationWorker } from "./moderationWorker";
+import { communityModerationMigration } from "./communityModerationMigration";
+import { accountLifecycleMigration } from "./accountLifecycle";
+import { startAccountDeletionWorker } from "./accountDeletionWorker";
 import { mobileCors } from "./mobileCors";
 import express from "express";
 import { createServer } from "http";
@@ -138,9 +146,12 @@ async function runMigrations() {
     await pool.query(`CREATE INDEX IF NOT EXISTS "notifications_recipientId_idx" ON "notifications" ("recipientId");`);
     await pool.query(`CREATE INDEX IF NOT EXISTS "notifications_unread_idx" ON "notifications" ("recipientId") WHERE "read" = false;`);
 
+    await pool.query(accountLifecycleMigration);
+    await pool.query(communityModerationMigration); await pool.query(profileMigration); await pool.query(appleTokenMigration); await pool.query(accountReportMigration); await pool.query(privateDisplayNameMigration);
     console.log('[Migrations] All migrations complete.');
   } catch (err) {
-    console.error('[Migrations] Migration error (non-fatal):', err);
+    console.error('[Migrations] Migration failed; refusing to start with an incomplete schema.');
+    throw err;
   } finally {
     await pool.end();
   }
@@ -149,6 +160,8 @@ async function runMigrations() {
 async function startServer() {
   // Run migrations before anything else
   await runMigrations();
+  startAccountDeletionWorker();
+    startModerationWorker();
 
   const app = express();
   app.use("/api", mobileCors);

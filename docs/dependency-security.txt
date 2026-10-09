@@ -1,0 +1,30 @@
+Dependency security triage — 2026-10-07
+
+Capacitor core/CLI/iOS/Android upgraded from8.3.3 to8.5.3; native SPM lock
+resolves8.5.3. Addresses GHSA-rvm3-566m-v7fv internal-proxy origin bypass.
+Maintainer: https://github.com/ionic-team/capacitor/security/advisories/GHSA-rvm3-566m-v7fv
+
+Post-update npm audit snapshot: {'info': 0, 'low': 7, 'moderate': 17, 'high': 34, 'critical': 5, 'total': 63}
+Counts vary as registry advisories refresh; do not infer severity reduction solely
+from count differences. Capacitor iOS/Android are no longer flagged in this snapshot.
+
+Remaining critical package chains:
+- @clerk/shared: node_modules/@clerk/shared
+- tar: node_modules/@capacitor/assets/node_modules/tar, node_modules/tar
+- tinypool: node_modules/tinypool
+- vitest: node_modules/vitest
+
+Clerk is present in the development server; production uses Supabase context.
+No req.ip/trust-proxy authorization usage found in targeted server search, but
+proxy-addr and other backend dependencies still need patching/reachability review.
+Vitest/tinypool and tar/tooling require separate compatible updates. No blanket
+audit-fix-force applied. This is not a complete security clearance.
+
+Release gates: remaining advisories, patched-runtime auth/media/navigation testing
+on physical devices, Android native build, and updated final iOS archive validation.
+
+Proxy address patch — 2026-10-07
+Express transitive proxy-addr updated2.0.7 to2.0.8 in npm and pnpm locks.
+Addresses GHSA-jqcg-44mw-7w3h; runtime dependency requirements unchanged.
+TypeScript check and eight mobile CORS unit/integration tests pass.
+Registry audit after update:61 findings, including4 critical; other chains remain.

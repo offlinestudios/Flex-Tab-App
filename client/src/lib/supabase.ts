@@ -1,3 +1,4 @@
+import { Capacitor } from '@capacitor/core';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -14,5 +15,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
 // Auth operations will fail gracefully and show an error to the user.
 export const supabase = createClient(
   supabaseUrl || 'https://placeholder.supabase.co',
-  supabaseAnonKey || 'placeholder-anon-key'
+  supabaseAnonKey || 'placeholder-anon-key',
+  Capacitor.isNativePlatform()
+    ? { auth: { flowType: 'pkce', detectSessionInUrl: false } }
+    : undefined
 );

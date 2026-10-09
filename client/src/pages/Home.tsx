@@ -240,7 +240,6 @@ export default function Home() {
       durationSeconds: durationMap.get(sessionKey) ?? null,
       sessionId: sessionIdMap.get(sessionKey) ?? null,
     }));
-    console.log('[DEBUG] Transformed workout sessions:', sessions);
     return sessions;
   }, [setLogsData]);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
@@ -1404,11 +1403,10 @@ export default function Home() {
 
             {/* Today's logged sets summary */}
             {(() => {
-              const today = new Date().toLocaleDateString();
-              // Aggregate all sessions for today (weights + GPS cardio may be separate sessions)
+              const today = workoutDateKey;
               const todaySessions = workoutSessions.filter(s => s.date === today);
               const todayExercises = todaySessions.flatMap(s => s.exercises);
-              const todaySession = todaySessions[0]; // for sessionId/share
+              const todaySession = todaySessions[0];
               if (!todaySession || todayExercises.length === 0) return null;
               const stats = {
                 sets: todayExercises.reduce((sum, set) => sum + set.sets, 0),
@@ -1420,7 +1418,7 @@ export default function Home() {
               return (
                 <div style={{ background:'var(--card)', borderRadius:20, border:'1px solid var(--border)', overflow:'hidden' }}>
                   <div style={{ padding:'16px 20px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                    <h3 style={{ fontSize:15, fontWeight:700, color:'var(--foreground)', margin:0 }}>Today's Workout</h3>
+                    <h3 style={{ fontSize:15, fontWeight:700, color:'var(--foreground)', margin:0 }}>{isLoggingToday ? "Today's Workout" : 'Workout Summary'}</h3>
                     <button
                       onClick={() => { setShareWorkoutData({ exercises: todayExercises, date: today, workoutSessionId: todaySession.sessionId ?? null }); setShowShareDialog(true); }}
                       style={{ display:'flex', alignItems:'center', gap:5, fontSize:13, fontWeight:600, color:'var(--foreground)', background:'none', border:'none', cursor:'pointer' }}
@@ -1635,8 +1633,8 @@ export default function Home() {
                         }
                         // ── Strength exercise card (unchanged) ────────────────────
                         const flatSets = sets.flatMap(s => Array.from({ length: s.sets }, () => ({ weight: s.weight, reps: s.reps })));
-                        const maxW = Math.max(...flatSets.map(s => s.weight), 1);
-                        const minW = Math.min(...flatSets.map(s => s.weight));
+                        const maxW = Math.max(...flatSets.map(s => s.weight), 0);
+                        const minW = flatSets.length ? Math.min(...flatSets.map(s => s.weight)) : 0;
                         const totalRepsEx = flatSets.reduce((a, s) => a + s.reps, 0);
                         return (
                           <div key={exName} style={{ paddingBottom:14, marginBottom:14, borderBottom:'1px solid var(--border)' }}>

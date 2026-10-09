@@ -35,7 +35,7 @@ A professional workout tracking application for serious lifters. Log sets, track
 ### Prerequisites
 
 - Node.js 22+
-- pnpm 10+
+- npm 10+
 - MySQL or PostgreSQL database
 - Clerk account
 - Cloudflare R2 bucket
@@ -50,19 +50,19 @@ cd Flex-Tab-App
 
 2. Install dependencies:
 ```bash
-pnpm install
+npm ci --legacy-peer-deps
 ```
 
 3. Set up environment variables (see **Environment Variables** section below)
 
 4. Run database migrations:
 ```bash
-pnpm db:push
+npm run db:push
 ```
 
 5. Start the development server:
 ```bash
-pnpm dev
+npm run dev
 ```
 
 The app will be available at `http://localhost:3000`
@@ -111,11 +111,11 @@ See [RAILWAY_DEPLOYMENT.md](./RAILWAY_DEPLOYMENT.md) for detailed deployment ins
 
 ### Available Scripts
 
-- `pnpm dev` - Start development server
-- `pnpm build` - Build for production
-- `pnpm test` - Run tests
-- `pnpm db:push` - Push database schema changes
-- `pnpm format` - Format code with Prettier
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm test` - Run tests
+- `npm run db:push` - Push database schema changes
+- `npm run format` - Format code with Prettier
 
 ### Project Structure
 
@@ -153,3 +153,6 @@ For issues or questions:
 ---
 
 Built with ❤️ by Offline Studios
+
+Release builds use package-lock.json with npm ci --legacy-peer-deps in CI and Railway.
+The historical pnpm lockfile is not used for release builds.

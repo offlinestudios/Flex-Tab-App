@@ -1,0 +1,125 @@
+Account deletion — implementation and release gate
+
+Entry points: /delete-account, linked from profile settings, dashboard settings and /settings.
+Users confirm with DELETE; the API accepts only their verified identity, never an arbitrary user ID.
+The accepted request locks the account immediately. A persisted job waits 20 minutes for existing
+presigned uploads to expire, then clears owned Supabase avatars/media and legacy R2 prefixes,
+generated workout-card storage, relational fitness/social data, and finally the Supabase identity. Relational changes are transactional;
+external cleanup is idempotent and retries every 15 minutes after failure, including after restart.
+An opaque SHA-256-hashed receipt exposes only pending/complete/unknown via POST. The completed
+receipt is detached from the user and expires after 30 days. Local app data/tokens are cleared after
+acceptance. The receipt is retained on the device and accessible from the sign-in screen.
+
+Required server configuration:
+- DATABASE_URL, VITE_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (server-only; no anon fallback).
+- R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY and R2_BUCKET_NAME (default flextab-storage).
+- ACCOUNT_DELETION_LEGACY_CARDS_CLEARED=true after inventorying/removing or attributing historical
+  ownerless generated workout cards. Deletion fails closed without this confirmation when R2 is used.
+- ACCOUNT_DELETION_SKIP_R2=true ONLY after confirming the deployment never stored user files in R2,
+  or completing a verified migration/removal of all legacy R2 data. Never set merely to bypass errors.
+No production environment settings have been changed by this implementation.
+
+Database migration 0006 is idempotent and runs before Railway starts serving requests.
+Foreign keys use NOT VALID: they protect new writes and cascade deleted-account references without
+silently erasing unrelated pre-existing orphans. Audit/validate historical constraints separately.
+New user-data tables or storage prefixes must be added to deletion coverage and its integration test.
+
+Operations:
+The server processes up to 10 due accounts per minute; row locks prevent competing workers from
+claiming the same job. A separate bounded connection pool holds active-account locks without
+exhausting the data-query pool. Monitor accounts with deletionRequestedAt older than 24 hours or
+nonzero deletionAttempts. Logs retain only numeric user ID and failure stage, not provider errors,
+credentials, request receipts, email addresses or workout contents. Resolve configuration/provider
+failures before the 24-hour user-facing target. Backup retention/restore procedures must reapply
+accepted deletions; document actual provider retention in the privacy policy before submission.
+
+Release verification still required:
+- Legacy generated R2 workout cards previously had no owner ID in their object key. New cards
+  require authentication and use workout-cards/{userId}/. Inventory legacy workout-cards/* objects
+  and establish safe cleanup before claiming deletion covers all historical files. Do not delete
+  unrelated users' legacy files based on a guessed owner. No legacy objects were deleted here.
+- Disposable staging Supabase identity with uploads in both storage systems; end-to-end deletion,
+  retry/restart and confirmation. No real user's account was used for destructive testing.
+- Apple-linked identities deliberately fail at token revocation until Sign in with Apple revocation
+  is implemented. Do not enable/ship Apple login or claim this gate complete before that work.
+- Verify storage policies do not allow signed-out/deleting users to upload directly with old JWTs.
+- Verify support@flextab.app is monitored and set up an operational response to overdue jobs.
+- Review deletion wording with actual retention policy and any future subscriptions.
+
+Local validation:
+Use a disposable local PostgreSQL database named flextab_test. The integration suite refuses
+non-loopback hosts and other database names; it creates only its dedicated test schema.
+TEST_DATABASE_URL=postgresql://...@127.0.0.1:55439/flextab_test npm run test:local
+GitHub Actions provisions its own PostgreSQL service. External R2 tests run separately.
+
+Apple revocation implementation status (2026-10-07)
+server/appleTokenRevocation.ts implements Apple's POST /auth/revoke contract with
+an ES256 client secret valid for five minutes, a 20-second timeout, forbidden
+redirects and sanitized failures. Ten offline tests verify signature/claims,
+request scoping and failure handling. This is not yet wired into deletion.
+Source: https://developer.apple.com/documentation/signinwithapplerestapi/revoke-tokens
+Remaining before enabling Apple login: establish the Apple Service ID/key and
+Supabase provider configuration; capture and validate provider refresh tokens
+against the authenticated Apple identity; persist them encrypted server-side;
+wire revocation before Supabase identity deletion with retry-safe state; test
+sign-in, linked identities, revocation and deletion against isolated staging.
+The existing Apple-linked deletion guard remains in place until these are done.
+
+Encrypted Apple token envelopes
+server/appleTokenEnvelope.ts provides AES-256-GCM encryption with random96-bit
+nonces and authenticated account ID, Apple subject, client ID and key version.
+Keys must be canonical base64-encoded32-byte secrets supplied only server-side.
+The keyring supports rotation: retain old keys until every envelope is re-encrypted
+or deleted. Unknown keys, metadata substitution and tampering fail closed.
+Thirteen offline tests cover round trips, tampering, account/client/subject binding,
+malformed envelopes, weak keys and rotation. No production key was generated.
+This helper does not itself persist tokens or establish their ownership. Callers
+must verify Apple's token identity before encryption; client-supplied metadata is
+not evidence of ownership. Database persistence/capture/deletion integration remains.
+
+Apple token ownership validation
+server/appleTokenValidation.ts exchanges the supplied refresh token at Apple's
+fixed token endpoint, then verifies the returned identity token with Apple's
+public keys, RS256, issuer, client audience, expiry and expected Apple subject.
+Expected subject must come from the authenticated user's server-verified Apple
+identity. Email matching or caller-supplied identifiers must never establish it.
+Twelve offline tests cover ownership/issuer/audience/expiry/signature failures and
+provider errors. Together with encryption/revocation,35 Apple tests pass.
+Source: https://developer.apple.com/documentation/signinwithapplerestapi/generate-and-validate-tokens
+This is not yet connected to the auth callback, database persistence or deletion
+worker. No real token was captured, stored or revoked. Apple login stays disabled.
+
+2026-10-08 server integration update (supersedes earlier helper-only status)
+Migration0009 creates apple_provider_tokens with encrypted envelopes, ownership
+binding, revocation progress and account-delete cascade. Row-level security is
+enabled with no client policies; only the trusted backend database role may use it.
+Railway startup and the empty-database initializer apply this migration.
+account.storeAppleToken is a protected POST mutation accepting only refreshToken.
+It obtains the Supabase identity through the server Admin API, verifies the Apple
+subject and token, and checks the persisted auth-account mapping before storage.
+It runs under the existing active-account lock. No client identity claim is trusted.
+Deletion now revokes persisted Apple tokens before Supabase identity removal and
+records success durably for retries. Linked identities missing a captured token
+still fail closed. Tokens also revoke if the Supabase identity was already removed.
+Server configuration names are documented in .env.example; signing and encryption
+keys are separate secrets. Never put either into VITE_ values or client code.
+127 local tests pass, including32 PostgreSQL cases and6 encrypted-vault cases;
+empty initialization through0009 and production build verified locally.
+Remaining: callback capture/retry UI, production key/configuration setup, migration
+rollout, Supabase provider activation and real external staging lifecycle validation.
+Apple login remains disabled. No production credentials or tokens were used.
+
+2026-10-08 client completion update
+AppleSignInSetup now observes Supabase sessions outside the auth callback lock,
+checks the server-owned token status, uploads the provider_refresh_token through
+the protected mutation when needed, and verifies persistence before showing the
+main app to Apple-linked accounts. Failures offer retry, Apple reauthentication,
+sign-out and support. Tokens are not copied to additional browser storage or logs.
+Pending tokens stay in memory for retry and are cleared after completion/sign-out.
+Normal access-token refreshes do not reset a completed account's workout screen.
+Support/legal pages and deletion receipts remain accessible during setup failure.
+Non-Apple sessions continue without calling the Apple configuration endpoints.
+132 local tests pass, including5 completion-flow tests and32 PostgreSQL cases.
+Actual provider_refresh_token delivery, consent cancellation, cold/warm native
+callbacks, setup-screen rendering and full external deletion still need staging
+and physical-device validation. These tests do not establish live Apple readiness.

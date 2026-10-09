@@ -1,12 +1,14 @@
+import { ReportContent } from './ReportContent';
 import { useState, useEffect, useRef } from "react";
 import { trpc } from "@/lib/trpc";
+import { publicAppUrl } from "@/lib/api";
 
 /* ─────────────────────────────────────────────────────────────────
    Share Profile Button — copy-to-clipboard + native share
 ───────────────────────────────────────────────────────────────── */
 function ShareProfileButton({ userId, displayName }: { userId: number; displayName: string }) {
   const [copied, setCopied] = useState(false);
-  const profileUrl = `${window.location.origin}/u/${userId}`;
+  const profileUrl = publicAppUrl(`/u/${userId}`);
 
   const handleShare = () => {
     if (navigator.share) {
@@ -671,6 +673,8 @@ export function UserProfileSheet({
               </p>
             </div>
 
+            {profile?.bio && <p style={{fontSize:13,whiteSpace:'pre-wrap',overflowWrap:'anywhere',marginBottom:12}}>{profile.bio}</p>}
+            {profile?.fitnessGoal && <p style={{fontSize:12,color:'#9ca3af',marginBottom:12}}>{profile.fitnessGoal}</p>}
             {/* Action buttons row */}
             <div style={{ display: "flex", gap: 8 }}>
               {/* Follow / Unfollow — only for other users */}
@@ -712,6 +716,7 @@ export function UserProfileSheet({
 
               {/* Share profile button */}
               <ShareProfileButton userId={userId} displayName={displayName} />
+              {!isMyProfile && currentUser && <ReportContent userId={userId} />}
             </div>
           </div>
 

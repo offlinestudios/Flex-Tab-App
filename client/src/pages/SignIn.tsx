@@ -1,6 +1,8 @@
 import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { supabase } from '@/lib/supabase';
+import { isNativeShell } from '@/lib/api';
+import { AUTH_PROVIDERS, authRedirectUrl, NativeOAuthButtons } from '@/components/NativeAuth';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 
@@ -60,11 +62,13 @@ export default function SignInPage() {
           <h1 className="text-2xl font-bold text-slate-900 mb-2">Welcome to FlexTab</h1>
           <p className="text-slate-600">Sign in to track your workouts</p>
         </div>
+        {localStorage.getItem('flextab_deletion_receipt') && <a href="/account-deletion-requested" className="mb-4 block text-center text-sm underline">Check account deletion status</a>}
+        <NativeOAuthButtons />
         <Auth
           supabaseClient={supabase}
           appearance={{ theme: ThemeSupa }}
-          providers={['google', 'github']}
-          redirectTo={`${window.location.origin}/dashboard`}
+          providers={isNativeShell() ? [] : AUTH_PROVIDERS}
+          redirectTo={authRedirectUrl()}
           view="sign_in"
           showLinks={true}
           theme="light"

@@ -1,0 +1,52 @@
+Community controls — implementation and release gates
+
+Blocking is enforced on feed/direct posts, profiles, comments, likes, follows,
+search, follower lists and notifications. Feed filtering happens before pagination.
+Mute affects the viewer's feed only. Public storage links already copied remain public;
+the app has no private-profile mode. Settings now explain these limits.
+Author-only post deletion checks ownership before cascading any child deletion.
+
+Report post/comment opens a reason/details form. The server verifies the target,
+rejects self-reports, deduplicates reports, and limits each reporter to 20/hour.
+Report intake accepts known content IDs after blocking without returning content.
+Account reports are available from profile sheets and blocked/muted lists. They
+share the 20/hour budget with content reports and deduplicate per reporter/target.
+Intake does not reveal missing accounts or bypass profile blocking. Moderators see
+the account ID/name and details; content removal cannot resolve an account report.
+Account enforcement is still required before community launch.
+
+Moderators use /moderation (also linked in profile settings for server-side admins).
+Both queue and resolution require an active admin role. Review current content,
+reason, details and verified-origin media; dismiss or explicitly confirm removal.
+Deleting a post queues storage keys durably before its media rows disappear. A worker
+removes only owner-scoped Supabase/R2 objects, retries provider errors after 15 minutes,
+and exposes pending cleanup in the resolved queue. Reporter deletion does not discard
+another author's pending purge job; account deletion clears the reporter's free text.
+The target account's deletion performs full owned-storage cleanup before cascading reports.
+
+This is not a complete live moderation operation. Required before community launch:
+- Assign a named, authenticated moderator and backup; do not auto-promote users.
+- Establish monitored coverage and response targets, published community rules,
+  support/escalation contacts, report retention, and an appeals process.
+- Run disposable staging tests through the native report UI, moderator review,
+  both configured storage providers, failure/retry and account deletion.
+- Inventory legacy media whose owner cannot be verified. Such media is not previewed
+  automatically and cleanup fails closed. Resolve these records before release.
+- Decide and implement pre-publication objectionable-content filtering and repeat-abuser
+  enforcement. Current intake/removal alone does not satisfy all community requirements.
+- Follow, likes and comments now share the block transaction’s account-pair lock.
+  PostgreSQL tests cover a follow/block race and likes/comments waiting for a block
+  to commit, then rechecking visibility before writing.
+- Verify storage access policies; reporting/removal does not prevent a user from
+  re-uploading content, and this implementation does not ban accounts.
+
+Migration 0007 runs after account-lifecycle migration 0006 on server startup.
+Deploy backend before distributing the updated native UI. No production data or roles
+were changed while developing this feature. Local tests use disposable PostgreSQL.
+
+Migration0010 extends report targets to accounts and adds a unique account-report
+index. Apply before updated clients. Local validation:136 tests across17 files,
+including34 PostgreSQL cases; TypeScript and production build pass. Account report
+tests cover post-block intake, concurrent duplicate retries, missing/self targets,
+admin-only queue, shared rate budget and rejection of content removal on accounts.
+Native account-report UI and real moderator workflow remain unverified.

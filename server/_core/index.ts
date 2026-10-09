@@ -1,3 +1,9 @@
+import { profileMigration } from "../profileMigration";
+import { startModerationWorker } from "../moderationWorker";
+import { communityModerationMigration } from "../communityModerationMigration";
+import { accountLifecycleMigration } from "../accountLifecycle";
+import { startAccountDeletionWorker } from "../accountDeletionWorker";
+import { Pool } from "pg";
 import { mobileCors } from "../mobileCors";
 import "dotenv/config";
 import express from "express";
@@ -37,6 +43,13 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 }
 
 async function startServer() {
+  if (process.env.DATABASE_URL) {
+    const migrationPool = new Pool({ connectionString: process.env.DATABASE_URL });
+    try { await migrationPool.query(accountLifecycleMigration); await migrationPool.query(communityModerationMigration); await migrationPool.query(profileMigration); }
+    finally { await migrationPool.end(); }
+    startAccountDeletionWorker();
+    startModerationWorker();
+  }
   const app = express();
   app.use("/api", mobileCors);
   const server = createServer(app);

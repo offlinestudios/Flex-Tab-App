@@ -106,7 +106,7 @@ export async function storagePut(
   });
 
   try {
-    await client.send(command);
+    await client.send(command, { abortSignal: AbortSignal.timeout(30000) });
   } catch (error) {
     console.error('[R2 Storage] Upload failed:', error);
     throw new Error(`Failed to upload file to R2: ${error instanceof Error ? error.message : 'Unknown error'}`);

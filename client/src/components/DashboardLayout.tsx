@@ -122,6 +122,7 @@ export default function DashboardLayout({ children, timerSlot }: DashboardLayout
 function AppShell({ children, timerSlot }: { children: React.ReactNode; timerSlot?: React.ReactNode }) {
   const { user, logout } = useAuth();
   const [location, setLocation] = useLocation();
+  const search = useSearch();
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
@@ -136,7 +137,7 @@ function AppShell({ children, timerSlot }: { children: React.ReactNode; timerSlo
   const { theme, setTheme } = useTheme();
 
   // Close sidebar on route change
-  useEffect(() => { setSidebarOpen(false); }, [location]);
+  useEffect(() => { setSidebarOpen(false); }, [location, search]);
 
   // Prevent body scroll when sidebar open on mobile
   useEffect(() => {
@@ -150,7 +151,6 @@ function AppShell({ children, timerSlot }: { children: React.ReactNode; timerSlo
     ? user.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
     : "FT";
 
-  const search = useSearch();
   const currentTab = new URLSearchParams(search).get('tab') || 'log';
 
   const isActive = (path: string) => {
@@ -174,7 +174,7 @@ function AppShell({ children, timerSlot }: { children: React.ReactNode; timerSlo
   useEffect(() => { setShowNotifications(false); }, [location]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="app-shell flex flex-col min-h-screen bg-background">
       {/* ── Top header ── */}
       <header style={{ position: 'sticky', top: 0, zIndex: 40, background: 'var(--card)', borderBottom: '1px solid var(--border)', paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', maxWidth: 700, margin: '0 auto' }}>
@@ -353,7 +353,7 @@ function AppShell({ children, timerSlot }: { children: React.ReactNode; timerSlo
       )}
 
       {/* ── Page content ── */}
-      <main className="flex-1 overflow-y-auto" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 80px)' }}>
+      <main className="min-h-0 flex-1 overflow-y-auto" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 80px)' }}>
         {children}
       </main>
 

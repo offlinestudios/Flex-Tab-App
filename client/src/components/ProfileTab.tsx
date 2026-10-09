@@ -1,7 +1,13 @@
+import { ReportContent } from './ReportContent';
+import { AppPreferences } from './AppPreferences';
+import { NotificationNotice } from './NotificationNotice';
+import { fitnessGoals } from '../../../shared/profile';
+import { PrivacyNotice } from "./PrivacyNotice";
 import React, { useState, useRef, useCallback } from "react";
 import { formatDateFull } from "@/lib/dateUtils";
 import { useTheme } from "@/contexts/ThemeContext";
 import { trpc } from "@/lib/trpc";
+import { apiUrl, publicAppUrl } from "@/lib/api";
 import { toast } from "sonner";
 import { NewPostComposer, CommentsSheet, FeedPost } from "./CommunityTab";
 import { UserProfileSheet } from "./UserProfileSheet";
@@ -209,7 +215,7 @@ interface EditProfileModalProps {
   name: string;
   bio: string;
   goal: string;
-  onSave: (name: string, bio: string, goal: string) => void;
+  onSave: (name: string, bio: string, goal: string) => Promise<void>;
   onClose: () => void;
 }
 
@@ -218,7 +224,9 @@ function EditProfileModal({ name, bio, goal, onSave, onClose }: EditProfileModal
   const [draftBio, setDraftBio] = useState(bio);
   const [draftGoal, setDraftGoal] = useState(goal);
 
-  const goals = ['Build Muscle', 'Lose Fat', 'Improve Endurance', 'Increase Strength', 'General Fitness'];
+  const goals = fitnessGoals;
+  const [saving,setSaving] = useState(false);
+  const [saveError,setSaveError] = useState('');
 
   return (
     <>
@@ -251,6 +259,7 @@ function EditProfileModal({ name, bio, goal, onSave, onClose }: EditProfileModal
           <label style={{ fontSize: 12, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 6 }}>Display Name</label>
           <input
             type="text"
+            maxLength={80}
             value={draftName}
             onChange={e => setDraftName(e.target.value)}
             placeholder="Your name"
@@ -266,6 +275,7 @@ function EditProfileModal({ name, bio, goal, onSave, onClose }: EditProfileModal
         <div style={{ marginBottom: 14 }}>
           <label style={{ fontSize: 12, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 6 }}>Bio</label>
           <textarea
+            maxLength={500}
             value={draftBio}
             onChange={e => setDraftBio(e.target.value)}
             placeholder="Tell the community about yourself…"
@@ -284,7 +294,7 @@ function EditProfileModal({ name, bio, goal, onSave, onClose }: EditProfileModal
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {goals.map(g => (
               <button
-                key={g}
+                key={g || 'Not selected'}
                 onClick={() => setDraftGoal(g)}
                 style={{
                   padding: '7px 14px', borderRadius: 50,
@@ -294,12 +304,13 @@ function EditProfileModal({ name, bio, goal, onSave, onClose }: EditProfileModal
                   fontSize: 13, fontWeight: 600, cursor: 'pointer',
                 }}
               >
-                {g}
+                {g || 'Not selected'}
               </button>
             ))}
           </div>
         </div>
 
+        {saveError && <p role="alert" style={{color:'#ef4444'}}>{saveError}</p>}
         {/* Actions */}
         <div style={{ display: 'flex', gap: 10 }}>
           <button
@@ -309,10 +320,11 @@ function EditProfileModal({ name, bio, goal, onSave, onClose }: EditProfileModal
             Cancel
           </button>
           <button
-            onClick={() => { onSave(draftName.trim() || name, draftBio.trim(), draftGoal); onClose(); }}
+            disabled={saving || !draftName.trim()}
+            onClick={async () => {setSaving(true);setSaveError('');try {await onSave(draftName.trim(),draftBio.trim(),draftGoal);onClose();} catch {setSaveError('Could not save your profile. Please try again.');} finally {setSaving(false);} }}
             style={{ flex: 2, padding: 12, background: 'var(--foreground)', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 700, color: 'var(--background)', cursor: 'pointer' }}
           >
-            Save Changes
+            {saving ? 'Saving…' : 'Save Changes'}
           </button>
         </div>
       </div>
@@ -386,157 +398,17 @@ function ToggleRow({ label, sublabel, checked, onChange }: { label: string; subl
 
 /* Notification Preferences panel */
 function NotificationPanel({ onBack }: { onBack: () => void }) {
-  const [workoutReminders, setWorkoutReminders] = useState(() => localStorage.getItem('notif_workout') !== 'false');
-  const [communityActivity, setCommunityActivity] = useState(() => localStorage.getItem('notif_community') !== 'false');
-  const [weeklySummary, setWeeklySummary] = useState(() => localStorage.getItem('notif_weekly') !== 'false');
-  const [prAlerts, setPrAlerts] = useState(() => localStorage.getItem('notif_pr') !== 'false');
-
-  const save = () => {
-    localStorage.setItem('notif_workout', String(workoutReminders));
-    localStorage.setItem('notif_community', String(communityActivity));
-    localStorage.setItem('notif_weekly', String(weeklySummary));
-    localStorage.setItem('notif_pr', String(prAlerts));
-    onBack();
-  };
-
-  return (
-    <SettingsSheet title="Notification Preferences" onBack={onBack}>
-      <p style={{ fontSize: 12, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>Activity</p>
-      <ToggleRow label="Workout Reminders" sublabel="Daily nudges to stay on track" checked={workoutReminders} onChange={setWorkoutReminders} />
-      <ToggleRow label="Community Activity" sublabel="Likes, comments and new followers" checked={communityActivity} onChange={setCommunityActivity} />
-      <ToggleRow label="PR Alerts" sublabel="Celebrate when you hit a new record" checked={prAlerts} onChange={setPrAlerts} />
-      <ToggleRow label="Weekly Summary" sublabel="Your week in review every Sunday" checked={weeklySummary} onChange={setWeeklySummary} />
-      <button
-        onClick={save}
-        style={{ width: '100%', marginTop: 20, padding: 13, background: 'var(--foreground)', color: 'var(--background)', border: 'none', borderRadius: 14, fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
-      >Save Preferences</button>
-    </SettingsSheet>
-  );
+  return <SettingsSheet title="Notifications" onBack={onBack}><NotificationNotice /></SettingsSheet>;
 }
 
 /* Units & Preferences panel */
 function UnitsPanel({ onBack }: { onBack: () => void }) {
-  const { theme, setTheme } = useTheme();
-  const [weightUnit, setWeightUnit] = useState(() => localStorage.getItem('weightUnit') || 'lbs');
-  const [appearance, setAppearance] = useState<'light' | 'dark' | 'system'>(
-    theme === 'dark' ? 'dark' : 'light'
-  );
-  const fitnessGoals = ['Build Muscle', 'Lose Fat', 'Improve Endurance', 'Increase Strength', 'General Fitness', 'Athletic Performance'];
-  const [fitnessGoal, setFitnessGoal] = useState(() => localStorage.getItem('fitnessGoal') || 'Build Muscle');
-
-  const save = () => {
-    localStorage.setItem('weightUnit', weightUnit);
-    localStorage.setItem('fitnessGoal', fitnessGoal);
-    if (appearance === 'dark') setTheme('dark');
-    else if (appearance === 'light') setTheme('light');
-    else {
-      if (window.matchMedia('(prefers-color-scheme: dark)').matches) setTheme('dark');
-      else setTheme('light');
-    }
-    onBack();
-  };
-
-  const optBtn = (label: string, val: string, current: string, setter: (v: any) => void) => (
-    <button
-      key={val}
-      onClick={() => setter(val)}
-      style={{
-        flex: 1, padding: '10px 0', borderRadius: 12,
-        border: `1.5px solid ${current === val ? 'var(--foreground)' : 'var(--border)'}`,
-        background: current === val ? 'var(--foreground)' : 'var(--secondary)',
-        color: current === val ? 'var(--background)' : '#6b7280',
-        fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
-      }}
-    >{label}</button>
-  );
-
-  return (
-    <SettingsSheet title="Units & Preferences" onBack={onBack}>
-      <p style={{ fontSize: 12, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 8px' }}>Weight Unit</p>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-        {optBtn('Pounds (lbs)', 'lbs', weightUnit, setWeightUnit)}
-        {optBtn('Kilograms (kg)', 'kg', weightUnit, setWeightUnit)}
-      </div>
-
-      <p style={{ fontSize: 12, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 8px' }}>Appearance</p>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-        {optBtn('Light', 'light', appearance, setAppearance)}
-        {optBtn('Dark', 'dark', appearance, setAppearance)}
-        {optBtn('System', 'system', appearance, setAppearance)}
-      </div>
-
-      <p style={{ fontSize: 12, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 8px' }}>Fitness Goal</p>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
-        {fitnessGoals.map(g => (
-          <button
-            key={g}
-            onClick={() => setFitnessGoal(g)}
-            style={{
-              padding: '8px 14px', borderRadius: 50,
-              border: `1.5px solid ${fitnessGoal === g ? 'var(--foreground)' : 'var(--border)'}`,
-              background: fitnessGoal === g ? 'var(--foreground)' : 'var(--secondary)',
-              color: fitnessGoal === g ? 'var(--background)' : '#6b7280',
-              fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
-            }}
-          >{g}</button>
-        ))}
-      </div>
-
-      <button
-        onClick={save}
-        style={{ width: '100%', padding: 13, background: 'var(--foreground)', color: 'var(--background)', border: 'none', borderRadius: 14, fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
-      >Save Preferences</button>
-    </SettingsSheet>
-  );
+  return <SettingsSheet title="Preferences" onBack={onBack}><AppPreferences /></SettingsSheet>;
 }
 
 /* Privacy Settings panel */
 function PrivacyPanel({ onBack }: { onBack: () => void }) {
-  const [visibility, setVisibility] = useState(() => localStorage.getItem('profileVisibility') || 'Public');
-  const [allowFollow, setAllowFollow] = useState(() => localStorage.getItem('allowFollow') !== 'false');
-  const [showActivity, setShowActivity] = useState(() => localStorage.getItem('showActivity') !== 'false');
-  const [showStats, setShowStats] = useState(() => localStorage.getItem('showStats') !== 'false');
-
-  const save = () => {
-    localStorage.setItem('profileVisibility', visibility);
-    localStorage.setItem('allowFollow', String(allowFollow));
-    localStorage.setItem('showActivity', String(showActivity));
-    localStorage.setItem('showStats', String(showStats));
-    onBack();
-  };
-
-  const visOptions = ['Public', 'Followers Only', 'Private'];
-
-  return (
-    <SettingsSheet title="Privacy Settings" onBack={onBack}>
-      <p style={{ fontSize: 12, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 8px' }}>Profile Visibility</p>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-        {visOptions.map(v => (
-          <button
-            key={v}
-            onClick={() => setVisibility(v)}
-            style={{
-              flex: 1, padding: '10px 4px', borderRadius: 12,
-              border: `1.5px solid ${visibility === v ? 'var(--foreground)' : 'var(--border)'}`,
-              background: visibility === v ? 'var(--foreground)' : 'var(--secondary)',
-              color: visibility === v ? 'var(--background)' : '#6b7280',
-              fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
-            }}
-          >{v}</button>
-        ))}
-      </div>
-
-      <p style={{ fontSize: 12, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>Activity</p>
-      <ToggleRow label="Allow Others to Follow" sublabel="People can follow your profile" checked={allowFollow} onChange={setAllowFollow} />
-      <ToggleRow label="Show Activity Status" sublabel="Let followers see when you're active" checked={showActivity} onChange={setShowActivity} />
-      <ToggleRow label="Show Workout Stats" sublabel="Display your stats on your public profile" checked={showStats} onChange={setShowStats} />
-
-      <button
-        onClick={save}
-        style={{ width: '100%', marginTop: 20, padding: 13, background: 'var(--foreground)', color: 'var(--background)', border: 'none', borderRadius: 14, fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
-      >Save Settings</button>
-    </SettingsSheet>
-  );
+  return <SettingsSheet title="Privacy & Sharing" onBack={onBack}><PrivacyNotice /></SettingsSheet>;
 }
 
 /* Help & Support panel */
@@ -579,7 +451,7 @@ function HelpPanel({ onBack }: { onBack: () => void }) {
 
       <p style={{ fontSize: 12, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '20px 0 8px' }}>Contact</p>
       <button
-        onClick={() => window.open('mailto:support@flextab.app?subject=FlexTab Support', '_blank')}
+        onClick={() => window.open('mailto:info@offlinestudios.ca?subject=FlexTab Support', '_blank')}
         style={{
           width: '100%', display: 'flex', alignItems: 'center', gap: 12,
           padding: '14px 0', background: 'none', border: 'none', borderBottom: '1px solid var(--border)',
@@ -611,20 +483,31 @@ function HelpPanel({ onBack }: { onBack: () => void }) {
 /* Blocked & Muted management panel */
 function BlockedMutedPanel({ onBack }: { onBack: () => void }) {
   const utils = (trpc as any).useUtils();
-  const [tab, setTab] = (useState as any)<'blocked' | 'muted'>('blocked');
+  const [tab, setTab] = useState<'blocked' | 'muted'>('blocked');
 
-  const { data: blockedUsers = [], isLoading: loadingBlocked } = (trpc as any).social.getBlockedUsers.useQuery({}, { staleTime: 30_000 });
-  const { data: mutedUsers = [], isLoading: loadingMuted } = (trpc as any).social.getMutedUsers.useQuery({}, { staleTime: 30_000 });
+  const blockedQuery = trpc.social.getBlockedUsers.useQuery(undefined, { staleTime: 30_000 });
+  const blockedUsers = blockedQuery.data ?? [];
+  const mutedQuery = trpc.social.getMutedUsers.useQuery(undefined, { staleTime: 30_000 });
+  const mutedUsers = mutedQuery.data ?? [];
 
-  const unblockMutation = (trpc as any).social.unblock.useMutation({
-    onSuccess: () => utils.social.getBlockedUsers.invalidate(),
+  const unblockMutation = trpc.social.unblock.useMutation({
+    onSuccess: async () => {
+      await utils.social.getBlockedUsers.invalidate();
+      toast.success('User unblocked.');
+    },
+    onError: () => toast.error('Could not unblock this user. Please try again.'),
   });
-  const unmuteMutation = (trpc as any).social.unmute.useMutation({
-    onSuccess: () => utils.social.getMutedUsers.invalidate(),
+  const unmuteMutation = trpc.social.unmute.useMutation({
+    onSuccess: async () => {
+      await utils.social.getMutedUsers.invalidate();
+      toast.success('User unmuted.');
+    },
+    onError: () => toast.error('Could not unmute this user. Please try again.'),
   });
 
   const list = tab === 'blocked' ? blockedUsers : mutedUsers;
-  const isLoading = tab === 'blocked' ? loadingBlocked : loadingMuted;
+  const activeQuery = tab === 'blocked' ? blockedQuery : mutedQuery;
+  const isLoading = activeQuery.isLoading;
 
   return (
     <SettingsSheet title="Blocked & Muted" onBack={onBack}>
@@ -643,14 +526,21 @@ function BlockedMutedPanel({ onBack }: { onBack: () => void }) {
               fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
             }}
           >
-            {t === 'blocked' ? `Blocked (${blockedUsers.length})` : `Muted (${mutedUsers.length})`}
+            {t === 'blocked' ? (blockedQuery.data ? `Blocked (${blockedUsers.length})` : 'Blocked') : (mutedQuery.data ? `Muted (${mutedUsers.length})` : 'Muted')}
           </button>
         ))}
       </div>
 
       {isLoading && <p style={{ textAlign: 'center', color: '#9ca3af', fontSize: 14, padding: '24px 0' }}>Loading…</p>}
 
-      {!isLoading && list.length === 0 && (
+      {activeQuery.isError && <div role="alert" className="py-4 text-center space-y-2">
+        <p>Could not refresh your {tab} users. {list.length > 0 ? 'The list below may be out of date.' : 'Please try again.'}</p>
+        <button type="button" className="underline disabled:opacity-50" disabled={activeQuery.isFetching} onClick={() => void activeQuery.refetch()}>
+          {activeQuery.isFetching ? 'Retrying…' : 'Try again'}
+        </button>
+      </div>}
+
+      {!isLoading && !activeQuery.isError && list.length === 0 && (
         <p style={{ textAlign: 'center', color: '#9ca3af', fontSize: 14, padding: '24px 0' }}>
           {tab === 'blocked' ? 'No blocked users' : 'No muted users'}
         </p>
@@ -684,6 +574,7 @@ function BlockedMutedPanel({ onBack }: { onBack: () => void }) {
             <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>
               @{(u.name ?? 'user').toLowerCase().replace(/\s+/g, '').slice(0, 20)}
             </p>
+            <ReportContent userId={u.id} />
           </div>
           {/* Action button */}
           <button
@@ -714,6 +605,7 @@ function BlockedMutedPanel({ onBack }: { onBack: () => void }) {
 
 /* Main Settings Menu */
 function SettingsMenu({ onClose }: SettingsMenuProps) {
+  const me = trpc.auth.me.useQuery();
   const [activePanel, setActivePanel] = useState<SettingsPanel>(null);
 
   if (activePanel === 'notifications') return <NotificationPanel onBack={() => setActivePanel(null)} />;
@@ -724,7 +616,7 @@ function SettingsMenu({ onClose }: SettingsMenuProps) {
 
   const items: Array<{ label: string; panel: SettingsPanel; icon: React.ReactNode }> = [
     {
-      label: 'Notification Preferences',
+      label: 'Notifications',
       panel: 'notifications',
       icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>,
     },
@@ -734,7 +626,7 @@ function SettingsMenu({ onClose }: SettingsMenuProps) {
       icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M4.93 19.07l1.41-1.41M19.07 19.07l-1.41-1.41M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>,
     },
     {
-      label: 'Privacy Settings',
+      label: 'Privacy & Sharing',
       panel: 'privacy',
       icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>,
     },
@@ -762,6 +654,8 @@ function SettingsMenu({ onClose }: SettingsMenuProps) {
       }}>
         <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border)', margin: '0 auto 16px' }} />
         <p style={{ fontSize: 13, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '0 20px', margin: '0 0 8px' }}>Settings</p>
+        {me.data?.role === 'admin' && <a href="/moderation" style={{display: 'block', padding: '14px 20px'}}>Community reports</a>}
+        <a href="/delete-account" style={{ display: 'block', padding: '14px 20px', color: '#ef4444', fontWeight: 600 }}>Delete Account</a>
         {items.map((item, i) => (
           <button
             key={i}
@@ -799,8 +693,8 @@ function ShareSheet({ profileName, userId, onClose }: ShareSheetProps) {
   // Build a clean shareable deep-link URL: /u/{userId} if we have an id,
   // otherwise fall back to the current page URL.
   const profileUrl = userId
-    ? `${window.location.origin}/u/${userId}`
-    : window.location.href;
+    ? publicAppUrl(`/u/${userId}`)
+    : publicAppUrl();
 
   const copyLink = () => {
     navigator.clipboard.writeText(profileUrl).catch(() => {});
@@ -1175,10 +1069,14 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
     onError: () => { toast.error('Failed to remove photo. Please try again.'); },
   });
 
-  // Editable profile fields
-  const [profileName, setProfileName] = useState<string>(user?.name || 'FlexTab User');
-  const [profileBio, setProfileBio] = useState<string>('Passionate about strength training and building healthy habits. Logging every rep. 💪');
-  const [profileGoal, setProfileGoal] = useState<string>('Build Muscle');
+  const profileName = myProfile?.name || user?.name || 'FlexTab User';
+  const profileBio = myProfile?.bio || '';
+  const profileGoal = myProfile?.fitnessGoal || '';
+  const profileUtils = trpc.useUtils();
+  const saveProfile = trpc.user.updateProfile.useMutation({onSuccess: async () => {
+    await Promise.all([profileUtils.user.invalidate(), profileUtils.community.invalidate(), profileUtils.auth.me.invalidate()]);
+    toast.success('Profile saved.');
+  }});
 
   const allSetLogs = workoutSessions.flatMap(s => s.exercises);
   const totalSets = allSetLogs.reduce((s, e) => s + e.sets, 0);
@@ -1248,7 +1146,7 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
 
       const formData = new FormData();
       formData.append('file', blob, 'avatar.jpg');
-      const res = await fetch('/api/upload-avatar', {
+      const res = await fetch(apiUrl('/api/upload-avatar'), {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
@@ -1334,7 +1232,7 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
             <div style={{ marginBottom: 12 }}>
               <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--foreground)', margin: '0 0 2px' }}>{profileName}</h3>
               <p style={{ fontSize: 13, color: '#6b7280', margin: '0 0 3px' }}>{handle}</p>
-              <p style={{ fontSize: 12, color: '#9ca3af', fontWeight: 500, margin: '0 0 8px' }}>{tier.tier} Lifter · {profileGoal}</p>
+              <p style={{ fontSize: 12, color: '#9ca3af', fontWeight: 500, margin: '0 0 8px' }}>{tier.tier} Lifter{profileGoal ? ` · ${profileGoal}` : ''}</p>
               {profileBio && (
                 <p style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.5, margin: 0 }}>{profileBio}</p>
               )}
@@ -1550,7 +1448,7 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
                   ['Total Sets', totalSets, 'border-right:1px solid var(--border);border-bottom:1px solid var(--border)'],
                   ['Total Reps', totalReps, 'border-bottom:1px solid var(--border)'],
                   ['Workouts', workoutSessions.length, 'border-right:1px solid var(--border)'],
-                  ['Fitness Goal', profileGoal, ''],
+                  ['Fitness Goal', profileGoal || 'Not selected', ''],
                 ] as [string, string | number, string][]).map(([label, val]) => (
                   <div key={label} style={{ padding: '14px 18px' }}>
                     <p style={{ fontSize: 11, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>{label}</p>
@@ -1596,12 +1494,12 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
           name={profileName}
           bio={profileBio}
           goal={profileGoal}
-          onSave={(n, b, g) => { setProfileName(n); setProfileBio(b); setProfileGoal(g); }}
+          onSave={async (name,bio,goal) => {await saveProfile.mutateAsync({name,bio,fitnessGoal:goal as typeof fitnessGoals[number]});}}
           onClose={() => setShowEditModal(false)}
         />
       )}
       {showSettingsMenu && <SettingsMenu onClose={() => setShowSettingsMenu(false)} />}
-      {showShareSheet && <ShareSheet profileName={profileName} userId={user?.id} onClose={() => setShowShareSheet(false)} />}
+      {showShareSheet && <ShareSheet profileName={profileName} userId={myProfile?.id} onClose={() => setShowShareSheet(false)} />}
       {/* Avatar crop modal — shown after file is selected */}
       {cropSrc && (
         <AvatarCropModal

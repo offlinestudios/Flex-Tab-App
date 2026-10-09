@@ -436,3 +436,6 @@ describe("workout.updateMeasurement", () => {
     });
   });
 });
+
+// Database ownership/locking is verified against PostgreSQL in accountLifecycle.integration.test.ts.
+vi.mock("./accountLifecycle", () => ({ withActiveAccount: (_id: number, run: () => Promise<unknown>) => run() }));

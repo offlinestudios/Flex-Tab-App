@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { useState, useRef, useEffect } from "react";
 import {
   DropdownMenu,
@@ -88,6 +89,7 @@ export function ExerciseCardNew({
       setTimeout(() => setJustLogged(false), 1500);
     } catch (error) {
       console.error("Failed to log set:", error);
+      toast.error("Your set could not be saved. Check your connection and try again.");
     } finally {
       setIsLogging(false);
     }

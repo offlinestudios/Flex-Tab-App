@@ -1,3 +1,6 @@
+import { ownedMedia } from "../ownedMedia";
+import { visibleAccount, unmutedAccount, requireVisiblePost, withVisiblePostWrite } from "../communityAccess";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { protectedProcedure, router } from "../_core/trpc";
@@ -118,6 +121,17 @@ export const communityRouter = router({
       const db = await getDb();
       if (!db) throw new Error("Database not available");
 
+      if (input.workoutSessionId !== undefined) {
+        const [ownedSession] = await db.select({ id: workoutSessions.id }).from(workoutSessions)
+          .where(and(eq(workoutSessions.id, input.workoutSessionId), eq(workoutSessions.userId, ctx.user.id))).limit(1);
+        if (!ownedSession) throw new TRPCError({ code: "NOT_FOUND", message: "Workout session not found." });
+      }
+
+      for (const media of input.mediaItems ?? []) {
+        try { ownedMedia(media.url ?? media.key, ctx.user.id); }
+        catch { throw new TRPCError({code: 'BAD_REQUEST', message: 'Upload media from your own account before posting.'}); }
+      }
+
       // Insert post row
       const [post] = await db
         .insert(posts)
@@ -165,7 +179,7 @@ export const communityRouter = router({
         })
         .from(posts)
         .leftJoin(users, eq(posts.userId, users.id))
-        .where(eq(posts.id, input.postId))
+        .where(and(eq(posts.id, input.postId), visibleAccount(ctx.user.id, posts.userId)))
         .limit(1);
 
       if (!post) return null;
@@ -183,7 +197,7 @@ export const communityRouter = router({
       const [commentCountRow] = await db
         .select({ count: sql<number>`count(*)::int` })
         .from(postComments)
-        .where(eq(postComments.postId, input.postId));
+        .where(and(eq(postComments.postId, input.postId), visibleAccount(ctx.user.id, postComments.userId)));
 
       const media = mediaRows.map((m) => ({
         id: m.id,
@@ -217,25 +231,10 @@ export const communityRouter = router({
       const db = await getDb();
       if (!db) throw new Error("Database not available");
 
-      await db
-        .delete(postMedia)
-        .where(
-          and(eq(postMedia.postId, input.postId), eq(postMedia.userId, ctx.user.id))
-        );
-
-      await db
-        .delete(postComments)
-        .where(eq(postComments.postId, input.postId));
-
-      await db
-        .delete(postLikes)
-        .where(eq(postLikes.postId, input.postId));
-
-      await db
-        .delete(posts)
-        .where(
-          and(eq(posts.id, input.postId), eq(posts.userId, ctx.user.id))
-        );
+      const [deleted] = await db.delete(posts)
+        .where(and(eq(posts.id, input.postId), eq(posts.userId, ctx.user.id)))
+        .returning({ id: posts.id });
+      if (!deleted) throw new TRPCError({ code: "NOT_FOUND", message: "Post unavailable." });
 
       return { success: true };
     }),
@@ -282,6 +281,7 @@ export const communityRouter = router({
       }
 
       const feedPosts = await query
+        .where(and(visibleAccount(ctx.user.id, posts.userId), unmutedAccount(ctx.user.id, posts.userId)))
         .orderBy(desc(posts.createdAt))
         .limit(input.limit)
         .offset(input.offset);
@@ -314,7 +314,7 @@ export const communityRouter = router({
           count: sql<number>`count(*)::int`,
         })
         .from(postComments)
-        .where(sql`${postComments.postId} = ANY(${sql.raw(`ARRAY[${postIds.join(",")}]`)})`)
+        .where(and(sql`${postComments.postId} = ANY(${sql.raw(`ARRAY[${postIds.join(",")}]`)})`, visibleAccount(ctx.user.id, postComments.userId)))
         .groupBy(postComments.postId)
         .catch(() => [] as { postId: number; count: number }[]);
 
@@ -324,6 +324,7 @@ export const communityRouter = router({
         .filter((id): id is number => id !== null && id !== undefined);
 
       let workoutData: {
+        userId: number;
         sessionId: number;
         exercise: string;
         sets: number;
@@ -334,6 +335,7 @@ export const communityRouter = router({
       if (sessionIds.length > 0) {
         workoutData = await db
           .select({
+            userId: setLogs.userId,
             sessionId: setLogs.sessionId,
             exercise: setLogs.exercise,
             sets: setLogs.sets,
@@ -384,7 +386,7 @@ export const communityRouter = router({
 
         const exercises =
           p.workoutSessionId
-            ? workoutBySession.get(p.workoutSessionId) ?? []
+            ? (workoutBySession.get(p.workoutSessionId) ?? []).filter(w => w.userId === p.userId)
             : [];
 
         const totalSets = exercises.reduce((s, e) => s + e.sets, 0);
@@ -436,19 +438,20 @@ export const communityRouter = router({
       const db = await getDb();
       if (!db) throw new Error("Database not available");
 
-      await db
-        .insert(postLikes)
+      await withVisiblePostWrite(ctx.user.id,input.postId,async tx => {
+        await tx.insert(postLikes)
         .values({ postId: input.postId, userId: ctx.user.id })
         .onConflictDoNothing();
+      });
 
       // Fan out like notification — look up post owner first
       const [postRow] = await db
         .select({ userId: posts.userId })
         .from(posts)
-        .where(eq(posts.id, input.postId))
+        .where(and(eq(posts.id, input.postId), visibleAccount(ctx.user.id, posts.userId)))
         .limit(1);
       if (postRow) {
-        createNotification({
+        await createNotification({
           recipientId: postRow.userId,
           actorId: ctx.user.id,
           type: "like",
@@ -494,23 +497,25 @@ export const communityRouter = router({
       const db = await getDb();
       if (!db) throw new Error("Database not available");
 
-      const [comment] = await db
-        .insert(postComments)
+      const comment = await withVisiblePostWrite(ctx.user.id,input.postId,async tx => {
+        const [created] = await tx.insert(postComments)
         .values({
           postId: input.postId,
           userId: ctx.user.id,
           body: input.body,
         })
         .returning({ id: postComments.id });
+        return created;
+      });
 
       // Fan out comment notification — look up post owner
       const [postRow] = await db
         .select({ userId: posts.userId })
         .from(posts)
-        .where(eq(posts.id, input.postId))
+        .where(and(eq(posts.id, input.postId), visibleAccount(ctx.user.id, posts.userId)))
         .limit(1);
       if (postRow) {
-        createNotification({
+        await createNotification({
           recipientId: postRow.userId,
           actorId: ctx.user.id,
           type: "comment",
@@ -532,7 +537,8 @@ export const communityRouter = router({
         offset: z.number().int().nonnegative().default(0),
       })
     )
-    .query(async ({ ctx: _ctx, input }) => {
+    .query(async ({ ctx, input }) => {
+      await requireVisiblePost(ctx.user.id, input.postId);
       const db = await getDb();
       if (!db) return [];
 
@@ -548,7 +554,7 @@ export const communityRouter = router({
         })
         .from(postComments)
         .leftJoin(users, eq(postComments.userId, users.id))
-        .where(eq(postComments.postId, input.postId))
+        .where(and(eq(postComments.postId, input.postId), visibleAccount(ctx.user.id, postComments.userId)))
         .orderBy(desc(postComments.createdAt))
         .limit(input.limit)
         .offset(input.offset);
@@ -559,6 +565,7 @@ export const communityRouter = router({
         userId: r.userId,
         body: r.body,
         createdAt: r.createdAt.toISOString(),
+        isMyComment: r.userId === ctx.user.id,
         authorName: r.authorName ?? "FlexTab User",
         authorAvatarUrl: r.authorAvatarUrl ?? null,
         authorHandle:
@@ -594,7 +601,7 @@ export const communityRouter = router({
           createdAt: posts.createdAt,
         })
         .from(posts)
-        .where(eq(posts.userId, input.userId))
+        .where(and(eq(posts.userId, input.userId), visibleAccount(ctx.user.id, posts.userId)))
         .orderBy(desc(posts.createdAt))
         .limit(input.limit)
         .offset(input.offset);

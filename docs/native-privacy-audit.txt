@@ -1,0 +1,52 @@
+Native privacy audit — draft, not submitted
+
+Evidence reviewed: ios/App/App/Info.plist; CapApp-SPM/Package.swift;
+Capacitor 8.5.3 and bundled Cordova PrivacyInfo.xcprivacy; Capacitor App/Browser
+Swift sources; client/src/components/CardioGPSTracker.tsx; media/profile upload
+flows; drizzle/schema.ts; client HTML/TS and server TS searches for analytics SDKs.
+
+Purpose descriptions added for user-initiated foreground GPS workout tracking,
+camera capture, video microphone capture and selected photo/video upload. No
+background location entitlement or always-location request is added. Actual
+WKWebView prompts, permission denial/retry and capture behavior require physical
+iPhone testing. Modern system photo pickers may not request whole-library access.
+Do not add broad library permissions or background modes unless required by tests.
+
+Known data flows to reconcile with App Store Connect privacy answers:
+- Account name/email and internal/auth user IDs: authentication and account display.
+- Sets, reps, weights, exercises, workout history and goals: fitness functionality.
+- Body weight/body measurements: health/fitness functionality; linked to account.
+- Route coordinates/polyline: precise location, saved with GPS activities.
+- Profile photos, post photos/videos, captions, comments, bio and reports: user content.
+- Moderation/deletion records: account operations; see retention/retry documentation.
+These are linked to accounts and transmitted to application/backend providers.
+Optional user entry does not by itself remove disclosure requirements.
+
+Native dependency inventory: Capacitor 8.5.3, Cordova bridge, Capacitor App 8.1.2,
+Capacitor Browser 8.0.5. Capacitor/Cordova ship privacy manifests. The inspected
+Capacitor manifest declares no accessed-reason APIs or collected data; this does
+not describe FlexTab's own backend collection. No direct required-reason API use
+was found by the limited app/App/Browser Swift-source search. Archive inspection
+and Xcode's consolidated privacy report remain required; source searches are not
+proof that every transitive SDK is covered.
+
+Web/service inventory: Supabase auth/storage, Railway app/PostgreSQL, optional
+Cloudflare R2, Google Maps for route display, external OAuth provider. No dedicated
+analytics/ad SDK references found in the targeted client/server source search.
+Do not treat that as proof of no provider logging/tracking. Inspect external scripts,
+network requests, backend logs, provider retention, and all production configuration.
+Do not submit 'data not collected'. Do not invent required-reason codes.
+
+Release gates: produce and inspect final signed archive, confirm manifests in all
+embedded SDKs, review Xcode privacy report, reconcile policy and App Store Connect
+answers with actual production collection/retention, verify location/media consent
+on a physical device, and review Google Maps/provider terms and logging.
+
+Authoritative references:
+https://developer.apple.com/documentation/bundleresources/privacy-manifest-files
+https://developer.apple.com/documentation/bundleresources/describing-data-use-in-privacy-manifests
+https://developer.apple.com/documentation/bundleresources/information-property-list/nslocationwheninuseusagedescription
+
+An unused asset, server/fonts/Inter-Regular.ttf, contains HTML instead of a font.
+The active workout-card renderer imports embedded fontData.js instead; this finding
+does not establish a rendering failure. Keep it out of the SDK/analytics inventory.

@@ -1,5 +1,9 @@
+import { fitnessGoals } from '../../shared/profile';
+import { ownedMedia } from "../ownedMedia";
+import { TRPCError } from "@trpc/server";
+import { visibleAccount } from "../communityAccess";
 import { z } from "zod";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { users } from "../../drizzle/schema";
@@ -48,9 +52,9 @@ export const userRouter = router({
       const db = await getDb();
       if (!db) return null;
       const [user] = await db
-        .select({ id: users.id, name: users.name, avatarUrl: users.avatarUrl })
+        .select({ id: users.id, name: users.name, avatarUrl: users.avatarUrl, bio: users.bio, fitnessGoal: users.fitnessGoal })
         .from(users)
-        .where(eq(users.id, input.userId))
+        .where(and(eq(users.id, input.userId), visibleAccount(ctx.user.id, users.id)))
         .limit(1);
       return user ?? null;
     }),
@@ -62,9 +66,9 @@ export const userRouter = router({
       if (!db) return [];
       const searchTerm = `%${input.query}%`;
       const results = await db
-        .select({ id: users.id, name: users.name, avatarUrl: users.avatarUrl })
+        .select({ id: users.id, name: users.name, avatarUrl: users.avatarUrl, bio: users.bio, fitnessGoal: users.fitnessGoal })
         .from(users)
-        .where(sql`${users.name} ILIKE ${searchTerm}`)
+        .where(and(sql`${users.name} ILIKE ${searchTerm}`, visibleAccount(ctx.user.id, users.id)))
         .limit(20);
       return results;
     }),
@@ -73,11 +77,24 @@ export const userRouter = router({
     const db = await getDb();
     if (!db) return null;
     const [user] = await db
-      .select({ id: users.id, name: users.name, avatarUrl: users.avatarUrl })
+      .select({ id: users.id, name: users.name, avatarUrl: users.avatarUrl, bio: users.bio, fitnessGoal: users.fitnessGoal })
       .from(users)
       .where(eq(users.id, ctx.user.id))
       .limit(1);
     return user ?? null;
+  }),
+
+  updateProfile: protectedProcedure.input(z.object({
+    name: z.string().trim().min(1).max(80),
+    bio: z.string().trim().max(500),
+    fitnessGoal: z.enum(fitnessGoals),
+  }).strict()).mutation(async ({ctx,input}) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({code:'INTERNAL_SERVER_ERROR'});
+    const [profile] = await db.update(users).set({...input,updatedAt:new Date()})
+      .where(eq(users.id,ctx.user.id)).returning({id:users.id,name:users.name,bio:users.bio,fitnessGoal:users.fitnessGoal,avatarUrl:users.avatarUrl});
+    if (!profile) throw new TRPCError({code:'NOT_FOUND'});
+    return profile;
   }),
 
   getAvatarUploadUrl: protectedProcedure
@@ -101,6 +118,8 @@ export const userRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
+      try { const location = ownedMedia(input.key,ctx.user.id); if(location.bucket !== 'avatars' && !location.key.startsWith(`avatars/${ctx.user.id}/`)) throw new Error(); }
+      catch { throw new TRPCError({code:'BAD_REQUEST',message:'Upload a profile photo from your own account.'}); }
       const avatarUrl = r2PublicUrl(input.key);
       await db
         .update(users)

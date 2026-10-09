@@ -148,6 +148,8 @@ export default function PublicProfile() {
               {handle} · FlexTab
             </p>
 
+            {profile.bio && <p style={{whiteSpace:'pre-wrap',overflowWrap:'anywhere',marginBottom:16}}>{profile.bio}</p>}
+            {profile.fitnessGoal && <p style={{marginBottom:16}}>{profile.fitnessGoal}</p>}
             {/* CTA */}
             <a
               href="/sign-up"

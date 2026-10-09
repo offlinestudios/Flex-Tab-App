@@ -257,3 +257,28 @@
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
 }
+
+/* Capacitor owns the viewport; web content owns safe areas and scrolling. */
+html[data-native="true"],
+html[data-native="true"] body {
+  height: 100%;
+  overflow: hidden;
+}
+html[data-native="true"] #root {
+  height: 100%;
+  overflow-y: auto;
+}
+html[data-native="true"] .app-shell {
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+html[data-native="true"] .app-shell > header {
+  flex-shrink: 0;
+}
+/* Avoid iOS focus zoom changing the viewport for small form controls. */
+html[data-native="true"] input,
+html[data-native="true"] textarea,
+html[data-native="true"] select {
+  font-size: 16px !important;
+}
