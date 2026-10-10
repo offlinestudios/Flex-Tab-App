@@ -36,7 +36,6 @@ interface ExerciseCardNewProps {
   totalVolume?: number;
 }
 
-const SPARK_HEIGHTS = [20, 28, 35, 42, 50, 58, 66, 75, 88, 100];
 
 const PART_LABELS: Record<string, string> = {
   chest: "Chest", back: "Back", legs: "Legs", arms: "Arms",
@@ -158,7 +157,6 @@ export function ExerciseCardNew({
       <div style={{ margin: '0 16px 14px', background: 'var(--secondary)', borderRadius: 14, padding: 14 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
           <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)' }}>{exercise.name}</span>
-          {lastWeight > 0 && <span style={{ fontSize: 12, fontWeight: 700, color: '#22c55e' }}>+4.2%</span>}
         </div>
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
           <div>
@@ -168,31 +166,17 @@ export function ExerciseCardNew({
                   Last: <strong style={{ color: 'var(--foreground)' }}>{lastWeight} × {lastReps}</strong>
                 </p>
                 <p style={{ fontSize: 12, color: 'var(--muted-foreground)', margin: '0 0 2px' }}>
-                  Best: <strong style={{ color: 'var(--foreground)' }}>{bestWeight > 0 ? bestWeight : lastWeight + 10} × 3</strong>
+                  Best: <strong style={{ color: 'var(--foreground)' }}>{bestWeight} lbs</strong>
                 </p>
                 <p style={{ fontSize: 12, color: 'var(--muted-foreground)', margin: 0 }}>
-                  30d Vol: <strong style={{ color: 'var(--foreground)' }}>{totalVolume > 0 ? totalVolume.toLocaleString() : (lastWeight * lastReps * 3 * 8).toLocaleString()} lbs</strong>
+                  Logged volume: <strong style={{ color: 'var(--foreground)' }}>{totalVolume.toLocaleString()} lbs</strong>
                 </p>
               </>
             ) : (
               <p style={{ fontSize: 12, color: 'var(--muted-foreground)', margin: 0 }}>No history yet — log your first set!</p>
             )}
           </div>
-          {/* Sparkline bars */}
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: 48, width: 90 }}>
-            {SPARK_HEIGHTS.map((h, i) => (
-              <div
-                key={i}
-                style={{
-                  flex: 1,
-                  background: 'var(--foreground)',
-                  borderRadius: 2,
-                  height: `${h}%`,
-                  opacity: 0.1 + h / 130,
-                }}
-              />
-            ))}
-          </div>
+
         </div>
       </div>
 
