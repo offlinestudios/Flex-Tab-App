@@ -168,7 +168,7 @@ export default function Home() {
   );
   
   // Fetch workout logs from database
-  const { data: setLogsData = [], isLoading: setLogsLoading, error: setLogsError } = trpc.workout.getSetLogs.useQuery(undefined, {
+  const { data: setLogsData = [], isLoading: setLogsLoading, error: setLogsError, refetch: refetchSetLogs, isFetching: setLogsFetching } = trpc.workout.getSetLogs.useQuery(undefined, {
     enabled: isAuthenticated,
     refetchOnWindowFocus: false,
   });
@@ -1470,8 +1470,20 @@ export default function Home() {
           <BodyMeasurements />
         )}
 
+        {['log', 'history', 'trends'].includes(activeTab) && (setLogsLoading || setLogsError) && (
+          <div role={setLogsError ? 'alert' : 'status'} className="rounded-xl border border-border bg-card p-4 mb-4">
+            <p className="font-semibold">{setLogsError ? 'Your workout history could not be loaded.' : 'Loading your workouts…'}</p>
+            {setLogsError && <>
+              <p className="text-sm text-muted-foreground mt-1">Check your connection and try again. Your saved workouts have not been changed.</p>
+              <button type="button" className="mt-3 rounded-lg border border-border px-4 py-2 disabled:opacity-50" disabled={setLogsFetching} onClick={() => void refetchSetLogs()}>
+                {setLogsFetching ? 'Retrying…' : 'Try again'}
+              </button>
+            </>}
+          </div>
+        )}
+
         {/* ══ HISTORY TAB ══ */}
-        {activeTab === 'history' && (
+        {activeTab === 'history' && !setLogsLoading && !setLogsError && (
           <div className="space-y-3">
             {sortedSessions.length === 0 ? (
               <div style={{ background:'var(--card)', borderRadius:20, border:'1px solid var(--border)', padding:'48px 24px', textAlign:'center' }}>
@@ -1718,7 +1730,7 @@ export default function Home() {
         )}
 
         {/* ══ TRENDS TAB ══ */}
-        {activeTab === 'trends' && (
+        {activeTab === 'trends' && !setLogsLoading && !setLogsError && (
           <div className="space-y-4">
             {/* Lifetime Stats */}
             <div style={{ background:'var(--card)', borderRadius:20, border:'1px solid var(--border)', overflow:'hidden' }}>
