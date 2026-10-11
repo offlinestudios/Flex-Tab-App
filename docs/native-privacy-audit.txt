@@ -50,3 +50,17 @@ https://developer.apple.com/documentation/bundleresources/information-property-l
 An unused asset, server/fonts/Inter-Regular.ttf, contains HTML instead of a font.
 The active workout-card renderer imports embedded fontData.js instead; this finding
 does not establish a rendering failure. Keep it out of the SDK/analytics inventory.
+
+2026-10-10 archive inspection:
+Xcode GUI successfully created App 2026-10-10, 10.53 PM.xcarchive (1.0 build 1)
+from the current checkout after native asset sync. This is a verification archive,
+not the replacement upload candidate: Apple provider configuration and build-number
+increment remain outstanding. Both embedded Capacitor.framework and Cordova.framework
+contain PrivacyInfo.xcprivacy with tracking=false and empty accessed-API, collected-data
+and tracking-domain arrays. Xcode Generate Privacy Report exported a one-page blank PDF;
+visual rendering and text extraction confirmed it is blank. Do not interpret that export
+as a privacy clearance or as evidence that FlexTab does not collect data.
+The App Privacy draft currently lists ten linked-to-user data types for functionality.
+Provider logging/production configuration still requires an authenticated Supabase session.
+Apple Add for Review validation returned only Content Rights and unpublished App Privacy
+as form-level blockers; this does not validate live authentication or account deletion.
