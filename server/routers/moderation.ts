@@ -32,7 +32,7 @@ export const moderationRouter = router({
         name:String(row.name||'FlexTab Member'),bio:String(row.bio||''),avatarUrl:row.avatarUrl as string|null,
         text:String(row.kind==='comment'?row.body||'':row.caption||''),suspended:Boolean(row.suspended),media:attachments,workout:workout.rows.map(log=>({exercise:String(log.exercise),sets:Number(log.sets),reps:Number(log.reps),weight:Number(log.weight)}))};
     }));
-    },{isolationLevel:'repeatable read',readOnly:true});
+    },{isolationLevel:'repeatable read',accessMode:'read only'});
   }),
   review: adminProcedure.input(z.object({kind:z.enum(['profile','post','comment']),targetId:z.number().int().positive(),revision:z.number().int().positive(),action:z.enum(['approved','rejected'])}).strict())
     .mutation(async ({ctx,input})=>{

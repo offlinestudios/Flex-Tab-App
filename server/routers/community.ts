@@ -223,7 +223,7 @@ export const communityRouter = router({
         likedByMe: likeRows.some((l) => l.userId === ctx.user.id),
         isMyPost: post.userId === ctx.user.id,
       };
-      }, {isolationLevel:'repeatable read',readOnly:true});
+      }, {isolationLevel:'repeatable read',accessMode:'read only'});
     }),
 
   /**
@@ -432,7 +432,7 @@ export const communityRouter = router({
       });
 
       return { posts: enriched, total: enriched.length };
-      }, {isolationLevel:'repeatable read',readOnly:true});
+      }, {isolationLevel:'repeatable read',accessMode:'read only'});
     }),
 
   /**
@@ -637,7 +637,7 @@ export const communityRouter = router({
           mimeType: thumb?.mimeType ?? null,
         };
       });
-      }, {isolationLevel:'repeatable read',readOnly:true});
+      }, {isolationLevel:'repeatable read',accessMode:'read only'});
     }),
 
   getMyPosts: protectedProcedure
