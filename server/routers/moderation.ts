@@ -8,6 +8,60 @@ import { ownedMedia } from '../ownedMedia';
 import { reportReasons } from '../../shared/moderation';
 
 export const moderationRouter = router({
+  pending: adminProcedure.query(async () => {
+    const db=await getDb(); if(!db)throw new TRPCError({code:'INTERNAL_SERVER_ERROR'});
+    return db.transaction(async db=>{
+    const result=await db.execute(sql`SELECT r.kind,r."targetId",r."userId",r.revision,r.status,r."updatedAt",
+      u.name,u.bio,u."avatarUrl",p.caption,c.body,
+      EXISTS(SELECT 1 FROM community_suspensions s WHERE s."userId"=r."userId") AS suspended
+      FROM community_reviews r JOIN users u ON u.id=r."userId"
+      LEFT JOIN posts p ON r.kind='post' AND p.id=r."targetId"
+      LEFT JOIN post_comments c ON r.kind='comment' AND c.id=r."targetId"
+      WHERE r.status='pending' AND u."deletionRequestedAt" IS NULL ORDER BY r."updatedAt" LIMIT 100`);
+    return Promise.all(result.rows.map(async row=>{
+      const media=row.kind==='post' ? await db.execute(sql`SELECT "r2Key","mediaType" FROM post_media WHERE "postId"=${Number(row.targetId)}`):{rows:[]};
+      const attachments=media.rows.map(item=>{
+        const key=String(item.r2Key); ownedMedia(key,Number(row.userId));
+        const base=process.env.R2_PUBLIC_URL || `https://pub-${process.env.R2_ACCOUNT_ID}.r2.dev`;
+        return {url:/^https?:\/\//.test(key)?key:`${base.replace(/\/$/,'')}/${key}`,type:String(item.mediaType)};
+      });
+      const workout=row.kind==='post'?await db.execute(sql`SELECT l.exercise,l.sets,l.reps,l.weight
+        FROM posts p JOIN workout_sessions w ON w.id=p."workoutSessionId" AND w."userId"=p."userId"
+        JOIN set_logs l ON l."sessionId"=w.id AND l."userId"=p."userId" WHERE p.id=${Number(row.targetId)} ORDER BY l.id`):{rows:[]};
+      return {kind:row.kind as 'profile'|'post'|'comment',targetId:Number(row.targetId),userId:Number(row.userId),revision:Number(row.revision),
+        name:String(row.name||'FlexTab Member'),bio:String(row.bio||''),avatarUrl:row.avatarUrl as string|null,
+        text:String(row.kind==='comment'?row.body||'':row.caption||''),suspended:Boolean(row.suspended),media:attachments,workout:workout.rows.map(log=>({exercise:String(log.exercise),sets:Number(log.sets),reps:Number(log.reps),weight:Number(log.weight)}))};
+    }));
+    },{isolationLevel:'repeatable read',readOnly:true});
+  }),
+  review: adminProcedure.input(z.object({kind:z.enum(['profile','post','comment']),targetId:z.number().int().positive(),revision:z.number().int().positive(),action:z.enum(['approved','rejected'])}).strict())
+    .mutation(async ({ctx,input})=>{
+      const db=await getDb();if(!db)throw new TRPCError({code:'INTERNAL_SERVER_ERROR'});
+      return db.transaction(async tx=>{
+      const result=await tx.execute(sql`UPDATE community_reviews SET status=${input.action},"moderatorId"=${ctx.user.id},"updatedAt"=now()
+        WHERE kind=${input.kind} AND "targetId"=${input.targetId} AND revision=${input.revision} AND status='pending' RETURNING "targetId"`);
+      if(!result.rows.length)throw new TRPCError({code:'CONFLICT',message:'Content changed or was already reviewed. Reload the queue before deciding.'});
+      if(input.kind==='comment' && input.action==='approved')await tx.execute(sql`INSERT INTO notifications ("recipientId","actorId",type,"entityId")
+        SELECT p."userId",c."userId",'comment',p.id FROM post_comments c JOIN posts p ON p.id=c."postId"
+        WHERE c.id=${input.targetId} AND p."userId"<>c."userId"
+        AND NOT EXISTS (SELECT 1 FROM user_blocks b WHERE (b."blockerId"=p."userId" AND b."blockedId"=c."userId") OR (b."blockerId"=c."userId" AND b."blockedId"=p."userId"))`);
+      return {reviewed:true};
+      });
+    }),
+  suspensions: adminProcedure.query(async()=>{
+    const db=await getDb();if(!db)throw new TRPCError({code:'INTERNAL_SERVER_ERROR'});
+    const result=await db.execute(sql`SELECT s."userId",s.reason,u.name FROM community_suspensions s JOIN users u ON u.id=s."userId" ORDER BY s."createdAt" DESC LIMIT 100`);
+    return result.rows.map(row=>({userId:Number(row.userId),reason:String(row.reason),name:String(row.name||'FlexTab Member')}));
+  }),
+  setSuspension: adminProcedure.input(z.object({userId:z.number().int().positive(),suspended:z.boolean(),reason:z.string().trim().min(5).max(1000)}).strict())
+    .mutation(async({ctx,input})=>{
+      if(input.userId===ctx.user.id)throw new TRPCError({code:'BAD_REQUEST',message:'You cannot suspend yourself.'});
+      const db=await getDb();if(!db)throw new TRPCError({code:'INTERNAL_SERVER_ERROR'});
+      if(input.suspended)await db.execute(sql`INSERT INTO community_suspensions ("userId",reason,"moderatorId") VALUES (${input.userId},${input.reason},${ctx.user.id}) ON CONFLICT ("userId") DO UPDATE SET reason=EXCLUDED.reason,"moderatorId"=EXCLUDED."moderatorId"`);
+      else await db.execute(sql`DELETE FROM community_suspensions WHERE "userId"=${input.userId}`);
+      return {updated:true};
+    }),
+
   reportAccount: protectedProcedure.input(z.object({
     userId: z.number().int().positive(), reason: z.enum(reportReasons),
     details: z.string().trim().max(2000).default(''),

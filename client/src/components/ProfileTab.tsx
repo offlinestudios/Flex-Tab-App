@@ -1075,7 +1075,7 @@ export function ProfileTab({ user, workoutSessions, measurements, prMap: externa
   const profileUtils = trpc.useUtils();
   const saveProfile = trpc.user.updateProfile.useMutation({onSuccess: async () => {
     await Promise.all([profileUtils.user.invalidate(), profileUtils.community.invalidate(), profileUtils.auth.me.invalidate()]);
-    toast.success('Profile saved.');
+    toast.success('Profile saved. Changes are visible to others after review.');
   }});
 
   const allSetLogs = workoutSessions.flatMap(s => s.exercises);

@@ -7,6 +7,8 @@ import { posts, users } from '../drizzle/schema';
 export function visibleAccount(viewerId: number, target: number | SQLWrapper): SQL {
   return sql`EXISTS (SELECT 1 FROM users access_user WHERE access_user.id=${target}
     AND access_user."deletionRequestedAt" IS NULL
+    AND NOT EXISTS (SELECT 1 FROM community_suspensions suspension WHERE suspension."userId"=access_user.id)
+    AND (access_user.id=${viewerId} OR EXISTS (SELECT 1 FROM community_reviews review WHERE review.kind='profile' AND review."targetId"=access_user.id AND review.status='approved'))
     AND NOT EXISTS (SELECT 1 FROM user_blocks access_block
       WHERE (access_block."blockerId"=${viewerId} AND access_block."blockedId"=access_user.id)
          OR (access_block."blockedId"=${viewerId} AND access_block."blockerId"=access_user.id)))`;
@@ -29,7 +31,7 @@ export async function requireVisiblePost(viewerId: number, postId: number) {
   const db = await getDb();
   if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
   const [post] = await db.select({ id: posts.id, userId: posts.userId }).from(posts)
-    .where(and(eq(posts.id, postId), visibleAccount(viewerId, posts.userId))).limit(1);
+    .where(and(eq(posts.id, postId), visibleAccount(viewerId, posts.userId), visibleContent(viewerId, 'post', posts.id, posts.userId))).limit(1);
   if (!post) throw new TRPCError({ code: 'NOT_FOUND', message: 'Post unavailable.' });
   return post;
 }
@@ -46,8 +48,17 @@ export async function withVisiblePostWrite<T>(viewerId:number,postId:number,writ
     if(!owner)throw new TRPCError({code:'NOT_FOUND',message:'Post unavailable.'});
     await tx.execute(sql`SELECT pg_advisory_xact_lock(${Math.min(viewerId,owner.userId)},${Math.max(viewerId,owner.userId)})`);
     const [visible]=await tx.select({id:posts.id}).from(posts)
-      .where(and(eq(posts.id,postId),visibleAccount(viewerId,posts.userId))).limit(1);
+      .where(and(eq(posts.id,postId),visibleAccount(viewerId,posts.userId),visibleContent(viewerId,'post',posts.id,posts.userId))).limit(1);
     if(!visible)throw new TRPCError({code:'NOT_FOUND',message:'Post unavailable.'});
     return write(tx);
   });
+}
+
+export function visibleContent(viewerId:number, kind:'post'|'comment', target:SQLWrapper, owner:SQLWrapper):SQL {
+ return sql`(${owner}=${viewerId} OR EXISTS (SELECT 1 FROM community_reviews review WHERE review.kind=${kind} AND review."targetId"=${target} AND review.status='approved'))`;
+}
+export async function requireCommunityAccess(userId:number) {
+ const db=await getDb(); if(!db)throw new TRPCError({code:'INTERNAL_SERVER_ERROR'});
+ const result=await db.execute(sql`SELECT 1 FROM community_suspensions WHERE "userId"=${userId}`);
+ if(result.rows.length)throw new TRPCError({code:'FORBIDDEN',message:'Your community access is suspended. Personal workouts and account deletion remain available.'});
 }

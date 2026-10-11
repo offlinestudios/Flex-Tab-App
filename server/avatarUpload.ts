@@ -1,3 +1,4 @@
+import { requireCommunityAccess } from "./communityAccess";
 import { getSupabaseRequestUser } from "./supabaseRequestUser";
 import { withActiveAccount } from "./accountLifecycle";
 /**
@@ -34,6 +35,7 @@ export async function handleAvatarUpload(req: Request, res: Response) {
     }
 
     return await withActiveAccount(user.id, async () => {
+      await requireCommunityAccess(user.id);
       const fileBuffer = await new Promise<{
         buffer: Buffer;
         mimeType: string;
@@ -69,7 +71,6 @@ export async function handleAvatarUpload(req: Request, res: Response) {
       const path = `${user.id}/${randomUUID()}.${fileBuffer.ext}`;
       const supabase = getSupabaseAdmin();
 
-      console.log("[AvatarUpload] Uploading to Supabase Storage:", path);
 
       // Ensure the bucket exists (idempotent — ignores "already exists" error)
       await supabase.storage.createBucket(AVATAR_BUCKET, { public: true }).catch(() => {});
@@ -82,7 +83,7 @@ export async function handleAvatarUpload(req: Request, res: Response) {
         });
 
       if (uploadError) {
-        console.error("[AvatarUpload] Supabase Storage upload error:", uploadError);
+        console.error("[AvatarUpload] Upload failed");
         throw new Error(uploadError.message);
       }
 
@@ -90,7 +91,6 @@ export async function handleAvatarUpload(req: Request, res: Response) {
         data: { publicUrl },
       } = supabase.storage.from(AVATAR_BUCKET).getPublicUrl(path);
 
-      console.log("[AvatarUpload] Upload success:", publicUrl);
 
       const db = await getDb();
       if (!db) return res.status(500).json({ error: "Database not available" });
@@ -100,7 +100,7 @@ export async function handleAvatarUpload(req: Request, res: Response) {
       return res.json({ avatarUrl: publicUrl });
     });
   } catch (err: any) {
-    console.error("[AvatarUpload] Error:", err);
+    console.error("[AvatarUpload] Upload failed");
     return res.status(500).json({ error: err.message ?? "Upload failed" });
   }
 }

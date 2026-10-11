@@ -1,3 +1,4 @@
+import { requireCommunityAccess } from "./communityAccess";
 import { getSupabaseRequestUser } from "./supabaseRequestUser";
 import { withActiveAccount } from "./accountLifecycle";
 /**
@@ -34,6 +35,7 @@ export async function handleMediaUpload(req: Request, res: Response) {
     }
 
     return await withActiveAccount(user.id, async () => {
+      await requireCommunityAccess(user.id);
       const fileData = await new Promise<{
         buffer: Buffer;
         mimeType: string;
@@ -73,7 +75,6 @@ export async function handleMediaUpload(req: Request, res: Response) {
       const path = `${user.id}/${randomUUID()}.${fileData.ext}`;
       const supabase = getSupabaseAdmin();
 
-      console.log("[MediaUpload] Uploading to Supabase Storage:", path);
 
       // Ensure the bucket exists (idempotent)
       await supabase.storage.createBucket(MEDIA_BUCKET, { public: true }).catch(() => {});
@@ -86,7 +87,7 @@ export async function handleMediaUpload(req: Request, res: Response) {
         });
 
       if (uploadError) {
-        console.error("[MediaUpload] Supabase Storage upload error:", uploadError);
+        console.error("[MediaUpload] Upload failed");
         throw new Error(uploadError.message);
       }
 
@@ -94,12 +95,11 @@ export async function handleMediaUpload(req: Request, res: Response) {
         data: { publicUrl: url },
       } = supabase.storage.from(MEDIA_BUCKET).getPublicUrl(path);
 
-      console.log("[MediaUpload] Upload success:", url);
 
       return res.json({ key: path, url, mediaType, mimeType: fileData.mimeType });
     });
   } catch (err: any) {
-    console.error("[MediaUpload] Error:", err);
+    console.error("[MediaUpload] Upload failed");
     return res.status(500).json({ error: err.message ?? "Upload failed" });
   }
 }

@@ -1,3 +1,4 @@
+import { requireCommunityAccess } from "../communityAccess";
 import { fitnessGoals } from '../../shared/profile';
 import { ownedMedia } from "../ownedMedia";
 import { TRPCError } from "@trpc/server";
@@ -89,6 +90,7 @@ export const userRouter = router({
     bio: z.string().trim().max(500),
     fitnessGoal: z.enum(fitnessGoals),
   }).strict()).mutation(async ({ctx,input}) => {
+      await requireCommunityAccess(ctx.user.id);
     const db = await getDb();
     if (!db) throw new TRPCError({code:'INTERNAL_SERVER_ERROR'});
     const [profile] = await db.update(users).set({...input,updatedAt:new Date()})
@@ -100,6 +102,7 @@ export const userRouter = router({
   getAvatarUploadUrl: protectedProcedure
     .input(z.object({ mimeType: z.string() }))
     .mutation(async ({ ctx, input }) => {
+      await requireCommunityAccess(ctx.user.id);
       const ext = input.mimeType.split("/")[1]?.split(";")[0] ?? "jpg";
       const key = `avatars/${ctx.user.id}/${randomUUID()}.${ext}`;
       const bucket = process.env.R2_BUCKET_NAME || "flextab-storage";
@@ -116,6 +119,7 @@ export const userRouter = router({
   updateAvatar: protectedProcedure
     .input(z.object({ key: z.string() }))
     .mutation(async ({ ctx, input }) => {
+      await requireCommunityAccess(ctx.user.id);
       const db = await getDb();
       if (!db) throw new Error("Database not available");
       try { const location = ownedMedia(input.key,ctx.user.id); if(location.bucket !== 'avatars' && !location.key.startsWith(`avatars/${ctx.user.id}/`)) throw new Error(); }

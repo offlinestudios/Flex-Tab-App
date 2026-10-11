@@ -87,7 +87,7 @@ export function ShareWorkoutDialog({
     onSuccess: () => {
       utils.community.getFeed.invalidate();
       (utils as any).community.getMyPosts?.invalidate();
-      toast.success('Posted to community!');
+      toast.success('Submitted for community review.');
       onOpenChange(false);
     },
     onError: (e) => toast.error(e.message ?? 'Failed to post'),
