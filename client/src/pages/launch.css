@@ -491,6 +491,8 @@
   .ft-athlete {
     object-fit: cover;
     object-position: center top;
+    top: calc(env(safe-area-inset-top) + 28px);
+    mask-image: linear-gradient(to bottom, transparent, #000 32px);
   }
   .ft-photo-shade {
     background: linear-gradient(
