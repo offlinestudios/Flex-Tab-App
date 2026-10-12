@@ -151,6 +151,7 @@ export default function TermsOfService() {
             </p>
           </section>
         </div>
+      <section className="mb-12 text-[#6B6F76]"><h2 className="text-2xl font-bold mb-4">Google Maps</h2><p>Map features are subject to the <a className="underline" href="https://maps.google.com/help/terms_maps/">Google Maps Additional Terms of Service</a> and <a className="underline" href="https://policies.google.com/privacy">Google Privacy Policy</a>.</p></section>
       </main>
 
       {/* Footer */}
