@@ -1,5 +1,5 @@
 import { ownedMedia } from "../ownedMedia";
-import { visibleAccount, unmutedAccount, requireVisiblePost, withVisiblePostWrite } from "../communityAccess";
+import { visibleContent, requireCommunityAccess, visibleAccount, unmutedAccount, requireVisiblePost, withVisiblePostWrite } from "../communityAccess";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { and, desc, eq, sql } from "drizzle-orm";
@@ -79,6 +79,7 @@ export const communityRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      await requireCommunityAccess(ctx.user.id);
       const ext = input.mimeType.split("/")[1]?.split(";")[0] ?? "bin";
       const key = `posts/${ctx.user.id}/media/${randomUUID()}.${ext}`;
       const bucket = process.env.R2_BUCKET_NAME || "flextab-storage";
@@ -118,6 +119,7 @@ export const communityRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      await requireCommunityAccess(ctx.user.id);
       const db = await getDb();
       if (!db) throw new Error("Database not available");
 
@@ -155,7 +157,7 @@ export const communityRouter = router({
         );
       }
 
-      return { postId: post.id };
+      return { postId: post.id, pendingReview: true };
     }),
 
   /**
@@ -166,6 +168,7 @@ export const communityRouter = router({
     .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) return null;
+      return db.transaction(async db => {
 
       const [post] = await db
         .select({
@@ -179,7 +182,7 @@ export const communityRouter = router({
         })
         .from(posts)
         .leftJoin(users, eq(posts.userId, users.id))
-        .where(and(eq(posts.id, input.postId), visibleAccount(ctx.user.id, posts.userId)))
+        .where(and(eq(posts.id, input.postId), visibleAccount(ctx.user.id, posts.userId), visibleContent(ctx.user.id, 'post', posts.id, posts.userId)))
         .limit(1);
 
       if (!post) return null;
@@ -197,7 +200,7 @@ export const communityRouter = router({
       const [commentCountRow] = await db
         .select({ count: sql<number>`count(*)::int` })
         .from(postComments)
-        .where(and(eq(postComments.postId, input.postId), visibleAccount(ctx.user.id, postComments.userId)));
+        .where(and(eq(postComments.postId, input.postId), visibleAccount(ctx.user.id, postComments.userId), visibleContent(ctx.user.id, 'comment', postComments.id, postComments.userId)));
 
       const media = mediaRows.map((m) => ({
         id: m.id,
@@ -220,6 +223,7 @@ export const communityRouter = router({
         likedByMe: likeRows.some((l) => l.userId === ctx.user.id),
         isMyPost: post.userId === ctx.user.id,
       };
+      }, {isolationLevel:'repeatable read',accessMode:'read only'});
     }),
 
   /**
@@ -255,6 +259,7 @@ export const communityRouter = router({
     .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) return { posts: [], total: 0 };
+      return db.transaction(async db => {
 
       let query = db
         .select({
@@ -281,7 +286,7 @@ export const communityRouter = router({
       }
 
       const feedPosts = await query
-        .where(and(visibleAccount(ctx.user.id, posts.userId), unmutedAccount(ctx.user.id, posts.userId)))
+        .where(and(visibleAccount(ctx.user.id, posts.userId), visibleContent(ctx.user.id, 'post', posts.id, posts.userId), unmutedAccount(ctx.user.id, posts.userId)))
         .orderBy(desc(posts.createdAt))
         .limit(input.limit)
         .offset(input.offset);
@@ -314,7 +319,7 @@ export const communityRouter = router({
           count: sql<number>`count(*)::int`,
         })
         .from(postComments)
-        .where(and(sql`${postComments.postId} = ANY(${sql.raw(`ARRAY[${postIds.join(",")}]`)})`, visibleAccount(ctx.user.id, postComments.userId)))
+        .where(and(sql`${postComments.postId} = ANY(${sql.raw(`ARRAY[${postIds.join(",")}]`)})`, visibleAccount(ctx.user.id, postComments.userId), visibleContent(ctx.user.id, 'comment', postComments.id, postComments.userId)))
         .groupBy(postComments.postId)
         .catch(() => [] as { postId: number; count: number }[]);
 
@@ -427,6 +432,7 @@ export const communityRouter = router({
       });
 
       return { posts: enriched, total: enriched.length };
+      }, {isolationLevel:'repeatable read',accessMode:'read only'});
     }),
 
   /**
@@ -435,6 +441,7 @@ export const communityRouter = router({
   likePost: protectedProcedure
     .input(z.object({ postId: z.number().int().positive() }))
     .mutation(async ({ ctx, input }) => {
+      await requireCommunityAccess(ctx.user.id);
       const db = await getDb();
       if (!db) throw new Error("Database not available");
 
@@ -448,7 +455,7 @@ export const communityRouter = router({
       const [postRow] = await db
         .select({ userId: posts.userId })
         .from(posts)
-        .where(and(eq(posts.id, input.postId), visibleAccount(ctx.user.id, posts.userId)))
+        .where(and(eq(posts.id, input.postId), visibleAccount(ctx.user.id, posts.userId), visibleContent(ctx.user.id, 'post', posts.id, posts.userId)))
         .limit(1);
       if (postRow) {
         await createNotification({
@@ -494,6 +501,7 @@ export const communityRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      await requireCommunityAccess(ctx.user.id);
       const db = await getDb();
       if (!db) throw new Error("Database not available");
 
@@ -508,22 +516,7 @@ export const communityRouter = router({
         return created;
       });
 
-      // Fan out comment notification — look up post owner
-      const [postRow] = await db
-        .select({ userId: posts.userId })
-        .from(posts)
-        .where(and(eq(posts.id, input.postId), visibleAccount(ctx.user.id, posts.userId)))
-        .limit(1);
-      if (postRow) {
-        await createNotification({
-          recipientId: postRow.userId,
-          actorId: ctx.user.id,
-          type: "comment",
-          entityId: input.postId,
-        });
-      }
-
-      return { commentId: comment.id };
+      return { commentId: comment.id, pendingReview: true };
     }),
 
   /**
@@ -554,7 +547,7 @@ export const communityRouter = router({
         })
         .from(postComments)
         .leftJoin(users, eq(postComments.userId, users.id))
-        .where(and(eq(postComments.postId, input.postId), visibleAccount(ctx.user.id, postComments.userId)))
+        .where(and(eq(postComments.postId, input.postId), visibleAccount(ctx.user.id, postComments.userId), visibleContent(ctx.user.id, 'comment', postComments.id, postComments.userId)))
         .orderBy(desc(postComments.createdAt))
         .limit(input.limit)
         .offset(input.offset);
@@ -592,6 +585,7 @@ export const communityRouter = router({
     .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) return [];
+      return db.transaction(async db => {
 
       // Fetch this user's posts
       const userPosts = await db
@@ -601,7 +595,7 @@ export const communityRouter = router({
           createdAt: posts.createdAt,
         })
         .from(posts)
-        .where(and(eq(posts.userId, input.userId), visibleAccount(ctx.user.id, posts.userId)))
+        .where(and(eq(posts.userId, input.userId), visibleAccount(ctx.user.id, posts.userId), visibleContent(ctx.user.id, 'post', posts.id, posts.userId)))
         .orderBy(desc(posts.createdAt))
         .limit(input.limit)
         .offset(input.offset);
@@ -643,6 +637,7 @@ export const communityRouter = router({
           mimeType: thumb?.mimeType ?? null,
         };
       });
+      }, {isolationLevel:'repeatable read',accessMode:'read only'});
     }),
 
   getMyPosts: protectedProcedure

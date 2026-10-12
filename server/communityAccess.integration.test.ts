@@ -1,3 +1,4 @@
+import { communityReviewMigration } from "./communityReviewMigration";
 import { privateDisplayNameMigration } from "./privateDisplayNameMigration";
 import { accountReportMigration } from "./accountReportMigration";
 import { profileMigration } from "./profileMigration";
@@ -37,6 +38,7 @@ const url = process.env.TEST_DATABASE_URL;
       read boolean NOT NULL DEFAULT false, "createdAt" timestamp NOT NULL DEFAULT now())`);
     await pool.query(accountLifecycleMigration);
     await pool.query(communityModerationMigration); await pool.query(accountReportMigration); await pool.query(accountReportMigration); await pool.query(profileMigration);
+    await pool.query(communityReviewMigration);
     database.current = drizzle(pool);
   });
   afterAll(async () => { await pool?.end(); });
@@ -53,9 +55,53 @@ const url = process.env.TEST_DATABASE_URL;
     await pool.query(`INSERT INTO user_follows ("followerId","followeeId") VALUES (2,3),(1,3)`);
     await pool.query(`INSERT INTO notifications ("recipientId","actorId",type,"entityId") VALUES (1,2,'comment',1),(1,3,'comment',1)`);
     await pool.query(`UPDATE users SET "deletionRequestedAt"=now() WHERE id=4`);
+    await pool.query(`UPDATE community_reviews SET status='approved'`);
   });
   const block = () => pool.query('INSERT INTO user_blocks ("blockerId","blockedId") VALUES (1,2)');
 
+  it('withholds new comments from other users until reviewed and sends no premature notification', async()=>{
+    const result=await communityRouter.createCaller(ctx(1)).addComment({postId:2,body:'Await review'});
+    const other=await communityRouter.createCaller(ctx(2)).getComments({postId:2});
+    expect(JSON.stringify(other)).not.toContain('Await review');
+    expect((await pool.query(`SELECT * FROM notifications WHERE "actorId"=1`)).rows).toHaveLength(0);
+    const decision=await pool.query(`SELECT revision FROM community_reviews WHERE kind='comment' AND "targetId"=$1`,[result.commentId]);
+    await moderationRouter.createCaller({...ctx(3),user:{...ctx(3).user,role:'admin'}}).review({kind:'comment',targetId:result.commentId,revision:decision.rows[0].revision,action:'approved'});
+    expect(JSON.stringify(await communityRouter.createCaller(ctx(2)).getComments({postId:2}))).toContain('Await review');
+    expect((await pool.query(`SELECT * FROM notifications WHERE "actorId"=1`)).rows).toHaveLength(1);
+  });
+  it('rejects stale review decisions after an edit',async()=>{
+    await pool.query(`UPDATE posts SET caption='Changed' WHERE id=2`);
+    await expect(moderationRouter.createCaller({...ctx(3),user:{...ctx(3).user,role:'admin'}}).review({kind:'post',targetId:2,revision:1,action:'approved'})).rejects.toThrow('Content changed');
+    expect(JSON.stringify(await communityRouter.createCaller(ctx(1)).getFeed({limit:20,offset:0}))).not.toContain('Changed');
+  });
+  it('suspends publishing and hides the account without deleting personal data',async()=>{
+    const admin=moderationRouter.createCaller({...ctx(3),user:{...ctx(3).user,role:'admin'}});
+    await admin.setSuspension({userId:2,suspended:true,reason:'Repeated harassment'});
+    await expect(communityRouter.createCaller(ctx(2)).createPost({caption:'Blocked'})).rejects.toThrow('suspended');
+    expect(await communityRouter.createCaller(ctx(1)).getPost({postId:2})).toBeNull();
+    expect((await pool.query('SELECT id FROM users WHERE id=2')).rows).toHaveLength(1);
+    await admin.setSuspension({userId:2,suspended:false,reason:'Appeal accepted'});
+    expect(await communityRouter.createCaller(ctx(1)).getPost({postId:2})).toBeTruthy();
+  });
+  it('requeues an approved post when its media changes',async()=>{
+    await pool.query(`UPDATE post_media SET "r2Key"='posts/2/new.jpg' WHERE "postId"=2`);
+    expect(await communityRouter.createCaller(ctx(1)).getPost({postId:2})).toBeNull();
+    expect(await communityRouter.createCaller(ctx(2)).getPost({postId:2})).not.toBeNull();
+  });
+  it('requeues shared workouts when a logged exercise changes',async()=>{
+    await pool.query(`INSERT INTO workout_sessions (id,"userId",date) OVERRIDING SYSTEM VALUE VALUES (22,2,'1/1/2026')`);
+    await pool.query(`INSERT INTO set_logs ("sessionId","userId",exercise,sets,reps,weight,time) VALUES (22,2,'Original',1,5,20,'12:00')`);
+    await pool.query(`UPDATE posts SET "workoutSessionId"=22 WHERE id=2`);
+    await pool.query(`UPDATE community_reviews SET status='approved' WHERE kind='post' AND "targetId"=2`);
+    await pool.query(`UPDATE set_logs SET exercise='Changed after approval' WHERE "sessionId"=22`);
+    expect(await communityRouter.createCaller(ctx(1)).getPost({postId:2})).toBeNull();
+  });
+  it('does not allow ordinary users to approve or suspend accounts',async()=>{
+    const caller=moderationRouter.createCaller(ctx(1));
+    await expect(caller.pending()).rejects.toThrow();
+    await expect(caller.review({kind:'post',targetId:2,revision:1,action:'approved'})).rejects.toThrow();
+    await expect(caller.setSuspension({userId:2,suspended:true,reason:'Not authorized'})).rejects.toThrow();
+  });
   it('cannot delete another author’s post or any of its reactions/media', async () => {
     await expect(communityRouter.createCaller(ctx(1)).deletePost({postId:2})).rejects.toThrow('Post unavailable');
     for (const table of ['post_media','post_comments','post_likes']) {
@@ -120,6 +166,7 @@ const url = process.env.TEST_DATABASE_URL;
     await pool.query(`INSERT INTO workout_sessions (id,"userId",date) OVERRIDING SYSTEM VALUE VALUES (3,3,'1/1/2026')`);
     await pool.query(`INSERT INTO set_logs ("sessionId","userId",exercise,sets,reps,weight,time) VALUES (3,3,'Private',1,5,20,'12:00')`);
     await pool.query(`UPDATE posts SET "workoutSessionId"=3 WHERE id=2`);
+    await pool.query(`UPDATE community_reviews SET status='approved' WHERE kind='post' AND "targetId"=2`);
     const caller = communityRouter.createCaller(ctx(1));
     expect((await caller.getFeed({limit:20,offset:0})).posts.find(post=>post.id===2)?.workout).toBeNull();
     await expect(caller.createPost({workoutSessionId:3})).rejects.toThrow('Workout session not found');
@@ -211,6 +258,7 @@ const url = process.env.TEST_DATABASE_URL;
     await pool.query(`UPDATE users SET email='other@example.com',name='Chosen Name' WHERE id=3`);
     await pool.query(privateDisplayNameMigration);
     await pool.query(privateDisplayNameMigration);
+    await pool.query(`UPDATE community_reviews SET status='approved' WHERE kind='profile' AND "targetId" IN (2,3)`);
     expect(await userRouter.createCaller(ctx(1)).getPublicProfile({userId:2})).toMatchObject({name:'FlexTab Member'});
     expect(await userRouter.createCaller(ctx(1)).searchUsers({query:'private@example.com'})).toEqual([]);
     expect((await pool.query('SELECT email FROM users WHERE id=2')).rows[0].email).toBe('private@example.com');
@@ -221,6 +269,8 @@ const url = process.env.TEST_DATABASE_URL;
     await userRouter.createCaller(ctx(1)).updateProfile({name:'  New display name  ',bio:'A real bio',fitnessGoal:'Increase Strength'});
     const fresh=await userRouter.createCaller(ctx(1)).getProfile();
     expect(fresh).toMatchObject({id:1,name:'New display name',bio:'A real bio',fitnessGoal:'Increase Strength'});
+    expect(await userRouter.createCaller(ctx(2)).getPublicProfile({userId:1})).toBeNull();
+    await pool.query(`UPDATE community_reviews SET status='approved' WHERE kind='profile' AND "targetId"=1`);
     expect(await userRouter.createCaller(ctx(2)).getPublicProfile({userId:1})).toMatchObject({name:'New display name',bio:'A real bio'});
     expect(await userRouter.createCaller(ctx(2)).getProfile()).toMatchObject({name:'Person Two',bio:'',fitnessGoal:''});
     await expect(userRouter.createCaller(ctx(1)).updateProfile({name:'Attempt',bio:'',fitnessGoal:'',userId:2} as any)).rejects.toThrow();

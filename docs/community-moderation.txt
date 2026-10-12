@@ -13,7 +13,7 @@ Account reports are available from profile sheets and blocked/muted lists. They
 share the 20/hour budget with content reports and deduplicate per reporter/target.
 Intake does not reveal missing accounts or bypass profile blocking. Moderators see
 the account ID/name and details; content removal cannot resolve an account report.
-Account enforcement is still required before community launch.
+Account enforcement is implemented in migration 0012; deploy and assign moderation coverage before launch.
 
 Moderators use /moderation (also linked in profile settings for server-side admins).
 Both queue and resolution require an active admin role. Review current content,
@@ -32,13 +32,11 @@ This is not a complete live moderation operation. Required before community laun
   both configured storage providers, failure/retry and account deletion.
 - Inventory legacy media whose owner cannot be verified. Such media is not previewed
   automatically and cleanup fails closed. Resolve these records before release.
-- Decide and implement pre-publication objectionable-content filtering and repeat-abuser
-  enforcement. Current intake/removal alone does not satisfy all community requirements.
+- Deploy and operate the pre-publication review and repeat-abuser suspension controls below.
 - Follow, likes and comments now share the block transaction’s account-pair lock.
   PostgreSQL tests cover a follow/block race and likes/comments waiting for a block
   to commit, then rechecking visibility before writing.
-- Verify storage access policies; reporting/removal does not prevent a user from
-  re-uploading content, and this implementation does not ban accounts.
+- Verify storage access policies; copied public object URLs remain accessible until storage cleanup.
 
 Migration 0007 runs after account-lifecycle migration 0006 on server startup.
 Deploy backend before distributing the updated native UI. No production data or roles
@@ -50,3 +48,20 @@ including34 PostgreSQL cases; TypeScript and production build pass. Account repo
 tests cover post-block intake, concurrent duplicate retries, missing/self targets,
 admin-only queue, shared rate budget and rejection of content removal on accounts.
 Native account-report UI and real moderator workflow remain unverified.
+
+2026-10-10 release controls (requires migration 0012 and deployment):
+All new and existing profiles, posts and comments enter a pre-publication queue.
+Only the author can view pending/rejected content. Other members see approved
+content from approved, active profiles, subject to existing block/mute controls.
+A profile name/bio/photo change, post edit, comment edit or media change resets
+approval and increments its revision. Moderator decisions compare that revision
+atomically so a stale queue cannot approve newly changed content.
+The /moderation page supports approve/reject and reversible community suspension.
+Suspension preserves personal workout records and account deletion. Reports and
+block controls remain available. No moderator roles are assigned by this change.
+The operator must staff the queue before deployment; existing content is not
+silently grandfathered in. Review all media, not just captions. Use account
+reports to suspend repeat abusers; investigate appeals through the support email.
+Storage currently uses public unguessable media URLs: this is an in-app publication
+filter, not private object quarantine. Do not describe uploads as private storage.
+Pending-comment notifications are withheld to avoid premature publication.

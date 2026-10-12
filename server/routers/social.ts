@@ -1,3 +1,4 @@
+import { requireCommunityAccess } from "../communityAccess";
 import { TRPCError } from '@trpc/server';
 import { visibleAccount, requireVisibleAccount } from "../communityAccess";
 import { z } from "zod";
@@ -19,6 +20,7 @@ export const socialRouter = router({
   follow: protectedProcedure
     .input(z.object({ userId: z.number().int().positive() }))
     .mutation(async ({ ctx, input }) => {
+      await requireCommunityAccess(ctx.user.id);
       if (ctx.user.id === input.userId) throw new Error("Cannot follow yourself");
       const db = await getDb();
       if (!db) throw new Error("Database not available");
