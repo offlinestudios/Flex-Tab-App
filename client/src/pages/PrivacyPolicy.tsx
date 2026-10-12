@@ -16,7 +16,7 @@ export default function PrivacyPolicy() {
       {/* Content */}
       <main className="container mx-auto px-6 py-16 max-w-4xl">
         <h1 className="text-4xl font-bold text-[#0B0B0C] mb-4">Privacy Policy</h1>
-        <p className="text-sm text-[#6B6F76] mb-12">Last updated: October 7, 2026</p>
+        <p className="text-sm text-[#6B6F76] mb-12">Last updated: October 12, 2026</p>
 
         <div className="prose prose-lg max-w-none">
           <section className="mb-12">
@@ -31,7 +31,7 @@ export default function PrivacyPolicy() {
             
             <h3 className="text-xl font-semibold text-[#0B0B0C] mb-3 mt-6">Personal Information</h3>
             <p className="text-base leading-relaxed text-[#6B6F76] mb-4">
-              When you create an account with FlexTab, we collect personal information that you voluntarily provide, including your name, email address, and authentication credentials. This information is necessary to create and maintain your account, provide personalized services, and communicate with you about your use of the Service.
+              When you create an account with FlexTab, we collect personal information that you voluntarily provide, including your name, email address, and authentication information. If you use Apple or Google sign-in, the provider authenticates you; FlexTab does not receive your Apple or Google password. We receive an account identifier and the profile information you authorize. Apple authorization tokens are stored encrypted so we can revoke access when your account is deleted. This information is necessary to create and maintain your account, provide personalized services, and communicate with you about your use of the Service.
             </p>
 
             <h3 className="text-xl font-semibold text-[#0B0B0C] mb-3 mt-6">Workout Data</h3>
@@ -39,31 +39,32 @@ export default function PrivacyPolicy() {
               FlexTab collects and stores the workout information you enter into the application, including exercise names, sets, repetitions, weight lifted, workout dates and times, body measurements (weight, chest, waist, arms, thighs), custom exercises you create, and workout notes or comments. This data is essential to providing our core service of tracking your fitness progress and generating insights about your training.
             </p>
 
-            <h3 className="text-xl font-semibold text-[#0B0B0C] mb-3 mt-6">Usage Information</h3>
+            <h3 className="text-xl font-semibold text-[#0B0B0C] mb-3 mt-6">Technical and Support Information</h3>
             <p className="text-base leading-relaxed text-[#6B6F76] mb-4">
-              We automatically collect certain information about your device and how you interact with our Service. This includes device information (type, operating system, unique device identifiers), log data (IP address, browser type, pages visited, time spent), and usage patterns (features used, frequency of use, session duration). This information helps us improve our Service and provide technical support.
+              Our authentication and hosting services process technical information such as IP addresses, request times, request identifiers, response status, referrers and request duration to operate, secure and troubleshoot the Service. We also receive the information you send in support requests and community reports. FlexTab does not include an advertising SDK or a dedicated product-analytics SDK.
             </p>
           </section>
 
           <section className="mb-12 text-[#6B6F76]">
             <h2 className="text-2xl font-bold text-[#0B0B0C] mb-4">Community Content and Visibility</h2>
             <PrivacyNotice showPolicyLink={false} />
-            <p className="mt-4">We store community posts, captions, photos, videos, comments, follows, blocks and mutes to provide these features. Reports and the details you supply are available to moderators for review and follow-up.</p>
+            <p className="mt-4">We store community posts, captions, photos, videos, comments, follows, blocks and mutes to provide these features. Profiles, posts and comments are reviewed before publication to other members. Moderators can review submitted content and reports, including pending content. Uploaded media uses public links that can be forwarded; review does not make those links private.</p>
           </section>
 
           <section className="mb-12 text-[#6B6F76]">
             <h2 className="text-2xl font-bold text-[#0B0B0C] mb-4">Location and Media Permissions</h2>
-            <p className="mb-4">If you start GPS workout tracking and grant location permission, FlexTab uses precise location coordinates to record your route and calculate workout distance. Saved GPS activities can include route information linked to your account. Map displays use Google Maps.</p>
+            <p className="mb-4">If you start GPS workout tracking and grant location permission, FlexTab uses precise location coordinates to record your route and calculate workout distance. Saved GPS activities can include route information linked to your account. Map displays use Google Maps. Loading a map sends requests to Google, including network and map-view information needed to display it. Google processes that information under its own privacy policy.</p>
+            <p className="mb-4">See the <a className="underline" href="https://policies.google.com/privacy">Google Privacy Policy</a> and <a className="underline" href="https://maps.google.com/help/terms_maps/">Google Maps Additional Terms of Service</a>.</p>
             <p>You can choose photos or videos for your profile or posts. Camera and microphone access support capture when you choose to use those features. You can manage location, camera and microphone permissions in your device settings; denying a permission may prevent the related feature from working.</p>
           </section>
 
           <section className="mb-12">
             <h2 className="text-2xl font-bold text-[#0B0B0C] mb-4">How We Use Your Information</h2>
             <p className="text-base leading-relaxed text-[#6B6F76] mb-4">
-              We use the collected information to provide, maintain, and improve our Service. Specifically, we use your data to create and manage your account, store and display your workout history, generate progress charts and statistics, enable you to track body measurements over time, provide personalized workout insights, send you service-related notifications and updates, respond to your support requests, and improve our application based on usage patterns.
+              We use the collected information to provide, maintain, and improve our Service. Specifically, we use your data to create and manage your account, store and display your workout history, generate progress charts and statistics, enable you to track body measurements over time, provide personalized workout insights, send you service-related notifications and updates, respond to your support requests, and diagnose technical problems.
             </p>
             <p className="text-base leading-relaxed text-[#6B6F76] mb-4">
-              We do not sell your personal information to third parties. We do not use your workout data for advertising purposes. Your fitness data remains private and is only visible to you unless you explicitly choose to share it.
+              We do not sell your personal information to third parties. We do not use your workout data for advertising purposes. Your personal workout log and measurements are not displayed to other members unless you choose to share them. Service providers process this data to operate FlexTab.
             </p>
           </section>
 
@@ -80,7 +81,7 @@ export default function PrivacyPolicy() {
           <section className="mb-12">
             <h2 className="text-2xl font-bold text-[#0B0B0C] mb-4">Data Sharing and Disclosure</h2>
             <p className="text-base leading-relaxed text-[#6B6F76] mb-4">
-              We do not share your personal information or workout data with third parties except in the following limited circumstances: with service providers who assist us in operating our Service (such as cloud hosting providers), subject to strict confidentiality agreements; when required by law, such as to comply with a subpoena or similar legal process; to protect the rights, property, or safety of FlexTab, our users, or others; or with your explicit consent.
+              We do not share your personal information or workout data with third parties except in the following limited circumstances: with service providers who assist us in operating our Service (such as cloud hosting providers), including Supabase for authentication, database or media services, Railway for application hosting, and Cloudflare for media delivery; when required by law, such as to comply with a subpoena or similar legal process; to protect the rights, property, or safety of FlexTab, our users, or others; or with your explicit consent.
             </p>
           </section>
 
