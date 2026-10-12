@@ -15,6 +15,7 @@
 /// <reference types="@types/google.maps" />
 import { useState, useRef, useEffect, useCallback } from "react";
 import { calculateCalories } from "@/utils/calorieCalculations";
+import { apiUrl } from "@/lib/api";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 export interface LatLng { lat: number; lng: number; }
@@ -93,7 +94,7 @@ function loadMapScript(): Promise<void> {
   _mapLoadPromise = new Promise((resolve) => {
     (window as unknown as Record<string, unknown>).__gpsMapReady = () => { resolve(); };
     const script = document.createElement("script");
-    script.src = `/api/maps/js?v=weekly&libraries=places,geocoding,geometry&callback=__gpsMapReady`;
+    script.src = apiUrl(`/api/maps/js?v=weekly&libraries=places,geocoding,geometry&callback=__gpsMapReady`);
     script.async = true;
     script.defer = true;
     script.onerror = () => { _mapLoadPromise = null; resolve(); };
