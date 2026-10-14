@@ -275,7 +275,7 @@ export function CommentsSheet({
 
   const addComment = trpc.community.addComment.useMutation({
     onSuccess: () => {
-      toast.success("Submitted for community review. Visible to others after approval.");
+      toast.success("Submitted. Your post will appear after safety checks.");
       utils.community.getComments.invalidate({ postId: post.id });
       utils.community.getFeed.invalidate();
       setDraft("");
@@ -538,7 +538,7 @@ export function NewPostComposer({
 
   const createPost = trpc.community.createPost.useMutation({
     onSuccess: () => {
-      toast.success("Submitted for community review. Visible to others after approval.");
+      toast.success("Submitted. Your post will appear after safety checks.");
       utils.community.getFeed.invalidate();
       // Also refresh the profile page posts grid
       (utils as any).community.getMyPosts.invalidate();
@@ -1479,7 +1479,7 @@ export function CommunityTab({ user, userAvatarUrl, workoutSessions = [], showSe
     refetch,
   } = trpc.community.getFeed.useQuery(
     { limit: 20, offset: 0, followingOnly },
-    { refetchOnWindowFocus: true, staleTime: 30_000 }
+    { refetchOnWindowFocus: true, staleTime: 10_000, refetchInterval: 10_000 }
   );
 
   // User search
@@ -1492,7 +1492,7 @@ export function CommunityTab({ user, userAvatarUrl, workoutSessions = [], showSe
 
   return (
     <div className="space-y-3" style={{ position: "relative", paddingBottom: 80 }}>
-      <p className="text-sm text-muted-foreground px-2">Posts, comments, and profile changes are reviewed before appearing to other members. Questions or appeals: <a href="mailto:info@offlinestudios.ca" className="underline">contact support</a>.</p>
+      <p className="text-sm text-muted-foreground px-2">Community content goes through safety checks before publication. Some submissions need additional review. Questions or appeals: <a href="mailto:info@offlinestudios.ca" className="underline">contact support</a>.</p>
       {/* Feed filter toggle — clean, no search icon */}
       <div style={{ display: "flex", background: "var(--secondary)", borderRadius: 50, padding: 3, border: "1px solid var(--border)" }}>
         <button

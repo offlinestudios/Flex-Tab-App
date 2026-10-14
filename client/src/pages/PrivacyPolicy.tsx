@@ -16,7 +16,7 @@ export default function PrivacyPolicy() {
       {/* Content */}
       <main className="container mx-auto px-6 py-16 max-w-4xl">
         <h1 className="text-4xl font-bold text-[#0B0B0C] mb-4">Privacy Policy</h1>
-        <p className="text-sm text-[#6B6F76] mb-12">Last updated: October 12, 2026</p>
+        <p className="text-sm text-[#6B6F76] mb-12">Last updated: October 14, 2026</p>
 
         <div className="prose prose-lg max-w-none">
           <section className="mb-12">
@@ -48,7 +48,7 @@ export default function PrivacyPolicy() {
           <section className="mb-12 text-[#6B6F76]">
             <h2 className="text-2xl font-bold text-[#0B0B0C] mb-4">Community Content and Visibility</h2>
             <PrivacyNotice showPolicyLink={false} />
-            <p className="mt-4">We store community posts, captions, photos, videos, comments, follows, blocks and mutes to provide these features. Profiles, posts and comments are reviewed before publication to other members. Moderators can review submitted content and reports, including pending content. Uploaded media uses public links that can be forwarded; review does not make those links private.</p>
+            <p className="mt-4">We store community posts, captions, photos, videos, comments, follows, blocks and mutes to provide these features. Profiles, posts and comments are checked before publication to other members. When automated screening is enabled, submitted community text and photos, including public profile details and shared workout exercise names, are sent to OpenAI for safety classification. Private workout history and account credentials are not sent for screening. Flagged content, videos and unsupported media require human review. Moderators can review submitted content and reports, including pending content. Uploaded media uses public links that can be forwarded; review does not make those links private.</p>
           </section>
 
           <section className="mb-12 text-[#6B6F76]">

@@ -14,10 +14,10 @@ export default function Moderation() {
   if(me.isLoading)return <p className="p-6">Loading…</p>;
   if(me.data?.role!=='admin')return <main className="p-6"><a href="/app">Back to FlexTab</a><p>Moderator access required.</p></main>;
   return <main className="max-w-3xl mx-auto p-6 space-y-6"><a href="/app">← FlexTab</a><h1 className="text-2xl font-bold">Community moderation</h1>
-    <section className="space-y-4"><h2 className="text-xl font-semibold">Review before publication</h2><p>Inspect all text and attachments before approving. Changes return content to this queue. Pending profiles and their content are hidden from other members.</p>
+    <section className="space-y-4"><h2 className="text-xl font-semibold">Review before publication</h2><p>Inspect all text and attachments before approving. Automated screening may approve supported content. Flagged or unsupported content stays here; unavailable screening is retried. Changes return content to this queue. Pending profiles and their content are hidden from other members.</p>
     {(pending.error||review.error||suspend.error||suspensions.error)&&<p role="alert">{pending.error?.message||review.error?.message||suspend.error?.message||suspensions.error?.message}</p>}
     {pending.isLoading?<p>Loading…</p>:pending.data?.length===0?<p>No content awaiting review.</p>:pending.data?.map(item=><article key={`${item.kind}-${item.targetId}`} className="border rounded p-4 space-y-3">
-      <h3>{item.kind} #{item.targetId} · {item.name} · revision {item.revision}</h3>
+      <h3>{item.kind} #{item.targetId} · {item.name} · revision {item.revision}</h3><p>Screening: {item.screeningOutcome === 'held' ? 'Needs human review (flagged or unsupported content)' : item.screeningOutcome === 'retry' ? 'Waiting for screening / retry' : 'Not screened yet'}</p>
       {item.kind==='profile'?<><p className="whitespace-pre-wrap">{item.bio}</p>{item.avatarUrl&&<img src={item.avatarUrl} alt="Profile submitted for review" className="max-h-60"/>}</>:<p className="whitespace-pre-wrap">{item.text}</p>}
       {item.media.map((media,i)=>media.type==='video'?<video key={i} src={media.url} controls className="max-h-80"/>:<img key={i} src={media.url} alt="Attachment submitted for review" className="max-h-80"/>)}
       {item.workout.length>0&&<ul>{item.workout.map((log,i)=><li key={i}>{log.exercise}: {log.sets} sets × {log.reps} reps × {log.weight}</li>)}</ul>}
