@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
 import { getDb } from "./db";
-import { removeOwnedMedia } from "./ownedMedia";
+import { ownedMedia, removeOwnedMedia } from "./ownedMedia";
 import {
   readScreeningImage,
   saveScreenedImage,
@@ -74,10 +74,17 @@ export async function processCommunityScreening(
   const snapshots: Awaited<ReturnType<typeof readScreeningImage>>[] = [];
   if (!input.requiresHumanReview) {
     try {
-      for (const media of originals)
-        snapshots.push(
-          await readScreeningImage(String(media.r2Key), Number(row.userId))
+      let totalBytes = 0;
+      for (const media of originals) {
+        const image = await readScreeningImage(
+          String(media.r2Key),
+          Number(row.userId)
         );
+        totalBytes += image.bytes.length;
+        if (totalBytes > 20 * 1024 * 1024)
+          throw new Error("Image batch requires review");
+        snapshots.push(image);
+      }
       input.images = snapshots.map(image => image.dataUrl);
     } catch {
       input.requiresHumanReview = true;
@@ -99,52 +106,52 @@ export async function processCommunityScreening(
           sql`INSERT INTO screening_media_cleanup(key,"userId") VALUES (${copy.url},${Number(row.userId)}) ON CONFLICT DO NOTHING`
         );
       }
-    await db.transaction(async tx => {
-      const current =
-        await tx.execute(sql`SELECT revision,status FROM community_reviews
+    published =
+      (await db.transaction(async tx => {
+        const current =
+          await tx.execute(sql`SELECT revision,status FROM community_reviews
       WHERE kind=${String(row.kind)} AND "targetId"=${Number(row.targetId)} FOR UPDATE`);
-      if (
-        Number(current.rows[0]?.revision) !== Number(row.revision) ||
-        current.rows[0]?.status !== "pending"
-      )
-        return;
-      await tx.execute(sql`UPDATE community_screenings SET outcome=${outcome},"nextAttemptAt"=now()+interval '5 minutes'
+        if (
+          Number(current.rows[0]?.revision) !== Number(row.revision) ||
+          current.rows[0]?.status !== "pending"
+        )
+          return;
+        await tx.execute(sql`UPDATE community_screenings SET outcome=${outcome},"nextAttemptAt"=now()+interval '5 minutes'
       WHERE kind=${String(row.kind)} AND "targetId"=${Number(row.targetId)} AND revision=${Number(row.revision)}`);
-      if (outcome !== "approved") return;
-      // Swap in immutable copies only for the exact scanned revision. The existing
-      // triggers increment revision; approval below applies to these same bytes.
-      for (let i = 0; i < copies.length; i++) {
-        await tx.execute(
-          sql`INSERT INTO screening_media_cleanup(key,"userId") VALUES (${String(originals[i].r2Key)},${Number(row.userId)}) ON CONFLICT DO NOTHING`
-        );
-        if (row.kind === "profile")
+        if (outcome !== "approved") return;
+        // Swap in immutable copies only for the exact scanned revision. The existing
+        // triggers increment revision; approval below applies to these same bytes.
+        for (let i = 0; i < copies.length; i++) {
           await tx.execute(
-            sql`UPDATE users SET "avatarUrl"=${copies[i].url} WHERE id=${Number(row.userId)}`
+            sql`INSERT INTO screening_media_cleanup(key,"userId") VALUES (${String(originals[i].r2Key)},${Number(row.userId)}) ON CONFLICT DO NOTHING`
           );
-        else
-          await tx.execute(
-            sql`UPDATE post_media SET "r2Key"=${copies[i].url} WHERE id=${Number(originals[i].id)} AND "postId"=${Number(row.targetId)}`
-          );
-      }
-      const changed =
-        await tx.execute(sql`UPDATE community_reviews r SET status='approved',"moderatorId"=NULL,"updatedAt"=now()
+          if (row.kind === "profile")
+            await tx.execute(
+              sql`UPDATE users SET "avatarUrl"=${copies[i].url} WHERE id=${Number(row.userId)}`
+            );
+          else
+            await tx.execute(
+              sql`UPDATE post_media SET "r2Key"=${copies[i].url} WHERE id=${Number(originals[i].id)} AND "postId"=${Number(row.targetId)}`
+            );
+        }
+        const changed =
+          await tx.execute(sql`UPDATE community_reviews r SET status='approved',"moderatorId"=NULL,"updatedAt"=now()
       WHERE kind=${String(row.kind)} AND "targetId"=${Number(row.targetId)} AND status='pending'
       AND NOT EXISTS(SELECT 1 FROM community_suspensions s WHERE s."userId"=r."userId")
       AND EXISTS(SELECT 1 FROM users u WHERE u.id=r."userId" AND u."deletionRequestedAt" IS NULL) RETURNING "targetId"`);
-      if (!changed.rows.length)
-        throw new Error("Account became unavailable during screening");
-      published = true;
-      if (published)
+        if (!changed.rows.length)
+          throw new Error("Account became unavailable during screening");
         for (const copy of copies)
           await tx.execute(
             sql`DELETE FROM screening_media_cleanup WHERE key=${copy.url}`
           );
-      if (changed.rows.length && row.kind === "comment")
-        await tx.execute(sql`INSERT INTO notifications("recipientId","actorId",type,"entityId")
+        if (changed.rows.length && row.kind === "comment")
+          await tx.execute(sql`INSERT INTO notifications("recipientId","actorId",type,"entityId")
       SELECT p."userId",c."userId",'comment',p.id FROM post_comments c JOIN posts p ON p.id=c."postId"
       WHERE c.id=${Number(row.targetId)} AND p."userId"<>c."userId"
       AND NOT EXISTS(SELECT 1 FROM user_blocks b WHERE (b."blockerId"=p."userId" AND b."blockedId"=c."userId") OR (b."blockerId"=c."userId" AND b."blockedId"=p."userId"))`);
-    });
+        return true;
+      })) === true;
   } finally {
     if (!published && copies.length) {
       try {
@@ -170,9 +177,24 @@ export async function processScreeningMediaCleanup(remove = removeOwnedMedia) {
       sql`UPDATE screening_media_cleanup SET "nextAttemptAt"=now()+interval '20 minutes' WHERE key=${String(row.key)}`
     );
     const refs = await tx.execute(
-      sql`SELECT 1 FROM users WHERE "avatarUrl"=${String(row.key)} UNION ALL SELECT 1 FROM post_media WHERE "r2Key"=${String(row.key)} LIMIT 1`
+      sql`SELECT "avatarUrl" AS value FROM users WHERE "avatarUrl" IS NOT NULL
+      UNION ALL SELECT "r2Key" AS value FROM post_media`
     );
-    return refs.rows.length ? null : row;
+    const target = ownedMedia(String(row.key), Number(row.userId));
+    const referenced = refs.rows.some(ref => {
+      if (ref.value === row.key) return true;
+      try {
+        const location = ownedMedia(String(ref.value), Number(row.userId));
+        return (
+          location.kind === target.kind &&
+          location.bucket === target.bucket &&
+          location.key === target.key
+        );
+      } catch {
+        return false;
+      }
+    });
+    return referenced ? null : row;
   });
   if (!claimed) return;
   await remove([String(claimed.key)], Number(claimed.userId));

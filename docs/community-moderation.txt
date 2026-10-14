@@ -75,7 +75,7 @@ No private workout history, credentials, or account email is sent.
 A clean decision publishes to the global feed without a follow/friend relationship.
 Flagged, video/animated/unsupported media, >10 images, unknown storage ownership, or
 unreadable media stays pending for a moderator. Provider failures retry, never approve.
-JPEG and non-animated PNG images are read from owned storage (10 MB limit per image),
+JPEG and non-animated PNG images are read from owned storage (10 MB per image, 20 MB per submission),
 sent as captured bytes, then copied into server-generated R2 keys before publication.
 The final transaction rechecks the submitted revision and preserves human decisions.
 Superseded original images are queued for cleanup after 20 minutes and retained while

@@ -87,6 +87,16 @@ const url = process.env.TEST_DATABASE_URL;
     await processScreeningMediaCleanup(remove);
     expect(remove).not.toHaveBeenCalled();
   });
+  it('retains an original referenced by its full URL alias', async () => {
+    vi.stubEnv('R2_PUBLIC_URL', 'https://media.example');
+    try {
+      await pool.query(`UPDATE post_media SET "r2Key"='https://media.example/posts/2/owned.jpg' WHERE "postId"=2`);
+      await pool.query(`INSERT INTO screening_media_cleanup(key,"userId","nextAttemptAt") VALUES ('posts/2/owned.jpg',2,now())`);
+      const remove = vi.fn(async () => {});
+      await processScreeningMediaCleanup(remove);
+      expect(remove).not.toHaveBeenCalled();
+    } finally { vi.unstubAllEnvs(); }
+  });
   it('publishes a safe text post to an unrelated viewer after screening', async () => {
     await pool.query(`INSERT INTO posts (id,"userId",caption) OVERRIDING SYSTEM VALUE VALUES (100,2,'Good workout')`);
     expect(await processCommunityScreening(async input => {
