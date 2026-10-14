@@ -1,3 +1,5 @@
+import { communityScreeningMigration } from './communityScreeningMigration';
+import { processCommunityScreening, processScreeningMediaCleanup } from './communityScreeningWorker';
 import { communityReviewMigration } from "./communityReviewMigration";
 import { privateDisplayNameMigration } from "./privateDisplayNameMigration";
 import { accountReportMigration } from "./accountReportMigration";
@@ -10,6 +12,12 @@ import { moderationRouter } from './routers/moderation';
 import { processModerationCleanup } from './moderationWorker';
 import { communityModerationMigration } from './communityModerationMigration';
 import { accountLifecycleMigration } from './accountLifecycle';
+const screeningMedia = vi.hoisted(() => ({
+  read: vi.fn(async () => ({ bytes: Buffer.from('test'), mime: 'image/jpeg', dataUrl: 'data:image/jpeg;base64,dGVzdA==' })),
+  save: vi.fn(async () => ({ key: 'posts/2/screened-test.jpg', url: 'https://media.example/posts/2/screened-test.jpg' })),
+  discard: vi.fn(async () => {}),
+}));
+vi.mock('./screeningMedia', () => ({ readScreeningImage: screeningMedia.read, saveScreenedImage: screeningMedia.save, discardScreenedImages: screeningMedia.discard }));
 const database = vi.hoisted(() => ({ current: null as any }));
 vi.mock('./db', () => ({ getDb: async () => database.current }));
 vi.mock('./accountLifecycle', async importOriginal => ({
@@ -39,6 +47,7 @@ const url = process.env.TEST_DATABASE_URL;
     await pool.query(accountLifecycleMigration);
     await pool.query(communityModerationMigration); await pool.query(accountReportMigration); await pool.query(accountReportMigration); await pool.query(profileMigration);
     await pool.query(communityReviewMigration);
+    await pool.query(communityScreeningMigration);
     database.current = drizzle(pool);
   });
   afterAll(async () => { await pool?.end(); });
@@ -59,6 +68,64 @@ const url = process.env.TEST_DATABASE_URL;
   });
   const block = () => pool.query('INSERT INTO user_blocks ("blockerId","blockedId") VALUES (1,2)');
 
+  it('publishes the same image bytes screened and queues original cleanup', async () => {
+    await pool.query(`UPDATE community_reviews SET status='pending' WHERE kind='post' AND "targetId"=2`);
+    await processCommunityScreening(async input => {
+      expect(input.images).toEqual(['data:image/jpeg;base64,dGVzdA==']); return 'approved';
+    });
+    expect((await pool.query(`SELECT "r2Key" FROM post_media WHERE "postId"=2`)).rows[0].r2Key).toBe('https://media.example/posts/2/screened-test.jpg');
+    expect((await pool.query(`SELECT status FROM community_reviews WHERE kind='post' AND "targetId"=2`)).rows[0].status).toBe('approved');
+    expect((await pool.query(`SELECT key FROM screening_media_cleanup`)).rows).toEqual([{ key: 'posts/2/owned.jpg' }]);
+    await pool.query(`UPDATE screening_media_cleanup SET "nextAttemptAt"=now()`);
+    const remove = vi.fn(async () => {});
+    await processScreeningMediaCleanup(remove);
+    expect(remove).toHaveBeenCalledWith(['posts/2/owned.jpg'],2);
+  });
+  it('retains an original image that another post still references', async () => {
+    await pool.query(`INSERT INTO screening_media_cleanup(key,"userId","nextAttemptAt") VALUES ('posts/2/owned.jpg',2,now())`);
+    const remove = vi.fn(async () => {});
+    await processScreeningMediaCleanup(remove);
+    expect(remove).not.toHaveBeenCalled();
+  });
+  it('retains an original referenced by its full URL alias', async () => {
+    vi.stubEnv('R2_PUBLIC_URL', 'https://media.example');
+    try {
+      await pool.query(`UPDATE post_media SET "r2Key"='https://media.example/posts/2/owned.jpg' WHERE "postId"=2`);
+      await pool.query(`INSERT INTO screening_media_cleanup(key,"userId","nextAttemptAt") VALUES ('posts/2/owned.jpg',2,now())`);
+      const remove = vi.fn(async () => {});
+      await processScreeningMediaCleanup(remove);
+      expect(remove).not.toHaveBeenCalled();
+    } finally { vi.unstubAllEnvs(); }
+  });
+  it('publishes a safe text post to an unrelated viewer after screening', async () => {
+    await pool.query(`INSERT INTO posts (id,"userId",caption) OVERRIDING SYSTEM VALUE VALUES (100,2,'Good workout')`);
+    expect(await processCommunityScreening(async input => {
+      expect(input.text).toContain('Good workout'); return 'approved';
+    })).toBe('approved');
+    expect((await pool.query(`SELECT status FROM community_reviews WHERE kind='post' AND "targetId"=100`)).rows[0].status).toBe('approved');
+    const feed = await communityRouter.createCaller(ctx(3)).getFeed({limit:20,offset:0,followingOnly:false});
+    expect(feed.posts.some(post => post.id === 100)).toBe(true);
+  });
+  it('does not approve an edit made while screening is in flight', async () => {
+    await pool.query(`INSERT INTO posts (id,"userId",caption) OVERRIDING SYSTEM VALUE VALUES (100,2,'Original')`);
+    await processCommunityScreening(async () => {
+      await pool.query(`UPDATE posts SET caption='Changed after snapshot' WHERE id=100`); return 'approved';
+    });
+    expect((await pool.query(`SELECT status FROM community_reviews WHERE kind='post' AND "targetId"=100`)).rows[0].status).toBe('pending');
+  });
+  it('does not undo a human rejection made while screening is in flight', async () => {
+    await pool.query(`INSERT INTO posts (id,"userId",caption) OVERRIDING SYSTEM VALUE VALUES (100,2,'Original')`);
+    await processCommunityScreening(async () => {
+      await pool.query(`UPDATE community_reviews SET status='rejected' WHERE kind='post' AND "targetId"=100`); return 'approved';
+    });
+    expect((await pool.query(`SELECT status FROM community_reviews WHERE kind='post' AND "targetId"=100`)).rows[0].status).toBe('rejected');
+  });
+  it('keeps flagged content in the manual queue without repeatedly screening it', async () => {
+    await pool.query(`INSERT INTO posts (id,"userId",caption) OVERRIDING SYSTEM VALUE VALUES (100,2,'Needs review')`);
+    await processCommunityScreening(async () => 'held');
+    expect(await processCommunityScreening(async () => { throw new Error('Must not repeat held revision'); })).toBe('idle');
+    expect((await pool.query(`SELECT status FROM community_reviews WHERE kind='post' AND "targetId"=100`)).rows[0].status).toBe('pending');
+  });
   it('withholds new comments from other users until reviewed and sends no premature notification', async()=>{
     const result=await communityRouter.createCaller(ctx(1)).addComment({postId:2,body:'Await review'});
     const other=await communityRouter.createCaller(ctx(2)).getComments({postId:2});

@@ -1,3 +1,5 @@
+import { communityScreeningMigration } from './communityScreeningMigration';
+import { startCommunityScreeningWorker } from './communityScreeningWorker';
 import { communityReviewMigration } from "./communityReviewMigration";
 import { privateDisplayNameMigration } from "./privateDisplayNameMigration";
 import { accountReportMigration } from "./accountReportMigration";
@@ -148,7 +150,7 @@ async function runMigrations() {
     await pool.query(`CREATE INDEX IF NOT EXISTS "notifications_unread_idx" ON "notifications" ("recipientId") WHERE "read" = false;`);
 
     await pool.query(accountLifecycleMigration);
-    await pool.query(communityModerationMigration); await pool.query(profileMigration); await pool.query(appleTokenMigration); await pool.query(accountReportMigration); await pool.query(privateDisplayNameMigration); await pool.query(communityReviewMigration);
+    await pool.query(communityModerationMigration); await pool.query(profileMigration); await pool.query(appleTokenMigration); await pool.query(accountReportMigration); await pool.query(privateDisplayNameMigration); await pool.query(communityReviewMigration); await pool.query(communityScreeningMigration);
     console.log('[Migrations] All migrations complete.');
   } catch (err) {
     console.error('[Migrations] Migration failed; refusing to start with an incomplete schema.');
@@ -163,6 +165,7 @@ async function startServer() {
   await runMigrations();
   startAccountDeletionWorker();
     startModerationWorker();
+  startCommunityScreeningWorker();
 
   const app = express();
   app.use("/api", mobileCors);

@@ -12,9 +12,10 @@ export const moderationRouter = router({
     const db=await getDb(); if(!db)throw new TRPCError({code:'INTERNAL_SERVER_ERROR'});
     return db.transaction(async db=>{
     const result=await db.execute(sql`SELECT r.kind,r."targetId",r."userId",r.revision,r.status,r."updatedAt",
-      u.name,u.bio,u."avatarUrl",p.caption,c.body,
+      u.name,u.bio,u."avatarUrl",p.caption,c.body,screen.outcome AS "screeningOutcome",
       EXISTS(SELECT 1 FROM community_suspensions s WHERE s."userId"=r."userId") AS suspended
       FROM community_reviews r JOIN users u ON u.id=r."userId"
+      LEFT JOIN community_screenings screen ON screen.kind=r.kind AND screen."targetId"=r."targetId" AND screen.revision=r.revision
       LEFT JOIN posts p ON r.kind='post' AND p.id=r."targetId"
       LEFT JOIN post_comments c ON r.kind='comment' AND c.id=r."targetId"
       WHERE r.status='pending' AND u."deletionRequestedAt" IS NULL ORDER BY r."updatedAt" LIMIT 100`);
@@ -29,7 +30,7 @@ export const moderationRouter = router({
         FROM posts p JOIN workout_sessions w ON w.id=p."workoutSessionId" AND w."userId"=p."userId"
         JOIN set_logs l ON l."sessionId"=w.id AND l."userId"=p."userId" WHERE p.id=${Number(row.targetId)} ORDER BY l.id`):{rows:[]};
       return {kind:row.kind as 'profile'|'post'|'comment',targetId:Number(row.targetId),userId:Number(row.userId),revision:Number(row.revision),
-        name:String(row.name||'FlexTab Member'),bio:String(row.bio||''),avatarUrl:row.avatarUrl as string|null,
+        screeningOutcome:row.screeningOutcome as 'approved'|'held'|'retry'|null, name:String(row.name||'FlexTab Member'),bio:String(row.bio||''),avatarUrl:row.avatarUrl as string|null,
         text:String(row.kind==='comment'?row.body||'':row.caption||''),suspended:Boolean(row.suspended),media:attachments,workout:workout.rows.map(log=>({exercise:String(log.exercise),sets:Number(log.sets),reps:Number(log.reps),weight:Number(log.weight)}))};
     }));
     },{isolationLevel:'repeatable read',accessMode:'read only'});

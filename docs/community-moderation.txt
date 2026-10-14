@@ -65,3 +65,27 @@ reports to suspend repeat abusers; investigate appeals through the support email
 Storage currently uses public unguessable media URLs: this is an in-app publication
 filter, not private object quarantine. Do not describe uploads as private storage.
 Pending-comment notifications are withheld to avoid premature publication.
+
+2026-10-14 automated screening (not enabled in production):
+Set COMMUNITY_SCREENING_ENABLED=true and COMMUNITY_SCREENING_API_KEY on the server
+only after provider approval, published privacy disclosure, and a live staging test.
+The moderation endpoint is OpenAI omni-moderation-latest. Only submitted community
+text/profile details/shared exercise names and supported photos are screened.
+No private workout history, credentials, or account email is sent.
+A clean decision publishes to the global feed without a follow/friend relationship.
+Flagged, video/animated/unsupported media, >10 images, unknown storage ownership, or
+unreadable media stays pending for a moderator. Provider failures retry, never approve.
+JPEG and non-animated PNG images are read from owned storage (10 MB per image, 20 MB per submission),
+sent as captured bytes, then copied into server-generated R2 keys before publication.
+The final transaction rechecks the submitted revision and preserves human decisions.
+Superseded original images are queued for cleanup after 20 minutes and retained while
+still referenced by a profile/post. Account deletion removes the entire owned prefix.
+Failed orphan cleanup remains queued; a process failure between upload and queue
+registration can leave an unreferenced file until account deletion. Monitor storage.
+The worker checks every 5 seconds; outages and backlog may delay publication.
+Old pending content is screened too; rejected content is not automatically reconsidered.
+Manual moderation coverage is still required for reports, held items and appeals.
+Do not claim videos or all harmful image categories are automatically screened.
+Before release: verify API credentials using synthetic staging examples, verify actual
+R2/Supabase image read/copy/cleanup, review historical held media, test two native
+accounts and update App Review Notes and privacy declarations as applicable.
