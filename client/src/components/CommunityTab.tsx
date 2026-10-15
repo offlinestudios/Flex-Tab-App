@@ -1,3 +1,4 @@
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "./ui/dialog";
 import { ReportContent } from './ReportContent';
 import { useState, useRef } from "react";
 import { trpc } from "@/lib/trpc";
@@ -802,6 +803,8 @@ function PostCard({
   const [likeCount, setLikeCount] = useState(post.likeCount);
   const [showOverflow, setShowOverflow] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showReport, setShowReport] = useState(false);
+  const [showBlockConfirm, setShowBlockConfirm] = useState(false);
   const isReal = post.id > 0;
   // Use server-provided isMyPost flag (avoids client-side ID type mismatch)
   const isOtherUser = isReal && !post.isMyPost;
@@ -834,7 +837,13 @@ function PostCard({
     onSuccess: () => { setFollowing(false); utils.social.getRelationship.invalidate({ userId: post.userId }); },
   });
   const blockMutation = (trpc as any).social.block.useMutation({
-    onSuccess: () => { setShowOverflow(false); utils.community.getFeed.invalidate(); },
+    onSuccess: () => {
+      setShowBlockConfirm(false);
+      void utils.community.getFeed.invalidate();
+      void utils.social.getBlockedUsers.invalidate();
+      toast.success("User blocked. You can unblock them in Settings → Blocked & Muted.");
+    },
+    onError: () => toast.error("Could not block this user. Please try again."),
   });
   const muteMutation = (trpc as any).social.mute.useMutation({
     onSuccess: () => { setShowOverflow(false); utils.community.getFeed.invalidate(); },
@@ -980,7 +989,10 @@ function PostCard({
                 >
                   {isOtherUser && (
                     <>
-                      <ReportContent postId={post.id} />
+                      <button type="button" className="block w-full px-4 py-3 text-sm text-red-500 text-left"
+                        onClick={(event) => { event.stopPropagation(); setShowOverflow(false); setShowReport(true); }}>
+                        Report post
+                      </button>
                       <button
                         onClick={() => { setShowOverflow(false); toggleFollow(); }}
                         style={{
@@ -1018,7 +1030,7 @@ function PostCard({
                       </button>
                       <div style={{ height: 1, background: "var(--border)", margin: "0 12px" }} />
                       <button
-                        onClick={() => blockMutation.mutate({ userId: post.userId })}
+                        onClick={(event) => { event.stopPropagation(); setShowOverflow(false); setShowBlockConfirm(true); }}
                         style={{
                           display: "block",
                           width: "100%",
@@ -1256,6 +1268,22 @@ function PostCard({
           onClose={() => setShowComments(false)}
         />
       )}
+
+      {isOtherUser && <ReportContent postId={post.id} open={showReport} onOpenChange={setShowReport} hideTrigger />}
+      <Dialog open={showBlockConfirm} onOpenChange={(open) => { if (!blockMutation.isPending) setShowBlockConfirm(open); }}>
+        <DialogContent overlayClassName="z-[999]" className="z-[1000]" onClick={(event) => event.stopPropagation()}>
+          <DialogTitle>Block {post.authorName}?</DialogTitle>
+          <DialogDescription>
+            This hides all posts from this person and prevents interactions between your accounts.
+            To report only one post, cancel and choose Report post. You can unblock them in Settings → Blocked &amp; Muted.
+          </DialogDescription>
+          <div className="flex justify-end gap-3">
+            <button type="button" className="rounded border px-4 py-3" disabled={blockMutation.isPending} onClick={() => setShowBlockConfirm(false)}>Cancel</button>
+            <button type="button" className="rounded bg-red-600 text-white px-4 py-3" disabled={blockMutation.isPending}
+              onClick={() => blockMutation.mutate({ userId: post.userId })}>{blockMutation.isPending ? 'Blocking…' : 'Block user'}</button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete confirmation dialog */}
       {showDeleteConfirm && (

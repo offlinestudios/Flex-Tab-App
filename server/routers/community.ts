@@ -286,7 +286,9 @@ export const communityRouter = router({
       }
 
       const feedPosts = await query
-        .where(and(visibleAccount(ctx.user.id, posts.userId), visibleContent(ctx.user.id, 'post', posts.id, posts.userId), unmutedAccount(ctx.user.id, posts.userId)))
+        .where(and(visibleAccount(ctx.user.id, posts.userId), visibleContent(ctx.user.id, 'post', posts.id, posts.userId), unmutedAccount(ctx.user.id, posts.userId),
+          sql`NOT EXISTS (SELECT 1 FROM content_reports report WHERE report."reporterId"=${ctx.user.id}
+            AND report."postId"=${posts.id} AND report."targetKind"='post' AND report.status='open')`))
         .orderBy(desc(posts.createdAt))
         .limit(input.limit)
         .offset(input.offset);

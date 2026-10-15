@@ -97,6 +97,21 @@ const url = process.env.TEST_DATABASE_URL;
       expect(remove).not.toHaveBeenCalled();
     } finally { vi.unstubAllEnvs(); }
   });
+  it('reporting hides only that post for the reporter, without blocking its author', async () => {
+    await pool.query(`INSERT INTO posts (id,"userId",caption) OVERRIDING SYSTEM VALUE VALUES (100,2,'Another post from the same author')`);
+    await pool.query(`UPDATE community_reviews SET status='approved' WHERE kind='post' AND "targetId"=100`);
+    await moderationRouter.createCaller(ctx(1)).report({postId:2,reason:'spam',details:'Regression test'});
+    const feed = await communityRouter.createCaller(ctx(1)).getFeed({limit:20,offset:0,followingOnly:false});
+    expect(feed.posts.some(post=>post.id===2)).toBe(false);
+    expect(feed.posts.some(post=>post.id===100)).toBe(true);
+    const other = await communityRouter.createCaller(ctx(3)).getFeed({limit:20,offset:0,followingOnly:false});
+    expect(other.posts.some(post=>post.id===2)).toBe(true);
+    expect((await pool.query('SELECT * FROM user_blocks')).rowCount).toBe(0);
+    expect((await pool.query('SELECT * FROM user_mutes')).rowCount).toBe(0);
+    await pool.query(`UPDATE content_reports SET status='dismissed' WHERE "reporterId"=1 AND "postId"=2`);
+    const restored = await communityRouter.createCaller(ctx(1)).getFeed({limit:20,offset:0,followingOnly:false});
+    expect(restored.posts.some(post=>post.id===2)).toBe(true);
+  });
   it('publishes a safe text post to an unrelated viewer after screening', async () => {
     await pool.query(`INSERT INTO posts (id,"userId",caption) OVERRIDING SYSTEM VALUE VALUES (100,2,'Good workout')`);
     expect(await processCommunityScreening(async input => {
