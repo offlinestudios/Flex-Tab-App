@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { App } from "@capacitor/app";
 import { Browser } from "@capacitor/browser";
 import { useLocation } from "wouter";
@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { isNativeShell, publicAppUrl } from "@/lib/api";
 import {
   createNativeCallbackHandler,
+  createCallbackReplayGuard,
   NATIVE_AUTH_REDIRECT,
 } from "@/lib/nativeAuthCallback";
 
@@ -21,16 +22,23 @@ export const AUTH_PROVIDERS = supportedProviders.filter(provider =>
 export const authRedirectUrl = () =>
   isNativeShell() ? NATIVE_AUTH_REDIRECT : publicAppUrl("/dashboard");
 
+// Capacitor retains the launch URL across listener remounts. Keep consumed
+// callbacks for this app process so sign-out cannot replay a one-use code.
+const consumedNativeCallbacks = new Set<string>();
+
 export function NativeAuthListener() {
   const [, navigate] = useLocation();
+  const navigateRef = useRef(navigate);
+  navigateRef.current = navigate;
   useEffect(() => {
     if (!isNativeShell()) return;
     let active = true;
     const handle = createNativeCallbackHandler({
+      claimCallback: createCallbackReplayGuard(localStorage),
       exchange: code => supabase.auth.exchangeCodeForSession(code),
       closeBrowser: () => Browser.close(),
       navigate: path => {
-        if (active) navigate(path);
+        if (active) navigateRef.current(path);
       },
       showError: () => {
         if (active)
@@ -38,7 +46,7 @@ export function NativeAuthListener() {
             "This sign-in link could not be completed. Start again in FlexTab and open the new link on this device."
           );
       },
-    });
+    }, consumedNativeCallbacks);
     // Register before reading the launch URL so a warm callback cannot be missed.
     const listener = App.addListener("appUrlOpen", ({ url }) => {
       void handle(url);
@@ -59,7 +67,7 @@ export function NativeAuthListener() {
       active = false;
       void listener.then(handle => handle.remove()).catch(() => undefined);
     };
-  }, [navigate]);
+  }, []);
   return null;
 }
 

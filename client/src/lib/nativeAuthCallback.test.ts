@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   createNativeCallbackHandler,
+  createCallbackReplayGuard,
   NATIVE_AUTH_REDIRECT,
   parseNativeAuthCallback,
 } from "./nativeAuthCallback";
@@ -56,6 +57,19 @@ describe("native auth callbacks", () => {
     expect(h.navigate).toHaveBeenCalledOnce();
     expect(h.navigate).toHaveBeenCalledWith("/dashboard");
   });
+  it("does not replay a consumed launch URL after listener remount", async () => {
+    const first = setup();
+    const seen = new Set<string>();
+    await createNativeCallbackHandler(first, seen)(valid);
+    const remounted = setup();
+    const handle = createNativeCallbackHandler(remounted, seen);
+    await handle(valid);
+    expect(remounted.exchange).not.toHaveBeenCalled();
+    expect(remounted.showError).not.toHaveBeenCalled();
+    await handle(`${NATIVE_AUTH_REDIRECT}?code=fresh-code`);
+    expect(remounted.exchange).toHaveBeenCalledWith("fresh-code");
+    expect(remounted.navigate).toHaveBeenCalledWith("/dashboard");
+  });
   it("routes password recovery to the password form", async () => {
     const h = setup({
       data: { session: {}, redirectType: "recovery" },
@@ -85,5 +99,33 @@ describe("native auth callbacks", () => {
     h.closeBrowser.mockRejectedValue(new Error("unsupported"));
     await h.handle(valid);
     expect(h.navigate).toHaveBeenCalledWith("/dashboard");
+  });
+});
+
+
+describe("native callback persistence across full reloads", () => {
+  function storage() {
+    const values = new Map<string, string>();
+    return { getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => { values.set(key, value); }, values };
+  }
+  it("does not exchange an old launch code after full reload but accepts a fresh login", async () => {
+    const disk = storage();
+    const first = setup();
+    await createNativeCallbackHandler({ ...first, claimCallback: createCallbackReplayGuard(disk) })(valid);
+    const reloaded = setup();
+    const handle = createNativeCallbackHandler({ ...reloaded, claimCallback: createCallbackReplayGuard(disk) });
+    await handle(valid);
+    expect(reloaded.exchange).not.toHaveBeenCalled();
+    expect(reloaded.showError).not.toHaveBeenCalled();
+    await handle(`${NATIVE_AUTH_REDIRECT}?code=new-login`);
+    expect(reloaded.exchange).toHaveBeenCalledWith("new-login");
+    expect(JSON.stringify([...disk.values.values()])).not.toContain("one-use-code");
+  });
+  it("serializes concurrent claims and handles corrupt history", async () => {
+    const disk = storage();
+    disk.setItem("native-auth-consumed-digests", "invalid");
+    const claim = createCallbackReplayGuard(disk);
+    expect(await Promise.all([claim(valid), claim(valid)])).toEqual([true, false]);
   });
 });

@@ -1,3 +1,4 @@
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "./ui/dropdown-menu";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "./ui/dialog";
 import { ReportContent } from './ReportContent';
 import { useState, useRef } from "react";
@@ -946,131 +947,30 @@ function PostCard({
             </button>
           )}
 
-          {/* Three-dot overflow menu */}
-          <div style={{ position: "relative" }}>
-            <button
-              onClick={() => setShowOverflow((v) => !v)}
-              style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                color: "#9ca3af",
-                padding: 4,
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <circle cx="12" cy="5" r="1.5" />
-                <circle cx="12" cy="12" r="1.5" />
-                <circle cx="12" cy="19" r="1.5" />
-              </svg>
-            </button>
-
-            {showOverflow && (
-              <>
-                {/* Backdrop to close menu */}
-                <div
-                  onClick={() => setShowOverflow(false)}
-                  style={{ position: "fixed", inset: 0, zIndex: 299 }}
-                />
-                {/* Dropdown */}
-                <div
-                  style={{
-                    position: "absolute",
-                    top: 28,
-                    right: 0,
-                    background: "var(--card)",
-                    border: "1.5px solid var(--border)",
-                    borderRadius: 14,
-                    boxShadow: "0 4px 24px rgba(0,0,0,0.15)",
-                    zIndex: 300,
-                    minWidth: 160,
-                    overflow: "hidden",
-                  }}
-                >
-                  {isOtherUser && (
-                    <>
-                      <button type="button" className="block w-full px-4 py-3 text-sm text-red-500 text-left"
-                        onClick={(event) => { event.stopPropagation(); setShowOverflow(false); setShowReport(true); }}>
-                        Report post
-                      </button>
-                      <button
-                        onClick={() => { setShowOverflow(false); toggleFollow(); }}
-                        style={{
-                          display: "block",
-                          width: "100%",
-                          padding: "12px 16px",
-                          background: "none",
-                          border: "none",
-                          textAlign: "left",
-                          fontSize: 14,
-                          fontWeight: 600,
-                          color: "var(--foreground)",
-                          cursor: "pointer",
-                        }}
-                      >
-                        {effectiveFollowing ? "Unfollow" : "Follow"}
-                      </button>
-                      <div style={{ height: 1, background: "var(--border)", margin: "0 12px" }} />
-                      <button
-                        onClick={() => muteMutation.mutate({ userId: post.userId })}
-                        style={{
-                          display: "block",
-                          width: "100%",
-                          padding: "12px 16px",
-                          background: "none",
-                          border: "none",
-                          textAlign: "left",
-                          fontSize: 14,
-                          fontWeight: 600,
-                          color: "var(--foreground)",
-                          cursor: "pointer",
-                        }}
-                      >
-                        Mute
-                      </button>
-                      <div style={{ height: 1, background: "var(--border)", margin: "0 12px" }} />
-                      <button
-                        onClick={(event) => { event.stopPropagation(); setShowOverflow(false); setShowBlockConfirm(true); }}
-                        style={{
-                          display: "block",
-                          width: "100%",
-                          padding: "12px 16px",
-                          background: "none",
-                          border: "none",
-                          textAlign: "left",
-                          fontSize: 14,
-                          fontWeight: 600,
-                          color: "#ef4444",
-                          cursor: "pointer",
-                        }}
-                      >
-                        Block
-                      </button>
-                    </>
-                  )}
-                  {!isOtherUser && (
-                    <button
-                      onClick={() => { setShowOverflow(false); setShowDeleteConfirm(true); }}
-                      style={{
-                        display: "block",
-                        width: "100%",
-                        padding: "12px 16px",
-                        background: "none",
-                        border: "none",
-                        textAlign: "left",
-                        fontSize: 14,
-                        fontWeight: 600,
-                        color: "#ef4444",
-                        cursor: "pointer",
-                      }}
-                    >
-                      Delete post
-                    </button>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
+          {/* Portal keeps actions outside the card's clipped media container. */}
+          <DropdownMenu open={showOverflow} onOpenChange={setShowOverflow}>
+            <DropdownMenuTrigger asChild>
+              <button type="button" aria-label="Post options" style={{ background: "none", border: "none", cursor: "pointer", color: "#9ca3af", padding: 8 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <circle cx="12" cy="5" r="1.5" />
+                  <circle cx="12" cy="12" r="1.5" />
+                  <circle cx="12" cy="19" r="1.5" />
+                </svg>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" collisionPadding={16} className="z-[300] min-w-40 rounded-xl"
+              style={{ maxHeight: "var(--radix-dropdown-menu-content-available-height)", overflowY: "auto" }}
+              onCloseAutoFocus={(event) => { if (showReport || showBlockConfirm || showDeleteConfirm) event.preventDefault(); }}>
+              {isOtherUser ? <>
+                <DropdownMenuItem className="px-4 py-3 text-red-500" onSelect={() => setShowReport(true)}>Report post</DropdownMenuItem>
+                <DropdownMenuItem className="px-4 py-3" onSelect={toggleFollow}>{effectiveFollowing ? "Unfollow" : "Follow"}</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="px-4 py-3" disabled={muteMutation.isPending} onSelect={() => muteMutation.mutate({ userId: post.userId })}>Mute</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="px-4 py-3 text-red-500" onSelect={() => setShowBlockConfirm(true)}>Block</DropdownMenuItem>
+              </> : <DropdownMenuItem className="px-4 py-3 text-red-500" onSelect={() => setShowDeleteConfirm(true)}>Delete post</DropdownMenuItem>}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Caption */}

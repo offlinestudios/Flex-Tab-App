@@ -1,8 +1,8 @@
 import { expect, it } from 'vitest';
 import { clearAccountData } from './clearAccountData';
-it('removes cached account data and credentials while preserving theme',()=>{
-  const values = new Map([['workoutSessions','private'],['flextab_routines','private'],['sb-test-auth-token','token'],['notif_pr','true'],['theme','dark']]);
+it('removes cached account data and credentials while preserving theme and non-credential replay digests',()=>{
+  const values = new Map([['workoutSessions','private'],['flextab_routines','private'],['sb-test-auth-token','token'],['notif_pr','true'],['theme','dark'],['native-auth-consumed-digests','["digest"]']]);
   const storage = {get length(){return values.size;},key:(i:number)=>[...values.keys()][i]??null,removeItem:(key:string)=>values.delete(key)} as Storage;
   clearAccountData(storage);
-  expect([...values]).toEqual([['theme','dark']]);
+  expect([...values]).toEqual([['theme','dark'],['native-auth-consumed-digests','["digest"]']]);
 });
